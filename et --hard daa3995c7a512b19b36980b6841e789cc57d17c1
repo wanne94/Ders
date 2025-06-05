@@ -1,0 +1,17 @@
+[33mcommit daa3995c7a512b19b36980b6841e789cc57d17c1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Avdo <wanneque@gmail.com>
+Date:   Tue May 27 21:24:28 2025 +0100
+
+    next radi verzija 1 stabilna
+
+[33mcommit 31c87fdcf6f7b8dcf3069019d4e1178702040363[m
+Author: Avdo <wanneque@gmail.com>
+Date:   Tue May 27 18:54:21 2025 +0100
+
+    Konverzija React projekta u Next.js – početna struktura
+
+[33mcommit d8bf2a02e132f310f929b6ced49f62944ec442a7[m
+Author: Avdo <wanneque@gmail.com>
+Date:   Tue May 27 00:53:37 2025 +0100
+
+    Initial commit

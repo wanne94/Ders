@@ -1,0 +1,42 @@
+{
+  "name": "predavanje-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "web",
+    "mobile",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "dev:web": "cd web && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "dev:mobile": "cd mobile && expo start",
+    "dev:full": "concurrently \"npm run dev:web\" \"npm run dev:server\"",
+    "start:full": "concurrently \"npm run start:web\" \"npm run start:server\"",
+    "build": "cd web && npm run build",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "eslint": "^9.28.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-unused-imports": "^4.1.4"
+  },
+  "dependencies": {
+    "expo": "^53.0.9",
+    "multer": "^2.0.0",
+    "react": "19.0.0",
+    "react-native": "0.79.2",
+    "react-native-gesture-handler": "^2.25.0"
+  },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "listUnknownPackages": false
+      }
+    }
+  }
+}

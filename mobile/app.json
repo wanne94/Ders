@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "DERS Predavanja",
+    "slug": "predavanje-monorepo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": ["ios", "android"],
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.wanne.predavanjemonorepo"
+    },
+    "android": {
+      "package": "com.wanne.predavanjemonorepo",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "softwareKeyboardLayoutMode": "pan",
+      "versionCode": 1
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "cb40aa2f-d39d-481f-8832-5ca2ef3bfcb5"
+      },
+      "apiUrl": "https://ders.ba"
+    }
+  }
+}
