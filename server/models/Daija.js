@@ -31,6 +31,10 @@ const daijaSchema = new mongoose.Schema({
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
   },
+  rejectionReason: {
+    type: String,
+    required: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

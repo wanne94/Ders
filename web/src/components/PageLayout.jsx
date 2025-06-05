@@ -7,7 +7,7 @@ const PageLayout = ({
   children, 
   showNavigation = true, 
   showFooter = true, 
-  maxWidth = 'xl',
+  maxWidth = 'xxl',
   disableGutters = false,
   sx = {},
   containerSx = {},

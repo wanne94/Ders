@@ -223,7 +223,7 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
         // Create new daija with approval status based on settings
         const daijaData = {
           ...finalFormData,
-          status: approvalEnabled ? 'pending' : 'approved'
+          status: approvalEnabled ? 'pending' : 'active'
         };
         response = await axiosInstance.post('/daije', daijaData);
       }

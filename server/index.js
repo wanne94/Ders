@@ -814,6 +814,188 @@ app.get('/api/suggestions/count/public', async (req, res) => {
   }
 });
 
+// Create new suggestion endpoint (public - no authentication required)
+app.post('/api/suggestions', async (req, res) => {
+  try {
+    logger.info('Creating new suggestion:', req.body);
+    
+    const { title, description, referenceType, referenceId } = req.body;
+    
+    // Validation
+    if (!description || !description.trim()) {
+      return res.status(400).json({ message: 'Opis prijedloga je obavezan' });
+    }
+    
+    // Map frontend types to backend types
+    let targetType = 'general';
+    let targetName = 'Općeniti prijedlog';
+    let targetId = null;
+    
+    if (referenceType && referenceId) {
+      switch (referenceType) {
+        case 'daija':
+          targetType = 'daija';
+          // Try to fetch daija name
+          try {
+            const daija = await Daija.findById(referenceId);
+            if (daija) {
+              targetName = daija.firstName || 'Nepoznata daija';
+              targetId = referenceId;
+            }
+          } catch (error) {
+            logger.warn('Could not fetch daija for suggestion:', error);
+          }
+          break;
+        case 'udruženje':
+        case 'organization':
+          targetType = 'organization';
+          // Try to fetch organization name
+          try {
+            const organization = await Organization.findById(referenceId);
+            if (organization) {
+              targetName = organization.name || 'Nepoznato udruženje';
+              targetId = referenceId;
+            }
+          } catch (error) {
+            logger.warn('Could not fetch organization for suggestion:', error);
+          }
+          break;
+        case 'stranica':
+          targetType = 'general';
+          targetName = 'Stranica';
+          break;
+        case 'općenito':
+        default:
+          targetType = 'general';
+          targetName = 'Općeniti prijedlog';
+          break;
+      }
+    }
+    
+    // Get user info if authenticated
+    let submittedBy = null;
+    let submitterName = null;
+    let submitterEmail = null;
+    
+    // Check if user is authenticated (optional)
+    const token = req.headers.authorization?.split(' ')[1];
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        submittedBy = decoded.id;
+        
+        // Get user details
+        const user = await User.findById(decoded.id);
+        if (user) {
+          submitterName = user.username;
+          submitterEmail = user.email;
+        }
+      } catch (error) {
+        // Token invalid, but that's okay for suggestions
+        logger.info('Invalid token for suggestion, proceeding as anonymous');
+      }
+    }
+    
+    const suggestionData = {
+      targetType,
+      targetId,
+      targetName,
+      suggestedChanges: {
+        description: description.trim(),
+        title: title?.trim() || null
+      },
+      reason: description.trim(),
+      submittedBy,
+      submitterName,
+      submitterEmail,
+      status: 'pending'
+    };
+    
+    logger.info('Creating suggestion with data:', suggestionData);
+    const suggestion = new Suggestion(suggestionData);
+    
+    const savedSuggestion = await suggestion.save();
+    logger.info('New suggestion saved successfully:', {
+      id: savedSuggestion._id,
+      targetType: savedSuggestion.targetType,
+      targetName: savedSuggestion.targetName
+    });
+    
+    res.status(201).json(savedSuggestion);
+  } catch (error) {
+    logger.error('Error creating suggestion:', error);
+    res.status(400).json({ message: error.message || 'Greška pri kreiranju prijedloga' });
+  }
+});
+
+// Update suggestion status (admin only)
+app.patch('/api/suggestions/:id', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    logger.info('Updating suggestion status:', { id: req.params.id, body: req.body });
+    
+    const { status, reviewNote } = req.body;
+    
+    // Validate status
+    const validStatuses = ['pending', 'approved', 'archived'];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Nevaljan status' });
+    }
+    
+    const updateData = {};
+    if (status) updateData.status = status;
+    if (reviewNote) updateData.reviewNote = reviewNote;
+    
+    // Add review info
+    updateData.reviewedBy = req.user.id;
+    updateData.reviewedAt = new Date();
+    
+    const suggestion = await Suggestion.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+    
+    if (!suggestion) {
+      return res.status(404).json({ message: 'Prijedlog nije pronađen' });
+    }
+    
+    logger.info('Suggestion updated successfully:', {
+      id: suggestion._id,
+      status: suggestion.status,
+      reviewedBy: req.user.username
+    });
+    
+    res.json(suggestion);
+  } catch (error) {
+    logger.error('Error updating suggestion:', error);
+    res.status(400).json({ message: error.message || 'Greška pri ažuriranju prijedloga' });
+  }
+});
+
+// Delete suggestion (admin only)
+app.delete('/api/suggestions/:id', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    logger.info('Deleting suggestion:', { id: req.params.id, user: req.user.username });
+    
+    const suggestion = await Suggestion.findByIdAndDelete(req.params.id);
+    
+    if (!suggestion) {
+      return res.status(404).json({ message: 'Prijedlog nije pronađen' });
+    }
+    
+    logger.info('Suggestion deleted successfully:', {
+      id: req.params.id,
+      targetType: suggestion.targetType,
+      deletedBy: req.user.username
+    });
+    
+    res.json({ message: 'Prijedlog je uspješno obrisan' });
+  } catch (error) {
+    logger.error('Error deleting suggestion:', error);
+    res.status(400).json({ message: error.message || 'Greška pri brisanju prijedloga' });
+  }
+});
+
 // Make lectures endpoint public (remove authentication requirement)
 app.get('/api/lectures/public', async (req, res) => {
   const startTime = Date.now();

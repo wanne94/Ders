@@ -19,7 +19,6 @@ import axiosInstance from '@/utils/axiosConfig';
 
 const SuggestionForm = ({ open, onClose, onSuccess }) => {
   const router = useRouter();
-  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [referenceType, setReferenceType] = useState('');
   const [referenceId, setReferenceId] = useState('');
@@ -126,9 +125,7 @@ const SuggestionForm = ({ open, onClose, onSuccess }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'title') {
-      setTitle(value);
-    } else if (name === 'description') {
+    if (name === 'description') {
       setDescription(value);
     } else if (name === 'referenceType') {
       setReferenceType(value);
@@ -143,8 +140,8 @@ const SuggestionForm = ({ open, onClose, onSuccess }) => {
 
     try {
       // Validate required fields
-      if (!title.trim() || !description.trim()) {
-        alert('Molimo unesite naslov i opis prijedloga');
+      if (!description.trim()) {
+        alert('Molimo unesite opis prijedloga');
         return;
       }
 
@@ -159,20 +156,22 @@ const SuggestionForm = ({ open, onClose, onSuccess }) => {
       }
 
       const payload = {
-        title: title.trim(),
         description: description.trim(),
         referenceType: finalReferenceId ? referenceType : null,
-        referenceId: finalReferenceId,
-        status: 'pending'
+        referenceId: finalReferenceId
       };
 
+      console.log('📤 Sending suggestion payload:', payload);
       const response = await axiosInstance.post('/suggestions', payload);
+      console.log('✅ Suggestion created successfully:', response.data);
 
       // Reset form
-      setTitle('');
       setDescription('');
       setReferenceType('');
       setReferenceId('');
+      
+      // Show success message
+      alert('Prijedlog je uspješno poslan!');
       
       // Close modal if it's in a modal
       if (onSuccess) {
@@ -195,7 +194,6 @@ const SuggestionForm = ({ open, onClose, onSuccess }) => {
   };
 
   const handleClose = () => {
-    setTitle('');
     setDescription('');
     setReferenceType('');
     setReferenceId('');

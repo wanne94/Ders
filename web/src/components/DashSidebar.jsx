@@ -17,7 +17,6 @@ import {
 import EventIcon from '@mui/icons-material/Event';
 import PeopleIcon from '@mui/icons-material/People';
 import GroupsIcon from '@mui/icons-material/Groups';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useRouter } from 'next/router';
@@ -25,6 +24,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import PersonIcon from '@mui/icons-material/Person';
 import SuggestionsIcon from '@mui/icons-material/Lightbulb';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 const drawerWidth = 280;
 
@@ -34,7 +34,8 @@ const DashSidebar = ({
   pendingCount = 0, 
   pendingSuggestionsCount = 0,
   approvalToggles, 
-  setApprovalToggles 
+  setApprovalToggles,
+  userRole
 }) => {
   const router = useRouter();
 
@@ -54,6 +55,14 @@ const DashSidebar = ({
       count: pendingCount,
       color: 'warning'
     },
+    // Samo super admin može da vidi odbijene stavke
+    ...(userRole === 'super_admin' ? [{
+      id: 'odbijeno',
+      text: 'Odbijeno',
+      icon: <CancelIcon />,
+      description: 'Odbijeni sadržaj',
+      color: 'error'
+    }] : []),
     {
       id: 'prijedlozi',
       text: 'Prijedlozi',

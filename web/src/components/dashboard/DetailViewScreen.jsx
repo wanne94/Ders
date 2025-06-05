@@ -80,7 +80,8 @@ const DetailViewScreen = ({
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active': return 'success';
+      case 'approved': return 'success';
+      case 'active': return 'success'; // Backward compatibility
       case 'pending': return 'warning';
       case 'rejected': return 'error';
       default: return 'default';
@@ -89,7 +90,8 @@ const DetailViewScreen = ({
 
   const getStatusLabel = (status) => {
     switch (status) {
-      case 'active': return 'Odobreno';
+      case 'approved': return 'Odobreno';
+      case 'active': return 'Odobreno'; // Backward compatibility
       case 'pending': return 'Na čekanju';
       case 'rejected': return 'Odbačeno';
       default: return 'Nepoznato';

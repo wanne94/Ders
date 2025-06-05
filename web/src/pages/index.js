@@ -193,7 +193,7 @@ const TenLectures = ({ lectures }) => {
   const router = useRouter();
   
   // Sort lectures by proximity to current time and take first 8
-  const proximityLectures = sortLecturesByTimeProximity(lectures).slice(0, 8);
+  const proximityLectures = sortLecturesByTimeProximity(lectures).slice(0, 10);
 
   const handleViewAllLectures = () => {
     router.push('/lectures');
@@ -273,7 +273,7 @@ const ActiveOrganizations = ({ organizations }) => {
         // Sort organizations by proximity of their closest lecture to current time
         // Show all organizations, limited to first 8
         const sortedOrganizations = sortOrganizationsByLectureProximity(organizations, lectures)
-          .slice(0, 8); // Limit to 8 organizations
+          .slice(0, 10); // Limit to 8 organizations
 
         console.log('Sorted organizations:', sortedOrganizations.length);
         setDisplayOrganizations(sortedOrganizations);
@@ -376,7 +376,7 @@ const ActiveDaije = () => {
         // Sort daije by proximity of their closest lecture to current time
         // Show all daije, limited to first 8
         const sortedDaije = sortDaijeByLectureProximity(daijeWithLectureCount, lectures)
-          .slice(0, 8); // Limit to 8 daije
+          .slice(0, 10); // Limit to 8 daije
 
         setDisplayDaije(sortedDaije);
       } catch (error) {

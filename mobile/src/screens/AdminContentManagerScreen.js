@@ -248,7 +248,9 @@ const ContentItemCard = ({ item, type, onEdit, onDelete, onStatusChange, onSelec
 // Helper function to get status color
 const getStatusColor = (status) => {
   switch (status) {
-    case 'active':
+    case 'approved':
+      return colors.success.main;
+    case 'active': // Backward compatibility
       return colors.success.main;
     case 'pending':
       return colors.warning.main;
@@ -380,8 +382,9 @@ const AdminContentManagerScreen = ({ route, navigation }) => {
     
     return {
       all: data.length,
-      active: data.filter(item => item.status === 'approved').length,
-      pending: data.filter(item => item.status === 'pending').length
+      approved: data.filter(item => item.status === 'approved').length,
+      pending: data.filter(item => item.status === 'pending').length,
+      rejected: data.filter(item => item.status === 'rejected').length
     };
   }, [data, type]);
 
@@ -399,8 +402,11 @@ const AdminContentManagerScreen = ({ route, navigation }) => {
   // Quick filter mapping
   const filterMapping = {
     all: 'all',
-    approve: 'approved',
-    reject: 'rejected'
+    approved: 'approved',
+    pending: 'pending',
+    rejected: 'rejected',
+    approve: 'approved', // For bulk actions
+    reject: 'rejected'   // For bulk actions
   };
 
   const handleItemSelect = (itemId) => {
@@ -670,16 +676,22 @@ const AdminContentManagerScreen = ({ route, navigation }) => {
                   count={filterCounts.all}
                 />
                 <FilterChip
-                  label="Aktivno"
-                  active={activeFilter === 'active'}
-                  onPress={() => setActiveFilter('active')}
-                  count={filterCounts.active}
+                  label="Odobreno"
+                  active={activeFilter === 'approved'}
+                  onPress={() => setActiveFilter('approved')}
+                  count={filterCounts.approved}
                 />
                 <FilterChip
                   label="Na čekanju"
                   active={activeFilter === 'pending'}
                   onPress={() => setActiveFilter('pending')}
                   count={filterCounts.pending}
+                />
+                <FilterChip
+                  label="Odbačeno"
+                  active={activeFilter === 'rejected'}
+                  onPress={() => setActiveFilter('rejected')}
+                  count={filterCounts.rejected}
                 />
               </ScrollView>
             )}

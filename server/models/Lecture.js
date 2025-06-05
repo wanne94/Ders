@@ -5,10 +5,6 @@ const lectureSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  speaker: {
-    type: String,
-    required: false
-  },
   daija: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Daija',
@@ -43,10 +39,6 @@ const lectureSchema = new mongoose.Schema({
     type: String,
     required: false
   },
-  description: {
-    type: String,
-    required: false
-  },
   image: {
     type: String
   },
@@ -54,6 +46,10 @@ const lectureSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
+  },
+  rejectionReason: {
+    type: String,
+    required: false
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,

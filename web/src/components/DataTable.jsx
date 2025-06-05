@@ -139,7 +139,7 @@ const ActionsMenu = memo(({ item, type, onEdit, onDelete, onDuplicate, onArchive
             <ListItemText>Uredi</ListItemText>
           </MenuItem>
         )}
-        {onDuplicate && (type === 'lecture' || type === 'lectures') && (
+        {onDuplicate && type !== 'users' && type !== 'suggestion' && (
           <MenuItem onClick={handleDuplicate}>
             <ListItemIcon>
               <ContentCopyIcon fontSize="small" />
@@ -319,15 +319,22 @@ const BulkActionsToolbar = memo(({
         onClose={handleMenuClose}
       >
         <MenuItem onClick={() => handleBulkAction('status', 'approved')}>
-          <CheckCircleIcon sx={{ mr: 1, color: 'success.main' }} />
-          Odobri odabrane
+          <ListItemIcon>
+            <CheckCircleIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Odobri odabrane</ListItemText>
         </MenuItem>
-        
+        <MenuItem onClick={() => handleBulkAction('status', 'pending')}>
+          <ListItemIcon>
+            <PendingIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Stavi na čekanje</ListItemText>
+        </MenuItem>
         <MenuItem onClick={() => handleBulkAction('status', 'rejected')}>
           <ListItemIcon>
-            <CancelIcon fontSize="small" />
+            <CloseIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Odbaci</ListItemText>
+          <ListItemText>Odbaci odabrane</ListItemText>
         </MenuItem>
       </Menu>
     </Toolbar>
@@ -347,6 +354,7 @@ const DataTable = ({
   hideActions = false,
   showActions = true,
   showStatus = true,
+  showRejectionReason = false,
   onRowClick
 }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
@@ -425,66 +433,81 @@ const DataTable = ({
   const isAllSelected = data.length > 0 && selectedItems.length === data.length;
   const isIndeterminate = selectedItems.length > 0 && selectedItems.length < data.length;
 
-  const getStatusSelect = useCallback((item) => {
+  // Status icons with actions
+  const getStatusIcons = (item) => {
     if (!onStatusChange) return null;
     
-    const getStatusColor = (status) => {
-      switch (status) {
-        case 'active': return 'success';
-        case 'pending': return 'warning';
-        case 'rejected': return 'error';
-        default: return 'default';
-      }
-    };
-
-    const getStatusIcon = (status) => {
-      switch (status) {
-        case 'active': return <CheckCircleIcon sx={{ fontSize: 16 }} />;
-        case 'pending': return <PendingIcon sx={{ fontSize: 16 }} />;
-        case 'rejected': return <CancelIcon sx={{ fontSize: 16 }} />;
-        default: return null;
-      }
-    };
-
-    const getStatusLabel = (status) => {
-      switch (status) {
-        case 'active': return 'Odobreno';
-        case 'pending': return 'Na čekanju';
-        case 'rejected': return 'Odbačeno';
-        default: return 'Nepoznato';
-      }
-    };
-
+    const currentStatus = item.status || 'pending';
     return (
-      <FormControl size="small" sx={{ minWidth: 120 }}>
-        <Select
-          value={item.status || 'pending'}
-          onChange={(e) => onStatusChange(item, e.target.value)}
-          sx={{ 
-            '& .MuiSelect-select': { 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1,
-              py: 0.5
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {/* Current status indicator */}
+          <Chip
+            size="small"
+            label={
+              currentStatus === 'approved' ? 'Odobreno' :
+              currentStatus === 'pending' ? 'Na čekanju' :
+              currentStatus === 'rejected' ? 'Odbačeno' : 'Nepoznato'
             }
-          }}
-        >
-          <MenuItem value="active">
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
-              Odobreno
-            </Box>
-          </MenuItem>
-          <MenuItem value="rejected">
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CancelIcon sx={{ fontSize: 16, color: 'error.main' }} />
-              Odbačeno
-            </Box>
-          </MenuItem>
-        </Select>
-      </FormControl>
+            color={
+              currentStatus === 'approved' ? 'success' :
+              currentStatus === 'pending' ? 'warning' :
+              currentStatus === 'rejected' ? 'error' : 'default'
+            }
+            sx={{ minWidth: 80 }}
+          />
+          
+          {/* Action buttons */}
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {currentStatus !== 'approved' && (
+              <Tooltip title="Odobri">
+                <IconButton
+                  size="small"
+                  onClick={() => onStatusChange(item, 'approved')}
+                  sx={{ 
+                    color: 'success.main',
+                    '&:hover': { bgcolor: 'success.light', color: 'white' }
+                  }}
+                >
+                  <CheckCircleIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            
+            {currentStatus !== 'rejected' && (
+              <Tooltip title="Odbaci">
+                <IconButton
+                  size="small"
+                  onClick={() => onStatusChange(item, 'rejected')}
+                  sx={{ 
+                    color: 'error.main',
+                    '&:hover': { bgcolor: 'error.light', color: 'white' }
+                  }}
+                >
+                  <CancelIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            
+            {currentStatus !== 'pending' && (
+              <Tooltip title="Stavi na čekanje">
+                <IconButton
+                  size="small"
+                  onClick={() => onStatusChange(item, 'pending')}
+                  sx={{ 
+                    color: 'warning.main',
+                    '&:hover': { bgcolor: 'warning.light', color: 'white' }
+                  }}
+                >
+                  <PendingIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        </Box>
+      </Box>
     );
-  }, [onStatusChange]);
+  };
 
   const getColumns = useMemo(() => {
     let columns = [];
@@ -642,11 +665,44 @@ const DataTable = ({
 
     // Add status column if showStatus is true and type is not 'users'
     if (showStatus && columns.length > 0 && type !== 'users') {
-      columns.push({ id: 'status', label: 'Status', sortable: true, sortKey: 'status', getValue: getStatusSelect });
+      columns.push({ id: 'status', label: 'Status', sortable: true, sortKey: 'status', getValue: getStatusIcons });
+    }
+
+    // Add rejection reason column if showRejectionReason is true
+    if (showRejectionReason && columns.length > 0 && type !== 'users') {
+      columns.push({ 
+        id: 'rejectionReason', 
+        label: 'Razlog odbijanja', 
+        sortable: false, 
+        getValue: (item) => {
+          if (item.status === 'rejected' && item.rejectionReason) {
+            const reason = item.rejectionReason;
+            const maxLength = 50;
+            return (
+              <Tooltip title={reason} arrow>
+                <Box sx={{ 
+                  bgcolor: 'error.light', 
+                  color: 'error.contrastText',
+                  p: 1, 
+                  borderRadius: 1,
+                  fontSize: '0.75rem',
+                  maxWidth: 200,
+                  cursor: 'help'
+                }}>
+                  <Typography variant="caption">
+                    {reason.length > maxLength ? reason.substring(0, maxLength) + '...' : reason}
+                  </Typography>
+                </Box>
+              </Tooltip>
+            );
+          }
+          return '-';
+        }
+      });
     }
 
     return columns;
-  }, [type, getStatusSelect, showStatus]);
+  }, [type, getStatusIcons, showStatus, showRejectionReason]);
 
   if (!data || data.length === 0) {
     return (
