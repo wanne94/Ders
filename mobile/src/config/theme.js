@@ -2,54 +2,80 @@
 // Uses shared brand colors for consistency with web app
 
 import { BRAND_COLORS, COLOR_USAGE } from '../../shared-colors';
+import { MD3LightTheme } from 'react-native-paper';
 
-export const colors = {
+// Create a deep clone to avoid readonly property issues with Hermes
+const cloneDeep = (obj) => {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (obj instanceof Date) return new Date(obj.getTime());
+  if (Array.isArray(obj)) return obj.map(item => cloneDeep(item));
+  
+  // For objects, create a completely new object with cloned properties
+  const clonedObj = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const value = obj[key];
+      // Ensure string values are properly cloned for Hermes compatibility
+      if (typeof value === 'string') {
+        clonedObj[key] = String(value); // Force string creation
+      } else {
+        clonedObj[key] = cloneDeep(value);
+      }
+    }
+  }
+  return clonedObj;
+};
+
+const safeBrandColors = cloneDeep(BRAND_COLORS);
+
+// Create a completely mutable colors object for Hermes compatibility
+const createMutableColors = () => ({
   primary: {
-    main: BRAND_COLORS.primary,
-    light: BRAND_COLORS.primaryLight,
-    dark: BRAND_COLORS.primaryDark,
-    contrastText: BRAND_COLORS.text.onPrimary,
+    main: safeBrandColors.primary,
+    light: safeBrandColors.primaryLight,
+    dark: safeBrandColors.primaryDark,
+    contrastText: safeBrandColors.text.onPrimary,
   },
   secondary: {
-    main: BRAND_COLORS.secondary,
-    light: BRAND_COLORS.secondaryLight,
-    dark: BRAND_COLORS.secondaryDark,
-    contrastText: BRAND_COLORS.text.onSecondary,
+    main: safeBrandColors.secondary,
+    light: safeBrandColors.secondaryLight,
+    dark: safeBrandColors.secondaryDark,
+    contrastText: safeBrandColors.text.onSecondary,
   },
   background: {
-    default: BRAND_COLORS.background.default,
-    paper: BRAND_COLORS.background.paper,
-    card: BRAND_COLORS.background.paper,
-    header: BRAND_COLORS.background.header,
-    footer: BRAND_COLORS.background.footer,
+    default: safeBrandColors.background.default,
+    paper: safeBrandColors.background.paper,
+    card: safeBrandColors.background.paper,
+    header: safeBrandColors.background.header,
+    footer: safeBrandColors.background.footer,
     disabled: '#f5f5f5',
   },
   text: {
-    primary: BRAND_COLORS.text.primary,
-    secondary: BRAND_COLORS.text.secondary,
-    disabled: BRAND_COLORS.text.disabled,
-    onPrimary: BRAND_COLORS.text.onPrimary,
-    onSecondary: BRAND_COLORS.text.onSecondary,
-    link: BRAND_COLORS.text.link,
-    linkHover: BRAND_COLORS.text.linkHover,
+    primary: safeBrandColors.text.primary,
+    secondary: safeBrandColors.text.secondary,
+    disabled: safeBrandColors.text.disabled,
+    onPrimary: safeBrandColors.text.onPrimary,
+    onSecondary: safeBrandColors.text.onSecondary,
+    link: safeBrandColors.text.link,
+    linkHover: safeBrandColors.text.linkHover,
   },
   success: {
-    main: BRAND_COLORS.status.success,
+    main: safeBrandColors.status.success,
     light: '#81C784',
     dark: '#388E3C',
   },
   warning: {
-    main: BRAND_COLORS.status.warning,
+    main: safeBrandColors.status.warning,
     light: '#ffd966',
     dark: 'ffd966',
   },
   error: {
-    main: BRAND_COLORS.status.error,
+    main: safeBrandColors.status.error,
     light: '#EF5350',
     dark: '#D32F2F',
   },
   info: {
-    main: BRAND_COLORS.status.info,
+    main: safeBrandColors.status.info,
     light: '#64B5F6',
     dark: '#1976D2',
   },
@@ -60,15 +86,15 @@ export const colors = {
   },
   divider: '#e0e0e0',
   border: {
-    main: BRAND_COLORS.border.light,
-    light: BRAND_COLORS.border.light,
-    medium: BRAND_COLORS.border.medium,
-    dark: BRAND_COLORS.border.dark,
+    main: safeBrandColors.border.light,
+    light: safeBrandColors.border.light,
+    medium: safeBrandColors.border.medium,
+    dark: safeBrandColors.border.dark,
   },
   shadow: {
-    light: BRAND_COLORS.shadow.light,
-    medium: BRAND_COLORS.shadow.medium,
-    dark: BRAND_COLORS.shadow.dark,
+    light: safeBrandColors.shadow.light,
+    medium: safeBrandColors.shadow.medium,
+    dark: safeBrandColors.shadow.dark,
   },
   grey: {
     50: '#fafafa',
@@ -82,7 +108,42 @@ export const colors = {
     800: '#424242',
     900: '#212121',
   },
+});
+
+// Export the mutable colors object
+export const colors = createMutableColors();
+
+// Create Paper theme
+const paperThemeBase = cloneDeep(MD3LightTheme);
+
+export const paperTheme = {
+  ...paperThemeBase,
+  colors: {
+    ...paperThemeBase.colors,
+    primary: colors.primary.main,
+    primaryContainer: colors.primary.light,
+    secondary: colors.secondary.main,
+    secondaryContainer: colors.secondary.light,
+    surface: colors.background.paper,
+    background: colors.background.default,
+    error: colors.error.main,
+    onPrimary: colors.text.onPrimary,
+    onSecondary: colors.text.onSecondary,
+    onSurface: colors.text.primary,
+    onBackground: colors.text.primary,
+  },
 };
+
+// Ensure the colors object is completely mutable for Hermes compatibility
+// This prevents any "property is not writable" errors
+try {
+  // Test if we can write to the object
+  const testKey = '__hermes_test__';
+  colors[testKey] = 'test';
+  delete colors[testKey];
+} catch (error) {
+  console.warn('Colors object may have readonly properties:', error);
+}
 
 // Export color usage guidelines for easy access
 export { COLOR_USAGE };

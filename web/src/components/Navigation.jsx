@@ -1,30 +1,29 @@
 import { useState, useEffect } from 'react';
 import {
-    AppBar,
-    Toolbar,
-    Button,
-    Box,
-    Drawer,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
-    IconButton,
-    Divider,
-    Typography,
-    useMediaQuery,
-    useTheme,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Tooltip,
-    Slide,
-    Menu,
-    MenuItem
+  AppBar,
+  Toolbar,
+  Button,
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  IconButton,
+  Divider,
+  Typography,
+  useMediaQuery,
+  useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tooltip,
+  Slide,
+  Menu,
+  MenuItem
 } from '@mui/material';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AddIcon from '@mui/icons-material/Add';
 import LoginIcon from '@mui/icons-material/Login';
@@ -206,23 +205,25 @@ const Navigation = () => {
         {menuItems.map((item, index) => {
           const IconComponent = item.icon;
           return (
-            <Link href={item.path} key={item.text || `menu-${index}`} passHref legacyBehavior>
-              <ListItem
-                button
-                onClick={() => setDrawerOpen(false)}
-                sx={{
-                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                  color: 'white',
-                  py: 1.5,
-                  px: 2
-                }}
-              >
-                <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                  <IconComponent sx={{ fontSize: '1.2rem' }} />
-                </ListItemIcon>
-                <ListItemText primary={item.text} />
-              </ListItem>
-            </Link>
+            <ListItem
+              key={item.text || `menu-${index}`}
+              button
+              onClick={() => {
+                setDrawerOpen(false);
+                router.push(item.path);
+              }}
+              sx={{
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                color: 'white',
+                py: 1.5,
+                px: 2
+              }}
+            >
+              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
+                <IconComponent sx={{ fontSize: '1.2rem' }} />
+              </ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItem>
           );
         })}
       </List>
@@ -259,98 +260,90 @@ const Navigation = () => {
         {/* Opcije za dodavanje - prikazane samo kada je meni otvoren */}
         {mobileAddMenuOpen && (
           <>
-            <Link href="#" passHref legacyBehavior>
-              <ListItem
-                button
-                onClick={() => {
-                  handleAddLectureFromMenu();
-                  setDrawerOpen(false);
-                  setMobileAddMenuOpen(false);
-                }}
-                sx={{
-                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                  color: 'white',
-                  py: 1.5,
-                  px: 2,
-                  pl: 6 // Uvučeno da izgleda kao sub-opcija
-                }}
-              >
-                <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                  <MenuBookIcon sx={{ fontSize: '1.2rem' }} />
-                </ListItemIcon>
-                <ListItemText primary="Dodaj ders" />
-              </ListItem>
-            </Link>
+            <ListItem
+              button
+              onClick={() => {
+                handleAddLectureFromMenu();
+                setDrawerOpen(false);
+                setMobileAddMenuOpen(false);
+              }}
+              sx={{
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                color: 'white',
+                py: 1.5,
+                px: 2,
+                pl: 6 // Uvučeno da izgleda kao sub-opcija
+              }}
+            >
+              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
+                <MenuBookIcon sx={{ fontSize: '1.2rem' }} />
+              </ListItemIcon>
+              <ListItemText primary="Dodaj ders" />
+            </ListItem>
             
-            <Link href="#" passHref legacyBehavior>
-              <ListItem
-                button
-                onClick={() => {
-                  handleAddDaijaFromMenu();
-                  setDrawerOpen(false);
-                  setMobileAddMenuOpen(false);
-                }}
-                sx={{
-                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                  color: 'white',
-                  py: 1.5,
-                  px: 2,
-                  pl: 6 // Uvučeno da izgleda kao sub-opcija
-                }}
-              >
-                <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                  <PersonIcon sx={{ fontSize: '1.2rem' }} />
-                </ListItemIcon>
-                <ListItemText primary="Dodaj daiiju" />
-              </ListItem>
-            </Link>
+            <ListItem
+              button
+              onClick={() => {
+                handleAddDaijaFromMenu();
+                setDrawerOpen(false);
+                setMobileAddMenuOpen(false);
+              }}
+              sx={{
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                color: 'white',
+                py: 1.5,
+                px: 2,
+                pl: 6 // Uvučeno da izgleda kao sub-opcija
+              }}
+            >
+              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
+                <PersonIcon sx={{ fontSize: '1.2rem' }} />
+              </ListItemIcon>
+              <ListItemText primary="Dodaj daiiju" />
+            </ListItem>
             
-            <Link href="#" passHref legacyBehavior>
-              <ListItem
-                button
-                onClick={() => {
-                  handleAddOrganizationFromMenu();
-                  setDrawerOpen(false);
-                  setMobileAddMenuOpen(false);
-                }}
-                sx={{
-                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                  color: 'white',
-                  py: 1.5,
-                  px: 2,
-                  pl: 6 // Uvučeno da izgleda kao sub-opcija
-                }}
-              >
-                <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                  <BusinessIcon sx={{ fontSize: '1.2rem' }} />
-                </ListItemIcon>
-                <ListItemText primary="Dodaj udruženje" />
-              </ListItem>
-            </Link>
+            <ListItem
+              button
+              onClick={() => {
+                handleAddOrganizationFromMenu();
+                setDrawerOpen(false);
+                setMobileAddMenuOpen(false);
+              }}
+              sx={{
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                color: 'white',
+                py: 1.5,
+                px: 2,
+                pl: 6 // Uvučeno da izgleda kao sub-opcija
+              }}
+            >
+              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
+                <BusinessIcon sx={{ fontSize: '1.2rem' }} />
+              </ListItemIcon>
+              <ListItemText primary="Dodaj udruženje" />
+            </ListItem>
           </>
         )}
         
         {/* Predloži izmjenu kao zasebna stavka */}
-        <Link href="#" passHref legacyBehavior>
-          <ListItem
-            button
-            onClick={() => {
-              handleSuggestionFromMenu();
-              setDrawerOpen(false);
-            }}
-            sx={{
-              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-              color: 'white',
-              py: 1.5,
-              px: 2
-            }}
-          >
-            <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-              <LightbulbIcon sx={{ fontSize: '1.2rem' }} />
-            </ListItemIcon>
-            <ListItemText primary="Predloži izmjenu" />
-          </ListItem>
-        </Link>
+        <ListItem
+          button
+          onClick={() => {
+            handleSuggestionFromMenu();
+            setDrawerOpen(false);
+          }}
+          sx={{
+            '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+            color: 'white',
+            py: 1.5,
+            px: 2
+          }}
+        >
+          <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
+            <LightbulbIcon sx={{ fontSize: '1.2rem' }} />
+          </ListItemIcon>
+          <ListItemText primary="Predloži izmjenu" />
+        </ListItem>
       </List>
 
       {/* Admin meni - samo za administratore */}
@@ -363,23 +356,24 @@ const Navigation = () => {
             </Typography>
           </Box>
           <List sx={{ py: 0 }}>
-            <Link href="/dashboard" passHref legacyBehavior>
-              <ListItem
-                button
-                onClick={() => setDrawerOpen(false)}
-                sx={{
-                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                  color: 'white',
-                  py: 1.5,
-                  px: 2
-                }}
-              >
-                <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                  <DashboardIcon sx={{ fontSize: '1.2rem' }} />
-                </ListItemIcon>
-                <ListItemText primary="Dashboard" />
-              </ListItem>
-            </Link>
+            <ListItem
+              button
+              onClick={() => {
+                setDrawerOpen(false);
+                router.push('/dashboard');
+              }}
+              sx={{
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                color: 'white',
+                py: 1.5,
+                px: 2
+              }}
+            >
+              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
+                <DashboardIcon sx={{ fontSize: '1.2rem' }} />
+              </ListItemIcon>
+              <ListItemText primary="Dashboard" />
+            </ListItem>
             {/* Uklonili smo "Korisnici" - samo Dashboard ostaje */}
           </List>
         </>
@@ -390,26 +384,24 @@ const Navigation = () => {
         <>
           <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', mt: 2 }} />
           <List sx={{ py: 0 }}>
-            <Link href="#" passHref legacyBehavior>
-              <ListItem
-                button
-                onClick={() => {
-                  handleLogout();
-                  setDrawerOpen(false);
-                }}
-                sx={{
-                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                  color: 'white',
-                  py: 1.5,
-                  px: 2
-                }}
-              >
-                <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                  <LogoutIcon sx={{ fontSize: '1.2rem' }} />
-                </ListItemIcon>
-                <ListItemText primary="Odjavi se" />
-              </ListItem>
-            </Link>
+            <ListItem
+              button
+              onClick={() => {
+                handleLogout();
+                setDrawerOpen(false);
+              }}
+              sx={{
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                color: 'white',
+                py: 1.5,
+                px: 2
+              }}
+            >
+              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
+                <LogoutIcon sx={{ fontSize: '1.2rem' }} />
+              </ListItemIcon>
+              <ListItemText primary="Odjavi se" />
+            </ListItem>
           </List>
         </>
       )}
@@ -419,26 +411,24 @@ const Navigation = () => {
         <>
           <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', mt: 2 }} />
           <List sx={{ py: 0 }}>
-            <Link href="/auth" passHref legacyBehavior>
-              <ListItem
-                button
-                onClick={() => {
-                  router.push('/auth');
-                  setDrawerOpen(false);
-                }}
-                sx={{
-                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                  color: 'white',
-                  py: 1.5,
-                  px: 2
-                }}
-              >
-                <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                  <LoginIcon sx={{ fontSize: '1.2rem' }} />
-                </ListItemIcon>
-                <ListItemText primary="Prijavi se" />
-              </ListItem>
-            </Link>
+            <ListItem
+              button
+              onClick={() => {
+                router.push('/auth');
+                setDrawerOpen(false);
+              }}
+              sx={{
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                color: 'white',
+                py: 1.5,
+                px: 2
+              }}
+            >
+              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
+                <LoginIcon sx={{ fontSize: '1.2rem' }} />
+              </ListItemIcon>
+              <ListItemText primary="Prijavi se" />
+            </ListItem>
           </List>
         </>
       )}
@@ -451,25 +441,26 @@ const Navigation = () => {
     }}>
       <Toolbar>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Link href="/" passHref legacyBehavior>
-            <Box component="a" sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-              <LogoCircle />
-            </Box>
-          </Link>
+          <Box 
+            onClick={() => router.push('/')}
+            sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+          >
+            <LogoCircle />
+          </Box>
           {/* Osnovni meni */}
           <Box sx={{ display: 'flex', gap: 2 }}>
             {menuItems.map((item, index) => {
               const IconComponent = item.icon;
               return (
-                <Link href={item.path} key={item.text || index} passHref legacyBehavior>
-                  <Button
-                    color="inherit"
-                    startIcon={<IconComponent />}
-                    sx={{ padding: '6px 8px', color: 'white' }}
-                  >
-                    {item.text}
-                  </Button>
-                </Link>
+                <Button
+                  key={item.text || index}
+                  color="inherit"
+                  startIcon={<IconComponent />}
+                  onClick={() => router.push(item.path)}
+                  sx={{ padding: '6px 8px', color: 'white' }}
+                >
+                  {item.text}
+                </Button>
               );
             })}
           </Box>
@@ -505,15 +496,14 @@ const Navigation = () => {
               {(user?.role === 'admin' || user?.role === 'super_admin') && (
                 <>
                   <Box sx={{ height: '24px', width: '1px', backgroundColor: 'rgba(255,255,255,0.3)', mx: 1 }} />
-                  <Link href="/dashboard" passHref legacyBehavior>
-                    <Button
-                      color="inherit"
-                      startIcon={<DashboardIcon />}
-                      sx={{ padding: '6px 8px', color: 'white' }}
-                    >
-                      Dashboard
-                    </Button>
-                  </Link>
+                  <Button
+                    color="inherit"
+                    startIcon={<DashboardIcon />}
+                    onClick={() => router.push('/dashboard')}
+                    sx={{ padding: '6px 8px', color: 'white' }}
+                  >
+                    Dashboard
+                  </Button>
                 </>
               )}
               
@@ -552,15 +542,14 @@ const Navigation = () => {
               </Tooltip>
 
               {/* Prijavi se */}
-              <Link href="/auth" passHref legacyBehavior>
-                <Button
-                  color="inherit"
-                  startIcon={<LoginIcon />}
-                  sx={{ padding: '6px 8px', color: 'white' }}
-                >
-                  Prijavi se
-                </Button>
-              </Link>
+              <Button
+                color="inherit"
+                startIcon={<LoginIcon />}
+                onClick={() => router.push('/auth')}
+                sx={{ padding: '6px 8px', color: 'white' }}
+              >
+                Prijavi se
+              </Button>
             </>
           )}
         </Box>
@@ -578,11 +567,12 @@ const Navigation = () => {
               transition: 'transform 0.3s ease-in-out'
             }}>
               <Toolbar sx={{ justifyContent: 'space-between' }}>
-                <Link href="/" passHref legacyBehavior>
-                  <Box component="a" sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                    <LogoCircle />
-                  </Box>
-                </Link>
+                <Box 
+                  onClick={() => router.push('/')}
+                  sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                >
+                  <LogoCircle />
+                </Box>
                 <IconButton
                   color="inherit"
                   aria-label={drawerOpen ? "close menu" : "open drawer"}

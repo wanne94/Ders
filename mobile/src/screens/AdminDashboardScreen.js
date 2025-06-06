@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -26,11 +26,19 @@ const { width, height } = Dimensions.get('window');
 
 // Section Navigation Component (similar to web sidebar)
 const SectionNavigation = ({ activeSection, onSectionChange, stats, userRole }) => {
+  // Create safe string copies for Hermes engine compatibility
+  const safePrimaryColor = `${colors.primary.main}`;
+  const safeInfoColor = `${colors.info.main}`;
+  const safeSuccessColor = `${colors.success.main}`;
+  const safeSecondaryColor = `${colors.secondary.main}`;
+  const safeWarningColor = `${colors.warning.main}`;
+  const safeErrorColor = `${colors.error.main}`;
+
   const mainSections = [
-    { id: 'predavanja', title: 'Dersovi', icon: 'book-outline', color: colors.primary.main },
-    { id: 'organizations', title: 'Udruženja', icon: 'business-outline', color: colors.info.main },
-    { id: 'daije', title: 'Daije', icon: 'person-outline', color: colors.success.main },
-    { id: 'korisnici', title: 'Korisnici', icon: 'people-outline', color: colors.secondary.main }
+    { id: 'predavanja', title: 'Dersovi', icon: 'book-outline', color: safePrimaryColor },
+    { id: 'organizations', title: 'Udruženja', icon: 'business-outline', color: safeInfoColor },
+    { id: 'daije', title: 'Daije', icon: 'person-outline', color: safeSuccessColor },
+    { id: 'korisnici', title: 'Korisnici', icon: 'people-outline', color: safeSecondaryColor }
   ];
 
   const approvalSections = [
@@ -38,53 +46,58 @@ const SectionNavigation = ({ activeSection, onSectionChange, stats, userRole }) 
       id: 'za-odobrenje', 
       title: 'Za odobrenje', 
       icon: 'time-outline', 
-      color: colors.warning.main,
+      color: safeWarningColor,
       badge: stats.totalPending
     },
     ...(userRole === 'super_admin' ? [{
       id: 'odbijeno',
       title: 'Odbijeno',
       icon: 'close-circle-outline',
-      color: colors.error.main
+      color: safeErrorColor
     }] : []),
     {
       id: 'prijedlozi',
       title: 'Prijedlozi',
       icon: 'bulb-outline',
-      color: colors.warning.main,
+      color: safeWarningColor,
       badge: stats.pendingSuggestions
     }
   ];
 
-  const renderSectionButton = (section) => (
-    <TouchableOpacity
-      key={section.id}
-      style={[
-        styles.sectionButton,
-        activeSection === section.id && styles.activeSectionButton
-      ]}
-      onPress={() => onSectionChange(section.id)}
-    >
-      <View style={[styles.sectionIconContainer, { backgroundColor: section.color + '15' }]}>
-        <Ionicons 
-          name={section.icon} 
-          size={20} 
-          color={activeSection === section.id ? colors.text.onPrimary : section.color} 
-        />
-        {section.badge > 0 && (
-          <View style={styles.sectionBadge}>
-            <Text style={styles.sectionBadgeText}>{section.badge}</Text>
-          </View>
-        )}
-      </View>
-      <Text style={[
-        styles.sectionButtonText,
-        activeSection === section.id && styles.activeSectionButtonText
-      ]}>
-        {section.title}
-      </Text>
-    </TouchableOpacity>
-  );
+  const renderSectionButton = (section) => {
+    // Create safe string copy for Hermes engine compatibility
+    const safeSectionColor = `${section.color}`;
+    
+    return (
+      <TouchableOpacity
+        key={section.id}
+        style={[
+          styles.sectionButton,
+          activeSection === section.id && styles.activeSectionButton
+        ]}
+        onPress={() => onSectionChange(section.id)}
+      >
+        <View style={[styles.sectionIconContainer, { backgroundColor: `${safeSectionColor}15` }]}>
+          <Ionicons 
+            name={section.icon} 
+            size={20} 
+            color={activeSection === section.id ? colors.text.onPrimary : section.color} 
+          />
+          {section.badge > 0 && (
+            <View style={styles.sectionBadge}>
+              <Text style={styles.sectionBadgeText}>{section.badge}</Text>
+            </View>
+          )}
+        </View>
+        <Text style={[
+          styles.sectionButtonText,
+          activeSection === section.id && styles.activeSectionButtonText
+        ]}>
+          {section.title}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.sectionNavigation}>
@@ -154,11 +167,17 @@ const ContentList = ({ data, type, onEdit, onDelete, onApprove, onReject, showAp
   };
 
   const getStatusColor = (status) => {
+    // Create safe string copies for Hermes engine compatibility
+    const safeSuccessColor = `${colors.success.main}`;
+    const safeWarningColor = `${colors.warning.main}`;
+    const safeErrorColor = `${colors.error.main}`;
+    const safeTextSecondaryColor = `${colors.text.secondary}`;
+
     switch (status) {
-      case 'approved': return colors.success.main;
-      case 'pending': return colors.warning.main;
-      case 'rejected': return colors.error.main;
-      default: return colors.text.secondary;
+      case 'approved': return safeSuccessColor;
+      case 'pending': return safeWarningColor;
+      case 'rejected': return safeErrorColor;
+      default: return safeTextSecondaryColor;
     }
   };
 
@@ -171,28 +190,33 @@ const ContentList = ({ data, type, onEdit, onDelete, onApprove, onReject, showAp
     }
   };
 
-  const renderItem = ({ item, index }) => (
-    <View style={styles.contentListItem}>
-      <View style={styles.contentItemLeft}>
-        <View style={[styles.contentItemIcon, { backgroundColor: colors.primary.main + '15' }]}>
-          <Ionicons name={getItemIcon(item, type)} size={24} color={colors.primary.main} />
+  const renderItem = ({ item, index }) => {
+    // Create safe string copies for Hermes engine compatibility
+    const safePrimaryColor = `${colors.primary.main}`;
+    const safeStatusColor = item.status ? `${getStatusColor(item.status)}` : '';
+    
+    return (
+      <View style={styles.contentListItem}> 
+        <View style={styles.contentItemLeft}>
+          <View style={[styles.contentItemIcon, { backgroundColor: `${safePrimaryColor}15` }]}>
+            <Ionicons name={getItemIcon(item, type)} size={24} color={colors.primary.main} />
+          </View>
+          <View style={styles.contentItemText}>
+            <Text style={styles.contentItemTitle} numberOfLines={1}>
+              {getItemTitle(item, type)}
+            </Text>
+            <Text style={styles.contentItemSubtitle} numberOfLines={1}>
+              {getItemSubtitle(item, type)}
+            </Text>
+            {item.status && (
+              <View style={[styles.statusChip, { backgroundColor: `${safeStatusColor}15` }]}>
+                <Text style={[styles.statusChipText, { color: getStatusColor(item.status) }]}>
+                  {getStatusText(item.status)}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-        <View style={styles.contentItemText}>
-          <Text style={styles.contentItemTitle} numberOfLines={1}>
-            {getItemTitle(item, type)}
-          </Text>
-          <Text style={styles.contentItemSubtitle} numberOfLines={1}>
-            {getItemSubtitle(item, type)}
-          </Text>
-          {item.status && (
-            <View style={[styles.statusChip, { backgroundColor: getStatusColor(item.status) + '15' }]}>
-              <Text style={[styles.statusChipText, { color: getStatusColor(item.status) }]}>
-                {getStatusText(item.status)}
-              </Text>
-            </View>
-          )}
-        </View>
-      </View>
       
       <View style={styles.contentItemActions}>
         {showApprovalActions && item.status === 'pending' && (
@@ -229,7 +253,8 @@ const ContentList = ({ data, type, onEdit, onDelete, onApprove, onReject, showAp
         )}
       </View>
     </View>
-  );
+    );
+  };
 
   if (data.length === 0) {
     return (
@@ -256,33 +281,39 @@ const ContentList = ({ data, type, onEdit, onDelete, onApprove, onReject, showAp
 };
 
 // Modern Action Card Component
-const ModernActionCard = ({ title, subtitle, icon, color, onPress, badge, disabled = false }) => (
-  <TouchableOpacity 
-    style={[styles.modernActionCard, disabled && styles.disabledCard]} 
-    onPress={disabled ? null : onPress}
-    activeOpacity={disabled ? 1 : 0.7}
-  >
-    <View style={styles.actionCardContent}>
-      <View style={[styles.actionIconContainer, { backgroundColor: color + '15' }]}>
-        <Ionicons name={icon} size={32} color={disabled ? colors.text.disabled : color} />
-        {badge && (
-          <View style={[styles.actionBadge, { backgroundColor: colors.error.main }]}>
-            <Text style={styles.actionBadgeText}>{badge}</Text>
-          </View>
-        )}
+const ModernActionCard = ({ title, subtitle, icon, color, onPress, badge, disabled = false }) => {
+  // Create safe string copies for Hermes engine compatibility
+  const safeColor = `${color}`;
+  const safeErrorColor = `${colors.error.main}`;
+  
+  return (
+    <TouchableOpacity 
+      style={[styles.modernActionCard, disabled && styles.disabledCard]} 
+      onPress={disabled ? null : onPress}
+      activeOpacity={disabled ? 1 : 0.7}
+    >
+      <View style={styles.actionCardContent}>
+        <View style={[styles.actionIconContainer, { backgroundColor: `${safeColor}15` }]}>
+          <Ionicons name={icon} size={32} color={disabled ? colors.text.disabled : color} />
+          {badge && (
+            <View style={[styles.actionBadge, { backgroundColor: safeErrorColor }]}>
+              <Text style={styles.actionBadgeText}>{badge}</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.actionTextContainer}>
+          <Text style={[styles.actionTitle, disabled && { color: colors.text.disabled }]}>{title}</Text>
+          <Text style={[styles.actionSubtitle, disabled && { color: colors.text.disabled }]}>{subtitle}</Text>
+        </View>
+        <Ionicons 
+          name="chevron-forward" 
+          size={20} 
+          color={disabled ? colors.text.disabled : colors.text.secondary} 
+        />
       </View>
-      <View style={styles.actionTextContainer}>
-        <Text style={[styles.actionTitle, disabled && { color: colors.text.disabled }]}>{title}</Text>
-        <Text style={[styles.actionSubtitle, disabled && { color: colors.text.disabled }]}>{subtitle}</Text>
-      </View>
-      <Ionicons 
-        name="chevron-forward" 
-        size={20} 
-        color={disabled ? colors.text.disabled : colors.text.secondary} 
-      />
-    </View>
-  </TouchableOpacity>
-);
+    </TouchableOpacity>
+  );
+};
 
 // Quick Filter Component
 const QuickFilterChip = ({ label, active, onPress, count }) => (
@@ -319,6 +350,9 @@ const SearchBar = ({ value, onChangeText, placeholder, onClear }) => (
 // Settings Modal Component
 const SettingsModal = ({ visible, onClose, approvalSettings, onUpdateSettings }) => {
   const [localSettings, setLocalSettings] = useState(approvalSettings);
+
+  // Create safe string copies for Hermes engine compatibility
+  const safePrimaryColor = `${colors.primary.main}`;
 
   useEffect(() => {
     setLocalSettings(approvalSettings);
@@ -362,7 +396,7 @@ const SettingsModal = ({ visible, onClose, approvalSettings, onUpdateSettings })
               <Switch
                 value={localSettings.lecture}
                 onValueChange={() => toggleSetting('lecture')}
-                trackColor={{ false: colors.background.disabled, true: colors.primary.main + '40' }}
+                trackColor={{ false: colors.background.disabled, true: `${safePrimaryColor}40` }}
                 thumbColor={localSettings.lecture ? colors.primary.main : colors.text.disabled}
               />
             </View>
@@ -375,7 +409,7 @@ const SettingsModal = ({ visible, onClose, approvalSettings, onUpdateSettings })
               <Switch
                 value={localSettings.daija}
                 onValueChange={() => toggleSetting('daija')}
-                trackColor={{ false: colors.background.disabled, true: colors.primary.main + '40' }}
+                trackColor={{ false: colors.background.disabled, true: `${safePrimaryColor}40` }}
                 thumbColor={localSettings.daija ? colors.primary.main : colors.text.disabled}
               />
             </View>
@@ -388,7 +422,7 @@ const SettingsModal = ({ visible, onClose, approvalSettings, onUpdateSettings })
               <Switch
                 value={localSettings.organization}
                 onValueChange={() => toggleSetting('organization')}
-                trackColor={{ false: colors.background.disabled, true: colors.primary.main + '40' }}
+                trackColor={{ false: colors.background.disabled, true: `${safePrimaryColor}40` }}
                 thumbColor={localSettings.organization ? colors.primary.main : colors.text.disabled}
               />
             </View>
@@ -401,34 +435,40 @@ const SettingsModal = ({ visible, onClose, approvalSettings, onUpdateSettings })
 
 // Add Options Modal Component
 const AddOptionsModal = ({ visible, onClose, onSelectOption }) => {
+  // Create safe string copies for Hermes engine compatibility
+  const safePrimaryColor = `${colors.primary.main}`;
+  const safeSuccessColor = `${colors.success.main}`;
+  const safeInfoColor = `${colors.info.main}`;
+  const safeSecondaryColor = `${colors.secondary.main}`;
+
   const addOptions = [
     {
       id: 'lecture',
       title: 'Predavanje',
       subtitle: 'Dodaj novo predavanje',
       icon: 'book-outline',
-      color: colors.primary.main
+      color: safePrimaryColor
     },
     {
       id: 'daija',
       title: 'Daija',
       subtitle: 'Dodaj novi profil daije',
       icon: 'person-outline',
-      color: colors.success.main
+      color: safeSuccessColor
     },
     {
       id: 'organization',
       title: 'Udruženje',
       subtitle: 'Dodaj novo udruženje',
       icon: 'business-outline',
-      color: colors.info.main
+      color: safeInfoColor
     },
     {
       id: 'user',
       title: 'Korisnik',
       subtitle: 'Dodaj novog korisnika',
       icon: 'person-add-outline',
-      color: colors.secondary.main
+      color: safeSecondaryColor
     }
   ];
 
@@ -445,22 +485,27 @@ const AddOptionsModal = ({ visible, onClose, onSelectOption }) => {
         
         <ScrollView style={styles.modalContent}>
           <View style={styles.addOptionsGrid}>
-            {addOptions.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={styles.addOptionCard}
-                onPress={() => {
-                  onSelectOption(option.id);
-                  onClose();
-                }}
-              >
-                <View style={[styles.addOptionIcon, { backgroundColor: option.color + '15' }]}>
-                  <Ionicons name={option.icon} size={32} color={option.color} />
-                </View>
-                <Text style={styles.addOptionTitle}>{option.title}</Text>
-                <Text style={styles.addOptionSubtitle}>{option.subtitle}</Text>
-              </TouchableOpacity>
-            ))}
+            {addOptions.map((option) => {
+              // Create safe string copy for Hermes engine compatibility
+              const safeOptionColor = `${option.color}`;
+              
+              return (
+                <TouchableOpacity
+                  key={option.id}
+                  style={styles.addOptionCard}
+                  onPress={() => {
+                    onSelectOption(option.id);
+                    onClose();
+                  }}
+                >
+                  <View style={[styles.addOptionIcon, { backgroundColor: `${safeOptionColor}15` }]}>
+                    <Ionicons name={option.icon} size={32} color={option.color} />
+                  </View>
+                  <Text style={styles.addOptionTitle}>{option.title}</Text>
+                  <Text style={styles.addOptionSubtitle}>{option.subtitle}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -512,15 +557,21 @@ const ApprovalCard = ({ item, type, onApprove, onReject }) => {
   };
 
   const getItemColor = () => {
+    // Create safe string copies for Hermes engine compatibility
+    const safePrimaryColor = `${colors.primary.main}`;
+    const safeSuccessColor = `${colors.success.main}`;
+    const safeInfoColor = `${colors.info.main}`;
+    const safeTextSecondaryColor = `${colors.text.secondary}`;
+
     switch (type) {
       case 'lecture':
-        return colors.primary.main;
+        return safePrimaryColor;
       case 'daija':
-        return colors.success.main;
+        return safeSuccessColor;
       case 'organization':
-        return colors.info.main;
+        return safeInfoColor;
       default:
-        return colors.text.secondary;
+        return safeTextSecondaryColor;
     }
   };
 
@@ -583,8 +634,10 @@ const ApprovalCard = ({ item, type, onApprove, onReject }) => {
     } else {
       // Fallback to icon only if image loading failed
       console.log('🔄 Using icon fallback for:', type);
+      // Create safe string copy for Hermes engine compatibility
+      const safeItemColor = `${getItemColor()}`;
       return (
-        <View style={[styles.approvalIconContainer, { backgroundColor: getItemColor() + '15' }]}>
+        <View style={[styles.approvalIconContainer, { backgroundColor: `${safeItemColor}15` }]}>
           <Ionicons name={getItemIcon()} size={24} color={getItemColor()} />
         </View>
       );
@@ -1106,6 +1159,14 @@ const AdminDashboardScreen = ({ navigation }) => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.stickyHeader}>
+          <View style={styles.headerTop}>
+            <View style={styles.headerInfo}>
+              <Text style={styles.headerTitle}>Admin Dashboard</Text>
+              <Text style={styles.headerSubtitle}>Učitavam...</Text>
+            </View>
+          </View>
+        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary.main} />
           <Text style={styles.loadingText}>Učitavam admin panel...</Text>
@@ -1116,15 +1177,15 @@ const AdminDashboardScreen = ({ navigation }) => {
 
   const currentContent = getCurrentSectionContent();
 
-  return (
+    return (
     <SafeAreaView style={styles.container}>
-      {/* Enhanced Header */}
-      <View style={styles.enhancedHeader}>
+      {/* TEST - BIG RED HEADER */}
+      <View style={[styles.stickyHeader, { backgroundColor: 'red', height: 100 }]}>
         <View style={styles.headerTop}>
           <View style={styles.headerInfo}>
-            <Text style={styles.headerTitle}>Admin Dashboard</Text>
+            <Text style={[styles.headerTitle, { color: 'white', fontSize: 30 }]}>NOVA VERZIJA!</Text>
             <Text style={styles.headerSubtitle}>
-              Dobrodošli, {user?.firstName} {user?.lastName}
+              TEST - {user?.firstName} {user?.lastName}
             </Text>
           </View>
           <TouchableOpacity 
@@ -1134,103 +1195,171 @@ const AdminDashboardScreen = ({ navigation }) => {
             <Ionicons name="settings-outline" size={24} color={colors.text.onPrimary} />
           </TouchableOpacity>
         </View>
-        
+      </View>
+
+      {/* Scrollable Dashboard Content */}
+      <ScrollView 
+        style={styles.dashboardContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary.main]}
+            tintColor={colors.primary.main}
+          />
+        }
+      >
         {/* Quick Stats Overview */}
-        <View style={styles.quickStatsContainer}>
-          <View style={styles.quickStat}>
-            <Text style={styles.quickStatValue}>{stats.totalContent}</Text>
-            <Text style={styles.quickStatLabel}>Ukupno sadržaja</Text>
-          </View>
-          <View style={styles.quickStat}>
-            <Text style={[styles.quickStatValue, { color: colors.warning.main }]}>{stats.totalPending}</Text>
-            <Text style={styles.quickStatLabel}>Na čekanju</Text>
-          </View>
-          <View style={styles.quickStat}>
-            <Text style={[styles.quickStatValue, { color: colors.success.main }]}>{stats.totalActive}</Text>
-            <Text style={styles.quickStatLabel}>Aktivno</Text>
+        <View style={styles.quickStatsSection}>
+          <View style={styles.quickStatsContainer}>
+            <View style={styles.quickStat}>
+              <Text style={styles.quickStatValue}>{stats.totalContent}</Text>
+              <Text style={styles.quickStatLabel}>Ukupno sadržaja</Text>
+            </View>
+            <View style={styles.quickStat}>
+              <Text style={[styles.quickStatValue, { color: colors.warning.main }]}>{stats.totalPending}</Text>
+              <Text style={styles.quickStatLabel}>Na čekanju</Text>
+            </View>
+            <View style={styles.quickStat}>
+              <Text style={[styles.quickStatValue, { color: colors.success.main }]}>{stats.totalActive}</Text>
+              <Text style={styles.quickStatLabel}>Aktivno</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Section Navigation */}
-      <SectionNavigation
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-        stats={stats}
-        userRole={user?.role}
-      />
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color={colors.text.secondary} style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Pretraži..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor={colors.text.secondary}
+        {/* Section Navigation */}
+        <SectionNavigation
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          stats={stats}
+          userRole={user?.role}
         />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-            <Ionicons name="close-circle" size={20} color={colors.text.secondary} />
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color={colors.text.secondary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Pretraži..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={colors.text.secondary}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+              <Ionicons name="close-circle" size={20} color={colors.text.secondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Quick Add Button */}
+        <View style={styles.quickAddContainer}>
+          <TouchableOpacity
+            style={styles.quickAddButton}
+            onPress={() => setAddModalVisible(true)}
+          >
+            <Ionicons name="add" size={24} color={colors.text.onPrimary} />
+            <Text style={styles.quickAddText}>Dodaj</Text>
           </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Quick Add Button */}
-      <View style={styles.quickAddContainer}>
-        <TouchableOpacity
-          style={styles.quickAddButton}
-          onPress={() => setAddModalVisible(true)}
-        >
-          <Ionicons name="add" size={24} color={colors.text.onPrimary} />
-          <Text style={styles.quickAddText}>Dodaj</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Content Area */}
-      <View style={styles.contentContainer}>
-        <View style={styles.contentHeader}>
-          <Text style={styles.contentTitle}>{currentContent?.title}</Text>
-          <Text style={styles.contentSubtitle}>
-            {currentContent?.data?.length || 0} stavki
-          </Text>
         </View>
-        
-        <ContentList
-          data={currentContent?.data || []}
-          type={currentContent?.type}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          onEdit={isAdmin ? (item) => {
-            // Navigate to edit screen based on type
-            const itemType = item.title ? 'lecture' : item.firstName ? 'daija' : item.name ? 'organization' : 'user';
-            navigateToManagement(itemType === 'lecture' ? 'lectures' : itemType === 'daija' ? 'daije' : itemType === 'organization' ? 'organizations' : 'users', { editItem: item });
-          } : undefined}
-          onDelete={canDelete ? (item) => {
-            Alert.alert(
-              'Potvrdi brisanje',
-              'Da li ste sigurni da želite obrisati ovu stavku?',
-              [
-                { text: 'Otkaži', style: 'cancel' },
-                { text: 'Obriši', style: 'destructive', onPress: () => {
-                  // Handle delete
-                  console.log('Delete item:', item);
-                }}
-              ]
-            );
-          } : undefined}
-          onApprove={currentContent?.showApprovalActions ? (item) => {
-            const itemType = item.title ? 'lecture' : item.firstName ? 'daija' : 'organization';
-            handleApproval(item._id, itemType, 'approve');
-          } : undefined}
-          onReject={currentContent?.showApprovalActions ? (item) => {
-            const itemType = item.title ? 'lecture' : item.firstName ? 'daija' : 'organization';
-            handleApproval(item._id, itemType, 'reject');
-          } : undefined}
-          showApprovalActions={currentContent?.showApprovalActions}
-        />
-      </View>
+
+        {/* Content Section */}
+        <View style={styles.contentSection}>
+          <View style={styles.contentHeader}>
+            <Text style={styles.contentTitle}>{currentContent?.title}</Text>
+            <Text style={styles.contentSubtitle}>
+              {currentContent?.data?.length || 0} stavki
+            </Text>
+          </View>
+          
+          <View style={styles.contentListContainer}>
+            {currentContent?.data?.length === 0 ? (
+              <View style={styles.emptyStateContainer}>
+                <Ionicons name="document-outline" size={48} color={colors.text.secondary} />
+                <Text style={styles.emptyStateTitle}>Nema dostupnih stavki</Text>
+                <Text style={styles.emptyStateSubtitle}>Dodajte novi sadržaj ili promijenite filter</Text>
+              </View>
+            ) : (
+              currentContent?.data?.map((item, index) => {
+                // Create safe string copies for Hermes engine compatibility
+                const safePrimaryColor = `${colors.primary.main}`;
+                const safeSuccessColor = `${colors.success.main}`;
+                const safeWarningColor = `${colors.warning.main}`;
+                const safeErrorColor = `${colors.error.main}`;
+                
+                return (
+                  <View key={item._id || index} style={styles.listItem}>
+                    <View style={styles.listItemContent}>
+                      <View style={styles.listItemLeft}>
+                        <View style={[styles.listItemIcon, { backgroundColor: `${safePrimaryColor}15` }]}>
+                          <Ionicons 
+                            name={item.title ? 'book-outline' : item.firstName ? 'person-outline' : item.name ? 'business-outline' : 'people-outline'} 
+                            size={24} 
+                            color={colors.primary.main} 
+                          />
+                        </View>
+                        <View style={styles.listItemText}>
+                          <Text style={styles.listItemTitle} numberOfLines={1}>
+                            {item.title || `${item.firstName || ''} ${item.lastName || ''}`.trim() || item.name || item.username || 'Nepoznato'}
+                          </Text>
+                          <Text style={styles.listItemSubtitle} numberOfLines={1}>
+                            {item.speaker || item.specialization || item.shortDescription || item.email || ''}
+                          </Text>
+                          {item.status && (
+                            <View style={[styles.statusBadge, { 
+                              backgroundColor: item.status === 'approved' ? `${safeSuccessColor}15` : 
+                                             item.status === 'pending' ? `${safeWarningColor}15` : 
+                                             `${safeErrorColor}15`
+                            }]}>
+                              <Text style={[styles.statusBadgeText, { 
+                                color: item.status === 'approved' ? colors.success.main : 
+                                       item.status === 'pending' ? colors.warning.main : 
+                                       colors.error.main 
+                              }]}>
+                                {item.status === 'approved' ? 'Odobreno' : 
+                                 item.status === 'pending' ? 'Na čekanju' : 'Odbačeno'}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                    
+                    <View style={styles.listItemActions}>
+                      {currentContent?.showApprovalActions && item.status === 'pending' && (
+                        <>
+                          <TouchableOpacity
+                            style={[styles.actionButton, styles.approveButton]}
+                            onPress={() => {
+                              const itemType = item.title ? 'lecture' : item.firstName ? 'daija' : 'organization';
+                              handleApproval(item._id, itemType, 'approve');
+                            }}
+                          >
+                            <Ionicons name="checkmark" size={20} color="white" />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.actionButton, styles.rejectButton]}
+                            onPress={() => {
+                              const itemType = item.title ? 'lecture' : item.firstName ? 'daija' : 'organization';
+                              handleApproval(item._id, itemType, 'reject');
+                            }}
+                          >
+                            <Ionicons name="close" size={20} color="white" />
+                          </TouchableOpacity>
+                        </>
+                      )}
+                      <TouchableOpacity style={styles.moreButton}>
+                        <Ionicons name="ellipsis-vertical" size={20} color={colors.text.secondary} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+                );
+              })
+            )}
+          </View>
+        </View>
+      </ScrollView>
 
       {/* Settings Modal */}
       <SettingsModal
@@ -1253,6 +1382,124 @@ const AdminDashboardScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background.default,
+  },
+  stickyHeader: {
+    backgroundColor: colors.primary.main,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  dashboardContent: {
+    flex: 1,
+  },
+  quickStatsSection: {
+    backgroundColor: colors.primary.main,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  contentListContainer: {
+    paddingHorizontal: 16,
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text.primary,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateSubtitle: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: 'center',
+  },
+  listItem: {
+    backgroundColor: colors.background.paper,
+    borderRadius: 12,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  listItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  listItemLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  listItemIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  listItemText: {
+    flex: 1,
+  },
+  listItemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text.primary,
+    marginBottom: 4,
+  },
+  listItemSubtitle: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    marginBottom: 8,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  listItemActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  approveButton: {
+    backgroundColor: colors.success.main,
+  },
+  rejectButton: {
+    backgroundColor: colors.error.main,
+  },
+  moreButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.background.default,
   },
   scrollView: {
@@ -1302,29 +1549,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  enhancedHeader: {
-    backgroundColor: colors.primary.main,
-    paddingTop: 20,
-    paddingBottom: 24,
-    paddingHorizontal: 20,
-  },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
+    alignItems: 'center',
   },
   headerInfo: {
     flex: 1,
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.text.onPrimary,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.text.onPrimary,
     opacity: 0.9,
   },
@@ -1342,6 +1582,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 12,
     paddingVertical: 16,
+    marginTop: 16,
   },
   quickStat: {
     alignItems: 'center',
@@ -1717,13 +1958,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   // Content Container Styles
-  contentContainer: {
+  contentSection: {
     flex: 1,
     backgroundColor: colors.background.default,
   },
   contentHeader: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
     backgroundColor: colors.background.paper,

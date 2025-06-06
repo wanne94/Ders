@@ -291,18 +291,22 @@ const Dashboard = () => {
   const handleEdit = (item, type) => {
     switch (type) {
       case 'lecture':
+      case 'lectures':
         setLectureToEdit(item);
         setEditLectureDialogOpen(true);
         break;
       case 'daija':
+      case 'daije':
         setDaijaToEdit(item);
         setEditDaijaDialogOpen(true);
         break;
       case 'organization':
+      case 'organizations':
         setOrganizationToEdit(item);
         setEditOrganizationDialogOpen(true);
         break;
       case 'user':
+      case 'users':
         setUserToEdit(item);
         setEditUserDialogOpen(true);
         break;

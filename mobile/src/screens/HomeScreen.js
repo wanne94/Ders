@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    SafeAreaView,
-    TouchableOpacity,
-    Dimensions,
-    RefreshControl,
-    Pressable,
-    Linking
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  TouchableOpacity,
+  Dimensions,
+  RefreshControl, Linking,
+  ActivityIndicator
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -241,6 +240,90 @@ const sortDaijeByLectureProximity = (daije, lectures) => {
     });
 };
 
+// Simplified Hero Section
+const SimplifiedHeroSection = () => (
+  <LinearGradient
+    colors={['#022C43', '#055A87', '#0A7FB8']}
+    style={styles.simplifiedHeroSection}
+  >
+    <View style={styles.heroContent}>
+      <View style={styles.heroIconContainer}>
+        <Ionicons name="book" size={48} color="white" />
+      </View>
+      <Text style={styles.simplifiedHeroTitle}>DERaaaS</Text>
+      <View style={styles.simplifiedDivider} />
+      <Text style={styles.simplifiedHeroSubtitle}>
+        Digitalna platforma za promociju islamskih predavanja
+      </Text>
+    </View>
+  </LinearGradient>
+);
+
+// Simplified Section Header Component
+const SimplifiedSectionHeader = ({ title, onSeeAll, seeAllText = "Prikaži sve" }) => (
+  <View style={styles.simplifiedSectionHeader}>
+    <Text style={styles.simplifiedSectionTitle}>{title}</Text>
+    {onSeeAll && (
+      <TouchableOpacity onPress={onSeeAll} style={styles.seeAllButton}>
+        <Text style={styles.simplifiedSeeAllText}>{seeAllText}</Text>
+        <Ionicons name="chevron-forward" size={16} color={colors.primary.main} />
+      </TouchableOpacity>
+    )}
+  </View>
+);
+
+// Simplified Quick Actions
+const QuickActionsSection = ({ navigation }) => (
+  <View style={styles.simplifiedSection}>
+    <SimplifiedSectionHeader title="Brza navigacija" />
+    <View style={styles.simplifiedQuickActionsContainer}>
+      <TouchableOpacity 
+        style={[styles.enhancedQuickActionButton, { backgroundColor: colors.primary.main }]}
+        onPress={() => navigation.navigate('Lectures')}
+      >
+        <View style={styles.quickActionIconContainer}>
+          <Ionicons name="book" size={28} color="white" />
+        </View>
+        <Text style={styles.enhancedQuickActionText}>Dersovi</Text>
+        <Text style={styles.quickActionSubtext}>Sva predavanja</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity 
+        style={[styles.enhancedQuickActionButton, { backgroundColor: colors.info.main }]}
+        onPress={() => navigation.navigate('Organizations')}
+      >
+        <View style={styles.quickActionIconContainer}>
+          <Ionicons name="business" size={28} color="white" />
+        </View>
+        <Text style={styles.enhancedQuickActionText}>Udruženja</Text>
+        <Text style={styles.quickActionSubtext}>Islamska udruženja</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={[styles.enhancedQuickActionButton, { backgroundColor: colors.success.main }]}
+        onPress={() => navigation.navigate('Daije')}
+      >
+        <View style={styles.quickActionIconContainer}>
+          <Ionicons name="person" size={28} color="white" />
+        </View>
+        <Text style={styles.enhancedQuickActionText}>Daije</Text>
+        <Text style={styles.quickActionSubtext}>Islamski učenjaci</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+);
+
+// Enhanced Loading Component
+const EnhancedLoadingState = () => (
+  <View style={styles.enhancedLoadingContainer}>
+    <View style={styles.loadingContent}>
+      <ActivityIndicator size="large" color={colors.primary.main} />
+      <Text style={styles.enhancedLoadingText}>Učitavam sadržaj...</Text>
+      <Text style={styles.loadingSubtext}>Molimo sačekajte</Text>
+    </View>
+  </View>
+);
+
 export default function HomeScreen({ navigation }) {
   const [allLectures, setAllLectures] = useState([]);
   const [organizations, setOrganizations] = useState([]);
@@ -433,32 +516,23 @@ export default function HomeScreen({ navigation }) {
   const renderOrganizationName = (org) => org?.name || 'Nepoznato udruženje';
 
   const renderSkeletonContent = () => (
-    <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-      {/* Hero Section Skeleton - simplified without LinearGradient */}
-      <View style={[styles.heroSection, { backgroundColor: '#022C43' }]}>
-        <Text style={styles.heroTitle}>DERS</Text>
-        <View style={styles.divider} />
-        <Text style={styles.heroSubtitle}>
-          Digitalna platforma za promociju islamskih predavanja
-        </Text>
-      </View>
-
+    <ScrollView style={styles.enhancedScrollView} showsVerticalScrollIndicator={false}>
       {/* Skeleton Cards */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Dersovi</Text>
+      <View style={styles.simplifiedSection}>
+        <Text style={styles.simplifiedSectionTitle}>Dersovi</Text>
         <HomeCardSkeleton />
         <HomeCardSkeleton />
         <HomeCardSkeleton />
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Udruženja</Text>
+      <View style={styles.simplifiedSection}>
+        <Text style={styles.simplifiedSectionTitle}>Udruženja</Text>
         <HomeCardSkeleton />
         <HomeCardSkeleton />
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Daije</Text>
+      <View style={styles.simplifiedSection}>
+        <Text style={styles.simplifiedSectionTitle}>Daije</Text>
         <HomeCardSkeleton />
         <HomeCardSkeleton />
       </View>
@@ -467,18 +541,44 @@ export default function HomeScreen({ navigation }) {
 
   if (isLoading && showSkeleton) {
     return (
-      <SafeAreaView style={styles.container}>
-        <OfflineBanner isVisible={isOffline} />
+      <View style={styles.enhancedContainer}>
+        <View style={styles.fixedHeader}>
+          <SafeAreaView style={styles.safeAreaHeader}>
+            <OfflineBanner isVisible={isOffline} />
+            {/* Hero Section Skeleton */}
+            <View style={[styles.simplifiedHeroSection, { backgroundColor: '#022C43' }]}>
+              <View style={styles.heroContent}>
+                <View style={styles.heroIconContainer}>
+                  <Ionicons name="book" size={48} color="white" />
+                </View>
+                <Text style={styles.simplifiedHeroTitle}>DERS</Text>
+                <View style={styles.simplifiedDivider} />
+                <Text style={styles.simplifiedHeroSubtitle}>
+                  Digitalna platforma za promocju znanja
+                </Text>
+              </View>
+            </View>
+          </SafeAreaView>
+        </View>
         {renderSkeletonContent()}
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <OfflineBanner isVisible={isOffline} />
+    <View style={styles.enhancedContainer}>
+      {/* Fixed Header with Hero Section */}
+      <View style={styles.fixedHeader}>
+        <SafeAreaView style={styles.safeAreaHeader}>
+          <OfflineBanner isVisible={isOffline} />
+          {/* Simplified Hero Section */}
+          <SimplifiedHeroSection />
+        </SafeAreaView>
+      </View>
+      
+      {/* Scrollable Content */}
       <ScrollView 
-        style={[styles.scrollView, isOffline && { marginTop: 40 }]}
+        style={styles.enhancedScrollView}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -486,365 +586,302 @@ export default function HomeScreen({ navigation }) {
             onRefresh={handleRefresh}
             colors={[colors.primary.main]}
             tintColor={colors.primary.main}
+            progressBackgroundColor={colors.background.paper}
           />
         }
+        contentContainerStyle={styles.scrollViewContent}
       >
         {/* Error Message */}
         {error && !isLoading && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
+          <View style={styles.enhancedErrorContainer}>
+            <Ionicons name="alert-circle" size={48} color={colors.error.main} />
+            <Text style={styles.enhancedErrorText}>{error}</Text>
             {!isOffline && (
-              <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
-                <Text style={styles.retryButtonText}>Pokušaj ponovo</Text>
+              <TouchableOpacity style={styles.enhancedRetryButton} onPress={fetchData}>
+                <Ionicons name="refresh" size={20} color="white" style={{ marginRight: 8 }} />
+                <Text style={styles.enhancedRetryButtonText}>Pokušaj ponovo</Text>
               </TouchableOpacity>
             )}
           </View>
         )}
 
-        {/* Hero Section */}
-        <LinearGradient
-          colors={['#022C43', '#055A87']}
-          style={styles.heroSection}
-        >
-          <Text style={styles.heroTitle}>DERS</Text>
-          <View style={styles.divider} />
-          <Text style={styles.heroSubtitle}>
-            Digitalna platforma za promociju islamskih predavanja
-          </Text>
-        </LinearGradient>
+        {/* Quick Actions Section */}
+        <QuickActionsSection navigation={navigation} />
 
-        {/* Latest Lectures Section (same as web TenLectures) */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Dersovi</Text>
-            <Pressable onPress={() => navigation.navigate('Lectures')} hitSlop={10}>
-              <Text style={styles.seeAllText}>Prikaži sve dersove</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.sectionDescription}>Posljednje najavljeni dersovi</Text>
+        {/* Latest Lectures Section */}
+        <View style={styles.simplifiedSection}>
+          <SimplifiedSectionHeader 
+            title="Najnoviji dersovi"
+            onSeeAll={() => navigation.navigate('Lectures')}
+            seeAllText="Svi dersovi"
+          />
           
           {proximityLectures.length === 0 ? (
-            !isLoading && <NoDataMessage 
-              title="Trenutno nema dostupnih dersova." 
-            />
+            !isLoading && (
+              <View style={styles.enhancedNoDataContainer}>
+                <Ionicons name="book-outline" size={48} color={colors.text.secondary} />
+                <Text style={styles.enhancedNoDataTitle}>Trenutno nema dostupnih dersova</Text>
+                <Text style={styles.enhancedNoDataSubtitle}>Provjerite ponovo kasnije</Text>
+              </View>
+            )
           ) : (
-            proximityLectures.map((lecture) => {
-              // Prepare info rows for the card (same format as web)
-              const infoRows = [
-                {
-                  icon: 'person-outline',
-                  text: lecture.speaker || 'Nepoznato',
-                  highlightSearch: false
-                },
-                {
-                  icon: 'calendar-outline',
-                  text: formatDateWithDay(lecture.date),
-                  highlightSearch: false
-                },
-                lecture.time && {
-                  icon: 'time-outline',
-                  text: lecture.time,
-                  highlightSearch: false
-                },
-                {
-                  icon: 'location-outline',
-                  text: `${(lecture.address || lecture.location || '').trim()}, ${(lecture.city || '').trim()}`.replace(/^, |, $/, ''),
-                  highlightSearch: false
-                }
-              ].filter(Boolean);
+            <View style={styles.cardsContainer}>
+              {proximityLectures.map((lecture) => {
+                const infoRows = [
+                  {
+                    icon: 'person-outline',
+                    text: lecture.speaker || 'Nepoznato',
+                    highlightSearch: false
+                  },
+                  {
+                    icon: 'calendar-outline',
+                    text: formatDateWithDay(lecture.date),
+                    highlightSearch: false
+                  },
+                  lecture.time && {
+                    icon: 'time-outline',
+                    text: lecture.time,
+                    highlightSearch: false
+                  },
+                  {
+                    icon: 'location-outline',
+                    text: `${(lecture.address || lecture.location || '').trim()}, ${(lecture.city || '').trim()}`.replace(/^, |, $/, ''),
+                    highlightSearch: false
+                  }
+                ].filter(Boolean);
 
-              return (
-                <UniversalCard
-                  key={lecture._id}
-                  title={lecture.title}
-                  infoRows={infoRows}
-                  rightContentType="image"
-                  imageUrl={lecture.image}
-                  onPress={() => handleLecturePress(lecture)}
-                  titleStyle={{ textTransform: 'uppercase' }}
-                  serverUrl={SERVER_URL}
-                  defaultImagePath="/uploads/images/predavanjeslika.jpg"
-                />
-              );
-            })
+                return (
+                  <UniversalCard
+                    key={lecture._id}
+                    title={lecture.title}
+                    infoRows={infoRows}
+                    rightContentType="image"
+                    imageUrl={lecture.image}
+                    onPress={() => handleLecturePress(lecture)}
+                    titleStyle={{ textTransform: 'uppercase' }}
+                    serverUrl={SERVER_URL}
+                    defaultImagePath="/uploads/images/predavanjeslika.jpg"
+                    cardStyle={styles.enhancedCard}
+                  />
+                );
+              })}
+            </View>
           )}
         </View>
 
-        {/* Benefits Section */}
+        {/* Enhanced Benefits Section */}
         <LinearGradient
-          colors={['#022C43', '#055A87']}
-          style={styles.benefitsSection}
+          colors={['#022C43', '#055A87', '#0A7FB8']}
+          style={styles.enhancedBenefitsSection}
         >
-          <Text style={styles.benefitsSectionTitle}>Zašto se registrovati?</Text>
-          <Text style={styles.benefitsSectionSubtitle}>
-            Registracija vam omogućava pristup ekskluzivnim funkcijama koje će poboljšati vaše iskustvo na našoj platformi
-          </Text>
-          
-          <View style={styles.benefitsContainer}>
-            <View style={styles.benefitItem}>
-              <Ionicons name="checkmark-circle" size={24} color="white" />
-              <View style={styles.benefitTextContainer}>
-                <Text style={styles.benefitTitle}>Dodavanje sadržaja</Text>
-                <Text style={styles.benefitDescription}>
-                  Registrirani korisnici mogu objavljivati nova predavanja, kao i predlagati daije i udruženja za dodavanje na platformu.
-                </Text>
-              </View>
-            </View>
-            
-            <View style={styles.benefitItem}>
-              <Ionicons name="star" size={24} color="white" />
-              <View style={styles.benefitTextContainer}>
-                <Text style={styles.benefitTitle}>Doprinos znanju i sticanje sevapa</Text>
-                <Text style={styles.benefitDescription}>
-                  Svako korisno predavanje koje podijeliš može nekome koristiti – a za to ti se piše nagrada kod Allaha.
-                </Text>
-              </View>
-            </View>
-            
-            <View style={styles.benefitItem}>
-              <Ionicons name="notifications" size={24} color="white" />
-              <View style={styles.benefitTextContainer}>
-                <Text style={styles.benefitTitle}>Primanje notifikacija (uskoro, inšallah)</Text>
-                <Text style={styles.benefitDescription}>
-                  Dobijaš obavijesti kada se organizuju nova predavanja, novosti i slično.
-                </Text>
-              </View>
-            </View>
-            
-            <View style={styles.benefitItem}>
-              <Ionicons name="person-add" size={24} color="white" />
-              <View style={styles.benefitTextContainer}>
-                <Text style={styles.benefitTitle}>Praćenje daija i udruženja (uskoro, inšallah)</Text>
-                <Text style={styles.benefitDescription}>
-                  Moći ćeš zapratiti daije i udruženja, te primati notifikacije kada oni budu organizovali nova predavanja.
-                </Text>
-              </View>
-            </View>
-            
-            <View style={styles.benefitItem}>
-              <Ionicons name="bookmark" size={24} color="white" />
-              <View style={styles.benefitTextContainer}>
-                <Text style={styles.benefitTitle}>Predlaganje izmjena postojećih informacija</Text>
-                <Text style={styles.benefitDescription}>
-                  Ako primijetiš netačne ili zastarjele podatke, možeš predložiti izmjene koje će biti pregledane od strane admin tima.
-                </Text>
-              </View>
-            </View>
-            
-            <View style={styles.benefitItem}>
-              <Ionicons name="calendar" size={24} color="white" />
-              <View style={styles.benefitTextContainer}>
-                <Text style={styles.benefitTitle}>Mogućnost da postaneš dio admin tima</Text>
-                <Text style={styles.benefitDescription}>
-                  Registracijom imaš priliku da, kada se ukaže potreba, postaneš dio tima koji aktivno uređuje i razvija platformu.
-                </Text>
-              </View>
-            </View>
+          <View style={styles.benefitsHeader}>
+            <Ionicons name="star" size={32} color="white" />
+            <Text style={styles.enhancedBenefitsSectionTitle}>Zašto se registrovati?</Text>
+            <Text style={styles.enhancedBenefitsSectionSubtitle}>
+              Registracija vam omogućava pristup ekskluzivnim funkcijama
+            </Text>
           </View>
           
-          <View style={styles.benefitsButtonsContainer}>
+          <View style={styles.enhancedBenefitsContainer}>
+            {[
+              {
+                icon: "add-circle",
+                title: "Dodavanje sadržaja",
+                description: "Objavljivanje novih predavanja i predlaganje daija i udruženja"
+              },
+              {
+                icon: "heart",
+                title: "Doprinos znanju",
+                description: "Svako korisno predavanje koje podijeliš može nekome koristiti"
+              },
+              {
+                icon: "notifications",
+                title: "Notifikacije",
+                description: "Obavijesti o novim predavanjima i događajima (uskoro)"
+              },
+              {
+                icon: "people",
+                title: "Praćenje",
+                description: "Praćenje omiljenih daija i udruženja (uskoro)"
+              }
+            ].map((benefit, index) => (
+              <View key={index} style={styles.enhancedBenefitItem}>
+                <View style={styles.benefitIconContainer}>
+                  <Ionicons name={benefit.icon} size={24} color="white" />
+                </View>
+                <View style={styles.enhancedBenefitTextContainer}>
+                  <Text style={styles.enhancedBenefitTitle}>{benefit.title}</Text>
+                  <Text style={styles.enhancedBenefitDescription}>{benefit.description}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+          
+          <View style={styles.enhancedBenefitsButtonsContainer}>
             <TouchableOpacity 
-              style={styles.registerButton}
+              style={styles.enhancedRegisterButton}
               onPress={() => navigation.navigate('Auth', { initialTab: 'register' })}
             >
-              <Text style={styles.registerButtonText}>Registrujte se</Text>
+              <Ionicons name="person-add" size={20} color="white" style={{ marginRight: 8 }} />
+              <Text style={styles.enhancedRegisterButtonText}>Registrujte se</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.loginButton}
+              style={styles.enhancedLoginButton}
               onPress={() => navigation.navigate('Auth', { initialTab: 'login' })}
             >
-              <Text style={styles.loginButtonText}>Prijavite se</Text>
+              <Ionicons name="log-in" size={20} color="white" style={{ marginRight: 8 }} />
+              <Text style={styles.enhancedLoginButtonText}>Prijavite se</Text>
             </TouchableOpacity>
           </View>
         </LinearGradient>
 
-        {/* Active Daije Section (same as web ActiveDaije) */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Daije</Text>
-            <Pressable onPress={() => navigation.navigate('Daije')} hitSlop={10}>
-              <Text style={styles.seeAllText}>Prikaži sve daije</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.sectionDescription}>Daije sa nedavno najvljenim dersom</Text>
+        {/* Active Daije Section */}
+        <View style={styles.simplifiedSection}>
+          <SimplifiedSectionHeader 
+            title="Aktivni daije"
+            onSeeAll={() => navigation.navigate('Daije')}
+            seeAllText="Svi daije"
+          />
           
           {displayDaije.length === 0 ? (
-            !isLoading && <NoDataMessage title="Trenutno nema dostupnih daija." />
+            !isLoading && (
+              <View style={styles.enhancedNoDataContainer}>
+                <Ionicons name="person-outline" size={48} color={colors.text.secondary} />
+                <Text style={styles.enhancedNoDataTitle}>Trenutno nema dostupnih daija</Text>
+                <Text style={styles.enhancedNoDataSubtitle}>Provjerite ponovo kasnije</Text>
+              </View>
+            )
           ) : (
-            displayDaije.map((daija) => {
-              const fullName = formatDaijaName(daija);
-              const infoRows = [
-                daija.specialization && {
-                  icon: 'school-outline',
-                  text: daija.specialization,
-                  highlightSearch: false
-                },
-                daija.city && {
-                  icon: 'location-outline',
-                  text: daija.city,
-                  highlightSearch: false
-                },
-                {
-                  icon: 'book-outline',
-                  text: `${daija.lectureCount} predavanja`,
-                  highlightSearch: false
-                }
-              ].filter(Boolean);
+            <View style={styles.cardsContainer}>
+              {displayDaije.map((daija) => {
+                const fullName = formatDaijaName(daija);
+                const infoRows = [
+                  daija.specialization && {
+                    icon: 'school-outline',
+                    text: daija.specialization,
+                    highlightSearch: false
+                  },
+                  daija.city && {
+                    icon: 'location-outline',
+                    text: daija.city,
+                    highlightSearch: false
+                  },
+                  {
+                    icon: 'book-outline',
+                    text: `${daija.lectureCount} predavanja`,
+                    highlightSearch: false
+                  }
+                ].filter(Boolean);
 
-              return (
-                <UniversalCard
-                  key={daija._id}
-                  title={fullName}
-                  infoRows={infoRows}
-                  rightContentType="image"
-                  imageUrl={daija.image}
-                  onPress={() => handleDaijaPress(daija)}
-                  serverUrl={SERVER_URL}
-                  defaultImagePath="/uploads/images/daijaslika.jpg"
-                />
-              );
-            })
+                return (
+                  <UniversalCard
+                    key={daija._id}
+                    title={fullName}
+                    infoRows={infoRows}
+                    rightContentType="image"
+                    imageUrl={daija.image}
+                    onPress={() => handleDaijaPress(daija)}
+                    serverUrl={SERVER_URL}
+                    defaultImagePath="/uploads/images/daijaslika.jpg"
+                    cardStyle={styles.enhancedCard}
+                  />
+                );
+              })}
+            </View>
           )}
         </View>
 
         {/* Social Media Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pratite nas na društvenim mrežama</Text>
-          <Text style={styles.sectionDescription}>
-            Budi u toku s najnovijim predavanjima, događajima i korisnim sadržajem.
-          </Text>
+        <View style={styles.simplifiedSection}>
+          <SimplifiedSectionHeader title="Pratite nas" />
           
-          <View style={styles.socialMediaContainer}>
+          <View style={styles.enhancedSocialMediaContainer}>
             <TouchableOpacity 
-              style={[styles.socialMediaButton, styles.facebookButton]}
-              onPress={() => {
-                // Open Facebook link
-                const url = 'https://www.facebook.com/profile.php?id=61561889404089';
-                Linking.openURL(url);
-              }}
+              style={[styles.enhancedSocialMediaButton, styles.enhancedFacebookButton]}
+              onPress={() => Linking.openURL('https://www.facebook.com/profile.php?id=61561889404089')}
             >
-              <Ionicons name="logo-facebook" size={32} color="white" />
-              <Text style={styles.socialMediaText}>Facebook</Text>
-              <Text style={styles.socialMediaSubtext}>Zaprati nas na Facebooku</Text>
+              <Ionicons name="logo-facebook" size={28} color="white" />
+              <View style={styles.socialMediaTextContainer}>
+                <Text style={styles.enhancedSocialMediaText}>Facebook</Text>
+                <Text style={styles.enhancedSocialMediaSubtext}>Zapratite nas</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.7)" />
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.socialMediaButton, styles.instagramButton]}
-              onPress={() => {
-                // Open Instagram link
-                const url = 'https://www.instagram.com/ders_ba/';
-                Linking.openURL(url);
-              }}
+              style={[styles.enhancedSocialMediaButton, styles.enhancedInstagramButton]}
+              onPress={() => Linking.openURL('https://www.instagram.com/ders_ba/')}
             >
-              <Ionicons name="logo-instagram" size={32} color="white" />
-              <Text style={styles.socialMediaText}>Instagram</Text>
-              <Text style={styles.socialMediaSubtext}>Zaprati nas na Instagramu</Text>
+              <Ionicons name="logo-instagram" size={28} color="white" />
+              <View style={styles.socialMediaTextContainer}>
+                <Text style={styles.enhancedSocialMediaText}>Instagram</Text>
+                <Text style={styles.enhancedSocialMediaSubtext}>Zapratite nas</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.7)" />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Active Organizations Section (same as web ActiveOrganizations) */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Udruženja</Text>
-            <Pressable onPress={() => navigation.navigate('Organizations')} hitSlop={10}>
-              <Text style={styles.seeAllText}>Prikaži sva udruženja</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.sectionDescription}>Udruženja sa nedavno najvljenim dersom</Text>
+        {/* Active Organizations Section */}
+        <View style={styles.simplifiedSection}>
+          <SimplifiedSectionHeader 
+            title="Aktivna udruženja"
+            onSeeAll={() => navigation.navigate('Organizations')}
+            seeAllText="Sva udruženja"
+          />
           
           {displayOrganizations.length === 0 ? (
-            !isLoading && <NoDataMessage title="Trenutno nema dostupnih udruženja." />
+            !isLoading && (
+              <View style={styles.enhancedNoDataContainer}>
+                <Ionicons name="business-outline" size={48} color={colors.text.secondary} />
+                <Text style={styles.enhancedNoDataTitle}>Trenutno nema dostupnih udruženja</Text>
+                <Text style={styles.enhancedNoDataSubtitle}>Provjerite ponovo kasnije</Text>
+              </View>
+            )
           ) : (
-            displayOrganizations.map((org) => {
-              const infoRows = [
-                org.shortDescription && {
-                  icon: 'document-text-outline',
-                  text: org.shortDescription,
-                  highlightSearch: false,
-                  numberOfLines: 2
-                },
-                org.city && {
-                  icon: 'location-outline',
-                  text: org.city,
-                  highlightSearch: false
-                },
-                {
-                  icon: 'book-outline',
-                  text: `${org.lectureCount} predavanja`,
-                  highlightSearch: false
-                }
-              ].filter(Boolean);
+            <View style={styles.cardsContainer}>
+              {displayOrganizations.map((org) => {
+                const infoRows = [
+                  org.shortDescription && {
+                    icon: 'document-text-outline',
+                    text: org.shortDescription,
+                    highlightSearch: false,
+                    numberOfLines: 2
+                  },
+                  org.city && {
+                    icon: 'location-outline',
+                    text: org.city,
+                    highlightSearch: false
+                  },
+                  {
+                    icon: 'book-outline',
+                    text: `${org.lectureCount} predavanja`,
+                    highlightSearch: false
+                  }
+                ].filter(Boolean);
 
-              return (
-                <UniversalCard
-                  key={org._id}
-                  title={renderOrganizationName(org)}
-                  infoRows={infoRows}
-                  rightContentType="image"
-                  imageUrl={org.image}
-                  onPress={() => handleOrganizationPress(org)}
-                  serverUrl={SERVER_URL}
-                  defaultImagePath="/uploads/images/udruzenjeslika.jpg"
-                />
-              );
-            })
+                return (
+                  <UniversalCard
+                    key={org._id}
+                    title={renderOrganizationName(org)}
+                    infoRows={infoRows}
+                    rightContentType="image"
+                    imageUrl={org.image}
+                    onPress={() => handleOrganizationPress(org)}
+                    serverUrl={SERVER_URL}
+                    defaultImagePath="/uploads/images/udruzenjeslika.jpg"
+                    cardStyle={styles.enhancedCard}
+                  />
+                );
+              })}
+            </View>
           )}
         </View>
 
-        {/* Quick Actions (same as web QuickActions) */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Navigacija</Text>
-          <View style={styles.quickActionsContainer}>
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => navigation.navigate('Lectures')}
-            >
-              <Ionicons name="book" size={32} color="#fff" />
-              <Text style={styles.quickActionText}>Dersovi</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => navigation.navigate('Organizations')}
-            >
-              <Ionicons name="business" size={32} color="#fff" />
-              <Text style={styles.quickActionText}>Udruženja</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => navigation.navigate('Daije')}
-            >
-              <Ionicons name="person" size={32} color="#fff" />
-              <Text style={styles.quickActionText}>Daije</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Statistics (same as web Statistic) */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Statistika</Text>
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Ionicons name="book-outline" size={24} color="#022C43" />
-              <Text style={styles.statNumber}>{allLectures?.filter(lecture => lecture.status === 'approved').length || 0}</Text>
-              <Text style={styles.statLabel}>Broj predavanja</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Ionicons name="business-outline" size={24} color="#022C43" />
-              <Text style={styles.statNumber}>{organizations?.length || 0}</Text>
-              <Text style={styles.statLabel}>Broj udruženja</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Ionicons name="people-outline" size={24} color="#022C43" />
-              <Text style={styles.statNumber}>{daije?.filter(daija => daija.status === 'approved').length || 0}</Text>
-              <Text style={styles.statLabel}>Broj daija</Text>
-            </View>
-          </View>
-        </View>
+        {/* Footer spacing */}
+        <View style={styles.footerSpacing} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -866,6 +903,50 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 20,
+  },
+  // Enhanced Styles
+  enhancedContainer: {
+    flex: 1,
+    backgroundColor: colors.background.default,
+  },
+  fixedHeader: {
+    backgroundColor: 'transparent',
+    zIndex: 1000,
+  },
+  safeAreaHeader: {
+    backgroundColor: 'transparent',
+  },
+  enhancedScrollView: {
+    flex: 1,
+    backgroundColor: colors.background.default,
+  },
+  enhancedLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background.default,
+    padding: 32,
+  },
+  loadingContent: {
+    alignItems: 'center',
+  },
+  enhancedLoadingText: {
+    marginTop: 16,
+    fontSize: 18,
+    color: colors.text.primary,
+    fontWeight: '600',
+  },
+  loadingSubtext: {
+    marginTop: 8,
+    fontSize: 14,
+    color: colors.text.secondary,
+  },
+  simplifiedSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   heroSection: {
     padding: 30,
@@ -1129,5 +1210,293 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     marginBottom: 15,
+  },
+  // Enhanced Styles
+  enhancedContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  enhancedScrollView: {
+    flex: 1,
+  },
+  enhancedErrorContainer: {
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    margin: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  enhancedErrorText: {
+    fontSize: 16,
+    color: 'red',
+    marginBottom: 20,
+  },
+  enhancedRetryButton: {
+    backgroundColor: '#022C43',
+    borderRadius: 12,
+    padding: 15,
+    alignItems: 'center',
+  },
+  enhancedRetryButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  enhancedNoDataContainer: {
+    padding: 32,
+    backgroundColor: colors.background.paper,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginVertical: 16,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    borderStyle: 'dashed',
+  },
+  enhancedNoDataTitle: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  enhancedNoDataSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  cardsContainer: {
+    gap: 8,
+  },
+  enhancedCard: {
+    marginHorizontal: 0,
+    marginBottom: 12,
+    borderRadius: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  simplifiedHeroSection: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 180,
+  },
+  heroContent: {
+    alignItems: 'center',
+  },
+  heroIconContainer: {
+    marginBottom: 15,
+  },
+  simplifiedHeroTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  simplifiedDivider: {
+    width: 60,
+    height: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: 12,
+  },
+  simplifiedHeroSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+
+  simplifiedSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  simplifiedSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text.primary,
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  simplifiedSeeAllText: {
+    fontSize: 14,
+    color: colors.primary.main,
+    fontWeight: '600',
+  },
+  simplifiedQuickActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    gap: 12,
+  },
+  enhancedQuickActionButton: {
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    flex: 1,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    minHeight: 120,
+    justifyContent: 'center',
+  },
+  quickActionIconContainer: {
+    marginRight: 8,
+  },
+  enhancedQuickActionText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  quickActionSubtext: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  enhancedBenefitsSection: {
+    margin: 20,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+  },
+  benefitsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  enhancedBenefitsSectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    marginRight: 10,
+  },
+  enhancedBenefitsSectionSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 20,
+  },
+  enhancedBenefitsContainer: {
+    marginBottom: 20,
+  },
+  enhancedBenefitItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  benefitIconContainer: {
+    marginRight: 12,
+  },
+  enhancedBenefitTextContainer: {
+    flex: 1,
+  },
+  enhancedBenefitTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 4,
+  },
+  enhancedBenefitDescription: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    lineHeight: 20,
+  },
+  enhancedBenefitsButtonsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  enhancedRegisterButton: {
+    backgroundColor: '#dc004e',
+    borderRadius: 12,
+    padding: 15,
+    flex: 1,
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#dc004e',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  enhancedLoginButton: {
+    borderWidth: 2,
+    borderColor: 'white',
+    borderRadius: 12,
+    padding: 15,
+    flex: 1,
+    alignItems: 'center',
+  },
+  enhancedRegisterButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  enhancedLoginButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  enhancedSocialMediaContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 15,
+  },
+  enhancedSocialMediaButton: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    minHeight: 80,
+  },
+  enhancedFacebookButton: {
+    backgroundColor: '#1877F2',
+  },
+  enhancedInstagramButton: {
+    background: 'linear-gradient(45deg, #F56040, #E1306C, #C13584, #833AB4, #5851DB)',
+    backgroundColor: '#E1306C', // Fallback for React Native
+  },
+  socialMediaTextContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  enhancedSocialMediaText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  enhancedSocialMediaSubtext: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'center',
+    color: '#666',
+    marginBottom: 15,
+  },
+  footerSpacing: {
+    height: 20,
   },
 }); 

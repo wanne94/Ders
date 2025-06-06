@@ -2,13 +2,22 @@ import 'react-native-gesture-handler';
 import React, { useRef, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { TouchableOpacity, View, StyleSheet, Text, Image, StatusBar as RNStatusBar, Platform } from 'react-native';
-import { NavigationContainer, CommonActions } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { Provider as PaperProvider, MD3LightTheme } from 'react-native-paper';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from './src/config/theme';
+import { paperTheme } from './src/config/theme';
+
+// Test Hermes engine detection
+console.log('Hermes enabled?', !!global.HermesInternal);
+
+// Enable Fast Refresh for this component
+if (__DEV__) {
+  require('react-native').unstable_enableLogBox();
+}
 
 // Import screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -34,25 +43,6 @@ import OrganizationForm from './src/components/OrganizationForm';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
-
-// Create custom theme for React Native Paper
-const paperTheme = {
-  ...MD3LightTheme,
-  colors: {
-    ...MD3LightTheme.colors,
-    primary: colors.primary.main,
-    primaryContainer: colors.primary.light,
-    secondary: colors.secondary.main,
-    secondaryContainer: colors.secondary.light,
-    surface: colors.background.paper,
-    background: colors.background.default,
-    error: colors.error.main,
-    onPrimary: colors.text.onPrimary,
-    onSecondary: colors.text.onSecondary,
-    onSurface: colors.text.primary,
-    onBackground: colors.text.primary,
-  },
-};
 
 // Logo Component
 function LogoComponent() {
@@ -834,7 +824,9 @@ export default function App() {
     <AuthProvider>
       <ToastProvider>
         <PaperProvider theme={paperTheme}>
-          <AppContent />
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <AppContent />
+          </GestureHandlerRootView>
         </PaperProvider>
       </ToastProvider>
     </AuthProvider>
@@ -929,4 +921,4 @@ function AdminStack() {
       />
     </Stack.Navigator>
   );
-}
+} 

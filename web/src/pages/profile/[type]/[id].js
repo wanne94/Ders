@@ -763,7 +763,7 @@ const UnifiedProfile = () => {
           </Box>
         ) : (
           // Enhanced Profile Section for Organizations and Lectures
-          <Box sx={{ mb: 4 }}>
+          (<Box sx={{ mb: 4 }}>
             {/* Hero Section */}
             <Paper 
               elevation={0}
@@ -951,7 +951,6 @@ const UnifiedProfile = () => {
                 </Grid>
               </Container>
             </Paper>
-
             {/* Detailed Information Cards */}
             <Grid container spacing={4}>
               {/* Organization Information */}
@@ -1160,7 +1159,7 @@ const UnifiedProfile = () => {
                 </Grid>
               )}
             </Grid>
-          </Box>
+          </Box>)
 
         )}
 
@@ -1206,7 +1205,6 @@ const UnifiedProfile = () => {
           </Alert>
         )}
       </Container>
-
       {/* Add CSS animations */}
       <style jsx global>{`
         @keyframes pulse {

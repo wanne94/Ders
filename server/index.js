@@ -676,7 +676,7 @@ app.get('/api/daije/public', async (req, res) => {
     const isAdminRequest = req.headers.authorization; // Check if authenticated
     const query = isAdminRequest ? {} : { status: 'approved' };
     
-    const daije = await Daija.find(query).sort({ firstName: 1 });
+    const daije = await Daija.find(query).sort({ name: 1 });
     
     logger.info(`Found ${daije.length} daije for dashboard (admin: ${!!isAdminRequest})`);
     res.json(daije);
@@ -1473,7 +1473,7 @@ app.get('/api/daije/with-active-lectures', async (req, res) => {
     logger.info('Fetching daije with active lectures');
     
     // Get all daije
-    const daije = await Daija.find().sort({ firstName: 1 });
+    const daije = await Daija.find().sort({ name: 1 });
     
     // For each daija, get their active lectures
     const daijeWithLectures = await Promise.all(
@@ -1508,7 +1508,15 @@ app.get('/api/daije', async (req, res) => {
     logger.info('Fetching all daije');
     const daije = await Daija.find({ status: 'approved' }).sort({ name: 1 });
     logger.info(`Found ${daije.length} approved daije`);
-    res.json(daije);
+    
+    // Transform data to include firstName for frontend compatibility
+    const transformedDaije = daije.map(daija => ({
+      ...daija.toObject(),
+      firstName: daija.name, // Map name to firstName for frontend compatibility
+      lastName: '', // Add empty lastName for compatibility
+    }));
+    
+    res.json(transformedDaije);
   } catch (error) {
     logger.error('Error fetching daije:', error);
     res.status(500).json({ message: 'Greška pri dohvaćanju daija' });
@@ -3043,9 +3051,17 @@ app.get('/api/debug/on-je-allah', async (req, res) => {
 app.get('/api/admin/daije', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
   try {
     logger.info('Admin fetching all daije (including pending/rejected)');
-    const daije = await Daija.find().sort({ firstName: 1 });
+    const daije = await Daija.find().sort({ name: 1 });
     logger.info(`Found ${daije.length} daije for admin`);
-    res.json(daije);
+    
+    // Transform data to include firstName for frontend compatibility
+    const transformedDaije = daije.map(daija => ({
+      ...daija.toObject(),
+      firstName: daija.name, // Map name to firstName for frontend compatibility
+      lastName: '', // Add empty lastName for compatibility
+    }));
+    
+    res.json(transformedDaije);
   } catch (error) {
     logger.error('Error fetching all daije for admin:', error);
     res.status(500).json({ message: 'Greška pri dohvaćanju daija' });
@@ -3113,9 +3129,17 @@ app.get('/api/admin/lectures/organization/:organizationId', authenticateToken, i
 app.get('/api/admin/daije/all', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
   try {
     logger.info('Admin fetching all daije for mobile dashboard (including pending/rejected)');
-    const daije = await Daija.find().sort({ firstName: 1 });
+    const daije = await Daija.find().sort({ name: 1 });
     logger.info(`Found ${daije.length} daije for admin mobile dashboard`);
-    res.json(daije);
+    
+    // Transform data to include firstName for frontend compatibility
+    const transformedDaije = daije.map(daija => ({
+      ...daija.toObject(),
+      firstName: daija.name, // Map name to firstName for frontend compatibility
+      lastName: '', // Add empty lastName for compatibility
+    }));
+    
+    res.json(transformedDaije);
   } catch (error) {
     logger.error('Error fetching all daije for admin mobile dashboard:', error);
     res.status(500).json({ message: 'Greška pri dohvaćanju daija' });
@@ -3154,5 +3178,174 @@ app.get('/api/admin/lectures/all', authenticateToken, isAdminOrSuperAdmin, async
   } catch (error) {
     logger.error('Error fetching all lectures for admin mobile dashboard:', error);
     res.status(500).json({ message: error.message });
+  }
+});
+
+// Update user endpoint - protected for admin access
+app.put('/api/users/:id', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const { username, email, password, role } = req.body;
+    const userId = req.params.id;
+    
+    logger.info('Updating user via admin dashboard:', {
+      userId,
+      username,
+      email,
+      role,
+      requestedBy: req.user.username
+    });
+
+    // Find existing user
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ message: 'Korisnik nije pronađen' });
+    }
+
+    // Validation
+    const errors = [];
+    
+    if (!username || !username.trim()) {
+      errors.push('Korisničko ime je obavezno');
+    } else if (username.trim().length < 2) {
+      errors.push('Korisničko ime mora imati najmanje 2 karaktera');
+    } else if (!/^[a-zA-Z0-9_]+$/.test(username.trim())) {
+      errors.push('Korisničko ime može sadržavati samo slova, brojeve i podvlaku');
+    }
+
+    if (!email || !email.trim()) {
+      errors.push('Email je obavezan');
+    } else if (!/\S+@\S+\.\S+/.test(email.trim())) {
+      errors.push('Email format nije ispravan');
+    }
+
+    // Password is optional for updates
+    if (password && password.length < 6) {
+      errors.push('Lozinka mora imati najmanje 6 karaktera');
+    }
+
+    const validRoles = ['user', 'admin', 'super_admin'];
+    if (role && !validRoles.includes(role)) {
+      errors.push('Nevaljan tip korisnika');
+    }
+
+    // Only super_admin can update admin or super_admin users
+    if ((role === 'admin' || role === 'super_admin') && req.user.role !== 'super_admin') {
+      errors.push('Nemate dozvolu za ažuriranje admin korisnika');
+    }
+
+    // Prevent non-super_admin from updating super_admin users
+    if (existingUser.role === 'super_admin' && req.user.role !== 'super_admin') {
+      errors.push('Nemate dozvolu za ažuriranje super admin korisnika');
+    }
+
+    if (errors.length > 0) {
+      return res.status(400).json({ message: errors[0] });
+    }
+
+    // Check if username or email already exists (excluding current user)
+    const duplicateUser = await User.findOne({
+      _id: { $ne: userId },
+      $or: [
+        { email: email.trim().toLowerCase() },
+        { username: username.trim() }
+      ]
+    });
+
+    if (duplicateUser) {
+      return res.status(400).json({ 
+        message: 'Korisnik sa ovim emailom ili korisničkim imenom već postoji' 
+      });
+    }
+
+    // Prepare update data
+    const updateData = {
+      username: username.trim(),
+      email: email.trim().toLowerCase(),
+      role: role || existingUser.role
+    };
+
+    // Hash new password if provided
+    if (password && password.trim()) {
+      const bcrypt = require('bcryptjs');
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    // Remove sensitive data from response
+    const userResponse = updatedUser.toObject();
+    delete userResponse.password;
+    delete userResponse.securityAnswer;
+
+    logger.info('User updated successfully via admin dashboard:', {
+      id: updatedUser._id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      role: updatedUser.role
+    });
+
+    res.json(userResponse);
+  } catch (error) {
+    logger.error('Error updating user via admin dashboard:', error);
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'Nevaljan ID korisnika' });
+    }
+    if (error.code === 11000) {
+      res.status(400).json({ 
+        message: 'Korisnik sa ovim emailom ili korisničkim imenom već postoji' 
+      });
+    } else {
+      res.status(500).json({ message: 'Greška pri ažuriranju korisnika' });
+    }
+  }
+});
+
+// Delete user endpoint - protected for super admin access only
+app.delete('/api/users/:id', authenticateToken, isSuperAdmin, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    logger.info('Deleting user via admin dashboard:', {
+      userId,
+      requestedBy: req.user.username
+    });
+
+    // Find existing user
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ message: 'Korisnik nije pronađen' });
+    }
+
+    // Prevent deletion of super_admin users (safety measure)
+    if (existingUser.role === 'super_admin') {
+      return res.status(403).json({ message: 'Super admin korisnici se ne mogu obrisati' });
+    }
+
+    // Prevent users from deleting themselves
+    if (userId === req.user.id) {
+      return res.status(403).json({ message: 'Ne možete obrisati sebe' });
+    }
+
+    // Delete user
+    await User.findByIdAndDelete(userId);
+
+    logger.info('User deleted successfully via admin dashboard:', {
+      id: userId,
+      username: existingUser.username,
+      email: existingUser.email
+    });
+
+    res.json({ message: 'Korisnik je uspješno obrisan' });
+  } catch (error) {
+    logger.error('Error deleting user via admin dashboard:', error);
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'Nevaljan ID korisnika' });
+    }
+    res.status(500).json({ message: 'Greška pri brisanju korisnika' });
   }
 });
