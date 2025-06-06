@@ -721,9 +721,28 @@ const Dashboard = () => {
           searchQueries.lectures,
           'lecture'
         );
+        const pendingDaije = filterData(
+          (data.daije || []).filter(d => d.status === 'pending'),
+          searchQueries.lectures,
+          'daija'
+        );
+        const pendingOrganizations = filterData(
+          (data.organizations || []).filter(o => o.status === 'pending'),
+          searchQueries.lectures,
+          'organization'
+        );
         content = (
           <Box>
-            {renderSection('all', pendingLectures, 'Predavanja za odobrenje', 'lecture')}
+            {pendingLectures.length > 0 && renderSection('pending', pendingLectures, 'Predavanja za odobrenje', 'lecture')}
+            {pendingDaije.length > 0 && renderSection('pending', pendingDaije, 'Daije za odobrenje', 'daija')}
+            {pendingOrganizations.length > 0 && renderSection('pending', pendingOrganizations, 'Udruženja za odobrenje', 'organization')}
+            {pendingLectures.length === 0 && pendingDaije.length === 0 && pendingOrganizations.length === 0 && (
+              <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
+                <Typography color="text.secondary" variant="h6">
+                  Nema sadržaja za odobrenje
+                </Typography>
+              </Paper>
+            )}
           </Box>
         );
         break;
@@ -947,7 +966,11 @@ const Dashboard = () => {
             <DashSidebar 
               activeSection={activeSection} 
               onSectionChange={setSection}
-              pendingCount={(data.lectures || []).filter(l => l.status === 'pending').length}
+              pendingCount={
+                (data.lectures || []).filter(l => l.status === 'pending').length +
+                (data.daije || []).filter(d => d.status === 'pending').length +
+                (data.organizations || []).filter(o => o.status === 'pending').length
+              }
               pendingSuggestionsCount={counts.pendingSuggestions}
               approvalToggles={approvalSettings}
               setApprovalToggles={updateApprovalSettings}

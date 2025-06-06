@@ -1,37 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  AppBar,
-  Toolbar,
-  Button,
-  Box,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  IconButton,
-  Divider,
-  Typography,
-  useMediaQuery,
-  useTheme,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Tooltip,
-  Slide,
-  Menu,
-  MenuItem
+    AppBar,
+    Toolbar,
+    Button,
+    Box,
+    Drawer,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
+    IconButton,
+    Divider,
+    Typography,
+    useMediaQuery,
+    useTheme,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Tooltip,
+    Slide,
+    Menu,
+    MenuItem
 } from '@mui/material';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import HomeIcon from '@mui/icons-material/Home';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import GroupsIcon from '@mui/icons-material/Groups';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AddIcon from '@mui/icons-material/Add';
 import LoginIcon from '@mui/icons-material/Login';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -39,13 +35,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import BusinessIcon from '@mui/icons-material/Business';
 import PersonIcon from '@mui/icons-material/Person';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoCircle from './LogoCircle.jsx';
 import LectureForm from './LectureForm.jsx';
 import DaijaForm from './DaijaForm.jsx';
 import OrganizationForm from './OrganizationForm.jsx';
 import SuggestionForm from './SuggestionForm.jsx';
-import { menuItems, adminMenuItems, userMenuItems } from '@/config/menuItems';
+import { menuItems, adminMenuItems } from '@/config/menuItems';
 import { clearAllData, getToken, getUserData } from '@/utils/authHelpers';
 
 const Navigation = () => {
@@ -625,7 +620,7 @@ const Navigation = () => {
         open={isOrganizationModalOpen}
         onClose={() => setIsOrganizationModalOpen(false)}
         onSuccess={(newOrganization) => {
-          // Just close the modal, no need to refresh data
+          // Just close the modal, success message is shown by OrganizationForm
         }}
       />
 

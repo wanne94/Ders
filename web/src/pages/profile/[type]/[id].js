@@ -20,13 +20,11 @@ import {
   IconButton,
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import LocationCityIcon from '@mui/icons-material/LocationCity';
 import SchoolIcon from '@mui/icons-material/School';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import BusinessIcon from '@mui/icons-material/Business';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -764,210 +762,406 @@ const UnifiedProfile = () => {
             </Grid>
           </Box>
         ) : (
-          // Original Profile Section for other types
-          <Card sx={{ mb: 4, p: 3 }}>
-            <Grid container spacing={4} alignItems="center" sx={{ minHeight: '400px' }}>
-              {/* Left Column - Image */}
-              <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center',
-                  textAlign: 'center'
-                }}>
-                  <Box
-                    component="img"
-                    src={getProfileImage()}
-                    alt={getProfileTitle()}
-                    sx={{ 
-                      width: '100%',
-                      height: '100%',
-                      maxWidth: type === 'lecture' ? 300 : type === 'daija' ? 250 : type === 'organization' ? 250 : 500,
-                      maxHeight: type === 'lecture' ? 800 : type === 'daija' ? 250 : type === 'organization' ? 250 : 500,
-                      borderRadius: type === 'lecture' ? 2 : '50%',
-                      objectFit: 'cover',
-                      border: '4px solid',
-                      borderColor: 'primary.main',
-                      mb: 2
-                    }}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = type === 'daija' ? getDefaultDaijaImage() : 
-                                    type === 'organization' ? getDefaultOrganizationImage() : 
-                                    getDefaultLectureImage();
-                    }}
-                  />
-                  {(type === 'daija' || type === 'organization') && (
-                    <Typography variant="h4" component="h1" gutterBottom>
-                      {getProfileTitle()}
-                    </Typography>
-                  )}
-                </Box>
-              </Grid>
+          // Enhanced Profile Section for Organizations and Lectures
+          <Box sx={{ mb: 4 }}>
+            {/* Hero Section */}
+            <Paper 
+              elevation={0}
+              sx={{ 
+                background: type === 'organization' ? 
+                  'linear-gradient(135deg, #9C27B0 0%, #6A1B9A 100%)' :
+                  'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
+                color: 'white',
+                borderRadius: 4,
+                overflow: 'hidden',
+                mb: 4,
+                position: 'relative'
+              }}
+            >
+              {/* Decorative Pattern */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  width: '40%',
+                  height: '100%',
+                  background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                  opacity: 0.3
+                }}
+              />
+              
+              <Container maxWidth="lg">
+                <Grid container spacing={4} alignItems="center" sx={{ py: 6 }}>
+                  {/* Profile Image */}
+                  <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        display: 'inline-block'
+                      }}
+                    >
+                      {type === 'lecture' ? (
+                        <Box
+                          component="img"
+                          src={getProfileImage()}
+                          alt={getProfileTitle()}
+                          sx={{ 
+                            width: 250,
+                            height: 350,
+                            borderRadius: 3,
+                            border: '6px solid rgba(255, 255, 255, 0.2)',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                            objectFit: 'cover',
+                            mb: 2
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = getDefaultLectureImage();
+                          }}
+                        />
+                      ) : (
+                        <Avatar
+                          src={getProfileImage()}
+                          alt={getProfileTitle()}
+                          sx={{ 
+                            width: 200,
+                            height: 200,
+                            border: '6px solid rgba(255, 255, 255, 0.2)',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                            mb: 2
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = getDefaultOrganizationImage();
+                          }}
+                        />
+                      )}
+                      {/* Decorative Ring for non-lecture types */}
+                      {type !== 'lecture' && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -10,
+                            left: -10,
+                            width: 220,
+                            height: 220,
+                            border: '2px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '50%',
+                            animation: 'pulse 2s infinite'
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </Grid>
 
-              {/* Right Column - Information */}
-              <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'center' }}>
-                <Box sx={{ width: '100%' }}>
-                  <Typography variant="h5" gutterBottom sx={{ mb: 3, textTransform: 'uppercase', fontWeight: 'bold' }}>
-                    {type === 'lecture' ? getProfileTitle() : 'Osnovne informacije'}
-                  </Typography>
-                  
-                  {/* Organization Profile Information */}
-                  {type === 'organization' && (
-                    <>
+                  {/* Profile Info */}
+                  <Grid item xs={12} md={8}>
+                    <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+                      <Typography 
+                        variant="h2" 
+                        component="h1" 
+                        gutterBottom
+                        sx={{ 
+                          fontWeight: 300,
+                          fontSize: { xs: '2.5rem', md: '3.5rem' },
+                          letterSpacing: '-0.02em',
+                          mb: 2
+                        }}
+                      >
+                        {getProfileTitle()}
+                      </Typography>
+                      
                       {profileData.shortDescription && (
-                        <Typography variant="h6" color="text.secondary" sx={{ mb: 3, fontStyle: 'italic' }}>
+                        <Typography 
+                          variant="h6" 
+                          sx={{ 
+                            opacity: 0.8,
+                            fontWeight: 300,
+                            lineHeight: 1.6,
+                            mb: 3,
+                            maxWidth: '600px'
+                          }}
+                        >
                           {profileData.shortDescription}
                         </Typography>
                       )}
-                      
-                      {profileData.address && (
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                          <LocationOnIcon sx={{ mr: 2, color: 'primary.main', mt: 0.5 }} />
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="body1" fontWeight="bold" gutterBottom>
-                              Adresa:
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                              {profileData.address}
-                            </Typography>
-                          </Box>
+
+                      {/* Contact Info for Organizations */}
+                      {type === 'organization' && (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+                          {profileData.email && (
+                            <Chip
+                              icon={<EmailIcon />}
+                              label={profileData.email}
+                              variant="outlined"
+                              sx={{ 
+                                color: 'white',
+                                borderColor: 'rgba(255, 255, 255, 0.3)',
+                                '& .MuiChip-icon': { color: 'white' }
+                              }}
+                            />
+                          )}
+                          {profileData.phone && (
+                            <Chip
+                              icon={<PhoneIcon />}
+                              label={profileData.phone}
+                              variant="outlined"
+                              sx={{ 
+                                color: 'white',
+                                borderColor: 'rgba(255, 255, 255, 0.3)',
+                                '& .MuiChip-icon': { color: 'white' }
+                              }}
+                            />
+                          )}
                         </Box>
                       )}
 
-                      {profileData.city && (
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                          <LocationCityIcon sx={{ mr: 2, color: 'primary.main', mt: 0.5 }} />
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="body1" fontWeight="bold" gutterBottom>
-                              Mjesto:
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                              {profileData.city}
-                            </Typography>
-                          </Box>
+                      {/* Lecture Info Chips */}
+                      {type === 'lecture' && (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+                          {profileData.date && (
+                            <Chip
+                              icon={<CalendarTodayIcon />}
+                              label={formatDateWithDay(profileData.date)}
+                              variant="outlined"
+                              sx={{ 
+                                color: 'white',
+                                borderColor: 'rgba(255, 255, 255, 0.3)',
+                                '& .MuiChip-icon': { color: 'white' }
+                              }}
+                            />
+                          )}
+                          {profileData.time && (
+                            <Chip
+                              icon={<AccessTimeIcon />}
+                              label={profileData.time}
+                              variant="outlined"
+                              sx={{ 
+                                color: 'white',
+                                borderColor: 'rgba(255, 255, 255, 0.3)',
+                                '& .MuiChip-icon': { color: 'white' }
+                              }}
+                            />
+                          )}
                         </Box>
                       )}
-                    </>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Container>
+            </Paper>
+
+            {/* Detailed Information Cards */}
+            <Grid container spacing={4}>
+              {/* Organization Information */}
+              {type === 'organization' && (
+                <>
+                  {/* Address Card */}
+                  {(profileData.address || profileData.city) && (
+                    <Grid item xs={12} md={6}>
+                      <Card 
+                        elevation={0}
+                        sx={{ 
+                          height: '100%',
+                          border: '1px solid #e0e0e0',
+                          borderRadius: 3,
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                            transform: 'translateY(-2px)'
+                          }
+                        }}
+                      >
+                        <CardContent sx={{ p: 4 }}>
+                                                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                             <Box
+                               sx={{
+                                 backgroundColor: '#9C27B0',
+                                 borderRadius: '50%',
+                                 p: 1.5,
+                                 mr: 2
+                               }}
+                             >
+                               <LocationOnIcon sx={{ color: 'white', fontSize: 24 }} />
+                             </Box>
+                             <Typography variant="h5" fontWeight="600" color="#022C43">
+                               Lokacija
+                             </Typography>
+                           </Box>
+                          <Box>
+                            {profileData.address && (
+                              <Typography variant="body1" sx={{ mb: 1, fontSize: '1.1rem', color: '#333' }}>
+                                <strong>Adresa:</strong> {profileData.address}
+                              </Typography>
+                            )}
+                            {profileData.city && (
+                              <Typography variant="body1" sx={{ fontSize: '1.1rem', color: '#333' }}>
+                                <strong>Grad:</strong> {profileData.city}
+                              </Typography>
+                            )}
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  )}
+                </>
+              )}
+
+              {/* Lecture Information */}
+              {type === 'lecture' && (
+                <>
+                  {/* Speaker & Organization Card */}
+                  {(profileData.speaker || profileData.organization) && (
+                    <Grid item xs={12} md={6}>
+                      <Card 
+                        elevation={0}
+                        sx={{ 
+                          height: '100%',
+                          border: '1px solid #e0e0e0',
+                          borderRadius: 3,
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                            transform: 'translateY(-2px)'
+                          }
+                        }}
+                      >
+                        <CardContent sx={{ p: 4 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                            <Box
+                              sx={{
+                                backgroundColor: '#4CAF50',
+                                borderRadius: '50%',
+                                p: 1.5,
+                                mr: 2
+                              }}
+                            >
+                              <PersonIcon sx={{ color: 'white', fontSize: 24 }} />
+                            </Box>
+                            <Typography variant="h5" fontWeight="600" color="#022C43">
+                              Predavač i Organizator
+                            </Typography>
+                          </Box>
+                          <Box>
+                            {profileData.speaker && (
+                              <Typography 
+                                variant="body1" 
+                                sx={{ mb: 2, fontSize: '1.1rem' }}
+                                color={relatedData?.daija ? 'primary.main' : '#333'}
+                                onClick={() => relatedData?.daija && handleRelatedClick('daija', relatedData.daija)}
+                                style={{ 
+                                  cursor: relatedData?.daija ? 'pointer' : 'default',
+                                  textDecoration: relatedData?.daija ? 'underline' : 'none'
+                                }}
+                              >
+                                <strong>Predavač:</strong> {formatSpeakerName(profileData.speaker)}
+                              </Typography>
+                            )}
+                            {profileData.organization && (
+                              <Typography 
+                                variant="body1" 
+                                sx={{ fontSize: '1.1rem' }}
+                                color={relatedData?.organization ? 'primary.main' : '#333'}
+                                onClick={() => relatedData?.organization && handleRelatedClick('organization', relatedData.organization)}
+                                style={{ 
+                                  cursor: relatedData?.organization ? 'pointer' : 'default',
+                                  textDecoration: relatedData?.organization ? 'underline' : 'none'
+                                }}
+                              >
+                                <strong>Udruženje:</strong> {profileData.organization}
+                              </Typography>
+                            )}
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
                   )}
 
-                  {/* Lecture Profile Information */}
-                  {type === 'lecture' && (
-                    <>
-                      {profileData.speaker && (
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                          <PersonIcon sx={{ mr: 2, color: 'primary.main', mt: 0.5 }} />
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="body1" fontWeight="bold" gutterBottom>
-                              Predavač:
-                            </Typography>
-                            <Typography 
-                              variant="body1" 
-                              color={relatedData?.daija ? 'primary.main' : 'text.secondary'}
-                              sx={{ 
-                                cursor: relatedData?.daija ? 'pointer' : 'default',
-                                textDecoration: relatedData?.daija ? 'underline' : 'none'
+                  {/* Location Card */}
+                  {(profileData.address || profileData.city) && (
+                    <Grid item xs={12} md={6}>
+                      <Card 
+                        elevation={0}
+                        sx={{ 
+                          height: '100%',
+                          border: '1px solid #e0e0e0',
+                          borderRadius: 3,
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                            transform: 'translateY(-2px)'
+                          }
+                        }}
+                      >
+                        <CardContent sx={{ p: 4 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                            <Box
+                              sx={{
+                                backgroundColor: '#FF9800',
+                                borderRadius: '50%',
+                                p: 1.5,
+                                mr: 2
                               }}
-                              onClick={() => relatedData?.daija && handleRelatedClick('daija', relatedData.daija)}
                             >
-                              {formatSpeakerName(profileData.speaker)}
+                              <LocationOnIcon sx={{ color: 'white', fontSize: 24 }} />
+                            </Box>
+                            <Typography variant="h5" fontWeight="600" color="#022C43">
+                              Lokacija
                             </Typography>
                           </Box>
-                        </Box>
-                      )}
-
-                      {profileData.organization && (
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                          <BusinessIcon sx={{ mr: 2, color: 'primary.main', mt: 0.5 }} />
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="body1" fontWeight="bold" gutterBottom>
-                              Udruženje:
-                            </Typography>
-                            <Typography 
-                              variant="body1" 
-                              color={relatedData?.organization ? 'primary.main' : 'text.secondary'}
-                              sx={{ 
-                                cursor: relatedData?.organization ? 'pointer' : 'default',
-                                textDecoration: relatedData?.organization ? 'underline' : 'none'
-                              }}
-                              onClick={() => relatedData?.organization && handleRelatedClick('organization', relatedData.organization)}
-                            >
-                              {profileData.organization}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      )}
-
-                      {profileData.date && (
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                          <CalendarTodayIcon sx={{ mr: 2, color: 'primary.main', mt: 0.5 }} />
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="body1" fontWeight="bold" gutterBottom>
-                              Datum:
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                              {formatDateWithDay(profileData.date)}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      )}
-
-                      {profileData.time && (
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                          <AccessTimeIcon sx={{ mr: 2, color: 'primary.main', mt: 0.5 }} />
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="body1" fontWeight="bold" gutterBottom>
-                              Vrijeme:
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                              {profileData.time}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      )}
-
-                      {(profileData.address || profileData.city) && (
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                          <LocationOnIcon sx={{ mr: 2, color: 'primary.main', mt: 0.5 }} />
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="body1" fontWeight="bold" gutterBottom>
-                              Lokacija:
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                              {[profileData.address, profileData.city].filter(Boolean).join(', ')}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      )}
-
-                      {profileData.shortDescription && (
-                        <Box sx={{ mt: 3, mb: 2 }}>
-                          <Typography variant="body1" fontWeight="bold" gutterBottom>
-                            Kratki opis:
+                          <Typography variant="body1" sx={{ fontSize: '1.1rem', color: '#333' }}>
+                            {[profileData.address, profileData.city].filter(Boolean).join(', ')}
                           </Typography>
-                          <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                            {profileData.shortDescription}
-                          </Typography>
-                        </Box>
-                      )}
-                    </>
+                        </CardContent>
+                      </Card>
+                    </Grid>
                   )}
+                </>
+              )}
 
-                  {/* Description for all types */}
-                  {profileData.description && type !== 'daija' && (
-                    <Box sx={{ mt: 3 }}>
-                      <Typography variant="body1" fontWeight="bold" gutterBottom>
-                        {type === 'lecture' ? 'Opis predavanja:' : 'Opis:'}
+              {/* Description Card for all types */}
+              {profileData.description && (
+                <Grid item xs={12}>
+                  <Card 
+                    elevation={0}
+                    sx={{ 
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 3,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)'
+                      }
+                    }}
+                  >
+                    <CardContent sx={{ p: 4 }}>
+                      <Typography 
+                        variant="h5" 
+                        fontWeight="600" 
+                        color="#022C43"
+                        gutterBottom
+                        sx={{ mb: 3 }}
+                      >
+                        {type === 'lecture' ? 'Opis predavanja' : 'Opis'}
                       </Typography>
-                      <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                      <Typography 
+                        variant="body1" 
+                        sx={{ 
+                          fontSize: '1.1rem',
+                          lineHeight: 1.8,
+                          color: '#555',
+                          textAlign: 'justify'
+                        }}
+                      >
                         {profileData.description}
                       </Typography>
-                    </Box>
-                  )}
-                </Box>
-              </Grid>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )}
             </Grid>
-          </Card>
+          </Box>
+
         )}
 
         {/* Related Lectures Section */}

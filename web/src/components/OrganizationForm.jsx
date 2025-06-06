@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  MenuItem,
-  Box,
-  Alert,
-  Snackbar,
-  Typography,
-  InputAdornment
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    TextField, Box,
+    Alert,
+    Snackbar,
+    Typography,
+    InputAdornment
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import FacebookIcon from '@mui/icons-material/Facebook';
@@ -242,6 +240,7 @@ const OrganizationForm = ({ open, onClose, onSuccess, approvalEnabled = true, or
         response = await axiosInstance.post('/organizations', organizationData);
       }
 
+      setSuccess(true);
       if (onSuccess) {
         onSuccess(response.data);
       }
@@ -255,9 +254,9 @@ const OrganizationForm = ({ open, onClose, onSuccess, approvalEnabled = true, or
       console.error('Error response status:', error.response?.status);
       console.error('Error response headers:', error.response?.headers);
       
-      // Show error through props or simple alert
+      // Show error through Snackbar
       const errorMessage = error.response?.data?.message || 'Greška pri spremanju organizacije';
-      alert(errorMessage);
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

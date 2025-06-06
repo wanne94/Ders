@@ -1,25 +1,20 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Image,
-  Dimensions,
-  FlatList,
-  Platform,
-  RefreshControl,
-  Pressable
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    SafeAreaView,
+    TouchableOpacity,
+    Dimensions,
+    RefreshControl,
+    Pressable,
+    Linking
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { Card, Title, Paragraph, Divider } from 'react-native-paper';
 import apiService from '../services/apiService';
-import { colors, COLOR_USAGE } from '../config/theme';
+import { colors } from '../config/theme';
 import UniversalCard from '../components/UniversalCard';
 import { useBackHandler } from '../utils/useBackHandler';
 import { useNetworkStatus } from '../utils/useNetworkStatus';
@@ -575,54 +570,93 @@ export default function HomeScreen({ navigation }) {
           )}
         </View>
 
-        {/* Active Organizations Section (same as web ActiveOrganizations) */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Udruženja</Text>
-            <Pressable onPress={() => navigation.navigate('Organizations')} hitSlop={10}>
-              <Text style={styles.seeAllText}>Prikaži sva udruženja</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.sectionDescription}>Udruženja sa nedavno najvljenim dersom</Text>
+        {/* Benefits Section */}
+        <LinearGradient
+          colors={['#022C43', '#055A87']}
+          style={styles.benefitsSection}
+        >
+          <Text style={styles.benefitsSectionTitle}>Zašto se registrovati?</Text>
+          <Text style={styles.benefitsSectionSubtitle}>
+            Registracija vam omogućava pristup ekskluzivnim funkcijama koje će poboljšati vaše iskustvo na našoj platformi
+          </Text>
           
-          {displayOrganizations.length === 0 ? (
-            !isLoading && <NoDataMessage title="Trenutno nema dostupnih udruženja." />
-          ) : (
-            displayOrganizations.map((org) => {
-              const infoRows = [
-                org.shortDescription && {
-                  icon: 'document-text-outline',
-                  text: org.shortDescription,
-                  highlightSearch: false,
-                  numberOfLines: 2
-                },
-                org.city && {
-                  icon: 'location-outline',
-                  text: org.city,
-                  highlightSearch: false
-                },
-                {
-                  icon: 'book-outline',
-                  text: `${org.lectureCount} predavanja`,
-                  highlightSearch: false
-                }
-              ].filter(Boolean);
-
-              return (
-                <UniversalCard
-                  key={org._id}
-                  title={renderOrganizationName(org)}
-                  infoRows={infoRows}
-                  rightContentType="image"
-                  imageUrl={org.image}
-                  onPress={() => handleOrganizationPress(org)}
-                  serverUrl={SERVER_URL}
-                  defaultImagePath="/uploads/images/udruzenjeslika.jpg"
-                />
-              );
-            })
-          )}
-        </View>
+          <View style={styles.benefitsContainer}>
+            <View style={styles.benefitItem}>
+              <Ionicons name="checkmark-circle" size={24} color="white" />
+              <View style={styles.benefitTextContainer}>
+                <Text style={styles.benefitTitle}>Dodavanje sadržaja</Text>
+                <Text style={styles.benefitDescription}>
+                  Registrirani korisnici mogu objavljivati nova predavanja, kao i predlagati daije i udruženja za dodavanje na platformu.
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.benefitItem}>
+              <Ionicons name="star" size={24} color="white" />
+              <View style={styles.benefitTextContainer}>
+                <Text style={styles.benefitTitle}>Doprinos znanju i sticanje sevapa</Text>
+                <Text style={styles.benefitDescription}>
+                  Svako korisno predavanje koje podijeliš može nekome koristiti – a za to ti se piše nagrada kod Allaha.
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.benefitItem}>
+              <Ionicons name="notifications" size={24} color="white" />
+              <View style={styles.benefitTextContainer}>
+                <Text style={styles.benefitTitle}>Primanje notifikacija (uskoro, inšallah)</Text>
+                <Text style={styles.benefitDescription}>
+                  Dobijaš obavijesti kada se organizuju nova predavanja, novosti i slično.
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.benefitItem}>
+              <Ionicons name="person-add" size={24} color="white" />
+              <View style={styles.benefitTextContainer}>
+                <Text style={styles.benefitTitle}>Praćenje daija i udruženja (uskoro, inšallah)</Text>
+                <Text style={styles.benefitDescription}>
+                  Moći ćeš zapratiti daije i udruženja, te primati notifikacije kada oni budu organizovali nova predavanja.
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.benefitItem}>
+              <Ionicons name="bookmark" size={24} color="white" />
+              <View style={styles.benefitTextContainer}>
+                <Text style={styles.benefitTitle}>Predlaganje izmjena postojećih informacija</Text>
+                <Text style={styles.benefitDescription}>
+                  Ako primijetiš netačne ili zastarjele podatke, možeš predložiti izmjene koje će biti pregledane od strane admin tima.
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.benefitItem}>
+              <Ionicons name="calendar" size={24} color="white" />
+              <View style={styles.benefitTextContainer}>
+                <Text style={styles.benefitTitle}>Mogućnost da postaneš dio admin tima</Text>
+                <Text style={styles.benefitDescription}>
+                  Registracijom imaš priliku da, kada se ukaže potreba, postaneš dio tima koji aktivno uređuje i razvija platformu.
+                </Text>
+              </View>
+            </View>
+          </View>
+          
+          <View style={styles.benefitsButtonsContainer}>
+            <TouchableOpacity 
+              style={styles.registerButton}
+              onPress={() => navigation.navigate('Auth', { initialTab: 'register' })}
+            >
+              <Text style={styles.registerButtonText}>Registrujte se</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.loginButton}
+              onPress={() => navigation.navigate('Auth', { initialTab: 'login' })}
+            >
+              <Text style={styles.loginButtonText}>Prijavite se</Text>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
 
         {/* Active Daije Section (same as web ActiveDaije) */}
         <View style={styles.section}>
@@ -667,6 +701,91 @@ export default function HomeScreen({ navigation }) {
                   onPress={() => handleDaijaPress(daija)}
                   serverUrl={SERVER_URL}
                   defaultImagePath="/uploads/images/daijaslika.jpg"
+                />
+              );
+            })
+          )}
+        </View>
+
+        {/* Social Media Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Pratite nas na društvenim mrežama</Text>
+          <Text style={styles.sectionDescription}>
+            Budi u toku s najnovijim predavanjima, događajima i korisnim sadržajem.
+          </Text>
+          
+          <View style={styles.socialMediaContainer}>
+            <TouchableOpacity 
+              style={[styles.socialMediaButton, styles.facebookButton]}
+              onPress={() => {
+                // Open Facebook link
+                const url = 'https://www.facebook.com/profile.php?id=61561889404089';
+                Linking.openURL(url);
+              }}
+            >
+              <Ionicons name="logo-facebook" size={32} color="white" />
+              <Text style={styles.socialMediaText}>Facebook</Text>
+              <Text style={styles.socialMediaSubtext}>Zaprati nas na Facebooku</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.socialMediaButton, styles.instagramButton]}
+              onPress={() => {
+                // Open Instagram link
+                const url = 'https://www.instagram.com/ders_ba/';
+                Linking.openURL(url);
+              }}
+            >
+              <Ionicons name="logo-instagram" size={32} color="white" />
+              <Text style={styles.socialMediaText}>Instagram</Text>
+              <Text style={styles.socialMediaSubtext}>Zaprati nas na Instagramu</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Active Organizations Section (same as web ActiveOrganizations) */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Udruženja</Text>
+            <Pressable onPress={() => navigation.navigate('Organizations')} hitSlop={10}>
+              <Text style={styles.seeAllText}>Prikaži sva udruženja</Text>
+            </Pressable>
+          </View>
+          <Text style={styles.sectionDescription}>Udruženja sa nedavno najvljenim dersom</Text>
+          
+          {displayOrganizations.length === 0 ? (
+            !isLoading && <NoDataMessage title="Trenutno nema dostupnih udruženja." />
+          ) : (
+            displayOrganizations.map((org) => {
+              const infoRows = [
+                org.shortDescription && {
+                  icon: 'document-text-outline',
+                  text: org.shortDescription,
+                  highlightSearch: false,
+                  numberOfLines: 2
+                },
+                org.city && {
+                  icon: 'location-outline',
+                  text: org.city,
+                  highlightSearch: false
+                },
+                {
+                  icon: 'book-outline',
+                  text: `${org.lectureCount} predavanja`,
+                  highlightSearch: false
+                }
+              ].filter(Boolean);
+
+              return (
+                <UniversalCard
+                  key={org._id}
+                  title={renderOrganizationName(org)}
+                  infoRows={infoRows}
+                  rightContentType="image"
+                  imageUrl={org.image}
+                  onPress={() => handleOrganizationPress(org)}
+                  serverUrl={SERVER_URL}
+                  defaultImagePath="/uploads/images/udruzenjeslika.jpg"
                 />
               );
             })
@@ -887,6 +1006,127 @@ const styles = StyleSheet.create({
   },
   sectionDescription: {
     fontSize: 14,
+    color: '#666',
+    marginBottom: 10,
+  },
+  // Benefits Section Styles
+  benefitsSection: {
+    margin: 20,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+  },
+  benefitsSectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  benefitsSectionSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  benefitsContainer: {
+    marginBottom: 20,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  benefitTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  benefitTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 4,
+  },
+  benefitDescription: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    lineHeight: 20,
+  },
+  benefitsButtonsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  registerButton: {
+    backgroundColor: '#dc004e',
+    borderRadius: 12,
+    padding: 15,
+    flex: 1,
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#dc004e',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  registerButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loginButton: {
+    borderWidth: 2,
+    borderColor: 'white',
+    borderRadius: 12,
+    padding: 15,
+    flex: 1,
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Social Media Section Styles
+  socialMediaContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 15,
+  },
+  socialMediaButton: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  facebookButton: {
+    backgroundColor: '#1877F2',
+  },
+  instagramButton: {
+    background: 'linear-gradient(45deg, #F56040, #E1306C, #C13584, #833AB4, #5851DB)',
+    backgroundColor: '#E1306C', // Fallback for React Native
+  },
+  socialMediaText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  socialMediaSubtext: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'center',
     color: '#666',
     marginBottom: 15,
   },

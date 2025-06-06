@@ -15,6 +15,7 @@
     "dev:full": "concurrently \"npm run dev:web\" \"npm run dev:server\"",
     "start:full": "concurrently \"npm run start:web\" \"npm run start:server\"",
     "build": "cd web && npm run build",
+    "deploy:prepare": "node prepare-deployment.js",
     "android": "expo run:android",
     "ios": "expo run:ios"
   },

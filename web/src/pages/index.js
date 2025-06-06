@@ -11,8 +11,22 @@ import {
   Alert,
   Paper,
   Divider,
+  Container,
+  IconButton,
 } from '@mui/material';
-import { School as SchoolIcon, Business as BusinessIcon, Person as PersonIcon } from '@mui/icons-material';
+import {
+  School as SchoolIcon,
+  Business as BusinessIcon,
+  Person as PersonIcon,
+  CheckCircle as CheckCircleIcon,
+  Notifications as NotificationsIcon,
+  Bookmark as BookmarkIcon,
+  Event as EventIcon,
+  PersonAdd as PersonAddIcon,
+  Star as StarIcon,
+  Facebook as FacebookIcon,
+  Instagram as InstagramIcon
+} from '@mui/icons-material';
 import PageLayout from '@/components/PageLayout';
 import OrganizationCompactCard from '@/components/OrganizationCompactCard';
 import DaijaCard from '@/components/DaijaCard';
@@ -25,12 +39,14 @@ import {
   sortLecturesByTimeProximity,
 } from '@/utils/dataHelpers';
 
+
+
 // HeroSection Component
 const HeroSection = () => {
   return (
     <Box 
       sx={{ 
-        width: '100vw',
+        width: '100%',
         position: 'relative',
         left: '50%',
         right: '50%',
@@ -216,7 +232,7 @@ const TenLectures = ({ lectures }) => {
               </Box>
             ))}
           </LecturesGrid>
-          <Box sx={{ mt: 4, mb: 5 }}>
+          <Box sx={{ mt: 4, mb: 0 }}>
             <Button 
               variant="outlined" 
               size="large"
@@ -234,6 +250,226 @@ const TenLectures = ({ lectures }) => {
           </Box>
         </>
       )}
+    </Box>
+  );
+};
+
+// Benefits Section Component
+const BenefitsSection = () => {
+  const router = useRouter();
+
+  const benefits = [
+    {
+      icon: CheckCircleIcon,
+      title: 'Dodavanje sadržaja',
+      description: 'Registrirani korisnici mogu objavljivati nova predavanja, kao i predlagati daije i udruženja za dodavanje na platformu.'
+    },
+    {
+      icon: StarIcon,
+      title: 'Doprinos znanju i sticanje sevapa',
+      description: 'Svako korisno predavanje koje podijeliš može nekome koristiti – a za to ti se piše nagrada kod Allaha. "Ko uputi na dobro, ima nagradu kao i onaj koji to dobro čini." (Muslim)'
+    },
+    {
+      icon: NotificationsIcon,
+      title: 'Primanje notifikacija (uskoro, inšallah)',
+      description: 'Dobijaš obavijesti kada se organizuju nova predavanja, novosti i slično.'
+    },
+    {
+      icon: PersonAddIcon,
+      title: 'Praćenje daija i udruženja (uskoro, inšallah)',
+      description: 'Moći ćeš zapratiti daije i udruženja, te primati notifikacije kada oni budu organizovali nova predavanja.'
+    },
+    {
+      icon: BookmarkIcon,
+      title: 'Predlaganje izmjena postojećih informacija',
+      description: 'Ako primijetiš netačne ili zastarjele podatke, možeš predložiti izmjene koje će biti pregledane od strane admin tima.'
+    },
+    {
+      icon: EventIcon,
+      title: 'Mogućnost da postaneš dio admin tima',
+      description: 'Registracijom imaš priliku da, kada se ukaže potreba, postaneš dio tima koji aktivno uređuje i razvija platformu.'
+    }
+  ];
+
+  const handleRegister = () => {
+    router.push('/register');
+  };
+
+  const handleLogin = () => {
+    router.push('/login');
+  };
+
+  return (
+    <Box 
+      sx={{ 
+        width: '100%',
+        position: 'relative',
+       
+        marginLeft: '-50vw',
+        marginRight: '-50vw',
+        py: 8,
+        background: 'linear-gradient(135deg, #022C43 0%, #055A87 100%)',
+        color: 'white',
+        mt: 6,
+        overflow: 'hidden',
+       
+        my: 1
+      }}
+    >
+      <Container 
+        maxWidth="lg"
+        sx={{
+          px: { xs: 2, sm: 3, md: 4 },
+          mx: 'auto'
+        }}
+      >
+        <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Typography 
+            variant="h3" 
+            component="h2" 
+            gutterBottom 
+            sx={{ 
+              fontWeight: 'bold',
+              mb: 2
+            }}
+          >
+            Zašto se registrovati?
+          </Typography>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              opacity: 0.9,
+              maxWidth: '600px',
+              margin: '0 auto',
+              lineHeight: 1.6
+            }}
+          >
+            Registracija vam omogućava pristup ekskluzivnim funkcijama koje će poboljšati vaše iskustvo na našoj platformi
+          </Typography>
+        </Box>
+
+        <Grid container spacing={4} sx={{ mb: 6 }}>
+          {benefits.map((benefit, index) => (
+            <Grid item xs={12} md={6} key={index}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  p: 3,
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: 3,
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.2)'
+                  }
+                }}
+              >
+                <Box
+                  sx={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '50%',
+                    p: 2,
+                    mr: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: 60,
+                    height: 60
+                  }}
+                >
+                  <benefit.icon sx={{ fontSize: 28, color: 'white' }} />
+                </Box>
+                <Box>
+                  <Typography 
+                    variant="h6" 
+                    gutterBottom 
+                    sx={{ 
+                      fontWeight: 600,
+                      mb: 1
+                    }}
+                  >
+                    {benefit.title}
+                  </Typography>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      opacity: 0.9,
+                      lineHeight: 1.6
+                    }}
+                  >
+                    {benefit.description}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography 
+            variant="h5" 
+            gutterBottom 
+            sx={{ 
+              mb: 4,
+              fontWeight: 500
+            }}
+          >
+            Pridružite se našoj zajednici danas!
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => router.push('/auth')}
+              sx={{
+                backgroundColor: '#dc004e',
+                color: 'white',
+                px: 4,
+                py: 1.5,
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                borderRadius: 3,
+                textTransform: 'none',
+                boxShadow: '0 4px 15px rgba(220, 0, 78, 0.3)',
+                '&:hover': {
+                  backgroundColor: '#b8003d',
+                  boxShadow: '0 6px 20px rgba(220, 0, 78, 0.4)',
+                  transform: 'translateY(-2px)'
+                }
+              }}
+            >
+              Registrujte se
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={() => router.push('/auth')}
+              sx={{
+                borderColor: 'white',
+                color: 'white',
+                px: 4,
+                py: 1.5,
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                borderRadius: 3,
+                textTransform: 'none',
+                borderWidth: 2,
+                '&:hover': {
+                  borderColor: 'white',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderWidth: 2
+                }
+              }}
+            >
+              Prijavite se
+            </Button>
+          </Box>
+        </Box>
+      </Container>
     </Box>
   );
 };
@@ -335,6 +571,101 @@ const ActiveOrganizations = ({ organizations }) => {
   );
 };
 
+// Social Media Section Component
+const SocialMediaSection = () => {
+  return (
+    <Box sx={{ mt: 2, mb: 2, textAlign: 'center' }}>
+      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 2 }}>
+        Pratite nas na društvenim mrežama
+      </Typography>
+      <Typography 
+        variant="h6" 
+        sx={{ 
+          mb: 4, 
+          opacity: 0.8, 
+          maxWidth: '300px', 
+          margin: '0 auto 2rem auto',
+          lineHeight: 1.6,
+          fontWeight: 300
+        }}
+      >
+        Budi u toku s najnovijim predavanjima, događajima i korisnim sadržajem.
+        
+      </Typography>
+      
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          gap: 4,
+          flexWrap: 'wrap'
+        }}
+      >
+        {/* Facebook */}
+        <Box sx={{ textAlign: 'center' }}>
+          <IconButton
+            component="a"
+            href="https://www.facebook.com/profile.php?id=61561889404089"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              backgroundColor: '#1877F2',
+              color: 'white',
+              width: 80,
+              height: 80,
+              mb: 2,
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                backgroundColor: '#166FE5',
+                transform: 'translateY(-4px)',
+                boxShadow: '0 8px 25px rgba(24, 119, 242, 0.3)'
+              }
+            }}
+          >
+            <FacebookIcon sx={{ fontSize: 40 }} />
+          </IconButton>
+          <Typography variant="h6" gutterBottom>
+            Facebook
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Zaprati nas na Facebooku
+          </Typography>
+        </Box>
+
+        {/* Instagram */}
+        <Box sx={{ textAlign: 'center' }}>
+          <IconButton
+            component="a"
+            href="https://www.instagram.com/ders_ba/"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              background: 'linear-gradient(45deg, #F56040 0%, #E1306C 25%, #C13584 50%, #833AB4 75%, #5851DB 100%)',
+              color: 'white',
+              width: 80,
+              height: 80,
+              mb: 2,
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 8px 25px rgba(225, 48, 108, 0.3)'
+              }
+            }}
+          >
+            <InstagramIcon sx={{ fontSize: 40 }} />
+          </IconButton>
+          <Typography variant="h6" gutterBottom>
+            Instagram
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Zaprati nas na Instagramu
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
 // ActiveDaije Component
 const ActiveDaije = () => {
   const router = useRouter();
@@ -413,7 +744,7 @@ const ActiveDaije = () => {
               </Box>
             ))}
           </DaijeGrid>
-          <Box sx={{ mt: 4, mb: 5 }}>
+          <Box sx={{ mt: 4, mb: 0 }}>
             <Button 
               variant="outlined" 
               size="large"
@@ -530,14 +861,22 @@ export default function Home() {
         <TenLectures lectures={lectures} />
       </Box>
 
-      {/* Active Organizations */}
-      <Box sx={{ width: '100%', mb: 4 }}>
-        <ActiveOrganizations organizations={organizations} />
-      </Box>
+      {/* Benefits Section */}
+      <BenefitsSection />
 
       {/* Active Daije */}
       <Box sx={{ width: '100%', mb: 4 }}>
         <ActiveDaije daije={daije} />
+      </Box>
+
+      {/* Social Media Section */}
+      <Box sx={{ width: '100%', mb: 4 }}>
+        <SocialMediaSection />
+      </Box>
+
+      {/* Active Organizations */}
+      <Box sx={{ width: '100%', mb: 4 }}>
+        <ActiveOrganizations organizations={organizations} />
       </Box>
 
       {/* Quick Actions */}
