@@ -146,7 +146,6 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Note: Static files are now served by Next.js from public/uploads
-// But we need to serve uploads explicitly for mobile app access
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // Basic health check route
@@ -2351,20 +2350,9 @@ app.post('/api/test-register', async (req, res) => {
       securityAnswer: 'test answer'
     };
     
-    // Test mobile format
-    const mobileTestData = {
-      firstName: 'Mobile',
-      lastName: 'User',
-      email: 'mobile@test.com',
-      password: 'password123',
-      securityQuestionIndex: 1,
-      securityAnswer: 'mobile answer'
-    };
-    
     res.json({
       message: 'Test registration endpoint working',
       webFormat: webTestData,
-      mobileFormat: mobileTestData,
       receivedData: req.body,
       timestamp: new Date().toISOString()
     });
@@ -2380,7 +2368,7 @@ app.post('/api/test-register-simulation', async (req, res) => {
   console.log('📥 Request body:', req.body);
   
   try {
-    // Extract fields - support both web (username) and mobile (firstName + lastName) formats
+    // Extract fields - web format
     let { username, firstName, lastName, email, password, securityQuestionIndex, securityAnswer } = req.body;
     
     console.log('🔍 Extracted fields:', {
@@ -2392,12 +2380,6 @@ app.post('/api/test-register-simulation', async (req, res) => {
       securityQuestionIndex: securityQuestionIndex,
       hasSecurityAnswer: !!securityAnswer
     });
-    
-    // If mobile format (firstName + lastName), create username
-    if (!username && firstName && lastName) {
-      username = `${firstName.trim()}${lastName.trim()}`.replace(/\s+/g, '');
-      console.log('🔄 Generated username from firstName + lastName:', username);
-    }
     
     // Validation
     const errors = [];
@@ -3125,61 +3107,7 @@ app.get('/api/admin/lectures/organization/:organizationId', authenticateToken, i
   }
 });
 
-// Admin endpoint - Get all daije (including pending/rejected) for mobile dashboard
-app.get('/api/admin/daije/all', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
-  try {
-    logger.info('Admin fetching all daije for mobile dashboard (including pending/rejected)');
-    const daije = await Daija.find().sort({ name: 1 });
-    logger.info(`Found ${daije.length} daije for admin mobile dashboard`);
-    
-    // Transform data to include firstName for frontend compatibility
-    const transformedDaije = daije.map(daija => ({
-      ...daija.toObject(),
-      firstName: daija.name, // Map name to firstName for frontend compatibility
-      lastName: '', // Add empty lastName for compatibility
-    }));
-    
-    res.json(transformedDaije);
-  } catch (error) {
-    logger.error('Error fetching all daije for admin mobile dashboard:', error);
-    res.status(500).json({ message: 'Greška pri dohvaćanju daija' });
-  }
-});
 
-// Admin endpoint - Get all organizations (including pending/rejected) for mobile dashboard
-app.get('/api/admin/organizations/all', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
-  try {
-    logger.info('Admin fetching all organizations for mobile dashboard (including pending/rejected)');
-    const organizations = await Organization.find().sort({ name: 1 });
-    logger.info(`Found ${organizations.length} organizations for admin mobile dashboard`);
-    res.json(organizations);
-  } catch (error) {
-    logger.error('Error fetching all organizations for admin mobile dashboard:', error);
-    res.status(500).json({ message: 'Greška pri dohvaćanju organizacija' });
-  }
-});
-
-// Admin endpoint - Get all lectures (including pending/rejected) for mobile dashboard
-app.get('/api/admin/lectures/all', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
-  try {
-    logger.info('Admin fetching all lectures for mobile dashboard (including pending/rejected)');
-    const lectures = await Lecture.find()
-      .populate('createdBy', 'firstName lastName email')
-      .sort({ createdAt: -1 });
-    logger.info(`Found ${lectures.length} lectures for admin mobile dashboard`);
-    
-    // Transform lectures to include daijaId for frontend compatibility
-    const transformedLectures = lectures.map(lecture => ({
-      ...lecture.toObject(),
-      daijaId: lecture.daija || null
-    }));
-    
-    res.json(transformedLectures);
-  } catch (error) {
-    logger.error('Error fetching all lectures for admin mobile dashboard:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
 
 // Update user endpoint - protected for admin access
 app.put('/api/users/:id', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {

@@ -3,7 +3,6 @@
  * 
  * NOTE: Base64 support is maintained for backward compatibility with:
  * - Existing database records that may still contain base64 images
- * - Mobile app during transition period (being migrated to file upload)
  * - Any legacy data that hasn't been migrated yet
  */
 

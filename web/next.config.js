@@ -5,10 +5,10 @@ const nextConfig = {
     styledComponents: true,
   },
 
-  // Exclude mobile app and other directories from build
+  // Exclude other directories from build
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   
-  // Ignore mobile directory and other non-web files
+  // Ignore non-web files
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -19,36 +19,31 @@ const nextConfig = {
       };
     }
 
-    // Exclude mobile directory and other non-web directories
+    // Exclude non-web directories
     config.watchOptions = {
       ...config.watchOptions,
       ignored: [
         '**/node_modules/**',
-        '**/mobile/**',
         '**/server/**',
         '**/scripts/**',
         '**/cypress/**',
         '**/.git/**',
-        '**/.expo/**',
         '**/public/**',
         '**/*.md',
         '**/package.json',
         '**/package-lock.json',
         '**/.gitignore',
-        '**/app.json',
-        '**/eas.json',
         '**/shared-colors.js',
         '**/combined.log',
         '**/error.log'
       ]
     };
 
-    // Exclude mobile files from module resolution
+    // Exclude non-web files from module resolution
     config.module.rules.push({
       test: /\.(js|jsx|ts|tsx)$/,
       exclude: [
         /node_modules/,
-        /mobile/,
         /server/,
         /scripts/,
         /cypress/
