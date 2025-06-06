@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Paper,
   TextField,
@@ -26,19 +26,12 @@ import axiosInstance from '@/utils/axiosConfig';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { SECURITY_QUESTIONS, getQuestionByIndex } from '@/data/securityQuestions';
-import { 
-  getRememberedCredentials, 
-  setRememberedCredentials, 
+import {
+  getRememberedCredentials,
+  setRememberedCredentials,
   clearRememberedCredentials,
   setToken,
   setUserData,
-  getToken,
-  getUserData,
-  validateEmail,
-  validatePassword,
-  validateRequired,
-  validateMinLength,
-  formatValidationErrors
 } from '@/utils/authHelpers';
 
 const Authentication = () => {

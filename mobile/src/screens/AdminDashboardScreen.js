@@ -24,6 +24,237 @@ import { SERVER_URL } from '../config/api';
 
 const { width, height } = Dimensions.get('window');
 
+// Section Navigation Component (similar to web sidebar)
+const SectionNavigation = ({ activeSection, onSectionChange, stats, userRole }) => {
+  const mainSections = [
+    { id: 'predavanja', title: 'Dersovi', icon: 'book-outline', color: colors.primary.main },
+    { id: 'organizations', title: 'Udruženja', icon: 'business-outline', color: colors.info.main },
+    { id: 'daije', title: 'Daije', icon: 'person-outline', color: colors.success.main },
+    { id: 'korisnici', title: 'Korisnici', icon: 'people-outline', color: colors.secondary.main }
+  ];
+
+  const approvalSections = [
+    { 
+      id: 'za-odobrenje', 
+      title: 'Za odobrenje', 
+      icon: 'time-outline', 
+      color: colors.warning.main,
+      badge: stats.totalPending
+    },
+    ...(userRole === 'super_admin' ? [{
+      id: 'odbijeno',
+      title: 'Odbijeno',
+      icon: 'close-circle-outline',
+      color: colors.error.main
+    }] : []),
+    {
+      id: 'prijedlozi',
+      title: 'Prijedlozi',
+      icon: 'bulb-outline',
+      color: colors.warning.main,
+      badge: stats.pendingSuggestions
+    }
+  ];
+
+  const renderSectionButton = (section) => (
+    <TouchableOpacity
+      key={section.id}
+      style={[
+        styles.sectionButton,
+        activeSection === section.id && styles.activeSectionButton
+      ]}
+      onPress={() => onSectionChange(section.id)}
+    >
+      <View style={[styles.sectionIconContainer, { backgroundColor: section.color + '15' }]}>
+        <Ionicons 
+          name={section.icon} 
+          size={20} 
+          color={activeSection === section.id ? colors.text.onPrimary : section.color} 
+        />
+        {section.badge > 0 && (
+          <View style={styles.sectionBadge}>
+            <Text style={styles.sectionBadgeText}>{section.badge}</Text>
+          </View>
+        )}
+      </View>
+      <Text style={[
+        styles.sectionButtonText,
+        activeSection === section.id && styles.activeSectionButtonText
+      ]}>
+        {section.title}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.sectionNavigation}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionScrollContainer}>
+        <View style={styles.sectionGroup}>
+          <Text style={styles.sectionGroupTitle}>GLAVNI MENI</Text>
+          <View style={styles.sectionButtonsRow}>
+            {mainSections.map(renderSectionButton)}
+          </View>
+        </View>
+        <View style={styles.sectionGroup}>
+          <Text style={styles.sectionGroupTitle}>ODOBRAVANJE</Text>
+          <View style={styles.sectionButtonsRow}>
+            {approvalSections.map(renderSectionButton)}
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+// Content List Component (similar to web DataTable)
+const ContentList = ({ data, type, onEdit, onDelete, onApprove, onReject, showApprovalActions = false, refreshing = false, onRefresh }) => {
+  const getItemType = (item) => {
+    if (item.title && item.speaker) return 'lecture';
+    if (item.firstName && item.lastName) return 'daija';
+    if (item.name && !item.firstName) return 'organization';
+    if (item.username || (item.email && !item.name && !item.firstName)) return 'user';
+    if (item.description && !item.speaker) return 'suggestion';
+    return 'unknown';
+  };
+
+  const getItemTitle = (item, type) => {
+    const itemType = type === 'mixed' ? getItemType(item) : type;
+    switch (itemType) {
+      case 'lecture': return item.title;
+      case 'daija': return `${item.firstName} ${item.lastName}`;
+      case 'organization': return item.name;
+      case 'user': return item.username || item.email;
+      case 'suggestion': return item.title || 'Prijedlog';
+      default: return 'Nepoznato';
+    }
+  };
+
+  const getItemSubtitle = (item, type) => {
+    const itemType = type === 'mixed' ? getItemType(item) : type;
+    switch (itemType) {
+      case 'lecture': return `${item.speaker} • ${item.organization}`;
+      case 'daija': return item.specialization || 'Daija';
+      case 'organization': return item.shortDescription || item.address;
+      case 'user': return item.email;
+      case 'suggestion': return item.description;
+      default: return '';
+    }
+  };
+
+  const getItemIcon = (item, type) => {
+    const itemType = type === 'mixed' ? getItemType(item) : type;
+    switch (itemType) {
+      case 'lecture': return 'book-outline';
+      case 'daija': return 'person-outline';
+      case 'organization': return 'business-outline';
+      case 'user': return 'people-outline';
+      case 'suggestion': return 'bulb-outline';
+      default: return 'document-outline';
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved': return colors.success.main;
+      case 'pending': return colors.warning.main;
+      case 'rejected': return colors.error.main;
+      default: return colors.text.secondary;
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'approved': return 'Odobreno';
+      case 'pending': return 'Na čekanju';
+      case 'rejected': return 'Odbačeno';
+      default: return 'Nepoznato';
+    }
+  };
+
+  const renderItem = ({ item, index }) => (
+    <View style={styles.contentListItem}>
+      <View style={styles.contentItemLeft}>
+        <View style={[styles.contentItemIcon, { backgroundColor: colors.primary.main + '15' }]}>
+          <Ionicons name={getItemIcon(item, type)} size={24} color={colors.primary.main} />
+        </View>
+        <View style={styles.contentItemText}>
+          <Text style={styles.contentItemTitle} numberOfLines={1}>
+            {getItemTitle(item, type)}
+          </Text>
+          <Text style={styles.contentItemSubtitle} numberOfLines={1}>
+            {getItemSubtitle(item, type)}
+          </Text>
+          {item.status && (
+            <View style={[styles.statusChip, { backgroundColor: getStatusColor(item.status) + '15' }]}>
+              <Text style={[styles.statusChipText, { color: getStatusColor(item.status) }]}>
+                {getStatusText(item.status)}
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+      
+      <View style={styles.contentItemActions}>
+        {showApprovalActions && item.status === 'pending' && (
+          <>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: colors.error.main }]}
+              onPress={() => onReject && onReject(item)}
+            >
+              <Ionicons name="close" size={16} color={colors.text.onPrimary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: colors.success.main }]}
+              onPress={() => onApprove && onApprove(item)}
+            >
+              <Ionicons name="checkmark" size={16} color={colors.text.onPrimary} />
+            </TouchableOpacity>
+          </>
+        )}
+        {onEdit && (
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: colors.info.main }]}
+            onPress={() => onEdit(item)}
+          >
+            <Ionicons name="pencil" size={16} color={colors.text.onPrimary} />
+          </TouchableOpacity>
+        )}
+        {onDelete && (
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: colors.error.main }]}
+            onPress={() => onDelete(item)}
+          >
+            <Ionicons name="trash" size={16} color={colors.text.onPrimary} />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  if (data.length === 0) {
+    return (
+      <View style={styles.emptyState}>
+        <Ionicons name="document-outline" size={64} color={colors.text.disabled} />
+        <Text style={styles.emptyStateTitle}>Nema podataka</Text>
+        <Text style={styles.emptyStateSubtitle}>Trenutno nema stavki za prikaz</Text>
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      data={data}
+      renderItem={renderItem}
+      keyExtractor={(item, index) => item._id || index.toString()}
+      style={styles.contentList}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    />
+  );
+};
+
 // Modern Action Card Component
 const ModernActionCard = ({ title, subtitle, icon, color, onPress, badge, disabled = false }) => (
   <TouchableOpacity 
@@ -397,7 +628,7 @@ const AdminDashboardScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeSection, setActiveSection] = useState('predavanja'); // Add section state
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [approvalSettings, setApprovalSettings] = useState({
     lecture: true,
@@ -687,6 +918,140 @@ const AdminDashboardScreen = ({ navigation }) => {
     }
   };
 
+  // Filter data based on search query (similar to web)
+  const filterData = (items, searchQuery, type) => {
+    if (!searchQuery) return items;
+    
+    const query = searchQuery.toLowerCase();
+    return items.filter(item => {
+      switch (type) {
+        case 'lecture':
+          return item.title?.toLowerCase().includes(query) ||
+                 item.speaker?.toLowerCase().includes(query) ||
+                 item.organization?.toLowerCase().includes(query);
+        case 'daija':
+          return item.firstName?.toLowerCase().includes(query) ||
+                 item.lastName?.toLowerCase().includes(query) ||
+                 item.specialization?.toLowerCase().includes(query);
+        case 'organization':
+          return item.name?.toLowerCase().includes(query) ||
+                 item.shortDescription?.toLowerCase().includes(query);
+        case 'user':
+          return item.username?.toLowerCase().includes(query) ||
+                 item.email?.toLowerCase().includes(query);
+        case 'suggestion':
+          return item.title?.toLowerCase().includes(query) ||
+                 item.description?.toLowerCase().includes(query);
+        default:
+          return true;
+      }
+    });
+  };
+
+  // Get content for current section (similar to web renderContent)
+  const getCurrentSectionContent = () => {
+    switch (activeSection) {
+      case 'predavanja': {
+        const approvedLectures = filterData(
+          (data.lectures || []).filter(l => l.status === 'approved'),
+          searchQuery,
+          'lecture'
+        );
+        return {
+          title: 'Odobrena predavanja (Dersovi)',
+          data: approvedLectures,
+          type: 'lecture',
+          showApprovalActions: false
+        };
+      }
+      case 'organizations': {
+        const approvedOrganizations = filterData(
+          (data.organizations || []).filter(o => o.status === 'approved'),
+          searchQuery,
+          'organization'
+        );
+        return {
+          title: 'Odobrena udruženja',
+          data: approvedOrganizations,
+          type: 'organization',
+          showApprovalActions: false
+        };
+      }
+      case 'daije': {
+        const approvedDaije = filterData(
+          (data.daije || []).filter(d => d.status === 'approved'),
+          searchQuery,
+          'daija'
+        );
+        return {
+          title: 'Odobrene daije',
+          data: approvedDaije,
+          type: 'daija',
+          showApprovalActions: false
+        };
+      }
+      case 'korisnici': {
+        const filteredUsers = filterData(data.users, searchQuery, 'user');
+        return {
+          title: 'Korisnici',
+          data: filteredUsers,
+          type: 'user',
+          showApprovalActions: false
+        };
+      }
+      case 'za-odobrenje': {
+        const pendingItems = [
+          ...filterData((data.lectures || []).filter(l => l.status === 'pending'), searchQuery, 'lecture'),
+          ...filterData((data.daije || []).filter(d => d.status === 'pending'), searchQuery, 'daija'),
+          ...filterData((data.organizations || []).filter(o => o.status === 'pending'), searchQuery, 'organization')
+        ];
+        return {
+          title: 'Sadržaj za odobrenje',
+          data: pendingItems,
+          type: 'mixed',
+          showApprovalActions: true
+        };
+      }
+      case 'odbijeno': {
+        if (user?.role !== 'super_admin') {
+          setActiveSection('predavanja');
+          return null;
+        }
+        const rejectedItems = [
+          ...filterData((data.lectures || []).filter(l => l.status === 'rejected'), searchQuery, 'lecture'),
+          ...filterData((data.daije || []).filter(d => d.status === 'rejected'), searchQuery, 'daija'),
+          ...filterData((data.organizations || []).filter(o => o.status === 'rejected'), searchQuery, 'organization')
+        ];
+        return {
+          title: 'Odbačeni sadržaj',
+          data: rejectedItems,
+          type: 'mixed',
+          showApprovalActions: false
+        };
+      }
+      case 'prijedlozi': {
+        const activeSuggestions = filterData(
+          (data.suggestions || []).filter(s => s.status !== 'archived'),
+          searchQuery,
+          'suggestion'
+        );
+        return {
+          title: 'Prijedlozi',
+          data: activeSuggestions,
+          type: 'suggestion',
+          showApprovalActions: false
+        };
+      }
+      default:
+        return {
+          title: 'Odobrena predavanja (Dersovi)',
+          data: filterData((data.lectures || []).filter(l => l.status === 'approved'), searchQuery, 'lecture'),
+          type: 'lecture',
+          showApprovalActions: false
+        };
+    }
+  };
+
   const handleApproval = async (itemId, type, action) => {
     try {
       const endpoints = {
@@ -749,150 +1114,123 @@ const AdminDashboardScreen = ({ navigation }) => {
     );
   }
 
+  const currentContent = getCurrentSectionContent();
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Enhanced Header */}
-        <View style={styles.enhancedHeader}>
-          <View style={styles.headerTop}>
-            <View style={styles.headerInfo}>
-              <Text style={styles.headerTitle}>Admin Dashboard</Text>
-              <Text style={styles.headerSubtitle}>
-                Dobrodošli, {user?.firstName} {user?.lastName}
-              </Text>
-            </View>
-            <TouchableOpacity 
-              style={styles.settingsButton}
-              onPress={() => setSettingsVisible(true)}
-            >
-              <Ionicons name="settings-outline" size={24} color={colors.text.onPrimary} />
-            </TouchableOpacity>
+      {/* Enhanced Header */}
+      <View style={styles.enhancedHeader}>
+        <View style={styles.headerTop}>
+          <View style={styles.headerInfo}>
+            <Text style={styles.headerTitle}>Admin Dashboard</Text>
+            <Text style={styles.headerSubtitle}>
+              Dobrodošli, {user?.firstName} {user?.lastName}
+            </Text>
           </View>
-          
-          {/* Quick Stats Overview */}
-          <View style={styles.quickStatsContainer}>
-            <View style={styles.quickStat}>
-              <Text style={styles.quickStatValue}>{stats.totalContent}</Text>
-              <Text style={styles.quickStatLabel}>Ukupno sadržaja</Text>
-            </View>
-            <View style={styles.quickStat}>
-              <Text style={[styles.quickStatValue, { color: colors.warning.main }]}>{stats.totalPending}</Text>
-              <Text style={styles.quickStatLabel}>Na čekanju</Text>
-            </View>
-            <View style={styles.quickStat}>
-              <Text style={[styles.quickStatValue, { color: colors.success.main }]}>{stats.totalActive}</Text>
-              <Text style={styles.quickStatLabel}>Aktivno</Text>
-            </View>
+          <TouchableOpacity 
+            style={styles.settingsButton}
+            onPress={() => setSettingsVisible(true)}
+          >
+            <Ionicons name="settings-outline" size={24} color={colors.text.onPrimary} />
+          </TouchableOpacity>
+        </View>
+        
+        {/* Quick Stats Overview */}
+        <View style={styles.quickStatsContainer}>
+          <View style={styles.quickStat}>
+            <Text style={styles.quickStatValue}>{stats.totalContent}</Text>
+            <Text style={styles.quickStatLabel}>Ukupno sadržaja</Text>
+          </View>
+          <View style={styles.quickStat}>
+            <Text style={[styles.quickStatValue, { color: colors.warning.main }]}>{stats.totalPending}</Text>
+            <Text style={styles.quickStatLabel}>Na čekanju</Text>
+          </View>
+          <View style={styles.quickStat}>
+            <Text style={[styles.quickStatValue, { color: colors.success.main }]}>{stats.totalActive}</Text>
+            <Text style={styles.quickStatLabel}>Aktivno</Text>
           </View>
         </View>
+      </View>
 
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <View style={styles.quickActionsGrid}>
-            <ModernActionCard
-              title="Dodaj"
-              subtitle="Dodaj ders, daiju ili udruženje"
-              icon="add-circle-outline"
-              color={colors.primary.main}
-              onPress={() => setAddModalVisible(true)}
-            />
-          </View>
+      {/* Section Navigation */}
+      <SectionNavigation
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        stats={stats}
+        userRole={user?.role}
+      />
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color={colors.text.secondary} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Pretraži..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholderTextColor={colors.text.secondary}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+            <Ionicons name="close-circle" size={20} color={colors.text.secondary} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Quick Add Button */}
+      <View style={styles.quickAddContainer}>
+        <TouchableOpacity
+          style={styles.quickAddButton}
+          onPress={() => setAddModalVisible(true)}
+        >
+          <Ionicons name="add" size={24} color={colors.text.onPrimary} />
+          <Text style={styles.quickAddText}>Dodaj</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Content Area */}
+      <View style={styles.contentContainer}>
+        <View style={styles.contentHeader}>
+          <Text style={styles.contentTitle}>{currentContent?.title}</Text>
+          <Text style={styles.contentSubtitle}>
+            {currentContent?.data?.length || 0} stavki
+          </Text>
         </View>
-
-        {/* Content Management */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Upravljanje sadržajem</Text>
-          
-          <ModernActionCard
-            title="Dersovi"
-            subtitle={`${stats.totalLectures} ukupno • Upravljaj sadržajem`}
-            icon="book-outline"
-            color={colors.primary.main}
-            onPress={() => navigateToManagement('lectures')}
-          />
-          
-          <ModernActionCard
-            title="Daije"
-            subtitle={`${stats.totalDaije} ukupno • Upravljaj profilima`}
-            icon="person-outline"
-            color={colors.success.main}
-            onPress={() => navigateToManagement('daije')}
-          />
-          
-          <ModernActionCard
-            title="Udruženja"
-            subtitle={`${stats.totalOrganizations} ukupno • Upravljaj udruženjima`}
-            icon="business-outline"
-            color={colors.info.main}
-            onPress={() => navigateToManagement('organizations')}
-          />
-          
-          <ModernActionCard
-            title="Korisnici"
-            subtitle={`${stats.totalUsers} registriranih korisnika`}
-            icon="people-outline"
-            color={colors.secondary.main}
-            onPress={() => navigateToManagement('users')}
-          />
-
-          {stats.totalSuggestions > 0 && (
-            <ModernActionCard
-              title="Prijedlozi"
-              subtitle={`${stats.totalSuggestions} ukupno • ${stats.pendingSuggestions} aktivnih`}
-              icon="bulb-outline"
-              color={colors.warning.main}
-              badge={stats.pendingSuggestions > 0 ? stats.pendingSuggestions : null}
-              onPress={() => navigateToManagement('suggestions')}
-            />
-          )}
-        </View>
-
-        {/* Approval Queue */}
-        <View style={styles.section}>
-          {stats.totalPending > 0 ? (
-            <>
-              {/* Pending Lectures */}
-              {data.lectures.filter(l => l?.status === 'pending').map((lecture, index) => (
-                <ApprovalCard
-                  key={`lecture-${lecture._id || index}`}
-                  item={lecture}
-                  type="lecture"
-                  onApprove={() => handleApproval(lecture._id, 'lecture', 'approve')}
-                  onReject={() => handleApproval(lecture._id, 'lecture', 'reject')}
-                />
-              ))}
-              
-              {/* Pending Daije */}
-              {data.daije.filter(d => d?.status === 'pending').map((daija, index) => (
-                <ApprovalCard
-                  key={`daija-${daija._id || index}`}
-                  item={daija}
-                  type="daija"
-                  onApprove={() => handleApproval(daija._id, 'daija', 'approve')}
-                  onReject={() => handleApproval(daija._id, 'daija', 'reject')}
-                />
-              ))}
-              
-              {/* Pending Organizations */}
-              {data.organizations.filter(o => o?.status === 'pending').map((org, index) => (
-                <ApprovalCard
-                  key={`org-${org._id || index}`}
-                  item={org}
-                  type="organization"
-                  onApprove={() => handleApproval(org._id, 'organization', 'approve')}
-                  onReject={() => handleApproval(org._id, 'organization', 'reject')}
-                />
-              ))}
-            </>
-          ) : null}
-        </View>
-      </ScrollView>
+        
+        <ContentList
+          data={currentContent?.data || []}
+          type={currentContent?.type}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          onEdit={isAdmin ? (item) => {
+            // Navigate to edit screen based on type
+            const itemType = item.title ? 'lecture' : item.firstName ? 'daija' : item.name ? 'organization' : 'user';
+            navigateToManagement(itemType === 'lecture' ? 'lectures' : itemType === 'daija' ? 'daije' : itemType === 'organization' ? 'organizations' : 'users', { editItem: item });
+          } : undefined}
+          onDelete={canDelete ? (item) => {
+            Alert.alert(
+              'Potvrdi brisanje',
+              'Da li ste sigurni da želite obrisati ovu stavku?',
+              [
+                { text: 'Otkaži', style: 'cancel' },
+                { text: 'Obriši', style: 'destructive', onPress: () => {
+                  // Handle delete
+                  console.log('Delete item:', item);
+                }}
+              ]
+            );
+          } : undefined}
+          onApprove={currentContent?.showApprovalActions ? (item) => {
+            const itemType = item.title ? 'lecture' : item.firstName ? 'daija' : 'organization';
+            handleApproval(item._id, itemType, 'approve');
+          } : undefined}
+          onReject={currentContent?.showApprovalActions ? (item) => {
+            const itemType = item.title ? 'lecture' : item.firstName ? 'daija' : 'organization';
+            handleApproval(item._id, itemType, 'reject');
+          } : undefined}
+          showApprovalActions={currentContent?.showApprovalActions}
+        />
+      </View>
 
       {/* Settings Modal */}
       <SettingsModal
@@ -1260,6 +1598,233 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 16,
+  },
+  // Section Navigation Styles
+  sectionNavigation: {
+    backgroundColor: colors.background.paper,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+    paddingVertical: 12,
+  },
+  sectionScrollContainer: {
+    paddingHorizontal: 16,
+  },
+  sectionGroup: {
+    marginRight: 24,
+  },
+  sectionGroupTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: colors.text.secondary,
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  sectionButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  sectionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: colors.background.default,
+    borderWidth: 1,
+    borderColor: colors.divider,
+  },
+  activeSectionButton: {
+    backgroundColor: colors.primary.main,
+    borderColor: colors.primary.main,
+  },
+  sectionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+    position: 'relative',
+  },
+  sectionBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: colors.error.main,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionBadgeText: {
+    color: colors.text.onPrimary,
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  sectionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text.primary,
+  },
+  activeSectionButtonText: {
+    color: colors.text.onPrimary,
+  },
+  // Search Container Styles
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background.paper,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    margin: 16,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text.primary,
+  },
+  clearButton: {
+    marginLeft: 12,
+  },
+  // Quick Add Button Styles
+  quickAddContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  quickAddButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary.main,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  quickAddText: {
+    color: colors.text.onPrimary,
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  // Content Container Styles
+  contentContainer: {
+    flex: 1,
+    backgroundColor: colors.background.default,
+  },
+  contentHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+    backgroundColor: colors.background.paper,
+  },
+  contentTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text.primary,
+    marginBottom: 4,
+  },
+  contentSubtitle: {
+    fontSize: 14,
+    color: colors.text.secondary,
+  },
+  // Content List Styles
+  contentList: {
+    flex: 1,
+    backgroundColor: colors.background.default,
+  },
+  contentListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background.paper,
+    marginHorizontal: 16,
+    marginVertical: 4,
+    borderRadius: 12,
+    padding: 16,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  contentItemLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  contentItemIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  contentItemText: {
+    flex: 1,
+  },
+  contentItemTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text.primary,
+    marginBottom: 4,
+  },
+  contentItemSubtitle: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    marginBottom: 4,
+  },
+  statusChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  statusChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  contentItemActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Empty State Styles
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text.primary,
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateSubtitle: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   emptyApprovalCard: {
     flex: 1,

@@ -839,7 +839,7 @@ app.post('/api/suggestions', async (req, res) => {
           try {
             const daija = await Daija.findById(referenceId);
             if (daija) {
-              targetName = daija.firstName || 'Nepoznata daija';
+              targetName = daija.name || 'Nepoznata daija';
               targetId = referenceId;
             }
           } catch (error) {
@@ -1496,7 +1496,7 @@ app.get('/api/daije/with-active-lectures', async (req, res) => {
 app.get('/api/daije', async (req, res) => {
   try {
     logger.info('Fetching all daije');
-    const daije = await Daija.find({ status: 'approved' }).sort({ firstName: 1 });
+    const daije = await Daija.find({ status: 'approved' }).sort({ name: 1 });
     logger.info(`Found ${daije.length} approved daije`);
     res.json(daije);
   } catch (error) {
@@ -1516,7 +1516,7 @@ app.get('/api/daije/:id', async (req, res) => {
       return res.status(404).json({ message: 'Daija nije pronađena' });
     }
     
-    logger.info('Daija found:', { id: daija._id, name: `${daija.firstName}` });
+    logger.info('Daija found:', { id: daija._id, name: daija.name });
     res.json(daija);
   } catch (error) {
     logger.error('Error fetching daija by ID:', error);
@@ -1533,7 +1533,7 @@ app.post('/api/daije', authenticateToken, isAdminOrSuperAdmin, async (req, res) 
     });
 
     const daijaData = {
-      firstName: req.body.firstName,
+      name: req.body.name || req.body.firstName || '',
       title: req.body.title,
       dateOfBirth: req.body.dateOfBirth || null,
       biography: req.body.biography || '',
@@ -1549,7 +1549,7 @@ app.post('/api/daije', authenticateToken, isAdminOrSuperAdmin, async (req, res) 
     const savedDaija = await daija.save();
     logger.info('New daija saved successfully:', {
       id: savedDaija._id,
-      name: savedDaija.firstName,
+      name: savedDaija.name,
       status: savedDaija.status
     });
     
@@ -1577,7 +1577,7 @@ app.put('/api/daije/:id', authenticateToken, isAdminOrSuperAdmin, async (req, re
 
     // Prepare update data
     const updateData = {
-      firstName: req.body.firstName,
+      name: req.body.name || req.body.firstName || '',
       title: req.body.title,
       dateOfBirth: req.body.dateOfBirth || null,
       biography: req.body.biography || '',
@@ -1596,7 +1596,7 @@ app.put('/api/daije/:id', authenticateToken, isAdminOrSuperAdmin, async (req, re
 
     logger.info('Daija updated:', { 
       id: daija._id, 
-      name: daija.firstName,
+      name: daija.name,
       updatedBy: req.user.id,
       userRole: req.user.role
     });
@@ -1631,8 +1631,8 @@ app.patch('/api/daije/:id', authenticateToken, isAdminOrSuperAdmin, async (req, 
     if (req.body.status !== undefined) {
       updateData.status = req.body.status;
     }
-    if (req.body.firstName !== undefined) {
-      updateData.firstName = req.body.firstName;
+    if (req.body.name !== undefined || req.body.firstName !== undefined) {
+      updateData.name = req.body.name || req.body.firstName;
     }
     if (req.body.title !== undefined) {
       updateData.title = req.body.title;
@@ -1661,7 +1661,7 @@ app.patch('/api/daije/:id', authenticateToken, isAdminOrSuperAdmin, async (req, 
 
     logger.info('Daija updated via PATCH:', { 
       id: daija._id, 
-      name: daija.firstName,
+      name: daija.name,
       status: daija.status,
       updatedBy: req.user.id,
       userRole: req.user.role
@@ -1684,7 +1684,7 @@ app.delete('/api/daije/:id', authenticateToken, isAdminOrSuperAdmin, async (req,
     if (!daija) {
       return res.status(404).json({ message: 'Daija not found' });
     }
-    logger.info('Daija deleted:', { id: req.params.id, name: `${daija.firstName} ${daija.lastName}` });
+    logger.info('Daija deleted:', { id: req.params.id, name: daija.name });
     res.json({ message: 'Daija deleted successfully' });
   } catch (error) {
     logger.error('Error deleting daija:', error);

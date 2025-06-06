@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import {
   Box,
@@ -8,31 +8,21 @@ import {
   Card,
   CardContent,
   CardActions,
-  CircularProgress,
   Alert,
   Paper,
-  Chip,
-  Divider
+  Divider,
 } from '@mui/material';
-import {
-  Dashboard as DashboardIcon,
-  School as SchoolIcon,
-  Login as LoginIcon,
-  Business as BusinessIcon,
-  Person as PersonIcon,
-  CalendarToday as CalendarIcon
-} from '@mui/icons-material';
+import { School as SchoolIcon, Business as BusinessIcon, Person as PersonIcon } from '@mui/icons-material';
 import PageLayout from '@/components/PageLayout';
 import OrganizationCompactCard from '@/components/OrganizationCompactCard';
 import DaijaCard from '@/components/DaijaCard';
 import LectureCard from '@/components/LectureCard';
 import { OrganizationsGrid, DaijeGrid, LecturesGrid } from '@/components/GridLayout';
 import axiosInstance from '@/utils/axiosConfig';
-import { 
-  normalizeToArray,
-  sortOrganizationsByLectureProximity, 
-  sortDaijeByLectureProximity, 
-  sortLecturesByTimeProximity 
+import {
+  sortOrganizationsByLectureProximity,
+  sortDaijeByLectureProximity,
+  sortLecturesByTimeProximity,
 } from '@/utils/dataHelpers';
 
 // HeroSection Component

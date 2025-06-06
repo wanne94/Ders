@@ -1,4 +1,3 @@
-import React from 'react';
 import ElementPage from './ElementPage';
 
 const DaijePage = () => {

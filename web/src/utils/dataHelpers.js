@@ -163,15 +163,17 @@ export const truncateText = (text, length = 100) => {
 
 /**
  * Generates URL-friendly slug from daija name
- * @param {Object} daija - Daija object with firstName
+ * @param {Object} daija - Daija object with name field
  * @returns {string} - URL-friendly slug
  */
 export const generateDaijaSlug = (daija) => {
-  if (!daija || !daija.firstName) return '';
+  if (!daija || (!daija.name && !daija.firstName)) return '';
   
-  const firstName = daija.firstName || '';
+  // Use name field or fallback to firstName for backward compatibility
+  const fullName = daija.name || daija.firstName || '';
   
-  return firstName
+  // Convert to lowercase and handle special characters
+  return fullName
     .toLowerCase()
     .replace(/[čć]/g, 'c')
     .replace(/[đ]/g, 'd')

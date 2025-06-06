@@ -1,17 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import dynamic from 'next/dynamic';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/utils/ProtectedRoute';
 import {
   Box,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -20,53 +12,16 @@ import {
   TextField,
   Alert,
   Snackbar,
-  Container,
   useMediaQuery,
   useTheme,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
   CircularProgress,
-  Grid,
-  Switch,
-  Chip,
-  FormControl,
-  Select,
-  InputAdornment,
-  Card,
-  CardContent,
-  CardHeader,
-  Avatar,
-  Divider,
-  Stack
 } from '@mui/material';
 import { jwtDecode } from 'jwt-decode';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-// Using default English (US) locale
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/Search';
-import PersonIcon from '@mui/icons-material/Person';
-import BusinessIcon from '@mui/icons-material/Business';
-import PendingActionsIcon from '@mui/icons-material/PendingActions';
-import GroupIcon from '@mui/icons-material/Group';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import { debounce } from 'lodash';
-
-// Components
-import Navigation from '@/components/Navigation';
 import PageLayout from '@/components/PageLayout';
 import DashSidebar from '@/components/DashSidebar';
 
-import OrganizationCard from '@/components/OrganizationCard';
 import DataTable from '@/components/DataTable';
-import LectureCard from '@/components/LectureCard';
 import Settings from '@/components/dashboard/Settings';
 import LectureForm from '@/components/LectureForm';
 import DaijaForm from '@/components/DaijaForm';
@@ -74,8 +29,6 @@ import OrganizationForm from '@/components/OrganizationForm';
 import UserForm from '@/components/UserForm';
 
 import axiosInstance from '@/utils/axiosConfig';
-import { normalizeToArray } from '@/utils/dataHelpers';
-import { getApiRoute } from '@/utils/apiRoutes';
 
 const Dashboard = () => {
   // ... (ostali stateovi ostaju)

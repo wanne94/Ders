@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const daijaSchema = new mongoose.Schema({
-  firstName: {
+  name: {
     type: String,
     required: true
   },
@@ -47,12 +47,12 @@ const daijaSchema = new mongoose.Schema({
 
 // 🚀 PERFORMANCE INDEXES for Daija model
 daijaSchema.index({ status: 1 }); // For filtering by status
-daijaSchema.index({ firstName: 1 }); // For sorting by name
-daijaSchema.index({ status: 1, firstName: 1 }); // Compound for active daije sorted by name
+daijaSchema.index({ name: 1 }); // For sorting by name
+daijaSchema.index({ status: 1, name: 1 }); // Compound for active daije sorted by name
 
 // Text search index for searching daije
 daijaSchema.index({ 
-  firstName: 'text', 
+  name: 'text', 
   biography: 'text',
   shortDescription: 'text'
 });
