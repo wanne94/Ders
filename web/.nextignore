@@ -1,3 +1,7 @@
+# Exclude mobile app
+../mobile/**
+mobile/**
+
 # Exclude server
 ../server/**
 server/**
@@ -10,9 +14,11 @@ scripts/**
 ../cypress/**
 cypress/**
 
-# Exclude git
+# Exclude git and expo
 ../.git/**
 .git/**
+../.expo/**
+.expo/**
 
 # Exclude documentation
 ../*.md
@@ -21,6 +27,7 @@ cypress/**
 # Exclude config files
 ../package.json
 ../package-lock.json
+../app.json
 ../shared-colors.js
 
 # Exclude logs

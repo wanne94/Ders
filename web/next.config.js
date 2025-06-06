@@ -24,15 +24,18 @@ const nextConfig = {
       ...config.watchOptions,
       ignored: [
         '**/node_modules/**',
+        '**/mobile/**',
         '**/server/**',
         '**/scripts/**',
         '**/cypress/**',
         '**/.git/**',
+        '**/.expo/**',
         '**/public/**',
         '**/*.md',
         '**/package.json',
         '**/package-lock.json',
         '**/.gitignore',
+        '**/app.json',
         '**/shared-colors.js',
         '**/combined.log',
         '**/error.log'
@@ -44,6 +47,7 @@ const nextConfig = {
       test: /\.(js|jsx|ts|tsx)$/,
       exclude: [
         /node_modules/,
+        /mobile/,
         /server/,
         /scripts/,
         /cypress/

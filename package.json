@@ -4,24 +4,29 @@
   "private": true,
   "workspaces": [
     "web",
+    "mobile",
     "server",
     "shared"
   ],
   "scripts": {
     "dev": "npm run dev:full",
     "dev:web": "cd web && npm run dev",
+    "dev:mobile": "cd mobile && npm run start",
     "dev:server": "cd server && npm run dev",
     "dev:shared": "cd shared && npm run dev",
     "dev:full": "concurrently \"npm run dev:web\" \"npm run dev:server\"",
+    "dev:all": "concurrently \"npm run dev:web\" \"npm run dev:mobile\" \"npm run dev:server\"",
     "start": "npm run start:full",
     "start:web": "cd web && npm run start",
+    "start:mobile": "cd mobile && npm run start",
     "start:server": "cd server && npm run start",
     "start:full": "concurrently \"npm run start:web\" \"npm run start:server\"",
     "build": "cd web && npm run build",
+    "build:mobile": "cd mobile && npm run build",
     "build:shared": "cd shared && npm run build",
-    "build:all": "npm run build:shared && npm run build",
+    "build:all": "npm run build:shared && npm run build && npm run build:mobile",
     "deploy:prepare": "node prepare-deployment.js",
-    "install:all": "npm install && cd web && npm install && cd ../server && npm install && cd ../shared && npm install"
+    "install:all": "npm install && cd web && npm install && cd ../mobile && npm install && cd ../server && npm install && cd ../shared && npm install"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
