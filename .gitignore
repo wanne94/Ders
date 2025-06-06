@@ -35,4 +35,3 @@ yarn-error.log*
 
 # Node modules
 /web/node_modules/
-/mobile/node_modules/

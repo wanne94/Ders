@@ -4,32 +4,18 @@
   "private": true,
   "workspaces": [
     "web",
-    "mobile",
     "server",
     "shared"
   ],
   "scripts": {
-    "start": "expo start --clear",
-    "start:dev": "expo start --dev-client --clear",
-    "android": "expo start --android --clear",
-    "ios": "expo start --ios --clear",
-    "web": "expo start --web",
-    "build:android": "eas build --platform android --profile production",
-    "build:ios": "eas build --platform ios --profile production",
-    "build:preview": "eas build --platform android --profile preview",
-    "submit:android": "eas submit --platform android",
-    "submit:ios": "eas submit --platform ios",
     "dev:web": "cd web && npm run dev",
     "dev:server": "cd server && npm run dev",
-    "dev:mobile": "expo start",
     "dev:full": "concurrently \"npm run dev:web\" \"npm run dev:server\"",
     "start:full": "concurrently \"npm run start:web\" \"npm run start:server\"",
     "build": "cd web && npm run build",
     "deploy:prepare": "node prepare-deployment.js"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0",
-    "babel-preset-expo": "~11.0.0",
     "concurrently": "^8.2.2",
     "eslint": "^9.28.0",
     "eslint-plugin-react": "^7.37.5",
@@ -37,33 +23,14 @@
     "eslint-plugin-unused-imports": "^4.1.4"
   },
   "dependencies": {
-    "@expo/vector-icons": "^14.0.3",
-    "@react-native-async-storage/async-storage": "2.1.2",
-    "@react-native-community/datetimepicker": "8.3.0",
-    "@react-native-community/netinfo": "^11.4.1",
-    "@react-navigation/bottom-tabs": "^6.5.11",
-    "@react-navigation/drawer": "^6.7.2",
-    "@react-navigation/native": "^6.1.9",
-    "@react-navigation/stack": "^6.3.20",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^5.15.15",
+    "@mui/material": "^5.15.15",
+    "@mui/x-date-pickers": "^6.20.2",
     "axios": "^1.9.0",
-    "expo": "~53.0.9",
-    "expo-image-picker": "~16.1.4",
-    "expo-linear-gradient": "~14.1.4",
-    "expo-status-bar": "~2.2.3",
     "multer": "^2.0.0",
-    "react": "19.0.0",
-    "react-native": "0.79.2",
-    "react-native-gesture-handler": "~2.24.0",
-    "react-native-paper": "^5.12.3",
-    "react-native-reanimated": "~3.17.4",
-    "react-native-safe-area-context": "5.4.0",
-    "react-native-screens": "~4.11.1"
-  },
-  "expo": {
-    "doctor": {
-      "reactNativeDirectoryCheck": {
-        "listUnknownPackages": false
-      }
-    }
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }

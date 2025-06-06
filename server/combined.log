@@ -2371,3 +2371,11 @@
 {"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-06T14:13:11.786Z"}
 {"level":"info","message":"Database performance indexes created","timestamp":"2025-06-06T14:13:12.707Z"}
 {"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-06T14:13:12.712Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-06T16:20:49.782Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-06T16:20:49.784Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-06T16:20:50.779Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-06T16:20:50.783Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-06T16:21:32.266Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-06T16:21:32.268Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-06T16:21:33.184Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-06T16:21:33.189Z"}
