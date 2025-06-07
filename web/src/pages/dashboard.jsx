@@ -1,20 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/utils/ProtectedRoute';
 import {
-  Box,
-  Typography,
-  Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Alert,
-  Snackbar,
-  useMediaQuery,
-  useTheme,
-  CircularProgress,
+    Box,
+    Typography,
+    Paper,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    TextField,
+    Alert,
+    Snackbar,
+    useMediaQuery,
+    useTheme,
+    CircularProgress,
 } from '@mui/material';
 import { jwtDecode } from 'jwt-decode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -141,9 +141,9 @@ const Dashboard = () => {
     try {
       const [usersRes, lecturesRes, daijeRes, orgsRes, suggestionsRes, archivedSuggestionsRes, suggestionsCountRes] = await Promise.all([
         axiosInstance.get('/users/public'),
-        axiosInstance.get('/admin/lectures/all'),
-        axiosInstance.get('/admin/daije/all'),
-        axiosInstance.get('/admin/organizations/all'),
+        axiosInstance.get('/lectures/public'),
+        axiosInstance.get('/daije/public'),
+        axiosInstance.get('/organizations/public'),
         axiosInstance.get('/suggestions/public'),
         axiosInstance.get('/suggestions/archived/public'),
         axiosInstance.get('/suggestions/count/public')
