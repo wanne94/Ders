@@ -1,5 +1,5 @@
-// Card helper functions for formatting data across web and mobile apps
-import { getImageUrl, getDefaultImageByType } from '../utils/imageUtils';
+// Card helper functions for formatting data for web app
+import { getImageUrl } from '../utils/imageUtils';
 
 export interface InfoItem {
   icon: string;
@@ -84,7 +84,7 @@ export const formatLectureCard = (lecture: any): CardData => {
 
   return {
     title: (lecture.title || 'Bez naziva').toUpperCase(),
-    imageUrl: getImageUrl(lecture.image) || getDefaultImageByType('lecture'),
+    imageUrl: getImageUrl(lecture.image) || getDefaultImage('lecture'),
     infoItems
   };
 };
@@ -150,7 +150,7 @@ export const formatDaijaCard = (daija: any, lectureCount?: number): CardData => 
   return {
     title: formatDaijaName(daija).toUpperCase(),
     subtitle: formatDaijaTitle(daija),
-    imageUrl: getImageUrl(daija.image) || getDefaultImageByType('daija'),
+    imageUrl: getImageUrl(daija.image) || getDefaultImage('daija'),
     infoItems
   };
 };
@@ -207,7 +207,7 @@ export const formatOrganizationCard = (organization: any, lectureCount?: number)
 
   return {
     title: (organization.name || 'Bez naziva').toUpperCase(),
-    imageUrl: getImageUrl(organization.image || organization.logo) || getDefaultImageByType('organization'),
+    imageUrl: getImageUrl(organization.image || organization.logo) || getDefaultImage('organization'),
     infoItems
   };
 };

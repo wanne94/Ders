@@ -32,7 +32,6 @@ const nextConfig = {
       ...config.watchOptions,
       ignored: [
         '**/node_modules/**',
-        '**/mobile/**',
         '**/server/**',
         '**/scripts/**',
         '**/cypress/**',
@@ -55,7 +54,6 @@ const nextConfig = {
       test: /\.(js|jsx|ts|tsx)$/,
       exclude: [
         /node_modules/,
-        /mobile/,
         /server/,
         /scripts/,
         /cypress/

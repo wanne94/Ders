@@ -1,6 +1,4 @@
-# Exclude mobile app
-../mobile/**
-mobile/**
+# Exclude mobile app (removed)
 
 # Exclude server
 ../server/**

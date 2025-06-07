@@ -5,6 +5,10 @@ const daijaSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  firstName: {
+    type: String,
+    required: false
+  },
   title: {
     type: String,
     required: true,

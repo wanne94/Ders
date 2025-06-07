@@ -1551,6 +1551,7 @@ app.post('/api/daije', authenticateToken, isAdminOrSuperAdmin, async (req, res) 
 
     const daijaData = {
       name: req.body.name || req.body.firstName || '',
+      firstName: req.body.firstName || req.body.name || '',
       title: req.body.title,
       dateOfBirth: req.body.dateOfBirth || null,
       biography: req.body.biography || '',
@@ -1594,7 +1595,8 @@ app.put('/api/daije/:id', authenticateToken, isAdminOrSuperAdmin, async (req, re
 
     // Prepare update data
     const updateData = {
-      name: req.body.name || req.body.firstName || '',
+      firstName: req.body.firstName || req.body.name || '',
+      name: req.body.firstName || req.body.name || '',
       title: req.body.title,
       dateOfBirth: req.body.dateOfBirth || null,
       biography: req.body.biography || '',

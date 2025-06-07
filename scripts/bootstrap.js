@@ -3,7 +3,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const rootDir = path.resolve(__dirname, '..');
-const projects = ['web', 'mobile'];
+const projects = ['web'];
 
 console.log('🚀 Setting up shared package in projects...');
 

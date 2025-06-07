@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Alert,
-  Snackbar,
-  TextField,
-  Typography,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    Box,
+    Alert,
+    Snackbar,
+    TextField,
+    Typography,
+    FormControl,
+    FormLabel,
+    RadioGroup,
+    FormControlLabel,
+    Radio
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import axiosInstance from '../utils/axiosConfig';
+import { getDefaultDaijaImage } from '../utils/imageUtils';
 
 const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) => {
   const [formData, setFormData] = useState({
@@ -44,7 +45,7 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
   useEffect(() => {
     if (daija) {
       setFormData({
-        firstName: daija.firstName || '',
+        firstName: daija.firstName || daija.name || '',
         title: daija.title || 'prof',
         biography: daija.biography || '',
         image: daija.image || '',
@@ -209,7 +210,8 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
       // If no image is provided, use default image
       const finalFormData = {
         ...formData,
-        image: imagePath || '/uploads/images/daijaslika.jpg'
+        name: formData.firstName, // Add name field for backend compatibility
+        image: formData.imageFile ? imagePath : (daija?.image || getDefaultDaijaImage())
       };
 
       // Remove imageFile from the data sent to server

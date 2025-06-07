@@ -466,18 +466,42 @@ const Dashboard = () => {
         const duplicatedItem = { ...itemToDuplicate };
         delete duplicatedItem._id;
         delete duplicatedItem.type;
+        delete duplicatedItem.createdAt;
+        delete duplicatedItem.updatedAt;
         
         // Postaviti status na pending
         duplicatedItem.status = 'pending';
         
-        // Dodati (kopija X) u naziv/ime
-        if (duplicatedItem.title) {
-          duplicatedItem.title = `${duplicatedItem.title} (kopija ${i + 1})`;
-        } else if (duplicatedItem.firstName) {
-          duplicatedItem.firstName = `${duplicatedItem.firstName} (kopija ${i + 1})`;
-        } else if (duplicatedItem.name) {
-          duplicatedItem.name = `${duplicatedItem.name} (kopija ${i + 1})`;
+        // Za daije, možda je image path neispravan - koristimo default sliku
+        if (itemToDuplicate.type === 'daija' && duplicatedItem.image) {
+          // Ako image nije dostupna, koristimo default
+          duplicatedItem.image = '';
         }
+        
+        // Dodati (kopija X) u naziv/ime
+        if (itemToDuplicate.type === 'lecture' && duplicatedItem.title) {
+          duplicatedItem.title = `${duplicatedItem.title} (kopija ${i + 1})`;
+        } else if (itemToDuplicate.type === 'organization' && duplicatedItem.name) {
+          duplicatedItem.name = `${duplicatedItem.name} (kopija ${i + 1})`;
+        } else if (itemToDuplicate.type === 'daija') {
+          // Za daije, mijenjamo ime/firstName
+          if (duplicatedItem.firstName) {
+            const newName = `${duplicatedItem.firstName} (kopija ${i + 1})`;
+            duplicatedItem.firstName = newName;
+            duplicatedItem.name = newName;
+          } else if (duplicatedItem.name) {
+            const newName = `${duplicatedItem.name} (kopija ${i + 1})`;
+            duplicatedItem.name = newName;
+            duplicatedItem.firstName = newName;
+          }
+        }
+        
+        console.log('🔄 Duplicating item:', {
+          type: itemToDuplicate.type,
+          originalName: itemToDuplicate.firstName || itemToDuplicate.name,
+          newName: duplicatedItem.firstName || duplicatedItem.name,
+          data: duplicatedItem
+        });
         
         promises.push(
           axiosInstance.post(endpoints[itemToDuplicate.type], duplicatedItem)
