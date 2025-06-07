@@ -1,6 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
-import { CssBaseline, Box, ThemeProvider } from '@mui/material';
+import { CssBaseline, Box } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 // Using default English (US) locale

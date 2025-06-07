@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   reactStrictMode: true,
   compiler: {
@@ -10,6 +12,12 @@ const nextConfig = {
   
   // Ignore non-web files
   webpack: (config, { isServer }) => {
+    // Add path alias for @ to src
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname, 'src'),
+    };
+
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
