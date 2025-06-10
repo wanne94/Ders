@@ -1,43 +1,37 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import {
-  Box,
-  Typography,
-  Button,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  Alert,
-  Paper,
-  Divider,
-  Container,
-  IconButton,
+    Box,
+    Typography,
+    Button,
+    Grid,
+    Card,
+    CardContent,
+    CardActions,
+    Alert,
+    Divider,
+    Container,
+    IconButton,
 } from '@mui/material';
 import {
-  School as SchoolIcon,
-  Business as BusinessIcon,
-  Person as PersonIcon,
-  CheckCircle as CheckCircleIcon,
-  Notifications as NotificationsIcon,
-  Bookmark as BookmarkIcon,
-  Event as EventIcon,
-  PersonAdd as PersonAddIcon,
-  Star as StarIcon,
-  Facebook as FacebookIcon,
-  Instagram as InstagramIcon
+    School as SchoolIcon,
+    Business as BusinessIcon,
+    Person as PersonIcon,
+    CheckCircle as CheckCircleIcon,
+    Notifications as NotificationsIcon,
+    Bookmark as BookmarkIcon,
+    Event as EventIcon,
+    PersonAdd as PersonAddIcon,
+    Star as StarIcon,
+    Facebook as FacebookIcon,
+    Instagram as InstagramIcon
 } from '@mui/icons-material';
 import PageLayout from '@/components/PageLayout';
-import OrganizationCompactCard from '@/components/OrganizationCompactCard';
-import DaijaCard from '@/components/DaijaCard';
-import LectureCard from '@/components/LectureCard';
 import { OrganizationsGrid, DaijeGrid, LecturesGrid } from '@/components/GridLayout';
-import axiosInstance from '@/utils/axiosConfig';
-import {
-  sortOrganizationsByLectureProximity,
-  sortDaijeByLectureProximity,
-  sortLecturesByTimeProximity,
-} from '@/utils/dataHelpers';
+import { sortOrganizationsByLectureProximity, sortLecturesByTimeProximity } from '@/utils/dataHelpers';
+import UniversalCard from '@/components/UniversalCard';
+import { sortAllDaijeWithActivePriority } from '../utils/dataHelpers';
+import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 
 
 
@@ -60,7 +54,7 @@ const HeroSection = () => {
       }}
     >
       <Typography variant="h2" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-        DERS
+        DERSAAA
       </Typography>
       <Divider color="white" sx={{ width: '20%', margin: '1rem auto', opacity: 0.5 }} />
       <Typography variant="h5" sx={{ mb: 3, opacity: 0.9, fontSize: '1.5rem' }}>
@@ -70,48 +64,7 @@ const HeroSection = () => {
   );
 };
 
-// Statistic Component
-const Statistic = ({ lectures, organizations, daije }) => {
-  return (
-    <>
-      <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
-        Statistika
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={4}>
-          <Paper sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="h3" color="primary" gutterBottom>
-              {lectures?.filter(org => org.status === 'approved').length || 0}
-            </Typography>
-            <Typography variant="h6">
-              Broj predavanja
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Paper sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="h3" color="success.main" gutterBottom>
-              {organizations?.length || 0}
-            </Typography>
-            <Typography variant="h6">
-              Broj udruženja
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Paper sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="h3" color="warning.main" gutterBottom>
-              {daije?.filter(daija => daija.status === 'approved').length || 0}
-            </Typography>
-            <Typography variant="h6">
-              Broj daija
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-    </>
-  );
-};
+
 
 // QuickActions Component
 const QuickActions = () => {
@@ -134,7 +87,7 @@ const QuickActions = () => {
     },
     {
       title: 'Daije',
-      description: 'Upoznajte naše predavače',
+      description: 'Upoznajte naše daije',
       icon: PersonIcon,
       color: 'warning',
       path: '/daije'
@@ -228,7 +181,7 @@ const TenLectures = ({ lectures }) => {
           >
             {proximityLectures.map((lecture) => (
               <Box key={lecture._id} sx={{ height: '300px' }}>
-                <LectureCard lecture={lecture} />
+                <UniversalCard data={{ ...lecture, type: 'Predavanje' }} />
               </Box>
             ))}
           </LecturesGrid>
@@ -483,13 +436,10 @@ const ActiveOrganizations = ({ organizations }) => {
   useEffect(() => {
     const fetchOrganizationsWithLectures = async () => {
       try {
-        const [organizationsResponse, lecturesResponse] = await Promise.all([
-          axiosInstance.get('/organizations'),
-          axiosInstance.get('/lectures/public')
+        const [organizations, lectures] = await Promise.all([
+          udruzenjaService.getAllUdruzenja(),
+          predavanjaService.getAllPredavanja()
         ]);
-
-        const organizations = organizationsResponse.data;
-        const lectures = lecturesResponse.data; // Only approved lectures from /lectures/public
 
         console.log('Organizations:', organizations.length);
         console.log('Lectures:', lectures.length);
@@ -498,13 +448,14 @@ const ActiveOrganizations = ({ organizations }) => {
 
         // Sort organizations by proximity of their closest lecture to current time
         // Show all organizations, limited to first 8
-        const sortedOrganizations = sortOrganizationsByLectureProximity(organizations, lectures)
-          .slice(0, 10); // Limit to 8 organizations
+        const sortedOrganizations = sortOrganizationsByLectureProximity(organizations || [], lectures || [])
+          .slice(0, 10); // Limit to 10 organizations
 
         console.log('Sorted organizations:', sortedOrganizations.length);
-        setDisplayOrganizations(sortedOrganizations);
+        setDisplayOrganizations(sortedOrganizations || []);
       } catch (error) {
         console.error('Error fetching organizations:', error);
+        setDisplayOrganizations([]);
       } finally {
         setIsLoading(false);
       }
@@ -521,6 +472,9 @@ const ActiveOrganizations = ({ organizations }) => {
     return null;
   }
 
+  // Inside the component, filter data before using it
+  const approvedOrganizations = (displayOrganizations || []).filter(item => item.status === 'approved');
+
   return (
     <Box sx={{ mt: 0, textAlign: 'center' }}>
       <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
@@ -530,7 +484,7 @@ const ActiveOrganizations = ({ organizations }) => {
         Udruženja sa nedavno najvljenim dersom
       </Typography>
 
-      {displayOrganizations.length === 0 ? (
+      {approvedOrganizations.length === 0 ? (
         <Typography variant="body1" color="text.secondary">
           Trenutno nema dostupnih udruženja.
         </Typography>
@@ -542,9 +496,9 @@ const ActiveOrganizations = ({ organizations }) => {
               width: '100%',
             }}
           >
-            {displayOrganizations.map((organization) => (
+            {approvedOrganizations.map((organization) => (
               <Box key={organization._id} sx={{ height: '200px' }}>
-                <OrganizationCompactCard organization={organization} />
+                <UniversalCard data={{ ...organization, type: 'Udruženje' }} />
               </Box>
             ))}
           </OrganizationsGrid>
@@ -675,32 +629,19 @@ const ActiveDaije = () => {
   useEffect(() => {
     const fetchDaijeAndLectures = async () => {
       try {
-        // Fetch all daije and all lectures
-        const [daijeResponse, lecturesResponse] = await Promise.all([
-          axiosInstance.get('/daije'),
-          axiosInstance.get('/lectures/public')
+        // Fetch daije with lecture counts from server
+        const [daije, lectures] = await Promise.all([
+          daijeService.getAllDaije(),
+          predavanjaService.getAllPredavanja()
         ]);
-        const daije = daijeResponse.data;
-        const lectures = lecturesResponse.data; // Already filtered to approved on server
 
-        // Calculate lecture count for each daija and sort by proximity
-        const daijeWithLectureCount = daije.map(daija => {
-          const daijaLectures = lectures.filter(lecture => 
-            lecture.daijaId === daija._id || lecture.daija === daija._id
-          );
-          return {
-            ...daija,
-            lectureCount: daijaLectures.length
-          };
-        });
+        // Sort all approved daije with random arrangement, prioritizing those with active lectures
+        // Limit to maximum 10 for homepage
+        const sortedDaije = sortAllDaijeWithActivePriority(daije || [], lectures || []).slice(0, 10);
 
-        // Sort daije by proximity of their closest lecture to current time
-        // Show all daije, limited to first 8
-        const sortedDaije = sortDaijeByLectureProximity(daijeWithLectureCount, lectures)
-          .slice(0, 10); // Limit to 8 daije
-
-        setDisplayDaije(sortedDaije);
+        setDisplayDaije(sortedDaije || []);
       } catch (error) {
+        console.error('Error fetching daije:', error);
         setDisplayDaije([]);
       } finally {
         setIsLoading(false);
@@ -717,16 +658,19 @@ const ActiveDaije = () => {
     return null;
   }
 
+  // displayDaije already contains only approved daije from the sorting function
+  const approvedDaije = displayDaije;
+
   return (
     <Box sx={{ mt: 1, textAlign: 'center' }}>
       <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
         Daije
       </Typography>
       <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
-        Daije sa nedavno najvljenim dersom
+      Daije koje imaju najavljen ders ili imaju profil na platformi.
       </Typography>
 
-      {displayDaije.length === 0 ? (
+      {approvedDaije.length === 0 ? (
         <Typography variant="body1" color="text.secondary" >
           Trenutno nema dostupnih daija.
         </Typography>
@@ -738,9 +682,9 @@ const ActiveDaije = () => {
               width: '100%',
             }}
           >
-            {displayDaije.map((daija) => (
+            {approvedDaije.map((daija) => (
               <Box key={daija._id} sx={{ height: '200px' }}>
-                <DaijaCard daija={daija} lectureCount={daija.lectureCount} />
+                <UniversalCard data={{ ...daija, type: 'Daija' }} />
               </Box>
             ))}
           </DaijeGrid>
@@ -766,6 +710,11 @@ const ActiveDaije = () => {
   );
 };
 
+// Filter function for approved items
+const filterApproved = (items) => (items || []).filter(item => 
+  item.status === 'approved'
+);
+
 // Main Home Component
 export default function Home() {
   const [lectures, setLectures] = useState([]);
@@ -782,12 +731,19 @@ export default function Home() {
         setIsLoading(true);
         setError(null);
         
+        // Environment debug (only in development)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🌍 Environment Variables:');
+          console.log('  - NODE_ENV:', process.env.NODE_ENV);
+          console.log('  - API_URL:', process.env.NEXT_PUBLIC_API_URL);
+          console.log('  - SERVER_URL:', process.env.NEXT_PUBLIC_SERVER_URL);
+        }
+        
         // Fetch lectures
-        const lecturesResponse = await axiosInstance.get('/lectures/public');
-        const allLectures = lecturesResponse.data;
+        const allLectures = await predavanjaService.getAllPredavanja();
 
         // Normalize lectures data
-        const lecturesData = allLectures.map(lecture => ({
+        const lecturesData = (allLectures || []).map(lecture => ({
           ...lecture,
           daija: lecture.daija || null,
           organization: lecture.organization || null
@@ -800,17 +756,29 @@ export default function Home() {
 
         setLectures(lecturesData);
         
-        // Fetch organizations
-        const organizationsResponse = await axiosInstance.get('/organizations');
-        setOrganizations(organizationsResponse.data);
+        // Fetch organizations with lecture counts from server
+        const organizationsData = await udruzenjaService.getAllUdruzenja();
+        setOrganizations(organizationsData || []);
         
-        // Fetch daije
-        const daijeResponse = await axiosInstance.get('/daije');
-        setDaije(daijeResponse.data);
+        // Fetch daije with lecture counts from server
+        const daijeData = await daijeService.getAllDaije();
+        setDaije(daijeData || []);
+        
+        // Debug info for production issues (only in development)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📊 Data loaded:');
+          console.log('  - Lectures:', lecturesData?.length || 0);
+          console.log('  - Organizations:', organizationsData?.length || 0);
+          console.log('  - Daije:', daijeData?.length || 0);
+        }
         
       } catch (err) {
         console.error('Greška pri dohvaćanju podataka:', err);
         setError('Greška pri učitavanju podataka');
+        // Set empty arrays in case of error
+        setLectures([]);
+        setOrganizations([]);
+        setDaije([]);
       } finally {
         setIsLoading(false);
       }
@@ -828,6 +796,13 @@ export default function Home() {
       }
     }
   }, []);
+
+  // Inside the component, filter data before using it with safety checks
+  const approvedOrganizations = (organizations || []).filter(item => item.status === 'approved');
+
+  const approvedDaije = (daije || []).filter(item => item.status === 'approved');
+
+  const approvedLectures = (lectures || []).filter(item => item.status === 'approved');
 
   return (
     <PageLayout 
@@ -884,10 +859,8 @@ export default function Home() {
         <QuickActions />
       </Box>
 
-      {/* Statistics */}
-      <Box sx={{ width: '100%' }}>
-        <Statistic lectures={lectures} organizations={organizations} daije={daije} />
-      </Box>
+
+     
     </PageLayout>
   );
 } 

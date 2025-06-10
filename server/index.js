@@ -17,6 +17,7 @@ const { generateToken, verifyToken, authMiddleware: jwtAuthMiddleware } = requir
 // Import routes
 const uploadRoutes = require('./routes/upload');
 const usersRouter = require('./routes/users');
+const lecturesRouter = require('./routes/lecturesRoutes');
 
 // Import models
 const Lecture = require('./models/Lecture');
@@ -116,7 +117,7 @@ console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 if (isProduction) {
   // Production - provjeri da li postoji out folder (static export) ili koristi .next
   const outPath = path.join(__dirname, '../out');
-  const nextPath = path.join(__dirname, '../.next');
+  const nextPath = path.join(__dirname, '../web/.next');
   
   if (fs.existsSync(outPath)) {
     // Static export build
@@ -124,8 +125,9 @@ if (isProduction) {
     console.log('📦 Serving production static export from /out folder');
   } else if (fs.existsSync(nextPath)) {
     // Regular Next.js build
-    app.use(express.static(path.join(__dirname, '../.next/static')));
-    console.log('📦 Serving production build from /.next folder');
+    app.use('/_next/static', express.static(path.join(__dirname, '../web/.next/static')));
+    app.use('/static', express.static(path.join(__dirname, '../web/.next/static')));
+    console.log('📦 Serving production build from /web/.next folder');
   } else {
     console.warn('⚠️  No production build found. Run "npm run build" first.');
   }
@@ -148,8 +150,8 @@ if (!fs.existsSync(uploadsDir)) {
 // Note: Static files are now served by Next.js from public/uploads
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
-// Basic health check route
-app.get('/', (req, res) => {
+// API health check route (moved to /api/status to avoid conflict with frontend)
+app.get('/api/status', (req, res) => {
   res.json({ 
     message: 'DERS Backend server is running!', 
     status: 'OK',
@@ -483,38 +485,8 @@ app.get('/api/lectures/dashboard/public', async (req, res) => {
 
     logger.info(`Found ${lectures.length} dashboard lectures`);
     
-    // Debug: Log all lecture titles to see if "On je Allah" is included
-    console.log('🔍 [DASHBOARD DEBUG] Lectures found:');
-    lectures.forEach((lecture, index) => {
-      console.log(`  ${index + 1}. "${lecture.title}" - Status: ${lecture.status} - Date: ${lecture.date}`);
-    });
     
-    // Check specifically for "On je Allah"
-    const onJeAllahLecture = lectures.find(l => l.title.toLowerCase().includes('on je allah'));
-    if (onJeAllahLecture) {
-      console.log('✅ [DASHBOARD DEBUG] "On je Allah" lecture FOUND in dashboard results:', {
-        title: onJeAllahLecture.title,
-        status: onJeAllahLecture.status,
-        date: onJeAllahLecture.date,
-        id: onJeAllahLecture._id
-      });
-    } else {
-      console.log('❌ [DASHBOARD DEBUG] "On je Allah" lecture NOT FOUND in dashboard results');
-      
-      // Let's check if it exists in database at all
-      const allLectures = await Lecture.find({}).select('title status date');
-      const onJeAllahInDb = allLectures.find(l => l.title.toLowerCase().includes('on je allah'));
-      if (onJeAllahInDb) {
-        console.log('🔍 [DASHBOARD DEBUG] "On je Allah" exists in DB but not in results:', {
-          title: onJeAllahInDb.title,
-          status: onJeAllahInDb.status,
-          date: onJeAllahInDb.date,
-          id: onJeAllahInDb._id
-        });
-      } else {
-        console.log('❌ [DASHBOARD DEBUG] "On je Allah" not found in database at all');
-      }
-    }
+    
     
     // Transform lectures to include daijaId for frontend compatibility
     const transformedLectures = lectures.map(lecture => ({
@@ -671,13 +643,13 @@ app.get('/api/daije/public', async (req, res) => {
   try {
     logger.info('Fetching public daije for dashboard');
     
-    // For admin dashboard, return all daije; for public, return only approved
-    const isAdminRequest = req.headers.authorization; // Check if authenticated
-    const query = isAdminRequest ? {} : { status: 'approved' };
+    // Always return only approved daije for public endpoint (even for admins)
+    // Admins can use /api/admin/daije to get all daije including pending/rejected
+    const daije = await Daija.find({ status: 'approved' }).sort({ name: 1 });
     
-    const daije = await Daija.find(query).sort({ name: 1 });
+    logger.info(`Found ${daije.length} approved daije for public endpoint`);
     
-    logger.info(`Found ${daije.length} daije for dashboard (admin: ${!!isAdminRequest})`);
+    // Return daije as-is with name field (no firstName mapping)
     res.json(daije);
   } catch (error) {
     logger.error('Error fetching public daije:', error);
@@ -690,9 +662,11 @@ app.get('/api/organizations/public', async (req, res) => {
   try {
     logger.info('Fetching public organizations for dashboard');
     
-    const organizations = await Organization.find().sort({ name: 1 });
+    // Always return only approved organizations for public endpoint (even for admins)
+    // Admins can use /api/admin/organizations to get all organizations including pending/rejected
+    const organizations = await Organization.find({ status: 'approved' }).sort({ name: 1 });
     
-    logger.info(`Found ${organizations.length} organizations for dashboard`);
+    logger.info(`Found ${organizations.length} approved organizations for public endpoint`);
     res.json(organizations);
   } catch (error) {
     logger.error('Error fetching public organizations:', error);
@@ -848,7 +822,7 @@ app.post('/api/suggestions', async (req, res) => {
           try {
             const daija = await Daija.findById(referenceId);
             if (daija) {
-              targetName = daija.name || 'Nepoznata daija';
+              targetName = daija.name || 'Nepoznat daija';
               targetId = referenceId;
             }
           } catch (error) {
@@ -1029,13 +1003,15 @@ app.get('/api/lectures/public', async (req, res) => {
     
     // 🚀 SUPER-OPTIMIZED QUERY with forced index usage and minimal data transfer
     const currentDate = new Date();
+    // Set to start of today to include today's lectures
+    const startOfToday = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
     
     // Method 1: Try with hint to force index usage
     let lectures;
     try {
       lectures = await Lecture.find({ 
         status: 'approved',
-        date: { $gte: currentDate }
+        date: { $gte: startOfToday }  // Include today's lectures and future ones
       })
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
         .populate('organization', 'name')
@@ -1051,7 +1027,7 @@ app.get('/api/lectures/public', async (req, res) => {
       // Fallback: Regular optimized query
       lectures = await Lecture.find({ 
         status: 'approved',
-        date: { $gte: currentDate }
+        date: { $gte: startOfToday }  // Include today's lectures and future ones
       })
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
         .populate('organization', 'name')
@@ -1222,15 +1198,26 @@ app.get('/api/lectures/organization/:organizationId', async (req, res) => {
 // Get all lectures pending approval
 app.get('/api/lectures/pending', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
     logger.info('Fetching pending lectures for user:', {
       id: req.user.id,
-      role: req.user.role
+      role: req.user.role,
+      page,
+      limit
     });
     
     const lectures = await Lecture.find({ status: 'pending' })
       .populate('createdBy', 'firstName lastName email')
-      .sort({ createdAt: -1 });
-    logger.info(`Found ${lectures.length} pending lectures:`, 
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    const total = await Lecture.countDocuments({ status: 'pending' });
+    
+    logger.info(`Found ${lectures.length} pending lectures (page ${page}/${Math.ceil(total/limit)}):`, 
       lectures.map(l => ({ id: l._id, title: l.title, status: l.status, createdBy: l.createdBy?.firstName }))
     );
     
@@ -1240,10 +1227,106 @@ app.get('/api/lectures/pending', authenticateToken, isAdminOrSuperAdmin, async (
       daijaId: lecture.daija || null
     }));
     
-    res.json(transformedLectures);
+    res.json({
+      lectures: transformedLectures,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     logger.error('Error fetching pending lectures:', error);
     res.status(500).json({ message: error.message });
+  }
+});
+
+// Get all approved lectures (public access with pagination)
+app.get('/api/lectures/approved', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    logger.info('Fetching approved lectures with pagination:', { page, limit, skip });
+    
+    const currentDate = new Date();
+    const startOfToday = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+    
+    const lectures = await Lecture.find({ 
+      status: 'approved',
+      date: { $gte: startOfToday }  // Include today's lectures and future ones
+    })
+      .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
+      .populate('organization', 'name')
+      .sort({ date: 1 })
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec();
+    
+    const total = await Lecture.countDocuments({ 
+      status: 'approved',
+      date: { $gte: startOfToday }
+    });
+    
+    logger.info(`Found ${lectures.length} approved lectures (page ${page}/${Math.ceil(total/limit)})`);
+    
+    // Transform lectures to include daijaId for frontend compatibility
+    const transformedLectures = lectures.map(lecture => ({
+      ...lecture,
+      daijaId: lecture.daija || null
+    }));
+    
+    res.json({
+      lectures: transformedLectures,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    logger.error('Error fetching approved lectures:', error);
+    res.status(500).json({ message: 'Greška pri dohvaćanju odobrenih predavanja' });
+  }
+});
+
+// Get latest lectures (public access)
+app.get('/api/lectures/latest', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    
+    logger.info('Fetching latest lectures with limit:', limit);
+    
+    const currentDate = new Date();
+    const startOfToday = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+    
+    const lectures = await Lecture.find({ 
+      status: 'approved',
+      date: { $gte: startOfToday }  // Include today's lectures and future ones
+    })
+      .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
+      .populate('organization', 'name')
+      .sort({ date: 1 })
+      .limit(limit)
+      .lean()
+      .exec();
+    
+    logger.info(`Found ${lectures.length} latest lectures`);
+    
+    // Transform lectures to include daijaId for frontend compatibility
+    const transformedLectures = lectures.map(lecture => ({
+      ...lecture,
+      daijaId: lecture.daija || null
+    }));
+    
+    res.json(transformedLectures);
+  } catch (error) {
+    logger.error('Error fetching latest lectures:', error);
+    res.status(500).json({ message: 'Greška pri dohvaćanju najnovijih predavanja' });
   }
 });
 
@@ -1270,6 +1353,10 @@ app.post('/api/lectures', authenticateToken, async (req, res) => {
     const approvalSettings = await Settings.findOne({ key: 'approvalSettings' });
     const needsApproval = approvalSettings?.value?.lecture !== false; // Default to true if setting not found
     
+    // Only allow admin/super_admin to explicitly set status, otherwise use approval settings
+    const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
+    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : (needsApproval ? 'pending' : 'approved');
+    
     let lectureData = {
       title: req.body.title,
       speaker: req.body.speaker || '',
@@ -1283,13 +1370,15 @@ app.post('/api/lectures', authenticateToken, async (req, res) => {
       shortDescription: req.body.shortDescription || '',
       description: req.body.description || '',
       image: req.body.image,
-      status: req.body.status || (needsApproval ? 'pending' : 'approved'),
+      status: finalStatus,
       createdBy: req.user.id
     };
     
     logger.info('Using approval settings:', { 
       needsApproval,
       setting: approvalSettings?.value?.lecture,
+      isAdminUser,
+      requestedStatus: req.body.status,
       finalStatus: lectureData.status 
     });
     
@@ -1508,14 +1597,8 @@ app.get('/api/daije', async (req, res) => {
     const daije = await Daija.find({ status: 'approved' }).sort({ name: 1 });
     logger.info(`Found ${daije.length} approved daije`);
     
-    // Transform data to include firstName for frontend compatibility
-    const transformedDaije = daije.map(daija => ({
-      ...daija.toObject(),
-      firstName: daija.name, // Map name to firstName for frontend compatibility
-      lastName: '', // Add empty lastName for compatibility
-    }));
-    
-    res.json(transformedDaije);
+    // Return daije as-is with name field (no firstName mapping)
+    res.json(daije);
   } catch (error) {
     logger.error('Error fetching daije:', error);
     res.status(500).json({ message: 'Greška pri dohvaćanju daija' });
@@ -1549,17 +1632,32 @@ app.post('/api/daije', authenticateToken, isAdminOrSuperAdmin, async (req, res) 
       user: req.user
     });
 
+    // Get approval settings
+    const approvalSettings = await Settings.findOne({ key: 'approvalSettings' });
+    const needsApproval = approvalSettings?.value?.daija !== false; // Default to true if setting not found
+
+    // Only allow admin/super_admin to explicitly set status, otherwise use approval settings
+    const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
+    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : (needsApproval ? 'pending' : 'approved');
+
     const daijaData = {
-      name: req.body.name || req.body.firstName || '',
-      firstName: req.body.firstName || req.body.name || '',
+      name: req.body.name || '',
       title: req.body.title,
       dateOfBirth: req.body.dateOfBirth || null,
       biography: req.body.biography || '',
       shortDescription: req.body.shortDescription || '',
       education: req.body.education || [],
       image: req.body.image || '',
-      status: req.body.status || 'pending'
+      status: finalStatus
     };
+    
+         logger.info('Using approval settings:', { 
+       needsApproval,
+       setting: approvalSettings?.value?.daija,
+       isAdminUser,
+       requestedStatus: req.body.status,
+       finalStatus: daijaData.status 
+     });
     
     logger.info('Creating daija with data:', daijaData);
     const daija = new Daija(daijaData);
@@ -1595,8 +1693,7 @@ app.put('/api/daije/:id', authenticateToken, isAdminOrSuperAdmin, async (req, re
 
     // Prepare update data
     const updateData = {
-      firstName: req.body.firstName || req.body.name || '',
-      name: req.body.firstName || req.body.name || '',
+      name: req.body.name || '',
       title: req.body.title,
       dateOfBirth: req.body.dateOfBirth || null,
       biography: req.body.biography || '',
@@ -1650,8 +1747,8 @@ app.patch('/api/daije/:id', authenticateToken, isAdminOrSuperAdmin, async (req, 
     if (req.body.status !== undefined) {
       updateData.status = req.body.status;
     }
-    if (req.body.name !== undefined || req.body.firstName !== undefined) {
-      updateData.name = req.body.name || req.body.firstName;
+    if (req.body.name !== undefined) {
+      updateData.name = req.body.name;
     }
     if (req.body.title !== undefined) {
       updateData.title = req.body.title;
@@ -1717,9 +1814,8 @@ app.get('/api/organizations', async (req, res) => {
   try {
     logger.info('Fetching all organizations');
     const organizations = await Organization.find({ status: 'approved' }).sort({ name: 1 });
-    logger.info(`Found ${organizations.length} approved organizations with statuses:`, 
-      organizations.map(org => ({ name: org.name, status: org.status }))
-    );
+
+    logger.info(`Found ${organizations.length} approved organizations`);
     res.json(organizations);
   } catch (error) {
     logger.error('Error fetching organizations:', error);
@@ -1757,6 +1853,14 @@ app.post('/api/organizations', authenticateToken, isAdminOrSuperAdmin, async (re
       user: req.user
     });
 
+    // Get approval settings
+    const approvalSettings = await Settings.findOne({ key: 'approvalSettings' });
+    const needsApproval = approvalSettings?.value?.organization !== false; // Default to true if setting not found
+
+    // Only allow admin/super_admin to explicitly set status, otherwise use approval settings
+    const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
+    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : (needsApproval ? 'pending' : 'approved');
+
     const organizationData = {
       name: req.body.name,
       description: req.body.description || '',
@@ -1767,8 +1871,16 @@ app.post('/api/organizations', authenticateToken, isAdminOrSuperAdmin, async (re
       telegram: req.body.telegram || '',
       viber: req.body.viber || '',
       image: req.body.image || '',
-      status: req.body.status || 'pending'
+      status: finalStatus
     };
+    
+         logger.info('Using approval settings:', { 
+       needsApproval,
+       setting: approvalSettings?.value?.organization,
+       isAdminUser,
+       requestedStatus: req.body.status,
+       finalStatus: organizationData.status 
+     });
     
     logger.info('Creating organization with data:', organizationData);
     const organization = new Organization(organizationData);
@@ -1948,8 +2060,7 @@ app.get('/api/organizations/with-active-lectures', async (req, res) => {
           lectures: lectures.map(lecture => ({
             ...lecture.toObject(),
             daijaId: lecture.daija || null
-          })),
-          upcomingLectureCount: lectures.length
+          }))
         };
       })
     );
@@ -2241,6 +2352,135 @@ app.post('/api/admin/fix-lectures-createdby', authenticateToken, isAdminOrSuperA
     console.error('❌ Error fixing lectures createdBy:', err);
     res.status(500).json({ 
       message: 'Error fixing lectures createdBy field', 
+      error: err.message 
+    });
+  }
+});
+
+// 🔧 Admin endpoint to cleanup invalid data from database
+app.post('/api/admin/cleanup-database', authenticateToken, isSuperAdmin, async (req, res) => {
+  console.log('🧹 Admin database cleanup endpoint called');
+  console.log('👤 Super admin user:', req.user);
+
+  try {
+    const cleanupResults = {
+      daije: { before: 0, deleted: 0, after: 0 },
+      organizations: { before: 0, deleted: 0, after: 0 },
+      lectures: { before: 0, deleted: 0, after: 0 }
+    };
+
+    // Keep only approved, pending and rejected statuses
+    const allowedStatuses = ['approved', 'pending', 'rejected'];
+
+    // 1. Cleanup Daije - delete all except approved, pending and rejected
+    console.log('🧹 Cleaning up Daije (keeping only approved, pending and rejected)...');
+    cleanupResults.daije.before = await Daija.countDocuments();
+    
+    const deleteInvalidDaije = await Daija.deleteMany({
+      $or: [
+        { status: { $exists: false } },
+        { status: null },
+        { status: { $nin: allowedStatuses } }
+      ]
+    });
+    console.log(`🗑️ Deleted ${deleteInvalidDaije.deletedCount} Daije (kept only approved, pending and rejected)`);
+    
+    cleanupResults.daije.deleted = deleteInvalidDaije.deletedCount;
+    cleanupResults.daije.after = await Daija.countDocuments();
+
+    // 2. Cleanup Organizations - delete all except approved, pending and rejected
+    console.log('🧹 Cleaning up Organizations (keeping only approved, pending and rejected)...');
+    cleanupResults.organizations.before = await Organization.countDocuments();
+    
+    const deleteInvalidOrgs = await Organization.deleteMany({
+      $or: [
+        { status: { $exists: false } },
+        { status: null },
+        { status: { $nin: allowedStatuses } }
+      ]
+    });
+    console.log(`🗑️ Deleted ${deleteInvalidOrgs.deletedCount} Organizations (kept only approved, pending and rejected)`);
+    
+    cleanupResults.organizations.deleted = deleteInvalidOrgs.deletedCount;
+    cleanupResults.organizations.after = await Organization.countDocuments();
+
+    // 3. Cleanup Lectures - delete all except approved, pending and rejected
+    console.log('🧹 Cleaning up Lectures (keeping only approved, pending and rejected)...');
+    cleanupResults.lectures.before = await Lecture.countDocuments();
+    
+    const deleteInvalidLectures = await Lecture.deleteMany({
+      $or: [
+        { status: { $exists: false } },
+        { status: null },
+        { status: { $nin: allowedStatuses } }
+      ]
+    });
+    console.log(`🗑️ Deleted ${deleteInvalidLectures.deletedCount} Lectures (kept only approved, pending and rejected)`);
+    
+    cleanupResults.lectures.deleted = deleteInvalidLectures.deletedCount;
+    cleanupResults.lectures.after = await Lecture.countDocuments();
+
+    // 4. Cleanup orphaned lectures (referencing deleted daije/organizations)
+    console.log('🧹 Cleaning up orphaned Lectures...');
+    
+    // Find lectures with daija references that don't exist
+    const orphanedByDaija = await Lecture.find({
+      daija: { $exists: true, $ne: null }
+    }).populate('daija');
+    
+    const orphanedDaijaLectures = orphanedByDaija.filter(lecture => !lecture.daija);
+    
+    if (orphanedDaijaLectures.length > 0) {
+      const orphanedDaijaIds = orphanedDaijaLectures.map(l => l._id);
+      await Lecture.deleteMany({ _id: { $in: orphanedDaijaIds } });
+      console.log(`🗑️ Deleted ${orphanedDaijaLectures.length} lectures with orphaned daija references`);
+      cleanupResults.lectures.deleted += orphanedDaijaLectures.length;
+    }
+
+    // Find lectures with organization references that don't exist
+    const orphanedByOrg = await Lecture.find({
+      organizationId: { $exists: true, $ne: null }
+    }).populate('organization');
+    
+    const orphanedOrgLectures = orphanedByOrg.filter(lecture => !lecture.organization);
+    
+    if (orphanedOrgLectures.length > 0) {
+      const orphanedOrgIds = orphanedOrgLectures.map(l => l._id);
+      await Lecture.deleteMany({ _id: { $in: orphanedOrgIds } });
+      console.log(`🗑️ Deleted ${orphanedOrgLectures.length} lectures with orphaned organization references`);
+      cleanupResults.lectures.deleted += orphanedOrgLectures.length;
+    }
+
+    // Update final lecture count
+    cleanupResults.lectures.after = await Lecture.countDocuments();
+
+    // 5. Summary
+    const totalDeleted = cleanupResults.daije.deleted + 
+                        cleanupResults.organizations.deleted + 
+                        cleanupResults.lectures.deleted;
+
+    console.log('✅ Database cleanup completed:', cleanupResults);
+
+    res.json({
+      message: 'Database cleanup completed successfully (kept only approved, pending and rejected items)',
+      results: cleanupResults,
+      summary: {
+        totalDeleted,
+        cleanupDate: new Date().toISOString(),
+        cleanupPolicy: 'Deleted all items except those with approved, pending or rejected status',
+        keptStatuses: ['approved', 'pending', 'rejected'],
+        performedBy: {
+          userId: req.user.id,
+          userEmail: req.user.email,
+          userName: `${req.user.firstName} ${req.user.lastName}`
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error('❌ Error during database cleanup:', err);
+    res.status(500).json({ 
+      message: 'Error during database cleanup (approved/pending/rejected only)', 
       error: err.message 
     });
   }
@@ -2848,13 +3088,15 @@ app.get('/api/lectures/public-fast', async (req, res) => {
     
     // 🚀 AGGREGATION PIPELINE - Always uses indexes and is very fast
     const currentDate = new Date();
+    // Set to start of today to include today's lectures
+    const startOfToday = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
     
     const lectures = await Lecture.aggregate([
       // Stage 1: Match with index hint
       {
         $match: {
           status: 'approved',
-          date: { $gte: currentDate }
+          date: { $gte: startOfToday }  // Include today's lectures and future ones
         }
       },
       // Stage 2: Sort by date (uses index)
@@ -3038,14 +3280,8 @@ app.get('/api/admin/daije', authenticateToken, isAdminOrSuperAdmin, async (req, 
     const daije = await Daija.find().sort({ name: 1 });
     logger.info(`Found ${daije.length} daije for admin`);
     
-    // Transform data to include firstName for frontend compatibility
-    const transformedDaije = daije.map(daija => ({
-      ...daija.toObject(),
-      firstName: daija.name, // Map name to firstName for frontend compatibility
-      lastName: '', // Add empty lastName for compatibility
-    }));
-    
-    res.json(transformedDaije);
+    // Return daije as-is with name field (no firstName mapping)
+    res.json(daije);
   } catch (error) {
     logger.error('Error fetching all daije for admin:', error);
     res.status(500).json({ message: 'Greška pri dohvaćanju daija' });
@@ -3279,3 +3515,259 @@ app.delete('/api/users/:id', authenticateToken, isSuperAdmin, async (req, res) =
     res.status(500).json({ message: 'Greška pri brisanju korisnika' });
   }
 });
+
+// Search lectures (public access)
+app.get('/api/lectures/search', async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({ message: 'Search query is required' });
+    }
+    
+    logger.info('Searching lectures with query:', query);
+    
+    const searchRegex = new RegExp(query.trim(), 'i');
+    
+    const lectures = await Lecture.find({ 
+      status: 'approved',
+      $or: [
+        { title: searchRegex },
+        { speaker: searchRegex },
+        { organization: searchRegex },
+        { city: searchRegex },
+        { address: searchRegex },
+        { description: searchRegex },
+        { shortDescription: searchRegex }
+      ]
+    })
+      .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
+      .populate('organization', 'name')
+      .sort({ date: 1 })
+      .lean()
+      .exec();
+    
+    logger.info(`Found ${lectures.length} lectures matching search query: "${query}"`);
+    
+    // Transform lectures to include daijaId for frontend compatibility
+    const transformedLectures = lectures.map(lecture => ({
+      ...lecture,
+      daijaId: lecture.daija || null
+    }));
+    
+    res.json(transformedLectures);
+  } catch (error) {
+    logger.error('Error searching lectures:', error);
+    res.status(500).json({ message: 'Greška pri pretraživanju predavanja' });
+  }
+});
+
+// Add new lecture
+app.post('/api/lectures', authenticateToken, async (req, res) => {
+  try {
+    logger.info('Adding new lecture - Request body:', {
+      body: req.body,
+      user: req.user
+    });
+
+    const requiredFields = ['title', 'date', 'time', 'address', 'city'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    
+    if (missingFields.length > 0) {
+      logger.warn('Missing required fields:', missingFields);
+      return res.status(400).json({ 
+        message: 'Missing required fields', 
+        fields: missingFields 
+      });
+    }
+    
+    // Get approval settings
+    const approvalSettings = await Settings.findOne({ key: 'approvalSettings' });
+    const needsApproval = approvalSettings?.value?.lecture !== false; // Default to true if setting not found
+    
+    // Only allow admin/super_admin to explicitly set status, otherwise use approval settings
+    const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
+    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : (needsApproval ? 'pending' : 'approved');
+    
+    let lectureData = {
+      title: req.body.title,
+      speaker: req.body.speaker || '',
+      daija: req.body.daijaId || null,
+      organization: req.body.organization,
+      organizationId: req.body.organizationId || null,
+      date: req.body.date,
+      time: req.body.time,
+      address: req.body.address,
+      city: req.body.city,
+      shortDescription: req.body.shortDescription || '',
+      description: req.body.description || '',
+      image: req.body.image,
+      status: finalStatus,
+      createdBy: req.user.id
+    };
+    
+    logger.info('Using approval settings:', { 
+      needsApproval,
+      setting: approvalSettings?.value?.lecture,
+      isAdminUser,
+      requestedStatus: req.body.status,
+      finalStatus: lectureData.status 
+    });
+    
+    logger.info('Creating lecture with data:', lectureData);
+    const lecture = new Lecture(lectureData);
+    
+    const savedLecture = await lecture.save();
+    logger.info('New lecture saved successfully:', {
+      id: savedLecture._id,
+      title: savedLecture.title,
+      date: savedLecture.date,
+      createdBy: savedLecture.createdBy
+    });
+    
+    // Transform response to include daijaId for frontend compatibility
+    const responseData = {
+      ...savedLecture.toObject(),
+      daijaId: savedLecture.daija || null
+    };
+    
+    res.status(201).json(responseData);
+  } catch (error) {
+    logger.error('Error adding lecture:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Debug endpoint - Get all organizations (public debug access)
+app.get('/api/debug/organizations', async (req, res) => {
+  try {
+    logger.info('Debug fetching all organizations (including pending/rejected)');
+    const organizations = await Organization.find().sort({ createdAt: -1 }); // Newest first
+    logger.info(`Found ${organizations.length} organizations for debug`);
+    
+    const summary = organizations.map(org => ({
+      id: org._id,
+      name: org.name,
+      status: org.status,
+      createdAt: org.createdAt,
+      updatedAt: org.updatedAt
+    }));
+    
+    res.json({
+      message: 'Debug organizations data',
+      total: organizations.length,
+      byStatus: {
+        approved: organizations.filter(o => o.status === 'approved').length,
+        pending: organizations.filter(o => o.status === 'pending').length,
+        rejected: organizations.filter(o => o.status === 'rejected').length,
+        other: organizations.filter(o => !['approved', 'pending', 'rejected'].includes(o.status)).length
+      },
+      organizations: summary
+    });
+  } catch (error) {
+    logger.error('Error fetching debug organizations:', error);
+    res.status(500).json({ message: 'Greška pri dohvaćanju debug organizacija' });
+  }
+});
+
+// Debug endpoint - Auto-approve pending organizations
+app.post('/api/debug/approve-pending-organizations', async (req, res) => {
+  try {
+    logger.info('Debug auto-approving pending organizations');
+    
+    const pendingOrganizations = await Organization.find({ status: 'pending' });
+    logger.info(`Found ${pendingOrganizations.length} pending organizations to approve`);
+    
+    const updateResult = await Organization.updateMany(
+      { status: 'pending' },
+      { status: 'approved', updatedAt: new Date() }
+    );
+    
+    logger.info(`Auto-approved ${updateResult.modifiedCount} organizations`);
+    
+    res.json({
+      message: 'Auto-approved pending organizations',
+      pendingFound: pendingOrganizations.length,
+      approved: updateResult.modifiedCount,
+      organizations: pendingOrganizations.map(org => ({
+        id: org._id,
+        name: org.name,
+        previousStatus: 'pending',
+        newStatus: 'approved'
+      }))
+    });
+  } catch (error) {
+    logger.error('Error auto-approving pending organizations:', error);
+    res.status(500).json({ message: 'Greška pri odobravanju pending organizacija' });
+  }
+});
+
+// Public daije endpoint for dashboard
+app.get('/api/daije/public', async (req, res) => {
+  try {
+    logger.info('Fetching public daije for dashboard');
+    
+    // Always return only approved daije for public endpoint (even for admins)
+    // Admins can use /api/admin/daije to get all daije including pending/rejected
+    const daije = await Daija.find({ status: 'approved' }).sort({ name: 1 });
+    
+    logger.info(`Found ${daije.length} approved daije for public endpoint`);
+    
+    // Return daije as-is with name field (no firstName mapping)
+    res.json(daije);
+  } catch (error) {
+    logger.error('Error fetching public daije:', error);
+    res.status(500).json({ message: 'Greška pri dohvaćanju daija' });
+  }
+});
+
+// CATCH-ALL ROUTE: Serve React app for all non-API routes (MUST BE LAST!)
+// This handles client-side routing in production
+if (isProduction) {
+  app.get('*', (req, res) => {
+    // Don't serve React app for API routes
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ message: 'API endpoint not found' });
+    }
+    
+    // Serve React app index.html for all other routes
+    const nextIndexPath = path.join(__dirname, '../web/.next/server/pages/index.html');
+    const outIndexPath = path.join(__dirname, '../out/index.html');
+    const buildIndexPath = path.join(__dirname, '../web/build/index.html');
+    
+    // Try different build paths (prioritize Next.js build)
+    if (fs.existsSync(nextIndexPath)) {
+      res.sendFile(nextIndexPath);
+    } else if (fs.existsSync(outIndexPath)) {
+      res.sendFile(outIndexPath);
+    } else if (fs.existsSync(buildIndexPath)) {
+      res.sendFile(buildIndexPath);
+    } else {
+      // Fallback to serve a basic HTML page that loads the React app
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <title>DERS - Digitalna platforma za islamska predavanja</title>
+          <script>
+            // Redirect to the frontend URL if this is being served from the backend
+            if (window.location.port === '5003') {
+              window.location.replace('https://ders.ba');
+            }
+          </script>
+        </head>
+        <body>
+          <div id="root">
+            <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+              <h1>DERS</h1>
+              <p>Digitalna platforma za islamska predavanja</p>
+              <p>Molimo idite na <a href="https://ders.ba">https://ders.ba</a></p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+  });
+}
