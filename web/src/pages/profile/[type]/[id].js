@@ -33,10 +33,10 @@ import TwitterIcon from '@mui/icons-material/Twitter';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import PageLayout from '../../../components/PageLayout';
-import axiosInstance from '../../../utils/axiosConfig';
-import LectureCard from '../../../components/LectureCard';
+import { predavanjaService, daijeService, udruzenjaService } from '@/services';
+import UniversalCard from '../../../components/UniversalCard';
 import { LecturesGrid } from '../../../components/GridLayout';
-import { sortLecturesByDateProximity, generateDaijaSlug, findDaijaBySlug, formatDateWithDay, generateOrganizationSlug, findOrganizationBySlug, generateLectureSlug, findLectureBySlug } from '../../../utils/dataHelpers';
+import { sortLecturesByDateProximity, generateDaijaSlug, findDaijaBySlug, formatDateWithDay, generateOrganizationSlug, findOrganizationBySlug, findLectureBySlug } from '../../../utils/dataHelpers';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '../../../utils/imageUtils';
 
 const UnifiedProfile = () => {
@@ -67,12 +67,12 @@ const UnifiedProfile = () => {
           if (id && id.length === 24) {
             // It's an ObjectId
             console.log("Fetching daija by ID:", id);
-            profileResponse = await axiosInstance.get(`/daije/${id}`);
+            const daijaData = await daijeService.getDaijaById(id);
+            profileResponse = { data: daijaData };
           } else {
             // It's a slug, fetch all daije and find by slug
             console.log("Fetching daija by slug:", id);
-            const allDaijeResponse = await axiosInstance.get('/daije');
-            const allDaije = Array.isArray(allDaijeResponse.data) ? allDaijeResponse.data : [];
+            const allDaije = await daijeService.getAllDaije();
             const foundDaija = findDaijaBySlug(id, allDaije);
             if (!foundDaija) {
               setError('Daija nije pronađen');
@@ -81,7 +81,8 @@ const UnifiedProfile = () => {
             profileResponse = { data: foundDaija };
           }
           
-          lecturesResponse = await axiosInstance.get(`/lectures/daija/${profileResponse.data._id}`);
+          const daijaLectures = await predavanjaService.getPredavanjaByDaija(profileResponse.data._id);
+          lecturesResponse = { data: daijaLectures };
           break;
 
         case 'organization':
@@ -89,12 +90,12 @@ const UnifiedProfile = () => {
           if (id && id.length === 24) {
             // It's an ObjectId
             console.log("Fetching organization by ID:", id);
-            profileResponse = await axiosInstance.get(`/organizations/${id}`);
+            const orgData = await udruzenjaService.getUdruzenjeById(id);
+            profileResponse = { data: orgData };
           } else {
             // It's a slug, fetch all organizations and find by slug
             console.log("Fetching organization by slug:", id);
-            const allOrganizationsResponse = await axiosInstance.get('/organizations');
-            const allOrganizations = Array.isArray(allOrganizationsResponse.data) ? allOrganizationsResponse.data : [];
+            const allOrganizations = await udruzenjaService.getAllUdruzenja();
             const foundOrganization = findOrganizationBySlug(id, allOrganizations);
             if (!foundOrganization) {
               setError('Organizacija nije pronađena');
@@ -103,7 +104,8 @@ const UnifiedProfile = () => {
             profileResponse = { data: foundOrganization };
           }
           
-          lecturesResponse = await axiosInstance.get(`/lectures/organization/${profileResponse.data._id}`);
+          const orgLectures = await predavanjaService.getPredavanjaByOrganization(profileResponse.data._id);
+          lecturesResponse = { data: orgLectures };
           break;
 
         case 'lecture':
@@ -111,12 +113,12 @@ const UnifiedProfile = () => {
           if (id && id.length === 24) {
             // It's an ObjectId
             console.log("Fetching lecture by ID:", id);
-            profileResponse = await axiosInstance.get(`/lectures/${id}`);
+            const lectureData = await predavanjaService.getPredavanjeById(id);
+            profileResponse = { data: lectureData };
           } else {
             // It's a slug, fetch all lectures and find by slug
             console.log("Fetching lecture by slug:", id);
-            const allLecturesResponse = await axiosInstance.get('/lectures');
-            const allLectures = Array.isArray(allLecturesResponse.data) ? allLecturesResponse.data : [];
+            const allLectures = await predavanjaService.getAllPredavanja();
             const foundLecture = findLectureBySlug(id, allLectures);
             if (!foundLecture) {
               setError('Predavanje nije pronađeno');
@@ -140,8 +142,8 @@ const UnifiedProfile = () => {
             const daijaId = lectureData.daija || lectureData.daijaId;
             console.log("Fetching related daija:", daijaId);
             relatedPromises.push(
-              axiosInstance.get(`/daije/${daijaId}`)
-                .then(res => ({ type: 'daija', data: res.data }))
+              daijeService.getDaijaById(daijaId)
+                .then(data => ({ type: 'daija', data }))
                 .catch((error) => {
                   console.warn(`Daija with ID ${daijaId} not found:`, error.message);
                   return { type: 'daija', data: null };
@@ -152,8 +154,8 @@ const UnifiedProfile = () => {
           if (lectureData.organizationId) {
             console.log("Fetching related organization:", lectureData.organizationId);
             relatedPromises.push(
-              axiosInstance.get(`/organizations/${lectureData.organizationId}`)
-                .then(res => ({ type: 'organization', data: res.data }))
+              udruzenjaService.getUdruzenjeById(lectureData.organizationId)
+                .then(data => ({ type: 'organization', data }))
                 .catch((error) => {
                   console.warn(`Organization with ID ${lectureData.organizationId} not found:`, error.message);
                   return { type: 'organization', data: null };
@@ -178,20 +180,20 @@ const UnifiedProfile = () => {
             const daijaId = lectureData.daija || lectureData.daijaId;
             console.log("Fetching other lectures by daija:", daijaId);
             otherLecturesPromises.push(
-              axiosInstance.get(`/lectures/daija/${daijaId}`)
+              predavanjaService.getPredavanjaByDaija(daijaId)
                 .catch((error) => {
                   console.warn(`Failed to fetch lectures for daija ${daijaId}:`, error.message);
-                  return { data: [] };
+                  return [];
                 })
             );
           }
           if (lectureData.organizationId) {
             console.log("Fetching other lectures by organization:", lectureData.organizationId);
             otherLecturesPromises.push(
-              axiosInstance.get(`/lectures/organization/${lectureData.organizationId}`)
+              predavanjaService.getPredavanjaByOrganization(lectureData.organizationId)
                 .catch((error) => {
                   console.warn(`Failed to fetch lectures for organization ${lectureData.organizationId}:`, error.message);
-                  return { data: [] };
+                  return [];
                 })
             );
           }
@@ -199,7 +201,7 @@ const UnifiedProfile = () => {
           if (otherLecturesPromises.length > 0) {
             const otherLecturesResults = await Promise.all(otherLecturesPromises);
             const allOtherLectures = otherLecturesResults.flatMap(res => 
-              Array.isArray(res.data) ? res.data : []
+              Array.isArray(res) ? res : []
             );
             // Remove current lecture and duplicates
             const uniqueOtherLectures = allOtherLectures
@@ -278,7 +280,7 @@ const UnifiedProfile = () => {
     switch (type) {
       case 'daija':
         // Return only the name without title (title is shown separately below)
-        const name = profileData.name || profileData.firstName || '';
+        const name = profileData.name || '';
         return name || 'Nepoznat daija';
       case 'organization':
         return profileData.name || 'Nepoznata organizacija';
@@ -330,6 +332,15 @@ const UnifiedProfile = () => {
       router.push(`/profile/organization/${slug}`);
     }
   };
+
+  // Filter function for approved items
+  const filterApproved = (items) => items.filter(item => 
+    item.status === 'approved'
+  );
+
+  const approvedLectures = currentLectures.filter(item => 
+    item.status === 'approved'
+  );
 
   if (isLoading) {
     return (
@@ -996,7 +1007,7 @@ const UnifiedProfile = () => {
                             )}
                             {profileData.city && (
                               <Typography variant="body1" sx={{ fontSize: '1.1rem', color: '#333' }}>
-                                <strong>Grad:</strong> {profileData.city}
+                                <strong>Mjesto:</strong> {profileData.city}
                               </Typography>
                             )}
                           </Box>
@@ -1164,21 +1175,14 @@ const UnifiedProfile = () => {
         )}
 
         {/* Related Lectures Section */}
-        {lectures.length > 0 && (
+        {approvedLectures.length > 0 && (
           <Box sx={{ mt: 4 }}>
-            <Typography variant="h4" gutterBottom>
-              {type === 'lecture' ? 'Ostala predavanja' : 'Dersovi'}
+            <Typography variant="h5" gutterBottom>
+             Najavljena predavanja
             </Typography>
             <LecturesGrid gap={3}>
-              {currentLectures.map((lecture) => (
-                <LectureCard 
-                  key={lecture._id} 
-                  lecture={lecture}
-                  onClick={() => {
-                    const slug = generateLectureSlug(lecture);
-                    router.push(`/profile/lecture/${slug}`);
-                  }}
-                />
+              {approvedLectures.map((lecture) => (
+                <UniversalCard key={lecture._id} data={{ ...lecture, type: 'Predavanje' }} />
               ))}
             </LecturesGrid>
             

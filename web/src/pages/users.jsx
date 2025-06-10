@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  CircularProgress,
-  Alert
+    Box,
+    Container,
+    Typography,
+    Button,
+    CircularProgress,
+    Alert
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import Navigation from '@/components/Navigation';
-import axiosInstance from '@/utils/axiosConfig';
+import { usersService } from '@/services';
 import DataTable from '@/components/DataTable';
 // import { UserForm } from '@shared/dashboard';
 
@@ -23,8 +23,8 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axiosInstance.get('/users');
-      setUsers(Array.isArray(response.data) ? response.data : []);
+      const response = await usersService.getAllUsers();
+      setUsers(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error('Error fetching users:', error);
       setError('Došlo je do greške pri dohvaćanju korisnika');

@@ -225,7 +225,7 @@ export const sortDaijeByLectureProximity = (daije: any[], lectures: any[]): any[
     // Also check speaker field for name matches (less precise but useful)
     if (lecture.speaker) {
       daije.forEach(daija => {
-        if (daija.firstName && lecture.speaker.includes(daija.firstName)) {
+        if (daija.name && lecture.speaker.includes(daija.name)) {
           if (!daijaLecturesMap.has(daija._id)) {
             daijaLecturesMap.set(daija._id, []);
           }
@@ -300,4 +300,104 @@ export const sortDaijeByLectureProximity = (daije: any[], lectures: any[]): any[
       // Second priority: within same category, sort by proximity
       return a.closestLectureTime - b.closestLectureTime;
     });
+};
+
+// Sort all approved daije with random arrangement, prioritizing those with active lectures
+export const sortAllDaijeWithActivePriority = (daije: any[], lectures: any[]): any[] => {
+  if (!Array.isArray(daije) || !Array.isArray(lectures)) return daije || [];
+  
+  // Filter only approved daije
+  const approvedDaije = daije.filter(daija => daija.status === 'approved');
+  
+  const now = new Date();
+  
+  // Create a lookup map for better performance
+  const daijaLecturesMap = new Map();
+  
+  // Group lectures by daija in a single pass
+  lectures.forEach(lecture => {
+    // Only consider approved lectures
+    if (lecture.status !== 'approved') return;
+    
+    const daijaKeys = [
+      lecture.daija,
+      lecture.daijaId,
+      typeof lecture.daija === 'object' ? lecture.daija?._id : null
+    ].filter(Boolean);
+    
+    daijaKeys.forEach(key => {
+      if (!daijaLecturesMap.has(key)) {
+        daijaLecturesMap.set(key, []);
+      }
+      daijaLecturesMap.get(key).push(lecture);
+    });
+    
+    // Also check speaker field for name matches
+    if (lecture.speaker) {
+      approvedDaije.forEach(daija => {
+        if (daija.name && lecture.speaker.includes(daija.name)) {
+          if (!daijaLecturesMap.has(daija._id)) {
+            daijaLecturesMap.set(daija._id, []);
+          }
+          daijaLecturesMap.get(daija._id).push(lecture);
+        }
+      });
+    }
+  });
+  
+  // Categorize daije into those with active lectures and those without
+  const daijeWithActiveLectures: any[] = [];
+  const daijeWithoutActiveLectures: any[] = [];
+  
+  approvedDaije.forEach(daija => {
+    const daijaLectures = daijaLecturesMap.get(daija._id) || [];
+    
+    // Remove duplicates
+    const uniqueLectures = daijaLectures.filter((lecture: any, index: number, arr: any[]) => 
+      arr.findIndex(l => l._id === lecture._id) === index
+    );
+    
+    // Check if daija has any active (future) lectures
+    const hasActiveLecture = uniqueLectures.some((lecture: any) => {
+      const lectureDateTime = new Date(lecture.date);
+      
+      if (lecture.time) {
+        const [hours, minutes] = lecture.time.split(':').map(Number);
+        lectureDateTime.setHours(hours, minutes, 0, 0);
+      } else {
+        lectureDateTime.setHours(12, 0, 0, 0);
+      }
+      
+      return lectureDateTime.getTime() > now.getTime();
+    });
+    
+    const daijaWithMetadata = {
+      ...daija,
+      lectureCount: uniqueLectures.length,
+      hasActiveLecture,
+      randomSeed: Math.random() // For random sorting within categories
+    };
+    
+    if (hasActiveLecture) {
+      daijeWithActiveLectures.push(daijaWithMetadata);
+    } else {
+      daijeWithoutActiveLectures.push(daijaWithMetadata);
+    }
+  });
+  
+  // Randomly shuffle both categories
+  const shuffleArray = (array: any[]) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+  
+  const shuffledWithActive = shuffleArray(daijeWithActiveLectures);
+  const shuffledWithoutActive = shuffleArray(daijeWithoutActiveLectures);
+  
+  // Return daije with active lectures first, then those without
+  return [...shuffledWithActive, ...shuffledWithoutActive];
 }; 

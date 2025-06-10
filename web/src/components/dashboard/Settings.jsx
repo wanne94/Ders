@@ -1,18 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  Box,
-  Typography,
-  Switch,
-  Button,
-  Alert,
-  Snackbar
+    Box,
+    Typography,
+    Switch,
+    Button,
+    Alert,
+    Snackbar,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Divider
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
+import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
+import axiosInstance from '../../utils/axiosConfig';
+import { jwtDecode } from 'jwt-decode';
 
 const Settings = ({ approvalSettings, setApprovalSettings }) => {
   const [localSettings, setLocalSettings] = useState(approvalSettings);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [cleanupDialog, setCleanupDialog] = useState(false);
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
+
+  // Check if user is super admin
+  const isSuperAdmin = () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return false;
+      const decoded = jwtDecode(token);
+      return decoded.role === 'super_admin';
+    } catch (error) {
+      return false;
+    }
+  };
 
   // Sync local settings when prop changes
   useEffect(() => {
@@ -26,10 +49,13 @@ const Settings = ({ approvalSettings, setApprovalSettings }) => {
     setHasChanges(JSON.stringify(newSettings) !== JSON.stringify(approvalSettings));
   };
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
+    if (isSaving) return;
+    
+    setIsSaving(true);
     try {
       // Update the parent component's state (which will save to database)
-      setApprovalSettings(localSettings);
+      await setApprovalSettings(localSettings);
       
       setHasChanges(false);
       setSnackbar({
@@ -44,6 +70,36 @@ const Settings = ({ approvalSettings, setApprovalSettings }) => {
         message: 'Greška pri spašavanju postavki.',
         severity: 'error'
       });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCleanupDatabase = async () => {
+    if (isCleaningUp) return;
+    
+    setIsCleaningUp(true);
+    try {
+      const response = await axiosInstance.post('/admin/cleanup-database');
+      const results = response.data;
+      
+      setSnackbar({
+        open: true,
+        message: `Baza očišćena! Ukupno obrisano: ${results.summary.totalDeleted} stavki`,
+        severity: 'success'
+      });
+      
+      console.log('🧹 Database cleanup results:', results);
+    } catch (error) {
+      console.error('Error cleaning database:', error);
+      setSnackbar({
+        open: true,
+        message: 'Greška pri čišćenju baze podataka.',
+        severity: 'error'
+      });
+    } finally {
+      setIsCleaningUp(false);
+      setCleanupDialog(false);
     }
   };
 
@@ -75,6 +131,7 @@ const Settings = ({ approvalSettings, setApprovalSettings }) => {
             checked={value}
             onChange={() => handleToggleChange(key)}
             color="primary"
+            disabled={isSaving}
           />
         </Box>
       ))}
@@ -94,12 +151,84 @@ const Settings = ({ approvalSettings, setApprovalSettings }) => {
           size="large"
           startIcon={<SaveIcon />}
           onClick={handleSaveChanges}
-          disabled={!hasChanges}
+          disabled={!hasChanges || isSaving}
           sx={{ px: 4, py: 1.5 }}
         >
-          Spasi promjene
+          {isSaving ? 'Spašavam...' : 'Spasi promjene'}
         </Button>
       </Box>
+
+      {/* Database Cleanup Section (Super Admin only) */}
+      {isSuperAdmin() && (
+        <>
+          <Divider sx={{ mt: 6, mb: 4 }} />
+          
+          <Typography variant="h6" gutterBottom color="error">
+            Čišćenje baze podataka
+          </Typography>
+          
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Briše sve daije, organizacije i predavanja koji nemaju valjan status (pending, approved, rejected).
+            Ova akcija je nepovratna!
+          </Typography>
+
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Button
+              variant="outlined"
+              color="error"
+              size="large"
+              startIcon={<CleaningServicesIcon />}
+              onClick={() => setCleanupDialog(true)}
+              disabled={isCleaningUp}
+              sx={{ px: 4, py: 1.5 }}
+            >
+              {isCleaningUp ? 'Čistim...' : 'Očisti bazu'}
+            </Button>
+          </Box>
+        </>
+      )}
+
+      {/* Cleanup Confirmation Dialog */}
+      <Dialog
+        open={cleanupDialog}
+        onClose={() => setCleanupDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle color="error">
+          Potvrda čišćenja baze
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" gutterBottom>
+            Da li ste sigurni da želite da obršite sve nevalidne podatke iz baze?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Ova akcija će obrisati:
+          </Typography>
+          <Typography variant="body2" component="ul" sx={{ mt: 1, pl: 2 }}>
+            <li>Daije bez status-a ili sa nevalidnim status-om</li>
+            <li>Organizacije bez status-a ili sa nevalidnim status-om</li>
+            <li>Predavanja bez status-a ili sa nevalidnim status-om</li>
+            <li>Predavanja koja referenciraju obrisane daije/organizacije</li>
+          </Typography>
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Ova akcija je nepovratna! Podaci će biti trajno obrisani.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCleanupDialog(false)} disabled={isCleaningUp}>
+            Otkaži
+          </Button>
+          <Button 
+            onClick={handleCleanupDatabase} 
+            color="error" 
+            variant="contained"
+            disabled={isCleaningUp}
+          >
+            {isCleaningUp ? 'Čistim...' : 'Potvrdi brisanje'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}

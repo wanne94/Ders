@@ -731,14 +731,6 @@ export default function Home() {
         setIsLoading(true);
         setError(null);
         
-        // Environment debug (only in development)
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🌍 Environment Variables:');
-          console.log('  - NODE_ENV:', process.env.NODE_ENV);
-          console.log('  - API_URL:', process.env.NEXT_PUBLIC_API_URL);
-          console.log('  - SERVER_URL:', process.env.NEXT_PUBLIC_SERVER_URL);
-        }
-        
         // Fetch lectures
         const allLectures = await predavanjaService.getAllPredavanja();
 
@@ -763,14 +755,6 @@ export default function Home() {
         // Fetch daije with lecture counts from server
         const daijeData = await daijeService.getAllDaije();
         setDaije(daijeData || []);
-        
-        // Debug info for production issues (only in development)
-        if (process.env.NODE_ENV === 'development') {
-          console.log('📊 Data loaded:');
-          console.log('  - Lectures:', lecturesData?.length || 0);
-          console.log('  - Organizations:', organizationsData?.length || 0);
-          console.log('  - Daije:', daijeData?.length || 0);
-        }
         
       } catch (err) {
         console.error('Greška pri dohvaćanju podataka:', err);

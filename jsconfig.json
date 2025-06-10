@@ -6,7 +6,11 @@
     }
   },
   "include": [
-    "src/**/*"
+    "web/**/*",
+    "mobile/**/*",
+    "server/**/*",
+    "scripts/**/*",
+    "*.js"
   ],
   "exclude": [
     "node_modules"

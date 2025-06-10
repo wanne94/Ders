@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const organizationSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    required: false,
+    default: 'Udruženje'
+  },
   name: {
     type: String
   },
@@ -46,6 +51,7 @@ organizationSchema.index({ status: 1 }); // For filtering by status
 organizationSchema.index({ name: 1 }); // For sorting by name
 organizationSchema.index({ status: 1, name: 1 }); // Compound for active organizations sorted by name
 organizationSchema.index({ city: 1 }); // For filtering by city
+organizationSchema.index({ type: 1 }); // For filtering by type
 
 // Text search index for searching organizations
 organizationSchema.index({ 

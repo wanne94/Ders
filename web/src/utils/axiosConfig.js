@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getToken, clearAllData } from './authHelpers';
 
 const api = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_URL}/api`,
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   timeout: 30000, // Increased to 30 seconds for slow servers
   headers: {
     'Accept': 'application/json',

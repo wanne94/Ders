@@ -26,7 +26,7 @@ export const formatLectureCard = (lecture: any): CardData => {
   if (lecture.daija?.name || lecture.speaker) {
     infoItems.push({
       icon: '👨‍🏫',
-      text: lecture.daija?.name || lecture.speaker || 'Nepoznata daija'
+      text: lecture.daija?.name || lecture.speaker || 'Nepoznat daija'
     });
   }
 
@@ -93,15 +93,6 @@ export const formatLectureCard = (lecture: any): CardData => {
 export const formatDaijaCard = (daija: any, lectureCount?: number): CardData => {
   const infoItems: InfoItem[] = [];
 
-  // Lecture count
-  if (lectureCount !== undefined) {
-    infoItems.push({
-      icon: '📚',
-      text: `${lectureCount} predavanja`,
-      color: '#1976d2'
-    });
-  }
-
   // Specialization
   if (daija.specialization) {
     infoItems.push({
@@ -130,10 +121,8 @@ export const formatDaijaCard = (daija: any, lectureCount?: number): CardData => 
   }
 
   const formatDaijaName = (daija: any) => {
-    const firstName = daija?.firstName || '';
-    const lastName = daija?.lastName || '';
-    const fullName = `${firstName} ${lastName}`.trim();
-    return fullName || daija?.name || 'Nepoznata daija';
+    // Use name field for daija
+    return daija?.name || 'Nepoznat daija';
   };
 
   const formatDaijaTitle = (daija: any) => {

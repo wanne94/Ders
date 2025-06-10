@@ -1,21 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  MenuItem,
-  Box,
-  Typography,
-  Alert,
-  CircularProgress,
-  IconButton
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    Button,
+    MenuItem,
+    Box,
+    Typography, CircularProgress,
+    IconButton
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useRouter } from 'next/router';
-import axiosInstance from '@/utils/axiosConfig';
+import { daijeService, suggestionsService } from '@/services';
 
 const SuggestionForm = ({ open, onClose, onSuccess }) => {
   const router = useRouter();
@@ -50,9 +48,9 @@ const SuggestionForm = ({ open, onClose, onSuccess }) => {
         
         const fetchDaijaBySlug = async () => {
           try {
-            const response = await axiosInstance.get(`/daije/slug/${potentialId}`);
-            if (response.data && response.data._id) {
-              detectedId = response.data._id;
+            const response = await daijeService.getDaijaBySlug(potentialId);
+            if (response && response._id) {
+              detectedId = response._id;
             } else {
               detectedId = potentialId;
             }
@@ -76,10 +74,10 @@ const SuggestionForm = ({ open, onClose, onSuccess }) => {
         // If it's a slug, fetch the daija to get the ID
         const fetchDaijaBySlug = async () => {
           try {
-            const response = await axiosInstance.get('/daije');
-            const allDaije = Array.isArray(response.data) ? response.data : [];
+            const response = await daijeService.getAllDaije();
+            const allDaije = Array.isArray(response) ? response : [];
             const foundDaija = allDaije.find(daija => {
-              const slug = daija.firstName
+              const slug = daija.name
                 ?.toLowerCase()
                 .replace(/[čć]/g, 'c')
                 .replace(/[đ]/g, 'd')
@@ -162,8 +160,8 @@ const SuggestionForm = ({ open, onClose, onSuccess }) => {
       };
 
       console.log('📤 Sending suggestion payload:', payload);
-      const response = await axiosInstance.post('/suggestions', payload);
-      console.log('✅ Suggestion created successfully:', response.data);
+      const response = await suggestionsService.createSuggestion(payload);
+      console.log('✅ Suggestion created successfully:', response);
 
       // Reset form
       setDescription('');

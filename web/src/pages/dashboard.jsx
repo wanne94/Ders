@@ -28,6 +28,8 @@ import DaijaForm from '@/components/DaijaForm';
 import OrganizationForm from '@/components/OrganizationForm';
 import UserForm from '@/components/UserForm';
 
+
+import { predavanjaService, daijeService, udruzenjaService, suggestionsService, usersService, settingsService } from '@/services';
 import axiosInstance from '@/utils/axiosConfig';
 
 const Dashboard = () => {
@@ -50,8 +52,7 @@ const Dashboard = () => {
   useEffect(() => {
     const loadApprovalSettings = async () => {
       try {
-        const response = await axiosInstance.get('/settings/public');
-        const settings = response.data;
+        const settings = await settingsService.getPublicSettings();
         
         if (settings.approvalSettings) {
           setApprovalSettings(settings.approvalSettings);
@@ -72,7 +73,7 @@ const Dashboard = () => {
   const saveApprovalSettings = async (settingsToSave = null) => {
     try {
       const settings = settingsToSave || approvalSettings;
-      await axiosInstance.put('/settings/approval-settings', settings);
+      await settingsService.updateApprovalSettings(settings);
       showSnackbar('Postavke odobrenja su uspješno spremljene!');
     } catch (error) {
       console.error('Error saving approval settings:', error);
@@ -83,6 +84,11 @@ const Dashboard = () => {
   const updateApprovalSettings = async (newSettings) => {
     setApprovalSettings(newSettings);
     await saveApprovalSettings(newSettings);
+  };
+
+  // Simple setter for the Settings component to avoid immediate saves
+  const setApprovalSettingsOnly = (newSettings) => {
+    setApprovalSettings(newSettings);
   };
 
   useEffect(() => {
@@ -140,26 +146,26 @@ const Dashboard = () => {
     setUi(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       const [usersRes, lecturesRes, daijeRes, orgsRes, suggestionsRes, archivedSuggestionsRes, suggestionsCountRes] = await Promise.all([
-        axiosInstance.get('/users/public'),
-        axiosInstance.get('/lectures/public'),
-        axiosInstance.get('/daije/public'),
-        axiosInstance.get('/organizations/public'),
-        axiosInstance.get('/suggestions/public'),
-        axiosInstance.get('/suggestions/archived/public'),
-        axiosInstance.get('/suggestions/count/public')
+        usersService.getAllUsers(),
+        predavanjaService.getAllPredavanjaForAdmin(),
+        daijeService.getAllDaije(),
+        udruzenjaService.getAllUdruzenjaForAdmin(),
+        suggestionsService.getAllSuggestions(),
+        suggestionsService.getArchivedSuggestions(),
+        suggestionsService.getSuggestionsCount()
       ]);
 
-      const suggestionsData = Array.isArray(suggestionsRes.data) ? suggestionsRes.data : suggestionsRes.data.suggestions || [];
-      const archivedSuggestionsData = Array.isArray(archivedSuggestionsRes.data) ? archivedSuggestionsRes.data : archivedSuggestionsRes.data.archivedSuggestions || [];
+      const suggestionsData = Array.isArray(suggestionsRes) ? suggestionsRes : [];
+      const archivedSuggestionsData = Array.isArray(archivedSuggestionsRes) ? archivedSuggestionsRes : [];
       
       setData({
-        users: Array.isArray(usersRes.data) ? usersRes.data : usersRes.data.users || [],
-        lectures: Array.isArray(lecturesRes.data) ? lecturesRes.data : lecturesRes.data.lectures || [],
-        daije: Array.isArray(daijeRes.data) ? daijeRes.data : daijeRes.data.daije || [],
-        organizations: Array.isArray(orgsRes.data) ? orgsRes.data : orgsRes.data.organizations || [],
+        users: Array.isArray(usersRes) ? usersRes : usersRes.users || [],
+        lectures: Array.isArray(lecturesRes) ? lecturesRes : [],
+        daije: Array.isArray(daijeRes) ? daijeRes : [],
+        organizations: Array.isArray(orgsRes) ? orgsRes : [],
         suggestions: suggestionsData,
         archivedSuggestions: archivedSuggestionsData,
-        suggestionsCount: suggestionsCountRes.data || { total: 0, pending: 0, approved: 0, rejected: 0 }
+        suggestionsCount: suggestionsCountRes || { total: 0, pending: 0, approved: 0, rejected: 0 }
       });
 
       // Ažuriraj broj aktivnih prijedloga
@@ -484,22 +490,17 @@ const Dashboard = () => {
         } else if (itemToDuplicate.type === 'organization' && duplicatedItem.name) {
           duplicatedItem.name = `${duplicatedItem.name} (kopija ${i + 1})`;
         } else if (itemToDuplicate.type === 'daija') {
-          // Za daije, mijenjamo ime/firstName
-          if (duplicatedItem.firstName) {
-            const newName = `${duplicatedItem.firstName} (kopija ${i + 1})`;
-            duplicatedItem.firstName = newName;
-            duplicatedItem.name = newName;
-          } else if (duplicatedItem.name) {
+          // Za daije, mijenjamo ime
+          if (duplicatedItem.name) {
             const newName = `${duplicatedItem.name} (kopija ${i + 1})`;
             duplicatedItem.name = newName;
-            duplicatedItem.firstName = newName;
           }
         }
         
         console.log('🔄 Duplicating item:', {
           type: itemToDuplicate.type,
-          originalName: itemToDuplicate.firstName || itemToDuplicate.name,
-          newName: duplicatedItem.firstName || duplicatedItem.name,
+          originalName: itemToDuplicate.name,
+          newName: duplicatedItem.name,
           data: duplicatedItem
         });
         
@@ -995,7 +996,6 @@ const Dashboard = () => {
               activeSection={activeSection} 
               onSectionChange={setSection}
               pendingCount={
-                (data.lectures || []).filter(l => l.status === 'pending').length +
                 (data.daije || []).filter(d => d.status === 'pending').length +
                 (data.organizations || []).filter(o => o.status === 'pending').length
               }
@@ -1196,6 +1196,29 @@ const Dashboard = () => {
           approvalEnabled={approvalSettings.lecture}
         />
 
+        {/* 
+        Alternative using UnifiedForm:
+        <UnifiedForm
+          open={editLectureDialogOpen}
+          onClose={() => setEditLectureDialogOpen(false)}
+          onSuccess={(updatedLecture) => {
+            setData(prev => ({
+              ...prev,
+              lectures: prev.lectures.map(lecture => 
+                lecture._id === updatedLecture._id ? updatedLecture : lecture
+              )
+            }));
+            setEditLectureDialogOpen(false);
+            showSnackbar('Predavanje uspješno ažurirano');
+          }}
+          type="lecture"
+          data={lectureToEdit}
+          approvalEnabled={approvalSettings.lecture}
+          daije={data.daije}
+          organizations={data.organizations}
+        />
+        */}
+
         {/* Duplicate Count Dialog */}
         <Dialog
           open={duplicateCountDialogOpen}
@@ -1208,7 +1231,7 @@ const Dashboard = () => {
           </DialogTitle>
           <DialogContent>
             <Typography variant="body1" sx={{ mb: 3 }}>
-              Koliko kopija želite napraviti od "{itemToDuplicate?.title || itemToDuplicate?.firstName || itemToDuplicate?.name}"?
+                              Koliko kopija želite napraviti od &quot;{itemToDuplicate?.title || itemToDuplicate?.name}&quot;?
             </Typography>
             <TextField
               autoFocus
@@ -1274,6 +1297,27 @@ const Dashboard = () => {
           approvalEnabled={approvalSettings.daija}
         />
 
+        {/* 
+        Alternative using UnifiedForm:
+        <UnifiedForm
+          open={editDaijaDialogOpen}
+          onClose={() => setEditDaijaDialogOpen(false)}
+          onSuccess={(updatedDaija) => {
+            setData(prev => ({
+              ...prev,
+              daije: prev.daije.map(daija => 
+                daija._id === updatedDaija._id ? updatedDaija : daija
+              )
+            }));
+            setEditDaijaDialogOpen(false);
+            showSnackbar('Daija uspješno ažurirana');
+          }}
+          type="daija"
+          data={daijaToEdit}
+          approvalEnabled={approvalSettings.daija}
+        />
+        */}
+
         {/* Edit Organization Dialog */}
         <OrganizationForm
           open={editOrganizationDialogOpen}
@@ -1291,6 +1335,27 @@ const Dashboard = () => {
           organization={organizationToEdit}
           approvalEnabled={approvalSettings.organization}
         />
+
+        {/* 
+        Alternative using UnifiedForm:
+        <UnifiedForm
+          open={editOrganizationDialogOpen}
+          onClose={() => setEditOrganizationDialogOpen(false)}
+          onSuccess={(updatedOrganization) => {
+            setData(prev => ({
+              ...prev,
+              organizations: prev.organizations.map(org => 
+                org._id === updatedOrganization._id ? updatedOrganization : org
+              )
+            }));
+            setEditOrganizationDialogOpen(false);
+            showSnackbar('Udruženje uspješno ažurirano');
+          }}
+          type="organization"
+          data={organizationToEdit}
+          approvalEnabled={approvalSettings.organization}
+        />
+        */}
 
         {/* Edit User Dialog */}
         <UserForm

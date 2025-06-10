@@ -1,10 +1,10 @@
-import React from 'react';
 import Head from 'next/head';
 import { CssBaseline, Box } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-// Using default English (US) locale
+// Using Bosnian locale
+import { bs } from 'date-fns/locale';
 import theme from '@/config/theme';
 import '@/styles/globals.css';
 
@@ -15,7 +15,11 @@ function MyApp({ Component, pageProps }) {
         <title>Ders</title>
       </Head>
       <CssBaseline />
-      <LocalizationProvider dateAdapter={AdapterDateFns} dateFormats={{ fullDate: 'EEEE, MMMM dd, yyyy' }}>
+      <LocalizationProvider 
+        dateAdapter={AdapterDateFns} 
+        adapterLocale={bs}
+        dateFormats={{ fullDate: 'EEEE, dd. MMMM yyyy.' }}
+      >
         <Box sx={{ pt: '64px' }}>
           <Component {...pageProps} />
         </Box>

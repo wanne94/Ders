@@ -249,18 +249,18 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
     if (!formData.city || !formData.city.trim()) {
       errors.push('Mjesto je obavezno');
     } else if (formData.city.trim().length < 2) {
-      errors.push('Grad mora imati najmanje 2 karaktera');
+      errors.push('Mjesto mora imati najmanje 2 karaktera');
     }
     
-    // Validacija za predavača
+    // Validacija za daije
     if (!useCustomSpeaker && !formData.daijaId) {
-      errors.push('Molimo odaberite daju ili unesite ime predavača');
+      errors.push('Molimo odaberite daju ili unesite ime daije');
     }
     
     if (useCustomSpeaker && (!formData.speaker || !formData.speaker.trim())) {
-      errors.push('Ime predavača je obavezno kada ne birate daju');
+      errors.push('Ime daije je obavezno kada niste odabrali daiju');
     } else if (useCustomSpeaker && formData.speaker && formData.speaker.trim().length < 2) {
-      errors.push('Ime predavača mora imati najmanje 2 karaktera');
+      errors.push('Ime daije mora imati najmanje 2 karaktera');
     }
     
     // Validacija za organizaciju

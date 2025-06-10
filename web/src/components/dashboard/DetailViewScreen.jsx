@@ -1,45 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
-  Box,
-  Paper,
-  Typography,
-  Button,
-  Grid,
-  Chip,
-  Avatar,
-  Divider,
-  Card,
-  CardContent,
-  CardMedia,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert,
-  IconButton,
-  Tooltip,
-  Stack,
-  CircularProgress
+    Box,
+    Paper,
+    Typography,
+    Button,
+    Grid,
+    Chip,
+    Avatar,
+    Divider,
+    Card, CardMedia,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions, IconButton,
+    Tooltip,
+    Stack,
+    CircularProgress
 } from '@mui/material';
 import {
-  ArrowBack as ArrowBackIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Check as CheckIcon,
-  Close as CloseIcon,
-  Event as EventIcon,
-  Person as PersonIcon,
-  Business as BusinessIcon,
-  LocationOn as LocationIcon,
-  AccessTime as TimeIcon,
-  CalendarToday as CalendarIcon,
-  Phone as PhoneIcon,
-  Email as EmailIcon,
-  Language as WebsiteIcon,
-  Description as DescriptionIcon
+    ArrowBack as ArrowBackIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    Check as CheckIcon,
+    Close as CloseIcon,
+    Event as EventIcon,
+    Person as PersonIcon,
+    Business as BusinessIcon,
+    LocationOn as LocationIcon,
+    AccessTime as TimeIcon,
+    CalendarToday as CalendarIcon,
+    Phone as PhoneIcon,
+    Email as EmailIcon,
+    Language as WebsiteIcon,
+    Description as DescriptionIcon
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
-import axiosInstance from '../../utils/axiosConfig';
 
 const DetailViewScreen = ({ 
   item, 
@@ -241,7 +236,14 @@ const DetailViewScreen = ({
             src={item.image}
             sx={{ width: 150, height: 150, mx: 'auto', mb: 2 }}
           >
-            {item.firstName?.[0]}{item.lastName?.[0]}
+            {(() => {
+              // Get initials from name
+              if (item.name) {
+                const names = item.name.split(' ');
+                return names.length > 1 ? `${names[0][0]}${names[names.length-1][0]}` : item.name[0];
+              }
+              return 'D';
+            })()}
           </Avatar>
           <Chip 
             label={getStatusLabel(item.status)} 
@@ -252,7 +254,7 @@ const DetailViewScreen = ({
       <Grid item xs={12} md={8}>
         <Stack spacing={2}>
           <Typography variant="h4" gutterBottom>
-            {item.firstName} {item.lastName}
+            {item.name || 'Nepoznata daija'}
           </Typography>
           
           {item.email && (

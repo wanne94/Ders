@@ -1,25 +1,18 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5003/api';
 
-// Console logging only in development
-if (process.env.NODE_ENV === 'development') {
-  console.log('🔍 Environment check:');
-  console.log('  - NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
-  console.log('  - API_BASE_URL:', API_BASE_URL);
-}
+console.log('🔍 Environment check:');
+console.log('  - NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+console.log('  - API_BASE_URL:', API_BASE_URL);
 
 class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔧 ApiClient initialized with baseURL:', this.baseURL);
-    }
+    console.log('🔧 ApiClient initialized with baseURL:', this.baseURL);
   }
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🌐 Making API request to:', url);
-    }
+    console.log('🌐 Making API request to:', url);
     
     const config = {
       headers: {

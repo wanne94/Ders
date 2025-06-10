@@ -210,19 +210,7 @@ const UniversalCard = ({ data }) => {
       src={imageUrl}
       alt={displayData.title}
       onError={(e) => {
-        // Fallback hierarchy for images
-        if (e.target.src !== displayData.image) {
-          e.target.src = displayData.image;
-        } else {
-          // Final fallback to placeholder
-          const placeholderColors = {
-            lecture: '#1976d2',
-            daija: '#4caf50',
-            organization: '#2196f3'
-          };
-          const color = placeholderColors[displayData.type] || '#1976d2';
-          e.target.src = `https://via.placeholder.com/100x100/${color.slice(1)}/ffffff?text=📷`;
-        }
+        e.target.src = displayData.image;
       }}
       style={{ 
         width: '100%',

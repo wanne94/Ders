@@ -1,24 +1,24 @@
 import { useState, useEffect } from 'react';
 import {
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Box,
-  Alert,
-  InputAdornment,
-  IconButton,
-  CircularProgress,
-  Tabs,
-  Tab,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControlLabel,
-  Checkbox,
-  Stack,
-  Snackbar
+    Paper,
+    TextField,
+    Button,
+    Typography,
+    Box,
+    Alert,
+    InputAdornment,
+    IconButton,
+    CircularProgress,
+    Tabs,
+    Tab,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    FormControlLabel,
+    Checkbox,
+    Stack,
+    Snackbar
 } from '@mui/material';
 import { useRouter } from 'next/router';
 import PageLayout from '@/components/PageLayout';
@@ -27,11 +27,11 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { SECURITY_QUESTIONS, getQuestionByIndex } from '@/data/securityQuestions';
 import {
-  getRememberedCredentials,
-  setRememberedCredentials,
-  clearRememberedCredentials,
-  setToken,
-  setUserData,
+    getRememberedCredentials,
+    setRememberedCredentials,
+    clearRememberedCredentials,
+    setToken,
+    setUserData,
 } from '@/utils/authHelpers';
 
 const Authentication = () => {

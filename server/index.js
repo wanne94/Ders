@@ -117,7 +117,7 @@ console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 if (isProduction) {
   // Production - provjeri da li postoji out folder (static export) ili koristi .next
   const outPath = path.join(__dirname, '../out');
-  const nextPath = path.join(__dirname, '../web/.next');
+  const nextPath = path.join(__dirname, '../.next');
   
   if (fs.existsSync(outPath)) {
     // Static export build
@@ -125,9 +125,8 @@ if (isProduction) {
     console.log('📦 Serving production static export from /out folder');
   } else if (fs.existsSync(nextPath)) {
     // Regular Next.js build
-    app.use('/_next/static', express.static(path.join(__dirname, '../web/.next/static')));
-    app.use('/static', express.static(path.join(__dirname, '../web/.next/static')));
-    console.log('📦 Serving production build from /web/.next folder');
+    app.use(express.static(path.join(__dirname, '../.next/static')));
+    console.log('📦 Serving production build from /.next folder');
   } else {
     console.warn('⚠️  No production build found. Run "npm run build" first.');
   }
@@ -150,8 +149,8 @@ if (!fs.existsSync(uploadsDir)) {
 // Note: Static files are now served by Next.js from public/uploads
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
-// API health check route (moved to /api/status to avoid conflict with frontend)
-app.get('/api/status', (req, res) => {
+// Basic health check route
+app.get('/', (req, res) => {
   res.json({ 
     message: 'DERS Backend server is running!', 
     status: 'OK',
@@ -3719,55 +3718,3 @@ app.get('/api/daije/public', async (req, res) => {
     res.status(500).json({ message: 'Greška pri dohvaćanju daija' });
   }
 });
-
-// CATCH-ALL ROUTE: Serve React app for all non-API routes (MUST BE LAST!)
-// This handles client-side routing in production
-if (isProduction) {
-  app.get('*', (req, res) => {
-    // Don't serve React app for API routes
-    if (req.path.startsWith('/api/')) {
-      return res.status(404).json({ message: 'API endpoint not found' });
-    }
-    
-    // Serve React app index.html for all other routes
-    const nextIndexPath = path.join(__dirname, '../web/.next/server/pages/index.html');
-    const outIndexPath = path.join(__dirname, '../out/index.html');
-    const buildIndexPath = path.join(__dirname, '../web/build/index.html');
-    
-    // Try different build paths (prioritize Next.js build)
-    if (fs.existsSync(nextIndexPath)) {
-      res.sendFile(nextIndexPath);
-    } else if (fs.existsSync(outIndexPath)) {
-      res.sendFile(outIndexPath);
-    } else if (fs.existsSync(buildIndexPath)) {
-      res.sendFile(buildIndexPath);
-    } else {
-      // Fallback to serve a basic HTML page that loads the React app
-      res.send(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>DERS - Digitalna platforma za islamska predavanja</title>
-          <script>
-            // Redirect to the frontend URL if this is being served from the backend
-            if (window.location.port === '5003') {
-              window.location.replace('https://ders.ba');
-            }
-          </script>
-        </head>
-        <body>
-          <div id="root">
-            <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
-              <h1>DERS</h1>
-              <p>Digitalna platforma za islamska predavanja</p>
-              <p>Molimo idite na <a href="https://ders.ba">https://ders.ba</a></p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `);
-    }
-  });
-}

@@ -17,6 +17,7 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import PhoneIcon from '@mui/icons-material/Phone';
 import axiosInstance from '@/utils/axiosConfig';
+import { getImageUrl } from '../utils/imageUtils';
 
 const OrganizationForm = ({ open, onClose, onSuccess, approvalEnabled = true, organization }) => {
   // Deduplikuj gradove za sigurnost - REMOVED
@@ -57,9 +58,9 @@ const OrganizationForm = ({ open, onClose, onSuccess, approvalEnabled = true, or
         imageFile: null
       });
 
-      // Set image preview if editing
+      // Set image preview if editing - use getImageUrl to get proper server URL
       if (organization.image) {
-        setImagePreview(organization.image);
+        setImagePreview(getImageUrl(organization.image));
       }
     } else {
       // Reset form when not editing

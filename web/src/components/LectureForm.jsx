@@ -1,25 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Alert,
-  Snackbar,
-  TextField,
-  Typography,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    Box,
+    Alert,
+    Snackbar,
+    TextField,
+    Typography,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Select
 } from '@mui/material';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-// Using default English (US) locale
+import { DatePicker } from '@mui/x-date-pickers';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import axiosInstance from '../utils/axiosConfig';
+import { daijeService, udruzenjaService } from '@/services';
+import { getImageUrl } from '../utils/imageUtils';
 
 // Generate time options with 15-minute intervals
 const generateTimeOptions = () => {
@@ -84,9 +84,9 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
       setUseCustomSpeaker(!lecture.daijaId && !!lecture.speaker);
       setUseCustomOrganization(!lecture.organizationId && !!lecture.organization);
 
-      // Set image preview if editing
+      // Set image preview if editing - use getImageUrl to get proper server URL
       if (lecture.image) {
-        setImagePreview(lecture.image);
+        setImagePreview(getImageUrl(lecture.image));
       }
     } else {
       // Reset form when not editing
@@ -114,12 +114,12 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
     const fetchData = async () => {
       try {
         const [daijeRes, organizationsRes] = await Promise.all([
-          axiosInstance.get('/daije'),
-          axiosInstance.get('/organizations')
+          daijeService.getAllDaije(),
+          udruzenjaService.getAllUdruzenja()
         ]);
         
-        setDaije(Array.isArray(daijeRes.data) ? daijeRes.data : []);
-        setOrganizations(Array.isArray(organizationsRes.data) ? organizationsRes.data : []);
+        setDaije(Array.isArray(daijeRes) ? daijeRes : []);
+        setOrganizations(Array.isArray(organizationsRes) ? organizationsRes : []);
       } catch (error) {
         console.error('❌ Error fetching data:', error);
         setError('Greška pri dohvaćanju podataka');
@@ -249,18 +249,18 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
     if (!formData.city || !formData.city.trim()) {
       errors.push('Mjesto je obavezno');
     } else if (formData.city.trim().length < 2) {
-      errors.push('Grad mora imati najmanje 2 karaktera');
+      errors.push('Mjesto mora imati najmanje 2 karaktera');
     }
     
-    // Validacija za predavača
+    // Validacija za daije
     if (!useCustomSpeaker && !formData.daijaId) {
-      errors.push('Molimo odaberite daju ili unesite ime predavača');
+      errors.push('Molimo odaberite daju ili unesite ime daije');
     }
     
     if (useCustomSpeaker && (!formData.speaker || !formData.speaker.trim())) {
-      errors.push('Ime predavača je obavezno kada ne birate daju');
+      errors.push('Ime daije je obavezno kada niste izabrali daiju');
     } else if (useCustomSpeaker && formData.speaker && formData.speaker.trim().length < 2) {
-      errors.push('Ime predavača mora imati najmanje 2 karaktera');
+      errors.push('Ime daije mora imati najmanje 2 karaktera');
     }
     
     // Validacija za organizaciju
@@ -491,19 +491,19 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
                       }));
                     } else {
                       setUseCustomSpeaker(false);
-                      const selectedDaija = daije.find(d => d._id === e.target.value);
-                      setFormData(prev => ({
-                        ...prev,
-                        daijaId: e.target.value,
-                        speaker: selectedDaija ? `${selectedDaija.title} ${selectedDaija.firstName}` : ''
-                      }));
+                                    const selectedDaija = daije.find(d => d._id === e.target.value);
+              setFormData(prev => ({
+                ...prev,
+                daijaId: e.target.value,
+                speaker: selectedDaija ? `${selectedDaija.title} ${selectedDaija.name}` : ''
+              }));
                     }
                   }}
                   label="Odaberi daiju"
                 >
                   {Array.isArray(daije) && daije.map((daija) => (
                     <MenuItem key={daija._id} value={daija._id}>
-                      {daija.title} {daija.firstName}
+                      {daija.title} {daija.name}
                     </MenuItem>
                   ))}
                   <MenuItem value="custom">➕ Upiši ime daije</MenuItem>
@@ -578,21 +578,19 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
               )}
 
               {/* Date and Time */}
-              <LocalizationProvider dateAdapter={AdapterDateFns} dateFormats={{ fullDate: 'EEEE, MMMM dd, yyyy' }}>
-                <DatePicker
-                  label="Datum"
-                  value={formData.date ? new Date(formData.date) : null}
-                  onChange={handleDateChange}
-                  format="d.M.yyyy"
-                  minDate={new Date()}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      margin: "normal"
-                    }
-                  }}
-                />
-              </LocalizationProvider>
+              <DatePicker
+                label="Datum"
+                value={formData.date ? new Date(formData.date) : null}
+                onChange={handleDateChange}
+                format="dd.MM.yyyy"
+                minDate={new Date()}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    margin: "normal"
+                  }
+                }}
+              />
 
               <FormControl fullWidth margin="normal">
                 <InputLabel>Vrijeme</InputLabel>

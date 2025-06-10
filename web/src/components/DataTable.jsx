@@ -1,23 +1,23 @@
 import { useState, useMemo, memo, useEffect } from 'react';
 import {
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton, Chip,
-  Typography, MenuItem,
-  TablePagination,
-  Menu,
-  ListItemIcon,
-  ListItemText,
-  TableSortLabel,
-  Checkbox,
-  Toolbar,
-  Tooltip
+    Box,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    IconButton, Chip,
+    Typography, MenuItem,
+    TablePagination,
+    Menu,
+    ListItemIcon,
+    ListItemText,
+    TableSortLabel,
+    Checkbox,
+    Toolbar,
+    Tooltip
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -366,7 +366,7 @@ const DataTable = ({
         return { key: 'createdAt', direction: 'desc' };
       case 'daija':
       case 'daije':
-        return { key: 'firstName', direction: 'asc' };
+        return { key: 'name', direction: 'asc' };
       case 'organization':
       case 'organizations':
         return { key: 'name', direction: 'asc' };
@@ -556,7 +556,7 @@ const DataTable = ({
             getValue: (item) => (
               <ImageCell 
                 src={item?.image || null} 
-                alt={item?.firstName || 'Daija'} 
+                alt={item?.name || 'Daija'} 
                 defaultSrc={getDefaultDaijaImage()}
               />
             )
@@ -565,8 +565,8 @@ const DataTable = ({
             id: 'name', 
             label: 'Ime i Prezime', 
             sortable: true,
-            sortKey: 'firstName',
-            getValue: (item) => item.firstName || 'N/A'
+            sortKey: 'name',
+            getValue: (item) => item.name || 'N/A'
           },
           { id: 'title', label: 'Titula', sortable: true, sortKey: 'title', getValue: (item) => item.title || 'N/A' },
           { id: 'biography', label: 'Biografija', sortable: false, getValue: (item) => {

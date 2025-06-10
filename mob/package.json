@@ -4,18 +4,45 @@
   "main": "index.js",
   "scripts": {
     "start": "expo start",
+    "start:dev": "EXPO_ENV=development expo start",
+    "start:prod": "EXPO_ENV=production expo start",
     "android": "expo start --android",
+    "android:dev": "EXPO_ENV=development expo start --android",
+    "android:prod": "EXPO_ENV=production expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "ios:dev": "EXPO_ENV=development expo start --ios",
+    "ios:prod": "EXPO_ENV=production expo start --ios",
+    "web": "expo start --web",
+    "build:android": "EXPO_ENV=production expo build:android",
+    "build:ios": "EXPO_ENV=production expo build:ios"
   },
   "dependencies": {
-    "expo": "~53.0.10",
+    "@expo/vector-icons": "^14.1.0",
+    "@gorhom/bottom-sheet": "^5.1.6",
+    "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-native-community/datetimepicker": "8.3.0",
+    "@react-native-picker/picker": "^2.11.0",
+    "axios": "^1.6.7",
+    "date-fns": "^4.1.0",
+    "expo": "~53.0.11",
+    "expo-image-picker": "^16.1.4",
+    "expo-linear-gradient": "~14.1.5",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
-    "react-native": "0.79.3"
+    "react-dom": "19.0.0",
+    "react-native": "0.79.3",
+    "react-native-dotenv": "^3.4.9",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-reanimated": "~3.17.4",
+    "react-native-safe-area-context": "5.4.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "@types/react": "~19.0.10",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.56.0",
+    "eslint-config-universe": "^12.0.0"
   },
   "private": true
 }

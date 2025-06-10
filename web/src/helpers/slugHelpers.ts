@@ -15,10 +15,10 @@ const normalizeForSlug = (text: string): string => {
 
 // Generate URL-friendly slug from daija name
 export const generateDaijaSlug = (daija: any): string => {
-  if (!daija || (!daija.name && !daija.firstName)) return '';
+  if (!daija || !daija.name) return '';
   
-  // Use name field or fallback to firstName for backward compatibility
-  const fullName = daija.name || daija.firstName || '';
+  // Use name field
+  const fullName = daija.name || '';
   
   return normalizeForSlug(fullName);
 };

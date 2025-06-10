@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Box,
   Container,
@@ -104,7 +103,7 @@ const Footer = () => {
             </Box>
           </Grid>
 
-          {/* Kontakt */}
+          {/* Informacije */}
           <Grid item xs={12} md={3}>
             <Typography variant="h6" gutterBottom sx={{ fontSize: 20 }}>
               Kontakt

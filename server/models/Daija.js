@@ -1,14 +1,17 @@
 const mongoose = require('mongoose');
 
 const daijaSchema = new mongoose.Schema({
+
+  type: {
+    type: String,
+    required: false,
+    default: 'Daija'
+  },
   name: {
     type: String,
     required: true
   },
-  firstName: {
-    type: String,
-    required: false
-  },
+ 
   title: {
     type: String,
     required: true,
@@ -53,6 +56,7 @@ const daijaSchema = new mongoose.Schema({
 daijaSchema.index({ status: 1 }); // For filtering by status
 daijaSchema.index({ name: 1 }); // For sorting by name
 daijaSchema.index({ status: 1, name: 1 }); // Compound for active daije sorted by name
+daijaSchema.index({ type: 1 }); // For filtering by type
 
 // Text search index for searching daije
 daijaSchema.index({ 

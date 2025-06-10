@@ -1,12 +1,32 @@
 {
-  "name": "predavanje",
-  "version": "0.1.0",
+  "name": "ders-ba",
+  "version": "1.0.0",
+  "description": "DERS.BA Web Application",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "concurrently \"cd server && npm run dev\" \"cd web && npm run dev\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:web": "cd web && npm run dev",
+    "build": "cd web && npm run build",
+    "start": "cd web && npm start",
+    "lint": "next lint",
+    "test:web": "cd web && npm run pre-deploy",
+    "test:pre-deploy": "cd web && node tests/pre-deploy.test.js",
+    "deploy": "node deploy-complete.js deploy",
+    "deploy:web": "node deploy-complete.js web",
+    "deploy:server": "node deploy-complete.js server",
+    "deploy:full": "node deploy-complete.js full",
+    "deploy:quick": "node deploy-images.js && node scripts/deploy-web.js",
+    "deploy:images": "node deploy-complete.js images",
+    "deploy:legacy": "npm run deploy:server && npm run deploy:web",
+    "health": "node deploy-complete.js health",
+    "health:check": "node scripts/health-check.js",
+    "backup": "node deploy-complete.js backup",
+    "backup:create": "node scripts/backup.js",
+    "backup:daily": "0 0 * * * node scripts/backup.js",
+    "images": "node deploy-images.js",
+    "logs": "ssh -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST 'pm2 logs'",
+    "monitor": "ssh -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST 'pm2 monit'"
   },
   "dependencies": {
     "@emotion/react": "^11.11.0",
@@ -15,11 +35,24 @@
     "@mui/material": "^5.14.18",
     "@mui/system": "^5.14.18",
     "@mui/x-date-pickers": "^6.15.0",
-    "axios": "^1.6.0",
+    "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-native-community/datetimepicker": "8.3.0",
+    "@types/react": "~19.0.10",
+    "archiver": "^7.0.1",
+    "axios": "^1.9.0",
+    "cross-env": "^7.0.3",
     "date-fns": "^2.30.0",
+    "dotenv": "^16.4.5",
+    "expo": "^53.0.11",
     "jwt-decode": "^4.0.0",
     "next": "^15.3.3",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-reanimated": "~3.17.4",
+    "ssh2": "^1.16.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
   }
 }

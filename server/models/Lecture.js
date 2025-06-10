@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const lectureSchema = new mongoose.Schema({
+
+  type: {
+    type: String,
+    required: false,
+    default: 'Predavanje'
+  },
   title: {
     type: String,
     required: true
@@ -68,6 +74,7 @@ lectureSchema.index({ status: 1, date: 1 });
 lectureSchema.index({ status: 1 }); // For pending/rejected/active filtering
 lectureSchema.index({ date: 1 }); // For date-based sorting and filtering
 lectureSchema.index({ createdBy: 1 }); // For user's own lectures
+lectureSchema.index({ type: 1 }); // For filtering by type
 
 // 3. Reference field indexes for populate operations
 lectureSchema.index({ daija: 1 }); // For daija-specific lectures

@@ -47,7 +47,7 @@ export const getImageUrl = (imagePath) => {
  * @returns {string} - The default lecture image URL
  */
 export const getDefaultLectureImage = () => {
-  return '/uploads/images/predavanjeslika.jpg';
+  return getImageUrl('/uploads/images/predavanjeslika.jpg');
 };
 
 /**
@@ -55,7 +55,7 @@ export const getDefaultLectureImage = () => {
  * @returns {string} - The default daija image URL
  */
 export const getDefaultDaijaImage = () => {
-  return '/uploads/images/daijaslika.jpg';
+  return getImageUrl('/uploads/images/daijaslika.jpg');
 };
 
 /**
@@ -63,7 +63,7 @@ export const getDefaultDaijaImage = () => {
  * @returns {string} - The default organization image URL
  */
 export const getDefaultOrganizationImage = () => {
-  return '/uploads/images/udruzenjeslika.jpg';
+  return getImageUrl('/uploads/images/udruzenjeslika.jpg');
 };
 
 /**
@@ -71,7 +71,7 @@ export const getDefaultOrganizationImage = () => {
  * @returns {string} - The logo URL
  */
 export const getLogoUrl = () => {
-  return '/uploads/logo.jpg';
+  return getImageUrl('/uploads/logo.jpg');
 };
 
 /**
@@ -79,7 +79,7 @@ export const getLogoUrl = () => {
  * @returns {string} - The favicon URL
  */
 export const getFaviconUrl = () => {
-  return '/uploads/images/favicon.png';
+  return getImageUrl('/uploads/images/favicon.png');
 };
 
 export default {

@@ -1,0 +1,410 @@
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    TouchableOpacity,
+    TextInput,
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Platform
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import udruzenjaService from '../../services/udruzenjaService';
+import Toast from '../Toast';
+import * as ImagePicker from 'expo-image-picker';
+
+const COLORS = {
+  primary: '#022C43',
+  primaryLight: '#055A87',
+  secondary: '#dc004e',
+  white: '#ffffff',
+  gray: '#666666',
+  lightGray: '#f5f5f5',
+  success: '#4CAF50',
+  warning: '#FF9800',
+  error: '#f44336',
+  info: '#2196F3',
+  background: '#f8fafc',
+  border: '#e2e8f0',
+};
+
+const OrganizationForm = ({ onBack, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    address: '',
+    city: '',
+    facebook: '',
+    instagram: '',
+    telegram: '',
+    viber: '',
+    image: '',
+    status: 'pending'
+  });
+  
+  const [loading, setLoading] = useState(false);
+  const [imageUri, setImageUri] = useState(null);
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      Alert.alert('Greška', 'Naziv udruženja je obavezan');
+      return false;
+    }
+    if (!formData.description.trim()) {
+      Alert.alert('Greška', 'Opis udruženja je obavezan');
+      return false;
+    }
+    if (!formData.city.trim()) {
+      Alert.alert('Greška', 'Mjesto je obavezno');
+      return false;
+    }
+    return true;
+  };
+
+  const showToast = (message, type = 'success') => {
+    setToast({ visible: true, message, type });
+  };
+
+  const hideToast = () => {
+    setToast({ visible: false, message: '', type: 'success' });
+  };
+
+  const pickImage = async () => {
+    try {
+      // Request permission
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('Dozvola potrebna', 'Potrebna je dozvola za pristup galeriji slika.');
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: false,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setImageUri(result.assets[0].uri);
+        handleInputChange('image', result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Greška', 'Došlo je do greške prilikom odabira slike.');
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      // Request permission
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('Dozvola potrebna', 'Potrebna je dozvola za pristup kameri.');
+        return;
+      }
+
+      // Launch camera
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: 'images',
+        allowsEditing: false,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setImageUri(result.assets[0].uri);
+        handleInputChange('image', result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert('Greška', 'Došlo je do greške prilikom snimanja fotografije.');
+    }
+  };
+
+  const showImageOptions = () => {
+    Alert.alert(
+      'Dodaj sliku',
+      'Odaberite opciju',
+      [
+        { text: 'Galerija', onPress: pickImage },
+        { text: 'Kamera', onPress: takePhoto },
+        { text: 'Otkaži', style: 'cancel' }
+      ]
+    );
+  };
+
+  const removeImage = () => {
+    setImageUri(null);
+    handleInputChange('image', '');
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      setLoading(true);
+      await udruzenjaService.createUdruzenje(formData);
+      showToast('Udruženje je uspješno dodano!', 'success');
+      setTimeout(() => {
+        onSuccess?.();
+      }, 1500);
+    } catch (error) {
+      console.error('Error creating organization:', error);
+      showToast('Došlo je do greške prilikom dodavanja udruženja', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderInput = (label, field, placeholder, multiline = false, required = false) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.inputLabel}>
+        {label} {required && <Text style={styles.required}>*</Text>}
+      </Text>
+      <TextInput
+        style={[styles.input, multiline && styles.multilineInput]}
+        value={formData[field]}
+        onChangeText={(value) => handleInputChange(field, value)}
+        placeholder={placeholder}
+        multiline={multiline}
+        numberOfLines={multiline ? 4 : 1}
+      />
+    </View>
+  );
+
+  return (
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      enabled
+    >
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+          <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Dodaj Udruženje</Text>
+        <View style={styles.headerRight} />
+      </View>
+
+      <ScrollView 
+        style={styles.formContainer} 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Image Picker */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Slika udruženja (neobavezno)</Text>
+          {imageUri ? (
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+              <TouchableOpacity style={styles.removeImageButton} onPress={removeImage}>
+                <Ionicons name="close-circle" size={30} color={COLORS.error} />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.imagePickerButton} onPress={showImageOptions}>
+              <View style={styles.imagePickerContent}>
+                <Ionicons name="camera-outline" size={48} color={COLORS.primary} />
+                <Text style={styles.imagePickerText}>Dodaj sliku</Text>
+                <Text style={styles.imagePickerSubtext}>Kliknite za odabir slike</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {renderInput('Naziv udruženja', 'name', 'Unesite naziv...', false, true)}
+        {renderInput('Opis udruženja', 'description', 'Unesite opis...', true, true)}
+        {renderInput('Adresa', 'address', 'Unesite adresu...')}
+        {renderInput('mjesto', 'city', 'Unesite mjesto...', false, true)}
+        
+        {/* Social Media Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Društvene mreže</Text>
+          {renderInput('Facebook', 'facebook', 'https://facebook.com/...')}
+          {renderInput('Instagram', 'instagram', 'https://instagram.com/...')}
+          {renderInput('Telegram', 'telegram', 'https://t.me/...')}
+          {renderInput('Viber', 'viber', '+387...')}
+        </View>
+
+        {/* Padding for sticky button */}
+        <View style={styles.bottomPadding} />
+      </ScrollView>
+
+      {/* Sticky Submit Button */}
+      <View style={styles.submitContainer}>
+        <TouchableOpacity
+          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.submitButtonText}>
+            {loading ? 'Dodavanje...' : 'Dodaj Udruženje'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
+    </KeyboardAvoidingView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  headerRight: {
+    width: 40,
+  },
+  formContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 120, // Extra space for keyboard and submit button
+  },
+  bottomPadding: {
+    height: 80, // Space for sticky button
+  },
+  sectionContainer: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 16,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.primary,
+    marginBottom: 8,
+  },
+  required: {
+    color: COLORS.error,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: COLORS.white,
+  },
+  multilineInput: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  submitContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    backgroundColor: COLORS.white,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  submitButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.white,
+  },
+  imageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    padding: 16,
+  },
+  imagePreview: {
+    width: 120,
+    height: 80,
+    borderRadius: 8,
+  },
+  removeImageButton: {
+    padding: 8,
+  },
+  imagePickerButton: {
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 120,
+  },
+  imagePickerContent: {
+    alignItems: 'center',
+  },
+  imagePickerText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginTop: 12,
+  },
+  imagePickerSubtext: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: COLORS.gray,
+    marginTop: 4,
+  },
+});
+
+export default OrganizationForm; 

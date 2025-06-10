@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -18,11 +18,11 @@ import {
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import axiosInstance from '../utils/axiosConfig';
-import { getDefaultDaijaImage } from '../utils/imageUtils';
+import { getDefaultDaijaImage, getImageUrl } from '../utils/imageUtils';
 
 const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) => {
   const [formData, setFormData] = useState({
-    firstName: '',
+    name: '',
     title: 'prof',
     biography: '',
     image: '',
@@ -45,7 +45,7 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
   useEffect(() => {
     if (daija) {
       setFormData({
-        firstName: daija.firstName || daija.name || '',
+        name: daija.name || '',
         title: daija.title || 'prof',
         biography: daija.biography || '',
         image: daija.image || '',
@@ -53,14 +53,14 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
         education: daija.education || []
       });
 
-      // Set image preview if editing
+      // Set image preview if editing - use getImageUrl to get proper server URL
       if (daija.image) {
-        setImagePreview(daija.image);
+        setImagePreview(getImageUrl(daija.image));
       }
     } else {
       // Reset form when not editing
       setFormData({
-        firstName: '',
+        name: '',
         title: 'prof',
         biography: '',
         image: '',
@@ -209,8 +209,11 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
 
       // If no image is provided, use default image
       const finalFormData = {
-        ...formData,
-        name: formData.firstName, // Add name field for backend compatibility
+        name: formData.name, // Use name field for backend
+        title: formData.title,
+        biography: formData.biography,
+        status: formData.status,
+        education: formData.education,
         image: formData.imageFile ? imagePath : (daija?.image || getDefaultDaijaImage())
       };
 
@@ -225,7 +228,7 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
         // Create new daija with approval status based on settings
         const daijaData = {
           ...finalFormData,
-          status: approvalEnabled ? 'pending' : 'active'
+          status: approvalEnabled ? 'pending' : 'approved'
         };
         response = await axiosInstance.post('/daije', daijaData);
       }
@@ -330,8 +333,8 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
             <TextField
               fullWidth
               label="Ime i prezime"
-              name="firstName"
-              value={formData.firstName}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
               margin="normal"
               required

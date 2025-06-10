@@ -6,6 +6,29 @@ const fs = require('fs');
 
 const router = express.Router();
 
+// Helper funkcija za brisanje temp fajlova sa retry logikom (Windows fix)
+const cleanupTempFile = async (filePath, maxRetries = 5, delay = 100) => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log('🗑️ Temp file deleted:', filePath);
+        return;
+      }
+      return; // Fajl ne postoji, nema šta da se briše
+    } catch (error) {
+      if (error.code === 'EBUSY' && i < maxRetries - 1) {
+        console.log(`⏳ File busy, retrying in ${delay}ms... (attempt ${i + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // Exponential backoff
+      } else {
+        console.error('❌ Error cleaning up temp file:', error);
+        return; // Odustani nakon svih pokušaja
+      }
+    }
+  }
+};
+
 // Kreiraj uploads direktorij ako ne postoji
 const uploadsDir = path.join(__dirname, '../../public/uploads/images');
 const tempDir = path.join(__dirname, '../../public/uploads/temp');
@@ -135,9 +158,8 @@ router.post('/', upload.single('image'), async (req, res) => {
       }
     });
 
-    // Obriši temp fajl
-    fs.unlinkSync(tempFilePath);
-    console.log('🗑️ Temp file deleted:', tempFilePath);
+    // Obriši temp fajl sa retry logikom za Windows
+    await cleanupTempFile(tempFilePath);
 
     // Vrati optimizovane informacije
     res.json({
@@ -158,12 +180,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     
     // Obriši temp fajl ako postoji
     if (req.file && req.file.path && fs.existsSync(req.file.path)) {
-      try {
-        fs.unlinkSync(req.file.path);
-        console.log('🗑️ Temp file cleaned up after error');
-      } catch (cleanupError) {
-        console.error('❌ Error cleaning up temp file:', cleanupError);
-      }
+      await cleanupTempFile(req.file.path);
     }
 
     res.status(500).json({
