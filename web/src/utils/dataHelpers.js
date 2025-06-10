@@ -1,39 +1,37 @@
 /**
  * Normalizes API response data to ensure it's always an array
- * @param {Object} response - The API response object
- * @param {string} field - The field to extract from the response (optional)
+ * @param {Array|Object} data - The direct data from API (already parsed JSON)
+ * @param {string} field - The field to extract from the data (optional)
  * @returns {Array} - Normalized array of data
  */
-export const normalizeToArray = (response, field) => {
-  console.log('🔧 normalizeToArray called with:', { response: response?.data, field });
+export const normalizeToArray = (data, field) => {
+  console.log('🔧 normalizeToArray called with:', { data: data, field });
   
-  if (!response?.data) {
-    console.log('🔧 No response.data, returning empty array');
+  // Handle null/undefined data
+  if (!data) {
+    console.log('🔧 No data provided, returning empty array');
     return [];
   }
   
   // If field is provided, try to extract data using the field
   if (field) {
-    const data = response.data[field];
-    console.log(`🔧 Extracting field "${field}":`, data);
-    if (Array.isArray(data)) {
-      console.log(`✅ Field "${field}" is array with ${data.length} items`);
-      return data;
+    const fieldData = data[field];
+    console.log(`🔧 Extracting field "${field}":`, fieldData);
+    if (Array.isArray(fieldData)) {
+      console.log(`✅ Field "${field}" is array with ${fieldData.length} items`);
+      return fieldData;
     }
-    if (data) {
+    if (fieldData) {
       console.log(`🔧 Field "${field}" is not array, wrapping in array`);
-      return [data];
+      return [fieldData];
     }
     console.log(`❌ Field "${field}" not found, returning empty array`);
     return [];
   }
   
-  // If no field is provided, use the data directly
-  const data = response.data;
-  console.log('🔧 Using response.data directly:', typeof data, Array.isArray(data));
-  
+  // Handle direct array response
   if (Array.isArray(data)) {
-    console.log(`✅ Response.data is array with ${data.length} items`);
+    console.log(`✅ Direct array response with ${data.length} items`);
     return data;
   }
   
@@ -58,6 +56,7 @@ export const normalizeToArray = (response, field) => {
     return [data];
   }
   
+  // For any other data type, wrap in array
   if (data) {
     console.log('🔧 Non-object data, wrapping in array');
     return [data];
@@ -77,24 +76,25 @@ export const normalizeToArray = (response, field) => {
 export const safeApiCall = async (apiCall, fallbackValue = [], field = null) => {
   try {
     console.log('🔄 Making safe API call...');
-    const response = await apiCall();
-    console.log('✅ API call successful:', response?.data);
+    const data = await apiCall(); // Already parsed JSON data from fetch API
+    console.log('✅ API call successful:', data);
     
-    // Check if response looks like an error
-    if (response?.data?.message && !Array.isArray(response.data) && !response.data.data) {
-      console.error('❌ API returned error message:', response.data);
+    // Check if data looks like an error (direct error response)
+    if (data?.message && !Array.isArray(data) && !data.data && !data.items && !data.results) {
+      console.error('❌ API returned error message:', data);
       return fallbackValue;
     }
     
     // Normalize the response
     if (Array.isArray(fallbackValue)) {
-      return normalizeToArray(response, field);
+      return normalizeToArray(data, field);
     } else {
-      return response?.data || fallbackValue;
+      // For non-array fallback values, return the data directly
+      return data || fallbackValue;
     }
   } catch (error) {
     console.error('❌ API call failed:', error);
-    console.error('❌ Error details:', error.response?.data);
+    console.error('❌ Error details:', error.response?.data || error.message);
     return fallbackValue;
   }
 };

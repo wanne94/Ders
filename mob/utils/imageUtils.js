@@ -6,7 +6,7 @@
  * - Any legacy data that hasn't been migrated yet
  */
 
-const SERVER_URL = 'https://ders.ba';
+const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3000';
 
 /**
  * Get the full URL for an image
@@ -26,20 +26,20 @@ export const getImageUrl = (imagePath) => {
     return imagePath;
   }
   
-  // For uploads, always serve from the server
+  // For uploads, serve from Next.js public directory via web URL
   if (imagePath.includes('uploads/')) {
-    // Ensure path starts with / and construct full server URL
+    // Ensure path starts with / for Next.js public directory
     const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    return `${SERVER_URL}${cleanPath}`;
+    return `${WEB_URL}${cleanPath}`;
   }
   
-  // If it starts with /, it's a public path - serve from server
+  // If it starts with /, it's a public path - serve from Next.js public directory
   if (imagePath.startsWith('/')) {
-    return `${SERVER_URL}${imagePath}`;
+    return `${WEB_URL}${imagePath}`;
   }
   
-  // For other paths, construct full URL with server
-  return `${SERVER_URL}/${imagePath}`;
+  // For other paths, construct path for Next.js public directory
+  return `${WEB_URL}/${imagePath}`;
 };
 
 /**
@@ -66,10 +66,28 @@ export const getDefaultOrganizationImage = () => {
   return getImageUrl('/uploads/images/udruzenjeslika.jpg');
 };
 
+/**
+ * Get the logo URL
+ * @returns {string} - The logo URL
+ */
+export const getLogoUrl = () => {
+  return getImageUrl('/uploads/logo.jpg');
+};
+
+/**
+ * Get the favicon URL
+ * @returns {string} - The favicon URL
+ */
+export const getFaviconUrl = () => {
+  return getImageUrl('/uploads/images/favicon.png');
+};
+
 export default {
   getImageUrl,
   getDefaultLectureImage,
   getDefaultDaijaImage,
   getDefaultOrganizationImage,
-  SERVER_URL
+  getLogoUrl,
+  getFaviconUrl,
+  WEB_URL
 }; 

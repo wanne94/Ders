@@ -83,8 +83,15 @@ const ElementPage = ({ type }) => {
           response = [];
       }
       
-      const normalizedData = normalizeToArray({ data: response });
-      setItems(normalizedData);
+      const normalizedData = normalizeToArray(response);
+      
+      // Add type field based on the page type
+      const dataWithType = normalizedData.map(item => ({
+        ...item,
+        type: config.expectedType
+      }));
+      
+      setItems(dataWithType);
     } catch (error) {
       console.error(`Error fetching ${type}:`, error);
       setError(`Greška pri dohvaćanju ${config.title.toLowerCase()}`);

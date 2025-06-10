@@ -1,11 +1,11 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import {
-    Card,
-    CardContent,
-    Typography,
-    Box,
-    CardActionArea
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  CardActionArea
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
@@ -98,7 +98,7 @@ const UniversalCard = ({ data }) => {
   return (
     <Card 
       sx={{ 
-        height: '200px',
+        height: '100%',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -210,7 +210,15 @@ const UniversalCard = ({ data }) => {
       src={imageUrl}
       alt={displayData.title}
       onError={(e) => {
-        e.target.src = displayData.image;
+        e.target.onerror = null; // Prevent infinite loop
+        // Use appropriate default image based on type
+        if (displayData.type === 'lecture') {
+          e.target.src = '/uploads/images/predavanjeslika.jpg';
+        } else if (displayData.type === 'daija') {
+          e.target.src = '/uploads/images/daijaslika.jpg';
+        } else if (displayData.type === 'organization') {
+          e.target.src = '/uploads/images/udruzenjeslika.jpg';
+        }
       }}
       style={{ 
         width: '100%',

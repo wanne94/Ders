@@ -30,8 +30,8 @@ const cleanupTempFile = async (filePath, maxRetries = 5, delay = 100) => {
 };
 
 // Kreiraj uploads direktorij ako ne postoji
-const uploadsDir = path.join(__dirname, '../../public/uploads/images');
-const tempDir = path.join(__dirname, '../../public/uploads/temp');
+const uploadsDir = path.join(__dirname, '../../web/public/uploads/images');
+const tempDir = path.join(__dirname, '../../web/public/uploads/temp');
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });

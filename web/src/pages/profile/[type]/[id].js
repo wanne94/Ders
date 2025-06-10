@@ -1,23 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
-  Alert,
-  Avatar,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Container,
-  Grid,
-  List,
-  ListItem,
-  ListItemText,
-  Pagination,
-  Typography,
-  Paper,
-  Chip,
-  IconButton,
+    Alert,
+    Avatar,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    CircularProgress,
+    Container,
+    Grid,
+    List,
+    ListItem,
+    ListItemText,
+    Pagination,
+    Typography,
+    Paper,
+    Chip,
+    IconButton,
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SchoolIcon from '@mui/icons-material/School';
@@ -132,14 +132,19 @@ const UnifiedProfile = () => {
           console.log("Lecture data:", {
             id: lectureData._id,
             title: lectureData.title,
-            daijaId: lectureData.daija || lectureData.daijaId,
+            daijaId: typeof lectureData.daija === 'object' && lectureData.daija?._id 
+              ? lectureData.daija._id 
+              : lectureData.daija || lectureData.daijaId,
             organizationId: lectureData.organizationId
           });
           
           const relatedPromises = [];
           
           if (lectureData.daija || lectureData.daijaId) {
-            const daijaId = lectureData.daija || lectureData.daijaId;
+            // Extract ID from daija object if it's an object, otherwise use as is
+            const daijaId = typeof lectureData.daija === 'object' && lectureData.daija?._id 
+              ? lectureData.daija._id 
+              : lectureData.daija || lectureData.daijaId;
             console.log("Fetching related daija:", daijaId);
             relatedPromises.push(
               daijeService.getDaijaById(daijaId)
@@ -177,7 +182,10 @@ const UnifiedProfile = () => {
           // For lectures, also fetch other lectures by same daija/organization
           const otherLecturesPromises = [];
           if (lectureData.daija || lectureData.daijaId) {
-            const daijaId = lectureData.daija || lectureData.daijaId;
+            // Extract ID from daija object if it's an object, otherwise use as is
+            const daijaId = typeof lectureData.daija === 'object' && lectureData.daija?._id 
+              ? lectureData.daija._id 
+              : lectureData.daija || lectureData.daijaId;
             console.log("Fetching other lectures by daija:", daijaId);
             otherLecturesPromises.push(
               predavanjaService.getPredavanjaByDaija(daijaId)

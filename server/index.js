@@ -137,17 +137,16 @@ if (isProduction) {
 }
 
 // Uvijek servira public folder
-app.use('/static', express.static(path.join(__dirname, '../public')));
-app.use(express.static(path.join(__dirname, '../public')));
+// Static files are now served by Next.js from web/public
 
-// Create uploads directory if it doesn't exist - back to public/uploads
-const uploadsDir = path.join(__dirname, '../public/uploads/images');
+// Create uploads directory if it doesn't exist - for saving uploaded files
+const uploadsDir = path.join(__dirname, '../web/public/uploads/images');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Note: Static files are now served by Next.js from public/uploads
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+// Note: Static files are served by Next.js from web/public/uploads
+// No need to serve uploads from server - Next.js handles this
 
 // Basic health check route
 app.get('/', (req, res) => {
@@ -1014,6 +1013,7 @@ app.get('/api/lectures/public', async (req, res) => {
       })
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
         .populate('organization', 'name')
+        .populate('daija', 'name title')
         .sort({ date: 1 })
         .hint({ status: 1, date: 1 }) // 🚀 Force index usage
         .lean()
@@ -1030,6 +1030,7 @@ app.get('/api/lectures/public', async (req, res) => {
       })
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
         .populate('organization', 'name')
+        .populate('daija', 'name title')
         .sort({ date: 1 })
         .lean()
         .exec();
@@ -1049,9 +1050,11 @@ app.get('/api/lectures/public', async (req, res) => {
     // 🚀 LIGHTNING-FAST transformation - pre-allocate array for better performance
     const transformedLectures = new Array(lectures.length);
     for (let i = 0; i < lectures.length; i++) {
+      const lecture = lectures[i];
       transformedLectures[i] = {
-        ...lectures[i],
-        daijaId: lectures[i].daija || null
+        ...lecture,
+        daijaId: lecture.daija?._id || lecture.daija || null,
+        speaker: lecture.daija ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim() : lecture.speaker || 'Nepoznat daija'
       };
     }
 
@@ -1120,7 +1123,8 @@ app.get('/api/lectures/:id', async (req, res) => {
     }
     
     const lecture = await Lecture.findById(req.params.id)
-      .populate('createdBy', 'firstName lastName email');
+      .populate('createdBy', 'firstName lastName email')
+      .populate('daija', 'name title');
     
     if (!lecture) {
       logger.warn('Lecture not found with ID:', req.params.id);
@@ -1136,7 +1140,8 @@ app.get('/api/lectures/:id', async (req, res) => {
     // Transform lecture to include daijaId for frontend compatibility
     const transformedLecture = {
       ...lecture.toObject(),
-      daijaId: lecture.daija || null
+      daijaId: lecture.daija?._id || lecture.daija || null,
+      speaker: lecture.daija ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim() : lecture.speaker || 'Nepoznat daija'
     };
     
     res.json(transformedLecture);
@@ -1154,13 +1159,15 @@ app.get('/api/lectures/daija/:daijaId', async (req, res) => {
       daija: req.params.daijaId,
       status: 'approved'  // Only show approved lectures to public
     })
-      .populate('createdBy', 'firstName lastName email');
+      .populate('createdBy', 'firstName lastName email')
+      .populate('daija', 'name title');
     logger.info(`Found ${lectures.length} approved lectures for daija:`, req.params.daijaId);
     
     // Transform lectures to include daijaId for frontend compatibility
     const transformedLectures = lectures.map(lecture => ({
       ...lecture.toObject(),
-      daijaId: lecture.daija || null
+      daijaId: lecture.daija?._id || lecture.daija || null,
+      speaker: lecture.daija ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim() : lecture.speaker || 'Nepoznat daija'
     }));
     
     res.json(transformedLectures);
@@ -1178,13 +1185,15 @@ app.get('/api/lectures/organization/:organizationId', async (req, res) => {
       organizationId: req.params.organizationId,
       status: 'approved'  // Only show approved lectures to public
     })
-      .populate('createdBy', 'firstName lastName email');
+      .populate('createdBy', 'firstName lastName email')
+      .populate('daija', 'name title');
     logger.info(`Found ${lectures.length} approved lectures for organization:`, req.params.organizationId);
     
     // Transform lectures to include daijaId for frontend compatibility
     const transformedLectures = lectures.map(lecture => ({
       ...lecture.toObject(),
-      daijaId: lecture.daija || null
+      daijaId: lecture.daija?._id || lecture.daija || null,
+      speaker: lecture.daija ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim() : lecture.speaker || 'Nepoznat daija'
     }));
     
     res.json(transformedLectures);
@@ -1210,6 +1219,7 @@ app.get('/api/lectures/pending', authenticateToken, isAdminOrSuperAdmin, async (
     
     const lectures = await Lecture.find({ status: 'pending' })
       .populate('createdBy', 'firstName lastName email')
+      .populate('daija', 'name title')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -1259,6 +1269,7 @@ app.get('/api/lectures/approved', async (req, res) => {
     })
       .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
       .populate('organization', 'name')
+      .populate('daija', 'name title')
       .sort({ date: 1 })
       .skip(skip)
       .limit(limit)
@@ -1275,7 +1286,8 @@ app.get('/api/lectures/approved', async (req, res) => {
     // Transform lectures to include daijaId for frontend compatibility
     const transformedLectures = lectures.map(lecture => ({
       ...lecture,
-      daijaId: lecture.daija || null
+      daijaId: lecture.daija?._id || lecture.daija || null,
+      speaker: lecture.daija ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim() : lecture.speaker || 'Nepoznat daija'
     }));
     
     res.json({
@@ -1309,6 +1321,7 @@ app.get('/api/lectures/latest', async (req, res) => {
     })
       .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
       .populate('organization', 'name')
+      .populate('daija', 'name title')
       .sort({ date: 1 })
       .limit(limit)
       .lean()
@@ -1319,7 +1332,8 @@ app.get('/api/lectures/latest', async (req, res) => {
     // Transform lectures to include daijaId for frontend compatibility
     const transformedLectures = lectures.map(lecture => ({
       ...lecture,
-      daijaId: lecture.daija || null
+      daijaId: lecture.daija?._id || lecture.daija || null,
+      speaker: lecture.daija ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim() : lecture.speaker || 'Nepoznat daija'
     }));
     
     res.json(transformedLectures);

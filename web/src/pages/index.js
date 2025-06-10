@@ -1,30 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import {
-    Box,
-    Typography,
-    Button,
-    Grid,
-    Card,
-    CardContent,
-    CardActions,
-    Alert,
-    Divider,
-    Container,
-    IconButton,
+  Box,
+  Typography,
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Alert,
+  Divider,
+  Container,
+  IconButton,
 } from '@mui/material';
 import {
-    School as SchoolIcon,
-    Business as BusinessIcon,
-    Person as PersonIcon,
-    CheckCircle as CheckCircleIcon,
-    Notifications as NotificationsIcon,
-    Bookmark as BookmarkIcon,
-    Event as EventIcon,
-    PersonAdd as PersonAddIcon,
-    Star as StarIcon,
-    Facebook as FacebookIcon,
-    Instagram as InstagramIcon
+  School as SchoolIcon,
+  Business as BusinessIcon,
+  Person as PersonIcon,
+  CheckCircle as CheckCircleIcon,
+  Notifications as NotificationsIcon,
+  Bookmark as BookmarkIcon,
+  Event as EventIcon,
+  PersonAdd as PersonAddIcon,
+  Star as StarIcon,
+  Facebook as FacebookIcon,
+  Instagram as InstagramIcon
 } from '@mui/icons-material';
 import PageLayout from '@/components/PageLayout';
 import { OrganizationsGrid, DaijeGrid, LecturesGrid } from '@/components/GridLayout';
@@ -54,7 +54,7 @@ const HeroSection = () => {
       }}
     >
       <Typography variant="h2" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-        DERSAAA
+        DERS
       </Typography>
       <Divider color="white" sx={{ width: '20%', margin: '1rem auto', opacity: 0.5 }} />
       <Typography variant="h5" sx={{ mb: 3, opacity: 0.9, fontSize: '1.5rem' }}>

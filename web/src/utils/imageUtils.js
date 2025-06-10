@@ -6,8 +6,6 @@
  * - Any legacy data that hasn't been migrated yet
  */
 
-const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:5003';
-
 /**
  * Get the full URL for an image
  * @param {string} imagePath - The image path (can be relative or full URL or base64 data)
@@ -26,20 +24,20 @@ export const getImageUrl = (imagePath) => {
     return imagePath;
   }
   
-  // For uploads, always serve from the server (not Next.js public directory)
+  // For uploads, serve from Next.js public directory
   if (imagePath.includes('uploads/')) {
-    // Ensure path starts with / and construct full server URL
+    // Ensure path starts with / for Next.js public directory
     const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    return `${SERVER_URL}${cleanPath}`;
+    return cleanPath;
   }
   
-  // If it starts with /, it's a public path - serve from server
+  // If it starts with /, it's a public path - serve from Next.js public directory
   if (imagePath.startsWith('/')) {
-    return `${SERVER_URL}${imagePath}`;
+    return imagePath;
   }
   
-  // For other paths, construct full URL with server
-  return `${SERVER_URL}/${imagePath}`;
+  // For other paths, construct path for Next.js public directory
+  return `/${imagePath}`;
 };
 
 /**
@@ -88,6 +86,5 @@ export default {
   getDefaultDaijaImage,
   getDefaultOrganizationImage,
   getLogoUrl,
-  getFaviconUrl,
-  SERVER_URL
+  getFaviconUrl
 }; 
