@@ -1,20 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/utils/ProtectedRoute';
 import {
-    Box,
-    Typography,
-    Paper,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    TextField,
-    Alert,
-    Snackbar,
-    useMediaQuery,
-    useTheme,
-    CircularProgress,
+  Box,
+  Typography,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Alert,
+  Snackbar,
+  useMediaQuery,
+  useTheme,
+  CircularProgress,
 } from '@mui/material';
 import { jwtDecode } from 'jwt-decode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -179,10 +179,7 @@ const Dashboard = () => {
     }
   }, []);
 
-  // Pozovi fetchData na mountu
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  // Uklonjen duplikat useEffect - koristimo samo onaj ispod sa fetchDataCalledRef
   const [selectedItem, setSelectedItem] = useState(null);
   const [statusChange, setStatusChange] = useState({ item: null, type: '', value: '' });
   const [imagePreview, setImagePreview] = useState(null);
@@ -259,7 +256,7 @@ const Dashboard = () => {
     return map[section] || '';
   };
 
-  const getTypeDisplayName = (type) => {
+  const getTypeDisplayName = useCallback((type) => {
     const map = {
       'lecture': 'Predavanje',
       'lectures': 'Predavanje',
@@ -271,7 +268,7 @@ const Dashboard = () => {
       'suggestion': 'Prijedlog'
     };
     return map[type] || type;
-  };
+  }, []);
 
   const showSnackbar = useCallback((message, severity = 'success') => {
     setUi(prev => ({
@@ -373,7 +370,7 @@ const Dashboard = () => {
       closeDialog('deleteDialog');
       setSelectedItem(null);
     }
-  }, [selectedItem, showSnackbar, closeDialog]);
+  }, [selectedItem, showSnackbar, closeDialog, getTypeDisplayName]);
 
   const confirmStatusChange = useCallback(async () => {
     try {
@@ -549,7 +546,7 @@ const Dashboard = () => {
     
     showSnackbar(getTypeDisplayName(type) + " je uspješno dodano");
     closeDialog(`add${type.charAt(0).toUpperCase() + type.slice(1)}`);
-  }, [showSnackbar, closeDialog]);
+  }, [showSnackbar, closeDialog, getTypeDisplayName]);
 
   const handleArchiveSuggestion = useCallback(async (suggestion) => {
     try {
@@ -1109,10 +1106,10 @@ const Dashboard = () => {
           </DialogTitle>
           <DialogContent>
             <Typography variant="body1" sx={{ mb: 2 }}>
-              Da li ste sigurni da želite promeniti status stavke na "
+              Da li ste sigurni da želite promeniti status stavke na &quot;
               {statusChange.value === 'approved' ? 'Odobreno' : 
                statusChange.value === 'pending' ? 'Na čekanju' : 
-               statusChange.value}"?
+               statusChange.value}&quot;?
             </Typography>
           </DialogContent>
           <DialogActions>

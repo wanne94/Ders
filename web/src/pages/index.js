@@ -28,9 +28,7 @@ import {
 } from '@mui/icons-material';
 import PageLayout from '@/components/PageLayout';
 import { OrganizationsGrid, DaijeGrid, LecturesGrid } from '@/components/GridLayout';
-import { sortOrganizationsByLectureProximity, sortLecturesByTimeProximity } from '@/utils/dataHelpers';
 import UniversalCard from '@/components/UniversalCard';
-import { sortAllDaijeWithActivePriority } from '../utils/dataHelpers';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 
 
@@ -151,8 +149,9 @@ const QuickActions = () => {
 const TenLectures = ({ lectures }) => {
   const router = useRouter();
   
-  // Sort lectures by proximity to current time and take first 8
-  const proximityLectures = sortLecturesByTimeProximity(lectures).slice(0, 10);
+  // Privremeno koristimo jednostavno sortiranje umesto složene funkcije
+  const approvedLectures = (lectures || []).filter(lecture => lecture.status === 'approved');
+  const proximityLectures = approvedLectures.slice(0, 10);
 
   const handleViewAllLectures = () => {
     router.push('/lectures');
@@ -428,49 +427,23 @@ const BenefitsSection = () => {
 };
 
 // ActiveOrganizations Component
-const ActiveOrganizations = ({ organizations }) => {
+const ActiveOrganizations = ({ organizations, lectures }) => {
   const router = useRouter();
   const [displayOrganizations, setDisplayOrganizations] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOrganizationsWithLectures = async () => {
-      try {
-        const [organizations, lectures] = await Promise.all([
-          udruzenjaService.getAllUdruzenja(),
-          predavanjaService.getAllPredavanja()
-        ]);
+    if (organizations && lectures) {
+      // Privremeno koristimo jednostavno sortiranje umesto složene funkcije
+      const approvedOrgs = (organizations || []).filter(org => org.status === 'approved');
+      const sortedOrganizations = approvedOrgs.slice(0, 10); // Limit to 10 organizations
 
-        console.log('Organizations:', organizations.length);
-        console.log('Lectures:', lectures.length);
-        console.log('Sample organization:', organizations[0]);
-        console.log('Sample lecture:', lectures[0]);
-
-        // Sort organizations by proximity of their closest lecture to current time
-        // Show all organizations, limited to first 8
-        const sortedOrganizations = sortOrganizationsByLectureProximity(organizations || [], lectures || [])
-          .slice(0, 10); // Limit to 10 organizations
-
-        console.log('Sorted organizations:', sortedOrganizations.length);
-        setDisplayOrganizations(sortedOrganizations || []);
-      } catch (error) {
-        console.error('Error fetching organizations:', error);
-        setDisplayOrganizations([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOrganizationsWithLectures();
-  }, []);
+      setDisplayOrganizations(sortedOrganizations || []);
+    }
+  }, [organizations, lectures]);
 
   const handleViewAllOrganizations = () => {
     router.push('/organizations');
   };
-
-  if (isLoading) {
-    return null;
-  }
 
   // Inside the component, filter data before using it
   const approvedOrganizations = (displayOrganizations || []).filter(item => item.status === 'approved');
@@ -621,42 +594,22 @@ const SocialMediaSection = () => {
 };
 
 // ActiveDaije Component
-const ActiveDaije = () => {
+const ActiveDaije = ({ daije, lectures }) => {
   const router = useRouter();
   const [displayDaije, setDisplayDaije] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDaijeAndLectures = async () => {
-      try {
-        // Fetch daije with lecture counts from server
-        const [daije, lectures] = await Promise.all([
-          daijeService.getAllDaije(),
-          predavanjaService.getAllPredavanja()
-        ]);
-
-        // Sort all approved daije with random arrangement, prioritizing those with active lectures
-        // Limit to maximum 10 for homepage
-        const sortedDaije = sortAllDaijeWithActivePriority(daije || [], lectures || []).slice(0, 10);
-
-        setDisplayDaije(sortedDaije || []);
-      } catch (error) {
-        console.error('Error fetching daije:', error);
-        setDisplayDaije([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchDaijeAndLectures();
-  }, []);
+    if (daije && lectures) {
+      // Privremeno koristimo jednostavno sortiranje umesto složene funkcije
+      const approvedDaije = (daije || []).filter(daija => daija.status === 'approved');
+      const sortedDaije = approvedDaije.slice(0, 10);
+      setDisplayDaije(sortedDaije || []);
+    }
+  }, [daije, lectures]);
 
   const handleViewAllDaije = () => {
     router.push('/daije');
   };
-
-  if (isLoading) {
-    return null;
-  }
 
   // displayDaije already contains only approved daije from the sorting function
   const approvedDaije = displayDaije;
@@ -825,7 +778,7 @@ export default function Home() {
 
       {/* Active Daije */}
       <Box sx={{ width: '100%', mb: 4 }}>
-        <ActiveDaije daije={daije} />
+        <ActiveDaije daije={daije} lectures={lectures} />
       </Box>
 
       {/* Social Media Section */}
@@ -835,7 +788,7 @@ export default function Home() {
 
       {/* Active Organizations */}
       <Box sx={{ width: '100%', mb: 4 }}>
-        <ActiveOrganizations organizations={organizations} />
+        <ActiveOrganizations organizations={organizations} lectures={lectures} />
       </Box>
 
       {/* Quick Actions */}

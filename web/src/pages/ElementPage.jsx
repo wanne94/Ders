@@ -33,7 +33,7 @@ const ElementPage = ({ type }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const itemsPerPage = 12;
+  const itemsPerPage = 20;
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
