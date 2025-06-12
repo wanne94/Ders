@@ -1,20 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/utils/ProtectedRoute';
 import {
-    Box,
-    Typography,
-    Paper,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    TextField,
-    Alert,
-    Snackbar,
-    useMediaQuery,
-    useTheme,
-    CircularProgress,
+  Box,
+  Typography,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Alert,
+  Snackbar,
+  useMediaQuery,
+  useTheme,
+  CircularProgress,
 } from '@mui/material';
 import { jwtDecode } from 'jwt-decode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -31,6 +31,8 @@ import UserForm from '@/components/UserForm';
 
 import { predavanjaService, daijeService, udruzenjaService, suggestionsService, usersService, settingsService } from '@/services';
 import axiosInstance from '@/utils/axiosConfig';
+import { getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
+import { isValid, parseISO } from 'date-fns';
 
 const Dashboard = () => {
   // ... (ostali stateovi ostaju)
@@ -157,6 +159,14 @@ const Dashboard = () => {
 
       const suggestionsData = Array.isArray(suggestionsRes) ? suggestionsRes : [];
       const archivedSuggestionsData = Array.isArray(archivedSuggestionsRes) ? archivedSuggestionsRes : [];
+      
+      // Debug logging za suggestions
+      console.log('🔍 Fetched suggestions data:', suggestionsData);
+      console.log('🔍 Suggestions count:', suggestionsData.length);
+      if (suggestionsData.length > 0) {
+        console.log('🔍 Sample suggestion:', suggestionsData[0]);
+        console.log('🔍 All suggestion statuses:', suggestionsData.map(s => s.status));
+      }
       
       setData({
         users: Array.isArray(usersRes) ? usersRes : usersRes.users || [],
@@ -290,6 +300,20 @@ const Dashboard = () => {
     fetchDataCalledRef.current = true;
     fetchData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Event listener za osvežavanje kada se kreira nova suggestion
+  useEffect(() => {
+    const handleSuggestionCreated = () => {
+      console.log('🔄 Refreshing dashboard after suggestion created');
+      fetchData();
+    };
+
+    window.addEventListener('suggestionCreated', handleSuggestionCreated);
+    
+    return () => {
+      window.removeEventListener('suggestionCreated', handleSuggestionCreated);
+    };
+  }, [fetchData]);
 
   const handleEdit = (item, type) => {
     switch (type) {
@@ -453,72 +477,81 @@ const Dashboard = () => {
     }
   }, [statusChange, rejectReason, fetchData, showSnackbar, closeDialog]);
 
+  const duplicate = async (item, type, count = 1) => {
+    const serviceMap = {
+      lecture: predavanjaService.createPredavanje,
+      organization: udruzenjaService.createUdruzenje,
+      daija: daijeService.createDaija
+    };
+    const keyMap = {
+      lecture: 'lectures',
+      organization: 'organizations',
+      daija: 'daije'
+    };
+    const defaultImageMap = {
+      lecture: getDefaultLectureImage(),
+      organization: getDefaultOrganizationImage(),
+      daija: getDefaultDaijaImage()
+    };
+    const results = [];
+    for (let i = 0; i < count; i++) {
+      let data = { ...item };
+      delete data._id;
+      delete data.type;
+      delete data.createdAt;
+      delete data.updatedAt;
+      data.status = 'pending';
+      // Kopiraj sliku ili postavi default ako nema slike
+      if (!data.image) {
+        data.image = defaultImageMap[type];
+      }
+      if (type === 'daija') {
+        if (data.name) data.name = `${item.name} (kopija ${i + 1})`;
+      } else if (type === 'lecture' && data.title) {
+        data.title = `${item.title} (kopija ${i + 1})`;
+        // Validacija i logovanje datuma
+        if (data.date) {
+          console.log('📅 Date before sending:', data.date);
+          let parsedDate = null;
+          if (typeof data.date === 'string') {
+            const iso = parseISO(data.date);
+            if (isValid(iso)) {
+              parsedDate = iso;
+            } else {
+              const d = new Date(data.date);
+              if (!isNaN(d.getTime())) {
+                parsedDate = d;
+              }
+            }
+          } else if (data.date instanceof Date && isValid(data.date)) {
+            parsedDate = data.date;
+          }
+          if (!parsedDate) {
+            console.error('❌ Invalid or unrecognized date format:', data.date);
+            parsedDate = new Date(); // fallback na danasnji datum
+          }
+          data.date = parsedDate.toISOString().split('T')[0]; // YYYY-MM-DD
+        }
+      } else if (type === 'organization' && data.name) {
+        data.name = `${item.name} (kopija ${i + 1})`;
+      }
+      const res = await serviceMap[type](data);
+      results.push(res.data || res);
+    }
+    return { key: keyMap[type], items: results };
+  };
+
   const confirmDuplicate = useCallback(async () => {
     if (!itemToDuplicate || duplicateCount < 1) return;
-
     try {
-      const endpoints = {
-        lecture: '/lectures',
-        daija: '/daije',
-        organization: '/organizations'
-      };
-
-      const promises = [];
-      
-      for (let i = 0; i < duplicateCount; i++) {
-        const duplicatedItem = { ...itemToDuplicate };
-        delete duplicatedItem._id;
-        delete duplicatedItem.type;
-        delete duplicatedItem.createdAt;
-        delete duplicatedItem.updatedAt;
-        
-        // Postaviti status na pending
-        duplicatedItem.status = 'pending';
-        
-        // Za daije, možda je image path neispravan - koristimo default sliku
-        if (itemToDuplicate.type === 'daija' && duplicatedItem.image) {
-          // Ako image nije dostupna, koristimo default
-          duplicatedItem.image = '';
-        }
-        
-        // Dodati (kopija X) u naziv/ime
-        if (itemToDuplicate.type === 'lecture' && duplicatedItem.title) {
-          duplicatedItem.title = `${duplicatedItem.title} (kopija ${i + 1})`;
-        } else if (itemToDuplicate.type === 'organization' && duplicatedItem.name) {
-          duplicatedItem.name = `${duplicatedItem.name} (kopija ${i + 1})`;
-        } else if (itemToDuplicate.type === 'daija') {
-          // Za daije, mijenjamo ime
-          if (duplicatedItem.name) {
-            const newName = `${duplicatedItem.name} (kopija ${i + 1})`;
-            duplicatedItem.name = newName;
-          }
-        }
-        
-        console.log('🔄 Duplicating item:', {
-          type: itemToDuplicate.type,
-          originalName: itemToDuplicate.name,
-          newName: duplicatedItem.name,
-          data: duplicatedItem
-        });
-        
-        promises.push(
-          axiosInstance.post(endpoints[itemToDuplicate.type], duplicatedItem)
-        );
-      }
-
-      const responses = await Promise.all(promises);
-      
-      const dataKey = itemToDuplicate.type === 'daija' ? 'daije' : 
-                     itemToDuplicate.type === 'organization' ? 'organizations' : 
-                     `${itemToDuplicate.type}s`;
-      
+      const type = itemToDuplicate.type;
+      const { key, items } = await duplicate(itemToDuplicate, type, duplicateCount);
       setData(prev => ({
         ...prev,
-        [dataKey]: [...prev[dataKey], ...responses.map(response => response.data)]
+        [key]: [...prev[key], ...items]
       }));
-      
       await fetchData();
-      showSnackbar(`${duplicateCount} ${getTypeDisplayName(itemToDuplicate.type).toLowerCase()}${duplicateCount > 1 ? 'a' : ''} je uspješno duplirano`);
+      showSnackbar(`${duplicateCount} ${getTypeDisplayName(type).toLowerCase()}${duplicateCount > 1 ? 'a' : ''} je uspješno duplirano`);
     } catch (error) {
       console.error('Error duplicating:', error);
       showSnackbar('Greška pri dupliranju', 'error');
@@ -879,6 +912,12 @@ const Dashboard = () => {
           'suggestion'
         );
         
+        // Debug logging za prijedlozi sekciju
+        console.log('🔍 Raw suggestions data:', data.suggestions);
+        console.log('🔍 Filtered active suggestions:', activeSuggestions);
+        console.log('🔍 Active suggestions length:', activeSuggestions.length);
+        console.log('🔍 Archived suggestions length:', archivedSuggestions.length);
+        
         content = (
           <Box sx={{ mb: 4, width: '100%' }}>
             <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
@@ -1193,29 +1232,6 @@ const Dashboard = () => {
           approvalEnabled={approvalSettings.lecture}
         />
 
-        {/* 
-        Alternative using UnifiedForm:
-        <UnifiedForm
-          open={editLectureDialogOpen}
-          onClose={() => setEditLectureDialogOpen(false)}
-          onSuccess={(updatedLecture) => {
-            setData(prev => ({
-              ...prev,
-              lectures: prev.lectures.map(lecture => 
-                lecture._id === updatedLecture._id ? updatedLecture : lecture
-              )
-            }));
-            setEditLectureDialogOpen(false);
-            showSnackbar('Predavanje uspješno ažurirano');
-          }}
-          type="lecture"
-          data={lectureToEdit}
-          approvalEnabled={approvalSettings.lecture}
-          daije={data.daije}
-          organizations={data.organizations}
-        />
-        */}
-
         {/* Duplicate Count Dialog */}
         <Dialog
           open={duplicateCountDialogOpen}
@@ -1260,22 +1276,6 @@ const Dashboard = () => {
           </DialogActions>
         </Dialog>
 
-        {/* Duplicate Lecture Dialog */}
-        <LectureForm
-          open={duplicateDialogOpen}
-          onClose={() => setDuplicateDialogOpen(false)}
-          onSuccess={(newLecture) => {
-            setData(prev => ({
-              ...prev,
-              lectures: [...prev.lectures, newLecture]
-            }));
-            setDuplicateDialogOpen(false);
-            showSnackbar('Predavanje uspješno duplirano');
-          }}
-          lecture={lectureToDuplicate ? { ...lectureToDuplicate, _id: undefined, title: `${lectureToDuplicate.title} (kopija)` } : null}
-          approvalEnabled={approvalSettings.lecture}
-        />
-
         {/* Edit Daija Dialog */}
         <DaijaForm
           open={editDaijaDialogOpen}
@@ -1294,27 +1294,6 @@ const Dashboard = () => {
           approvalEnabled={approvalSettings.daija}
         />
 
-        {/* 
-        Alternative using UnifiedForm:
-        <UnifiedForm
-          open={editDaijaDialogOpen}
-          onClose={() => setEditDaijaDialogOpen(false)}
-          onSuccess={(updatedDaija) => {
-            setData(prev => ({
-              ...prev,
-              daije: prev.daije.map(daija => 
-                daija._id === updatedDaija._id ? updatedDaija : daija
-              )
-            }));
-            setEditDaijaDialogOpen(false);
-            showSnackbar('Daija uspješno ažurirana');
-          }}
-          type="daija"
-          data={daijaToEdit}
-          approvalEnabled={approvalSettings.daija}
-        />
-        */}
-
         {/* Edit Organization Dialog */}
         <OrganizationForm
           open={editOrganizationDialogOpen}
@@ -1332,27 +1311,6 @@ const Dashboard = () => {
           organization={organizationToEdit}
           approvalEnabled={approvalSettings.organization}
         />
-
-        {/* 
-        Alternative using UnifiedForm:
-        <UnifiedForm
-          open={editOrganizationDialogOpen}
-          onClose={() => setEditOrganizationDialogOpen(false)}
-          onSuccess={(updatedOrganization) => {
-            setData(prev => ({
-              ...prev,
-              organizations: prev.organizations.map(org => 
-                org._id === updatedOrganization._id ? updatedOrganization : org
-              )
-            }));
-            setEditOrganizationDialogOpen(false);
-            showSnackbar('Udruženje uspješno ažurirano');
-          }}
-          type="organization"
-          data={organizationToEdit}
-          approvalEnabled={approvalSettings.organization}
-        />
-        */}
 
         {/* Edit User Dialog */}
         <UserForm

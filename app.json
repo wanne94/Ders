@@ -1,5 +1,12 @@
 {
   "expo": {
+    "sdkVersion": "53.0.0",
+    "icon": "./mob/assets/icon.png",
+    "splash": {
+      "image": "./mob/assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "extra": {
       "eas": {
         "projectId": "83f270e6-9c4c-4b99-b9e3-c16f2a15c7f2"

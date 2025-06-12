@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import {
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-  ActivityIndicator,
-  Alert,
-  RefreshControl
+    StatusBar,
+    StyleSheet,
+    Text,
+    View,
+    ScrollView,
+    TouchableOpacity,
+    Dimensions,
+    ActivityIndicator,
+    Alert,
+    RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import UniverzalCard from './components/UniverzalCard';
@@ -26,9 +26,9 @@ import { sortAssociations } from './utils/sortingUtils';
 import AuthScreen from './screens/AuthScreen';
 import AddContentPopup from './components/AddContentPopup';
 import {
-  isAuthenticated as checkIsAuthenticated,
-  getUserData,
-  logout
+    isAuthenticated as checkIsAuthenticated,
+    getUserData,
+    logout
 } from './utils/authHelpers';
 import { sortAllDaijeWithActivePriority } from './utils/sortingUtils';
 import { sortEntitiesByUpcomingLecture } from './utils/sortingUtils';

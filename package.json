@@ -23,7 +23,6 @@
     "backup": "node deploy-complete.js backup",
     "backup:create": "node scripts/backup.js",
     "backup:daily": "0 0 * * * node scripts/backup.js",
-
     "logs": "ssh -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST 'pm2 logs'",
     "monitor": "ssh -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST 'pm2 monit'"
   },
@@ -43,7 +42,9 @@
     "date-fns": "^2.30.0",
     "dotenv": "^16.4.5",
     "expo": "^53.0.11",
+    "expo-cli": "^6.3.12",
     "jwt-decode": "^4.0.0",
+    "metro-cache": "^0.82.4",
     "next": "^15.3.3",
     "react": "19.0.0",
     "react-dom": "19.0.0",

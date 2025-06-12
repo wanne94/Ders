@@ -445,13 +445,20 @@ app.get('/api/lectures', async (req, res) => {
     const lectures = await Lecture.find()
       .populate('organization', 'name')
       .populate('daija', 'name title')
+      .populate('createdBy', 'firstName lastName email')
       .sort({ createdAt: -1 });
 
     logger.info(`Found ${lectures.length} lectures:`,
       lectures.map(l => ({ id: l._id, title: l.title, status: l.status }))
     );
 
-    res.json(lectures);
+    // Transform lectures to include daijaId for frontend compatibility
+    const transformedLectures = lectures.map(lecture => ({
+      ...lecture.toObject(),
+      daijaId: lecture.daija?._id || lecture.daija || null
+    }));
+
+    res.json(transformedLectures);
   } catch (error) {
     logger.error('Error fetching lectures:', error);
     res.status(500).json({ message: 'Greška pri dohvaćanju predavanja' });
@@ -1388,13 +1395,22 @@ app.post('/api/lectures', authenticateToken, async (req, res) => {
     const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
     const finalStatus = (isAdminUser && req.body.status) ? req.body.status : (needsApproval ? 'pending' : 'approved');
     
+    // Parse date from DD.MM.YYYY format if needed
+    let parsedDate = req.body.date;
+    if (typeof req.body.date === 'string' && req.body.date.includes('.')) {
+      const [day, month, year] = req.body.date.split('.');
+      parsedDate = new Date(year, month - 1, day);
+    } else if (typeof req.body.date === 'string') {
+      parsedDate = new Date(req.body.date);
+    }
+
     let lectureData = {
       title: req.body.title,
       speaker: req.body.speaker || '',
       daija: req.body.daijaId || null,
       organization: req.body.organization,
       organizationId: req.body.organizationId || null,
-      date: req.body.date,
+      date: parsedDate,
       time: req.body.time,
       address: req.body.address,
       city: req.body.city,
@@ -1467,12 +1483,26 @@ app.put('/api/lectures/:id', authenticateToken, async (req, res) => {
       });
     }
 
+    // Parse date from DD.MM.YYYY format if needed
+    let parsedDate = req.body.date;
+    if (req.body.date && typeof req.body.date === 'string' && req.body.date.includes('.')) {
+      const [day, month, year] = req.body.date.split('.');
+      parsedDate = new Date(year, month - 1, day);
+    } else if (req.body.date && typeof req.body.date === 'string') {
+      parsedDate = new Date(req.body.date);
+    }
+
     // Map frontend field names to model field names
     let updateData = {
       ...req.body,
       daija: req.body.daijaId || null,
       organizationId: req.body.organizationId || null
     };
+
+    // Update date if provided
+    if (req.body.date) {
+      updateData.date = parsedDate;
+    }
     
     // Remove daijaId from update data as it's not a model field
     delete updateData.daijaId;
@@ -1535,11 +1565,25 @@ app.patch('/api/lectures/:id', authenticateToken, async (req, res) => {
       }
     }
 
+    // Parse date from DD.MM.YYYY format if needed
+    let parsedDate = req.body.date;
+    if (req.body.date && typeof req.body.date === 'string' && req.body.date.includes('.')) {
+      const [day, month, year] = req.body.date.split('.');
+      parsedDate = new Date(year, month - 1, day);
+    } else if (req.body.date && typeof req.body.date === 'string') {
+      parsedDate = new Date(req.body.date);
+    }
+
     // Map frontend field names to model field names if needed
     const updateData = { ...req.body };
     if (req.body.daijaId !== undefined) {
       updateData.daija = req.body.daijaId;
       delete updateData.daijaId;
+    }
+    
+    // Update date if provided
+    if (req.body.date) {
+      updateData.date = parsedDate;
     }
     // Ne dozvoljavamo mijenjanje createdBy polja
     delete updateData.createdBy;

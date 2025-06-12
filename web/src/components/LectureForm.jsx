@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Alert,
-  Snackbar,
-  TextField,
-  Typography,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    Box,
+    Alert,
+    Snackbar,
+    TextField,
+    Typography,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Select
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -65,13 +65,28 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
   // Populate form data when editing
   useEffect(() => {
     if (lecture) {
+      // Parse date properly - handle different date formats from server
+      let parsedDate = '';
+      if (lecture.date) {
+        try {
+          const date = new Date(lecture.date);
+          if (!isNaN(date.getTime())) {
+            // Format to YYYY-MM-DD for consistency
+            parsedDate = date.toISOString().split('T')[0];
+          }
+        } catch (error) {
+          console.error('Error parsing date:', error);
+          parsedDate = lecture.date; // Fallback to original value
+        }
+      }
+
       setFormData({
         title: lecture.title || '',
         daijaId: lecture.daijaId || '',
         speaker: lecture.speaker || '',
         organizationId: lecture.organizationId || '',
         organization: lecture.organization || '',
-        date: lecture.date || '',
+        date: parsedDate,
         time: lecture.time || '',
         address: lecture.address || '',
         city: lecture.city || '',
@@ -206,9 +221,10 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
   };
 
   const handleDateChange = (date) => {
+    console.log('📅 Date changed:', date);
     setFormData(prev => ({
       ...prev,
-      date: date ? date.toISOString() : ''
+      date: date ? date.toISOString().split('T')[0] : ''
     }));
   };
 

@@ -116,10 +116,25 @@ const UnifiedForm = ({
     if (data) {
       switch (type) {
         case 'lecture':
+          // Parse date properly - handle different date formats from server
+          let parsedDate = '';
+          if (data.date) {
+            try {
+              const date = new Date(data.date);
+              if (!isNaN(date.getTime())) {
+                // Format to YYYY-MM-DD for consistency
+                parsedDate = date.toISOString().split('T')[0];
+              }
+            } catch (error) {
+              console.error('Error parsing date:', error);
+              parsedDate = data.date; // Fallback to original value
+            }
+          }
+
           setFormData({
             title: data.title || '',
             description: data.description || '',
-            date: data.date || '',
+            date: parsedDate,
             time: data.time || '',
             address: data.address || '',
             city: data.city || '',

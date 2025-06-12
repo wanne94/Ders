@@ -171,7 +171,17 @@ const Navigation = () => {
 
   const handleSuggestionFromMenu = () => {
     handleAddMenuClose();
-    handleSuggestionClick();
+    setSuggestionFormOpen(true);
+  };
+
+  const handleSuggestionSuccess = () => {
+    setSuggestionFormOpen(false);
+    
+    // Pošaljemo custom event da se dashboard osveži
+    const event = new CustomEvent('suggestionCreated', {
+      detail: { timestamp: Date.now() }
+    });
+    window.dispatchEvent(event);
   };
 
   const handleMobileAddMenuToggle = () => {
@@ -617,9 +627,7 @@ const Navigation = () => {
       <SuggestionForm
         open={suggestionFormOpen}
         onClose={() => setSuggestionFormOpen(false)}
-        onSuccess={() => {
-          setSuggestionFormOpen(false);
-        }}
+        onSuccess={handleSuggestionSuccess}
       />
 
       {/* Dialog za nelogirane korisnike */}
