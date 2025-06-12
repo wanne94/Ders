@@ -35,7 +35,11 @@ const UniversalCard = ({ data }) => {
           image: data.image || getDefaultLectureImage(),
           imageStyle: { borderRadius: '8px' },
           infoItems: [
-            { icon: <PersonIcon />, text: data.speaker || 'Nepoznat daija' },
+            { icon: <PersonIcon />, text: 
+              data.daija && typeof data.daija === 'object' 
+                ? `${data.daija.title || ''} ${data.daija.name || ''}`.trim() || 'Nepoznat daija'
+                : data.speaker || 'Nepoznat daija' 
+            },
             { icon: <BusinessIcon />, text: data.organization || 'Nepoznato udruženje' },
             data.date && { icon: <CalendarTodayIcon />, text: formatDateWithDay(data.date) },
             data.time && { icon: <AccessTimeIcon />, text: data.time },

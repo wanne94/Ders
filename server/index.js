@@ -444,6 +444,7 @@ app.get('/api/lectures', async (req, res) => {
 
     const lectures = await Lecture.find()
       .populate('organization', 'name')
+      .populate('daija', 'name title')
       .sort({ createdAt: -1 });
 
     logger.info(`Found ${lectures.length} lectures:`,
@@ -495,6 +496,7 @@ app.get('/api/lectures/dashboard/public', async (req, res) => {
       // No date filtering - show all lectures for dashboard
     })
       .populate('organization', 'name')
+      .populate('daija', 'name title')
       .sort({ date: 1 });
 
     logger.info(`Found ${lectures.length} dashboard lectures`);

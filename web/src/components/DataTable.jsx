@@ -536,7 +536,12 @@ const DataTable = ({
             )
           },
           { id: 'title', label: 'Naslov', sortable: true, sortKey: 'title', getValue: (item) => item.title || 'N/A' },
-          { id: 'speaker', label: 'Daija', sortable: true, sortKey: 'speaker', getValue: (item) => item.speaker || 'N/A' },
+          { id: 'speaker', label: 'Daija', sortable: true, sortKey: 'speaker', getValue: (item) => {
+            if (item.daija && typeof item.daija === 'object') {
+              return `${item.daija.title || ''} ${item.daija.name || ''}`.trim() || 'N/A';
+            }
+            return item.speaker || 'N/A';
+          }},
           { id: 'organization', label: 'Udruženje', sortable: true, sortKey: 'organization', getValue: (item) => item.organization || 'N/A' },
           { id: 'date', label: 'Datum', sortable: true, sortKey: 'date', getValue: (item) => {
             const date = item.date;

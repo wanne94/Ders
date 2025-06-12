@@ -24,9 +24,13 @@ export const formatLectureCard = (lecture: any): CardData => {
 
   // Speaker/Daija
   if (lecture.daija?.name || lecture.speaker) {
+    const speakerName = lecture.daija && typeof lecture.daija === 'object' 
+      ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim()
+      : lecture.speaker;
+    
     infoItems.push({
       icon: '👨‍🏫',
-      text: lecture.daija?.name || lecture.speaker || 'Nepoznat daija'
+      text: speakerName || 'Nepoznat daija'
     });
   }
 

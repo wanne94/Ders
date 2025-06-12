@@ -180,7 +180,11 @@ const DetailViewScreen = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <PersonIcon color="action" />
             <Typography variant="body1">
-              <strong>Daija:</strong> {item.speaker || 'N/A'}
+              <strong>Daija:</strong> {
+                item.daija && typeof item.daija === 'object' 
+                  ? `${item.daija.title || ''} ${item.daija.name || ''}`.trim() || 'N/A'
+                  : item.speaker || 'N/A'
+              }
             </Typography>
           </Box>
           
