@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import daijeService from '../../services/daijeService';
 import Toast from '../Toast';
 import * as ImagePicker from 'expo-image-picker';
+import { uploadImage, getImageUrl } from '../../utils/imageUtils';
 
 const COLORS = {
   primary: '#022C43',
@@ -31,7 +32,7 @@ const COLORS = {
   border: '#e2e8f0',
 };
 
-const DaijaForm = ({ onBack, onSuccess }) => {
+const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => {
   const [formData, setFormData] = useState({
     name: '',
     title: 'prof',
@@ -51,6 +52,35 @@ const DaijaForm = ({ onBack, onSuccess }) => {
     { value: 'mr', label: 'Mr.' },
     { value: 'dr', label: 'Dr.' }
   ];
+
+  useEffect(() => {
+    // If in edit mode, populate form with existing data
+    if (editMode && editData) {
+      populateFormWithEditData();
+    }
+  }, [editMode, editData]);
+
+  const populateFormWithEditData = () => {
+    if (!editData) return;
+    
+    setFormData({
+      name: editData.name || '',
+      title: editData.title || 'prof',
+      biography: editData.biography || '',
+      image: editData.image || '',
+      status: editData.status || 'pending'
+    });
+
+    // Set education array
+    if (editData.education && Array.isArray(editData.education)) {
+      setEducation(editData.education);
+    }
+
+    // Set image URI if exists
+    if (editData.image) {
+      setImageUri(getImageUrl(editData.image));
+    }
+  };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -159,22 +189,63 @@ const DaijaForm = ({ onBack, onSuccess }) => {
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
-
     try {
       setLoading(true);
-      const submitData = {
+
+      // Validate required fields
+      if (!validateForm()) return;
+
+      let imagePath = formData.image;
+
+      // If we have a new image (local URI), upload it first
+      if (imageUri && imageUri.startsWith('file://')) {
+        try {
+          imagePath = await uploadImage(imageUri);
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          Alert.alert('Greška', 'Došlo je do greške prilikom uploada slike. Pokušajte ponovo.');
+          return;
+        }
+      }
+
+      // Prepare final form data
+      const finalFormData = {
         ...formData,
-        education: education
+        education: education,
+        image: imagePath
       };
-      await daijeService.createDaija(submitData);
-      showToast('Daija je uspješno dodana!', 'success');
-      setTimeout(() => {
-        onSuccess?.();
-      }, 1500);
+
+      // Submit the form - either create or update
+      if (editMode && editData?._id) {
+        await daijeService.updateItem(editData._id, finalFormData);
+        Alert.alert('Uspjeh', 'Uspješno ste ažurirali daiju!');
+      } else {
+        await daijeService.createDaija(finalFormData);
+        Alert.alert('Uspjeh', 'Uspješno ste dodali daiju!');
+      }
+      
+      // Call success callback
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // Clear form only if not in edit mode
+      if (!editMode) {
+        setFormData({
+          name: '',
+          title: 'prof',
+          biography: '',
+          image: '',
+          status: 'pending'
+        });
+        setEducation([]);
+        setImageUri(null);
+      }
+      
     } catch (error) {
-      console.error('Error creating daija:', error);
-      showToast('Došlo je do greške prilikom dodavanja daije', 'error');
+      console.error('Error submitting form:', error);
+      const errorMessage = editMode ? 'Došlo je do greške prilikom ažuriranja. Pokušajte ponovo.' : 'Došlo je do greške prilikom spremanja. Pokušajte ponovo.';
+      Alert.alert('Greška', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -234,7 +305,7 @@ const DaijaForm = ({ onBack, onSuccess }) => {
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Dodaj Daiju</Text>
+        <Text style={styles.headerTitle}>{editMode ? 'Uredi Daiju' : 'Dodaj Daiju'}</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -309,7 +380,10 @@ const DaijaForm = ({ onBack, onSuccess }) => {
           disabled={loading}
         >
           <Text style={styles.submitButtonText}>
-            {loading ? 'Dodavanje...' : 'Dodaj Daiju'}
+            {loading 
+              ? (editMode ? 'Ažuriranje...' : 'Dodavanje...') 
+              : (editMode ? 'Ažuriraj Daiju' : 'Dodaj Daiju')
+            }
           </Text>
         </TouchableOpacity>
       </View>

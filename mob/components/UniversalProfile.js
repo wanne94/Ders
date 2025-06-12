@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getImageUrl, getDefaultDaijaImage, getDefaultLectureImage, getDefaultOrganizationImage } from '../utils/imageUtils';
 import UniverzalCard from './UniverzalCard';
 import predavanjaService from '../services/predavanjaService';
+import { sortLecturesByTime } from '../utils/sortingUtils';
 const { Linking } = require('react-native');
 
 const { width } = Dimensions.get('window');

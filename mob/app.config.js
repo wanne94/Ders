@@ -1,14 +1,14 @@
 export default {
   expo: {
-    name: "mobile-app",
-    slug: "mobile-app",
+    name: "ders",
+    slug: "ders",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/icon.png",
+    icon: "./assets/logo.jpg",
     userInterfaceStyle: "light",
     newArchEnabled: false,
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/logo.jpg",
       resizeMode: "contain",
       backgroundColor: "#ffffff"
     },
@@ -22,18 +22,19 @@ export default {
     android: {
       package: "com.wanne.mobileapp",
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/logo.jpg",
         backgroundColor: "#ffffff"
       },
       edgeToEdgeEnabled: true,
       permissions: [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     web: {
-      favicon: "./assets/favicon.png"
+      favicon: "./assets/logo.jpg"
     },
     plugins: [
       [
@@ -53,7 +54,7 @@ export default {
     },
     extra: {
       eas: {
-        projectId: "35110304-fd17-4acb-b1af-7223a72c73d3"
+        projectId: "6a6c13f8-0b9e-477a-adc1-867f4ad1861c"
       }
     }
   }

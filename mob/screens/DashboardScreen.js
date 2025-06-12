@@ -1,19 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    RefreshControl,
-    ActivityIndicator,
-    Alert,
-    Modal,
-    TextInput,
-    Switch,
-    Dimensions,
-    FlatList,
-    Image
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  TextInput,
+  Switch,
+  Dimensions,
+  FlatList,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import predavanjaService from '../services/predavanjaService';
@@ -24,6 +24,8 @@ import suggestionsService from '../services/suggestionsService';
 import { applySorting } from '../utils/sortingUtils';
 import { getApiUrl } from '../config';
 import { getToken } from '../utils/authHelpers';
+import AddContentPopup from '../components/AddContentPopup';
+import { getImageUrl } from '../utils/imageUtils';
 
 const { width, height } = Dimensions.get('window');
 
@@ -82,12 +84,17 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Helper function for date formatting
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
       const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return dateString;
+      }
       const day = date.getDate().toString().padStart(2, '0');
       const month = (date.getMonth() + 1).toString().padStart(2, '0');
       const year = date.getFullYear();
@@ -98,7 +105,13 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
   };
 
   // Helper function to get daija name by ID
-  const getDaijaName = (daijaId) => {
+  const getDaijaName = (daijaId, daijaObject = null) => {
+    // If daija object is already provided (from populated data), use it
+    if (daijaObject && typeof daijaObject === 'object') {
+      return `${daijaObject.title || ''} ${daijaObject.name || ''}`.trim();
+    }
+    
+    // Otherwise, look up by ID in the daije array
     if (!daijaId || !data.daije) return null;
     const daija = data.daije.find(d => d._id === daijaId);
     if (!daija) return null;
@@ -120,12 +133,12 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       ] = await Promise.all([
         usersService?.getAllUsers ? usersService.getAllUsers() : Promise.resolve([]),
         predavanjaService.getAllPredavanjaForAdmin(),
-        daijeService.getAllDaije(),
+        daijeService.getAllDaijeForAdmin(),
         udruzenjaService.getAllUdruzenjaForAdmin(),
         suggestionsService?.getAllSuggestions ? suggestionsService.getAllSuggestions() : Promise.resolve([]),
         suggestionsService?.getArchivedSuggestions ? suggestionsService.getArchivedSuggestions() : Promise.resolve([]),
         // Load approval settings from server
-        fetch(`${getApiUrl()}/api/settings/public`, {
+        fetch(`${getApiUrl()}/settings/public`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -201,7 +214,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         return false;
       }
 
-      const response = await fetch(`${getApiUrl()}/api/settings/approval-settings`, {
+      const response = await fetch(`${getApiUrl()}/settings/approval-settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -289,11 +302,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     return { mainItems, approvalItems };
   };
 
-  // Handle item press
-  const handleItemPress = (item, type) => {
-    setSelectedItem({ ...item, type });
-    setShowItemModal(true);
-  };
+
 
   // Handle approval action
   const handleApprovalAction = (item, action) => {
@@ -312,12 +321,8 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       return;
     }
 
-    console.log('confirmApprovalAction called with selectedItem:', selectedItem);
-
     try {
       const { action, type, _id } = selectedItem;
-      
-      console.log('Extracted values:', { action, type, _id });
       
       let service;
       switch (type) {
@@ -334,19 +339,13 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
           service = suggestionsService;
           break;
         default:
-          console.error('Unknown item type:', type);
           throw new Error(`Unknown item type: ${type}`);
       }
 
-      console.log('Selected service:', service);
-      console.log('About to call updateStatus with:', { _id, action, rejectionReason });
-
       if (action === 'approve') {
-        const result = await service.updateStatus(_id, 'approved');
-        console.log('Approve result:', result);
+        await service.updateStatus(_id, 'approved');
       } else if (action === 'reject') {
-        const result = await service.updateStatus(_id, 'rejected', rejectionReason);
-        console.log('Reject result:', result);
+        await service.updateStatus(_id, 'rejected', rejectionReason);
       }
 
       setShowApprovalModal(false);
@@ -361,7 +360,10 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
 
     } catch (error) {
       console.error('Error updating status:', error);
-      Alert.alert('Greška', `Došlo je do greške prilikom ažuriranja statusa: ${error.message}`);
+      Alert.alert(
+        'Greška',
+        'Došlo je do greške prilikom ažuriranja statusa. Molimo provjerite vašu internet konekciju i pokušajte ponovo.'
+      );
     }
   };
 
@@ -567,17 +569,38 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
   // Render data item
   const renderDataItem = ({ item }) => {
     const { type } = getCurrentSectionData();
-    const itemType = type === 'mixed' ? item.type : type;
+    let itemType = type === 'mixed' ? item.type : type;
     
+    // Map plural types to singular for edit mode
+    if (itemType === 'lectures') itemType = 'lecture';
+    if (itemType === 'organizations') itemType = 'organization';
+    if (itemType === 'daije') itemType = 'daija';
+    
+    const canEdit = userRole === 'admin' || userRole === 'superadmin' || userRole === 'super_admin';
+    const canDelete = userRole === 'superadmin' || userRole === 'super_admin';
+    const canApprove = userRole === 'admin' || userRole === 'superadmin' || userRole === 'super_admin';
+
     return (
       <TouchableOpacity
         style={styles.dataItem}
-        onPress={() => handleItemPress(item, itemType)}
+        onPress={() => {
+          setSelectedItem({ ...item, type: itemType });
+          setShowItemModal(true);
+        }}
       >
         <View style={styles.dataItemHeader}>
           <View style={styles.dataItemTitleContainer}>
-            {itemType === 'lecture' && item.image && (
-              <Image source={{ uri: item.image }} style={styles.dataItemImage} />
+            {/* Show images for all item types that have them */}
+            {((itemType === 'lecture' || activeSection === 'predavanja') || 
+              (itemType === 'daija' || activeSection === 'daije') || 
+              (itemType === 'organization' || activeSection === 'udruzenja')) && item.image && (
+              <Image 
+                source={{ uri: getImageUrl(item.image) }} 
+                style={styles.dataItemImage}
+                onError={(e) => {
+                  console.log('Image load error:', e.nativeEvent.error);
+                }}
+              />
             )}
             <View style={styles.dataItemTextContainer}>
               <Text style={styles.dataItemTitle} numberOfLines={2}>
@@ -605,16 +628,32 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
                 </TouchableOpacity>
               </>
             )}
+            {(activeSection === 'predavanja' || activeSection === 'daije' || activeSection === 'udruzenja') && (
+              <>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.editButton]}
+                  onPress={() => handleEditItem(item, itemType)}
+                >
+                  <Ionicons name="create-outline" size={16} color={COLORS.white} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.deleteButton]}
+                  onPress={() => handleDeleteItem(item, itemType)}
+                >
+                  <Ionicons name="trash-outline" size={16} color={COLORS.white} />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
         
         <View style={styles.dataItemInfo}>
-          {itemType === 'lecture' && (
+          {(itemType === 'lecture' || activeSection === 'predavanja') && (
             <>
               <Text style={styles.dataItemSubtitle}>
                 {(() => {
-                  if (item.daijaId) {
-                    const daijaName = getDaijaName(item.daijaId);
+                  if (item.daijaId || item.daija) {
+                    const daijaName = getDaijaName(item.daijaId, item.daija);
                     return daijaName || 'Daija iz baze';
                   }
                   return item.speaker || 'Nema predavača';
@@ -668,6 +707,98 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
           )}
         </View>
       </TouchableOpacity>
+    );
+  };
+
+  // Handle edit item
+  const handleEditItem = (item, itemType) => {
+    setSelectedItem({ ...item, itemType });
+    setShowEditModal(true);
+  };
+
+  // Handle delete item
+  const handleDeleteItem = (item, itemType) => {
+    const itemName = item.title || item.name || 'stavku';
+    Alert.alert(
+      'Potvrda brisanja',
+      `Jeste li sigurni da želite obrisati "${itemName}"?`,
+      [
+        {
+          text: 'Odustani',
+          style: 'cancel'
+        },
+        {
+          text: 'Obriši',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              let service;
+              switch (itemType) {
+                case 'lecture':
+                  service = predavanjaService;
+                  break;
+                case 'daija':
+                  service = daijeService;
+                  break;
+                case 'organization':
+                  service = udruzenjaService;
+                  break;
+                default:
+                  Alert.alert('Greška', 'Nepoznat tip stavke');
+                  return;
+              }
+              
+              await service.deleteItem(item._id);
+              await handleDataChange();
+              Alert.alert('Uspjeh', `"${itemName}" je uspješno obrisano`);
+            } catch (error) {
+              console.error('Delete error:', error);
+              Alert.alert('Greška', 'Došlo je do greške prilikom brisanja');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Handle edit user
+  const handleEditUser = (user) => {
+    Alert.alert(
+      'Uredi korisnika',
+      `Funkcionalnost uređivanja korisnika "${user.username}" će biti dostupna uskoro.`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  // Handle delete user
+  const handleDeleteUser = (user) => {
+    Alert.alert(
+      'Potvrda brisanja korisnika',
+      `Jeste li sigurni da želite obrisati korisnika "${user.username}"?\n\nOva akcija je nepovratna!`,
+      [
+        {
+          text: 'Odustani',
+          style: 'cancel'
+        },
+        {
+          text: 'Obriši',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (usersService?.deleteUser) {
+                await usersService.deleteUser(user._id);
+                await handleDataChange();
+                Alert.alert('Uspjeh', `Korisnik "${user.username}" je uspješno obrisan`);
+              } else {
+                Alert.alert('Greška', 'Funkcionalnost brisanja korisnika nije dostupna');
+              }
+            } catch (error) {
+              console.error('Delete user error:', error);
+              Alert.alert('Greška', 'Došlo je do greške prilikom brisanja korisnika');
+            }
+          }
+        }
+      ]
     );
   };
 
@@ -757,11 +888,15 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
 
     const renderLectureDetails = () => (
       <View style={styles.detailsContainer}>
-        <Text style={styles.detailsTitle}>{selectedItem.title}</Text>
+        <Text style={styles.detailsTitle}>{selectedItem.title || 'Bez naslova'}</Text>
         
         {selectedItem.image && (
           <View style={styles.imageContainer}>
-            <Image source={{ uri: selectedItem.image }} style={styles.detailsImage} />
+            <Image 
+              source={{ uri: getImageUrl(selectedItem.image) }} 
+              style={styles.detailsImage}
+              resizeMode="cover"
+            />
           </View>
         )}
 
@@ -777,41 +912,25 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
           <Text style={styles.detailLabel}>Predavač:</Text>
           <Text style={styles.detailValue}>
             {(() => {
-              if (selectedItem.daijaId) {
-                const daijaName = getDaijaName(selectedItem.daijaId);
-                return daijaName || 'Daija iz baze podataka';
+              if (selectedItem.daijaId || selectedItem.daija) {
+                const daijaName = getDaijaName(selectedItem.daijaId, selectedItem.daija);
+                return daijaName || 'Daija iz baze';
               }
               return selectedItem.speaker || 'Nije navedeno';
             })()}
           </Text>
         </View>
 
-        {selectedItem.daijaId && (
-          <View style={styles.detailRow}>
-            <Ionicons name="id-card-outline" size={16} color={COLORS.gray} />
-            <Text style={styles.detailLabel}>ID Daije:</Text>
-            <Text style={styles.detailValue}>{selectedItem.daijaId}</Text>
-          </View>
-        )}
-
         <View style={styles.detailRow}>
           <Ionicons name="business-outline" size={16} color={COLORS.gray} />
-          <Text style={styles.detailLabel}>Organizacija:</Text>
+          <Text style={styles.detailLabel}>Udruženje:</Text>
           <Text style={styles.detailValue}>{selectedItem.organization || 'Nije navedeno'}</Text>
         </View>
-
-        {selectedItem.organizationId && (
-          <View style={styles.detailRow}>
-            <Ionicons name="id-card-outline" size={16} color={COLORS.gray} />
-            <Text style={styles.detailLabel}>ID Organizacije:</Text>
-            <Text style={styles.detailValue}>{selectedItem.organizationId}</Text>
-          </View>
-        )}
 
         <View style={styles.detailRow}>
           <Ionicons name="calendar-outline" size={16} color={COLORS.gray} />
           <Text style={styles.detailLabel}>Datum:</Text>
-          <Text style={styles.detailValue}>{formatDate(selectedItem.date)}</Text>
+          <Text style={styles.detailValue}>{formatDate(selectedItem.date) || 'Nije navedeno'}</Text>
         </View>
 
         <View style={styles.detailRow}>
@@ -832,24 +951,48 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
           <Text style={styles.detailValue}>{selectedItem.city || 'Nije navedeno'}</Text>
         </View>
 
-        <View style={styles.detailRow}>
-          <Ionicons name="checkmark-circle-outline" size={16} color={COLORS.gray} />
-          <Text style={styles.detailLabel}>Status:</Text>
-          <Text style={[styles.detailValue, { color: getStatusTextColor(selectedItem.status) }]}>
-            {getStatusText(selectedItem.status)}
-          </Text>
-        </View>
+        {selectedItem.facebook && (
+          <View style={styles.detailRow}>
+            <Ionicons name="logo-facebook" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Facebook:</Text>
+            <Text style={styles.detailValue}>{selectedItem.facebook}</Text>
+          </View>
+        )}
+
+        {selectedItem.instagram && (
+          <View style={styles.detailRow}>
+            <Ionicons name="logo-instagram" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Instagram:</Text>
+            <Text style={styles.detailValue}>{selectedItem.instagram}</Text>
+          </View>
+        )}
+
+        {selectedItem.telegram && (
+          <View style={styles.detailRow}>
+            <Ionicons name="paper-plane-outline" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Telegram:</Text>
+            <Text style={styles.detailValue}>{selectedItem.telegram}</Text>
+          </View>
+        )}
+
+        {selectedItem.viber && (
+          <View style={styles.detailRow}>
+            <Ionicons name="chatbubble-outline" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Viber:</Text>
+            <Text style={styles.detailValue}>{selectedItem.viber}</Text>
+          </View>
+        )}
 
         <View style={styles.detailRow}>
           <Ionicons name="calendar-outline" size={16} color={COLORS.gray} />
-          <Text style={styles.detailLabel}>Kreiran:</Text>
-          <Text style={styles.detailValue}>{formatDate(selectedItem.createdAt)}</Text>
+          <Text style={styles.detailLabel}>Kreirano:</Text>
+          <Text style={styles.detailValue}>{formatDate(selectedItem.createdAt) || 'Nije navedeno'}</Text>
         </View>
 
         {selectedItem.updatedAt && (
           <View style={styles.detailRow}>
             <Ionicons name="refresh-outline" size={16} color={COLORS.gray} />
-            <Text style={styles.detailLabel}>Ažuriran:</Text>
+            <Text style={styles.detailLabel}>Ažurirano:</Text>
             <Text style={styles.detailValue}>{formatDate(selectedItem.updatedAt)}</Text>
           </View>
         )}
@@ -859,6 +1002,12 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     const renderDaijaDetails = () => (
       <View style={styles.detailsContainer}>
         <Text style={styles.detailsTitle}>{selectedItem.name}</Text>
+        
+        {selectedItem.image && (
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: getImageUrl(selectedItem.image) }} style={styles.detailsImage} />
+          </View>
+        )}
         
         <View style={styles.detailRow}>
           <Ionicons name="briefcase-outline" size={16} color={COLORS.gray} />
@@ -884,10 +1033,58 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
           <Text style={styles.detailValue}>{selectedItem.phone || 'N/A'}</Text>
         </View>
 
+        {selectedItem.dateOfBirth && (
+          <View style={styles.detailRow}>
+            <Ionicons name="calendar-outline" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Datum rođenja:</Text>
+            <Text style={styles.detailValue}>{formatDate(selectedItem.dateOfBirth)}</Text>
+          </View>
+        )}
+
+        <View style={styles.detailRow}>
+          <Ionicons name="checkmark-circle-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>Status:</Text>
+          <Text style={[styles.detailValue, { color: getStatusTextColor(selectedItem.status) }]}>
+            {getStatusText(selectedItem.status)}
+          </Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Ionicons name="calendar-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>Kreiran:</Text>
+          <Text style={styles.detailValue}>{formatDate(selectedItem.createdAt)}</Text>
+        </View>
+
+        {selectedItem.updatedAt && (
+          <View style={styles.detailRow}>
+            <Ionicons name="refresh-outline" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Ažuriran:</Text>
+            <Text style={styles.detailValue}>{formatDate(selectedItem.updatedAt)}</Text>
+          </View>
+        )}
+
+        {selectedItem.shortDescription && (
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.descriptionLabel}>Kratki opis:</Text>
+            <Text style={styles.descriptionText}>{selectedItem.shortDescription}</Text>
+          </View>
+        )}
+
         {selectedItem.biography && (
           <View style={styles.descriptionContainer}>
             <Text style={styles.descriptionLabel}>Biografija:</Text>
             <Text style={styles.descriptionText}>{selectedItem.biography}</Text>
+          </View>
+        )}
+
+        {selectedItem.education && selectedItem.education.length > 0 && (
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.descriptionLabel}>Obrazovanje:</Text>
+            {selectedItem.education.map((edu, index) => (
+              <Text key={index} style={styles.descriptionText}>
+                • {edu}
+              </Text>
+            ))}
           </View>
         )}
       </View>
@@ -896,6 +1093,12 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     const renderOrganizationDetails = () => (
       <View style={styles.detailsContainer}>
         <Text style={styles.detailsTitle}>{selectedItem.name}</Text>
+        
+        {selectedItem.image && (
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: getImageUrl(selectedItem.image) }} style={styles.detailsImage} />
+          </View>
+        )}
         
         <View style={styles.detailRow}>
           <Ionicons name="mail-outline" size={16} color={COLORS.gray} />
@@ -926,6 +1129,60 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
           <Text style={styles.detailLabel}>Website:</Text>
           <Text style={styles.detailValue}>{selectedItem.website || 'N/A'}</Text>
         </View>
+
+        {selectedItem.facebook && (
+          <View style={styles.detailRow}>
+            <Ionicons name="logo-facebook" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Facebook:</Text>
+            <Text style={styles.detailValue}>{selectedItem.facebook}</Text>
+          </View>
+        )}
+
+        {selectedItem.instagram && (
+          <View style={styles.detailRow}>
+            <Ionicons name="logo-instagram" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Instagram:</Text>
+            <Text style={styles.detailValue}>{selectedItem.instagram}</Text>
+          </View>
+        )}
+
+        {selectedItem.telegram && (
+          <View style={styles.detailRow}>
+            <Ionicons name="send-outline" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Telegram:</Text>
+            <Text style={styles.detailValue}>{selectedItem.telegram}</Text>
+          </View>
+        )}
+
+        {selectedItem.viber && (
+          <View style={styles.detailRow}>
+            <Ionicons name="chatbubble-outline" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Viber:</Text>
+            <Text style={styles.detailValue}>{selectedItem.viber}</Text>
+          </View>
+        )}
+
+        <View style={styles.detailRow}>
+          <Ionicons name="checkmark-circle-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>Status:</Text>
+          <Text style={[styles.detailValue, { color: getStatusTextColor(selectedItem.status) }]}>
+            {getStatusText(selectedItem.status)}
+          </Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Ionicons name="calendar-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>Kreiran:</Text>
+          <Text style={styles.detailValue}>{formatDate(selectedItem.createdAt)}</Text>
+        </View>
+
+        {selectedItem.updatedAt && (
+          <View style={styles.detailRow}>
+            <Ionicons name="refresh-outline" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Ažuriran:</Text>
+            <Text style={styles.detailValue}>{formatDate(selectedItem.updatedAt)}</Text>
+          </View>
+        )}
 
         {selectedItem.description && (
           <View style={styles.descriptionContainer}>
@@ -965,6 +1222,28 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
           <Text style={styles.detailLabel}>Kreiran:</Text>
           <Text style={styles.detailValue}>{formatDate(selectedItem.createdAt)}</Text>
         </View>
+
+        {selectedItem.updatedAt && (
+          <View style={styles.detailRow}>
+            <Ionicons name="refresh-outline" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Ažuriran:</Text>
+            <Text style={styles.detailValue}>{formatDate(selectedItem.updatedAt)}</Text>
+          </View>
+        )}
+
+        {selectedItem.lastLogin && (
+          <View style={styles.detailRow}>
+            <Ionicons name="log-in-outline" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Zadnja prijava:</Text>
+            <Text style={styles.detailValue}>{formatDate(selectedItem.lastLogin)}</Text>
+          </View>
+        )}
+
+        <View style={styles.detailRow}>
+          <Ionicons name="id-card-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>ID:</Text>
+          <Text style={styles.detailValue}>{selectedItem._id}</Text>
+        </View>
       </View>
     );
 
@@ -988,6 +1267,28 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
           <Ionicons name="calendar-outline" size={16} color={COLORS.gray} />
           <Text style={styles.detailLabel}>Datum:</Text>
           <Text style={styles.detailValue}>{formatDate(selectedItem.createdAt)}</Text>
+        </View>
+
+        {selectedItem.updatedAt && (
+          <View style={styles.detailRow}>
+            <Ionicons name="refresh-outline" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Ažuriran:</Text>
+            <Text style={styles.detailValue}>{formatDate(selectedItem.updatedAt)}</Text>
+          </View>
+        )}
+
+        <View style={styles.detailRow}>
+          <Ionicons name="checkmark-circle-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>Status:</Text>
+          <Text style={[styles.detailValue, { color: getStatusTextColor(selectedItem.status) }]}>
+            {getStatusText(selectedItem.status)}
+          </Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Ionicons name="id-card-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>ID:</Text>
+          <Text style={styles.detailValue}>{selectedItem._id}</Text>
         </View>
 
         {selectedItem.reason && (
@@ -1061,30 +1362,87 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
             </ScrollView>
 
             {/* Actions */}
-            {selectedItem.status === 'pending' && (
-              <View style={styles.itemModalActions}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.rejectButton]}
-                  onPress={() => {
-                    setShowItemModal(false);
-                    handleApprovalAction(selectedItem, 'reject');
-                  }}
-                >
-                  <Ionicons name="close" size={16} color={COLORS.white} />
-                  <Text style={styles.rejectButtonText}>Odbaci</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.approveButton]}
-                  onPress={() => {
-                    setShowItemModal(false);
-                    handleApprovalAction(selectedItem, 'approve');
-                  }}
-                >
-                  <Ionicons name="checkmark" size={16} color={COLORS.white} />
-                  <Text style={styles.approveButtonText}>Odobri</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+            <View style={styles.itemModalActionsContainer}>
+              {/* Approval Actions for Pending Items */}
+              {selectedItem.status === 'pending' && (
+                <View style={styles.itemModalActions}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.rejectButton]}
+                    onPress={() => {
+                      setShowItemModal(false);
+                      handleApprovalAction(selectedItem, 'reject');
+                    }}
+                  >
+                    <Ionicons name="close" size={16} color={COLORS.white} />
+                    <Text style={styles.rejectButtonText}>Odbaci</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.approveButton]}
+                    onPress={() => {
+                      setShowItemModal(false);
+                      handleApprovalAction(selectedItem, 'approve');
+                    }}
+                  >
+                    <Ionicons name="checkmark" size={16} color={COLORS.white} />
+                    <Text style={styles.approveButtonText}>Odobri</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Edit/Delete Actions for Super Admins */}
+              {userRole === 'super_admin' && selectedItem.type !== 'user' && selectedItem.type !== 'suggestion' && (
+                <View style={styles.itemModalActions}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.editButton]}
+                    onPress={() => {
+                      setShowItemModal(false);
+                      handleEditItem(selectedItem, selectedItem.type);
+                    }}
+                  >
+                    <Ionicons name="create-outline" size={16} color={COLORS.white} />
+                    <Text style={styles.editButtonText}>Uredi</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.deleteButton]}
+                    onPress={() => {
+                      setShowItemModal(false);
+                      handleDeleteItem(selectedItem, selectedItem.type);
+                    }}
+                  >
+                    <Ionicons name="trash-outline" size={16} color={COLORS.white} />
+                    <Text style={styles.deleteButtonText}>Obriši</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* User Management Actions for Super Admins */}
+              {userRole === 'super_admin' && selectedItem.type === 'user' && (
+                <View style={styles.itemModalActions}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.editButton]}
+                    onPress={() => {
+                      setShowItemModal(false);
+                      handleEditUser(selectedItem);
+                    }}
+                  >
+                    <Ionicons name="create-outline" size={16} color={COLORS.white} />
+                    <Text style={styles.editButtonText}>Uredi korisnika</Text>
+                  </TouchableOpacity>
+                  {selectedItem.role !== 'super_admin' && (
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.deleteButton]}
+                      onPress={() => {
+                        setShowItemModal(false);
+                        handleDeleteUser(selectedItem);
+                      }}
+                    >
+                      <Ionicons name="trash-outline" size={16} color={COLORS.white} />
+                      <Text style={styles.deleteButtonText}>Obriši korisnika</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </View>
           </View>
         </View>
       </Modal>
@@ -1216,6 +1574,25 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     </Modal>
   );
 
+  // Render edit modal using AddContentPopup
+  const renderEditModal = () => (
+    <AddContentPopup
+      visible={showEditModal}
+      onClose={() => {
+        setShowEditModal(false);
+        setSelectedItem(null);
+      }}
+      onSuccess={async () => {
+        setShowEditModal(false);
+        setSelectedItem(null);
+        await handleDataChange();
+      }}
+      initialType={selectedItem?.itemType}
+      editMode={true}
+      editData={selectedItem}
+    />
+  );
+
   return (
     <View style={styles.container}>
      
@@ -1233,6 +1610,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       {renderItemDetailsModal()}
       {renderApprovalModal()}
       {renderSettingsModal()}
+      {renderEditModal()}
     </View>
   );
 };
@@ -1382,6 +1760,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   dataItemHeader: {
     flexDirection: 'row',
@@ -1392,6 +1778,8 @@ const styles = StyleSheet.create({
   dataItemTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
   },
   dataItemImage: {
     width: 40,
@@ -1411,6 +1799,7 @@ const styles = StyleSheet.create({
   dataItemActions: {
     flexDirection: 'row',
     gap: 8,
+    alignItems: 'center',
   },
   actionButton: {
     width: 32,
@@ -1423,6 +1812,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.success,
   },
   rejectButton: {
+    backgroundColor: COLORS.error,
+  },
+  editButton: {
+    backgroundColor: COLORS.primary,
+  },
+  deleteButton: {
     backgroundColor: COLORS.error,
   },
   dataItemInfo: {
@@ -1483,6 +1878,7 @@ const styles = StyleSheet.create({
     width: width - 20,
     maxHeight: height * 0.9,
     maxWidth: 500,
+    marginHorizontal: 10,
   },
   itemModalHeader: {
     flexDirection: 'row',
@@ -1506,11 +1902,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   itemModalBody: {
-    flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
   },
   detailsContainer: {
-    paddingBottom: 20,
+    paddingVertical: 0,
   },
   detailsTitle: {
     fontSize: 20,
@@ -1523,14 +1918,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 16,
     backgroundColor: COLORS.lightGray,
     borderRadius: 8,
   },
   detailLabel: {
     fontSize: 14,
-    fontWeight: 'medium',
+    fontWeight: '600',
     color: COLORS.gray,
     marginLeft: 8,
     minWidth: 80,
@@ -1542,8 +1937,8 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   descriptionContainer: {
-    marginTop: 16,
-    padding: 12,
+    marginVertical: 16,
+    padding: 16,
     backgroundColor: COLORS.lightGray,
     borderRadius: 8,
   },
@@ -1558,12 +1953,14 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     lineHeight: 20,
   },
+  itemModalActionsContainer: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
   itemModalActions: {
     flexDirection: 'row',
     padding: 20,
     gap: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
   },
   modalTitle: {
     fontSize: 18,
@@ -1644,15 +2041,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 4,
   },
+  editButtonText: {
+    color: COLORS.white,
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginLeft: 4,
+  },
+  deleteButtonText: {
+    color: COLORS.white,
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginLeft: 4,
+  },
   imageContainer: {
-    marginBottom: 16,
+    marginVertical: 6,
     borderRadius: 8,
     overflow: 'hidden',
+    backgroundColor: COLORS.lightGray,
   },
   detailsImage: {
     width: '100%',
-    height: 200,
-    borderRadius: 8,
+    height: 400,
+    resizeMode: 'cover',
+  },
+  editForm: {
+    padding: 20,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
   },
 });
 

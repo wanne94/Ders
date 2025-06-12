@@ -42,12 +42,21 @@ const udruzenjaService = {
     return response.data;
   },
 
-  updateStatus: async (id, status, reason = null) => {
-    const payload = { status };
-    if (reason) payload.rejectionReason = reason;
-
-    const response = await apiClient.patch(`${ENV.API_ENDPOINTS.UDRUZENJA}/${id}`, payload);
+  updateStatus: async (id, status, reason = '') => {
+    const response = await apiClient.patch(`${ENV.API_ENDPOINTS.UDRUZENJA}/${id}`, {
+      status,
+      reason
+    });
     return response.data;
+  },
+
+  // Add new methods for dashboard functionality
+  updateItem: async (id, itemData) => {
+    return await udruzenjaService.updateUdruzenje(id, itemData);
+  },
+
+  deleteItem: async (id) => {
+    return await udruzenjaService.deleteUdruzenje(id);
   }
 };
 

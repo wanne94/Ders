@@ -139,6 +139,8 @@ const UniverzalCard = ({ data, onPress, style }) => {
 
   const displayData = getDisplayData();
 
+  console.log('Image URL:', data.image ? getImageUrl(data.image) : 'Using default image');
+
   const renderIcon = (iconName) => {
     const IconComponent = Icons[iconName];
     return IconComponent ? <IconComponent /> : null;

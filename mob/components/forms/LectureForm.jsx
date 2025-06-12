@@ -31,6 +31,7 @@ import udruzenjaService from '../../services/udruzenjaService';
 import { sortLecturers, sortAssociations } from '../../utils/sortingUtils';
 import Toast from '../Toast';
 import * as ImagePicker from 'expo-image-picker';
+import { uploadImage, getImageUrl } from '../../utils/imageUtils';
 
 const COLORS = {
   primary: '#022C43',
@@ -47,11 +48,11 @@ const COLORS = {
   border: '#e2e8f0',
 };
 
-const LectureForm = ({ onBack, onSuccess }) => {
+const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    date: '',
+    date: format(new Date(), 'dd.MM.yyyy'),
     time: '',
     address: '',
     city: '',
@@ -181,7 +182,12 @@ const LectureForm = ({ onBack, onSuccess }) => {
 
   useEffect(() => {
     loadData();
-  }, []);
+    
+    // If in edit mode, populate form with existing data
+    if (editMode && editData) {
+      populateFormWithEditData();
+    }
+  }, [editMode, editData]);
 
   const loadData = async () => {
     try {
@@ -211,6 +217,61 @@ const LectureForm = ({ onBack, onSuccess }) => {
     }
   };
 
+  const populateFormWithEditData = () => {
+    if (!editData) return;
+    
+    setFormData({
+      title: editData.title || '',
+      description: editData.description || '',
+      date: editData.date || format(new Date(), 'dd.MM.yyyy'),
+      time: editData.time || '',
+      address: editData.address || '',
+      city: editData.city || '',
+      speaker: editData.speaker || '',
+      daijaId: editData.daijaId || '',
+      organization: editData.organization || '',
+      organizationId: editData.organizationId || '',
+      image: editData.image || '',
+      status: editData.status || 'pending'
+    });
+
+    // Set image URI if exists
+    if (editData.image) {
+      setImageUri(getImageUrl(editData.image));
+    }
+
+    // Set custom speaker/organization flags
+    if (editData.speaker && !editData.daijaId) {
+      setUseCustomSpeaker(true);
+    }
+    if (editData.organization && !editData.organizationId) {
+      setUseCustomOrganization(true);
+    }
+
+    // Parse and set date
+    if (editData.date) {
+      try {
+        // Handle different date formats
+        let dateObj;
+        if (editData.date.includes('.')) {
+          // DD.MM.YYYY format
+          const [day, month, year] = editData.date.split('.');
+          dateObj = new Date(year, month - 1, day);
+        } else {
+          // ISO format or other
+          dateObj = new Date(editData.date);
+        }
+        
+        if (!isNaN(dateObj.getTime())) {
+          setSelectedDate(dateObj);
+          setCurrentMonth(dateObj);
+        }
+      } catch (error) {
+        console.error('Error parsing date:', error);
+      }
+    }
+  };
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -220,10 +281,12 @@ const LectureForm = ({ onBack, onSuccess }) => {
     return format(date, 'dd.MM.yyyy');
   };
 
-  const handleDateSelect = (date) => {
-    setSelectedDate(date);
-    handleInputChange('date', formatDateForDisplay(date));
+  const handleDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
+    if (selectedDate) {
+      setSelectedDate(selectedDate);
+      handleInputChange('date', format(selectedDate, 'dd.MM.yyyy'));
+    }
   };
 
   const renderCalendar = () => {
@@ -280,7 +343,7 @@ const LectureForm = ({ onBack, onSuccess }) => {
                   isSelected && styles.calendarDaySelected,
                   isDisabled && styles.calendarDayDisabled
                 ]}
-                onPress={() => handleDateSelect(day)}
+                onPress={() => handleDateChange(null, day)}
                 disabled={isDisabled}
               >
                 <Text style={[
@@ -401,33 +464,79 @@ const LectureForm = ({ onBack, onSuccess }) => {
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
-
     try {
       setLoading(true);
-      
-      // Format data for API
-      const submitData = { ...formData };
-      
-      // Convert date from DD.MM.YYYY to YYYY-MM-DD format
-      if (submitData.date) {
-        const dateParts = submitData.date.split('.');
-        if (dateParts.length === 3) {
-          const day = dateParts[0].padStart(2, '0');
-          const month = dateParts[1].padStart(2, '0');
-          const year = dateParts[2];
-          submitData.date = `${year}-${month}-${day}`;
+
+      // Validate required fields
+      if (!validateForm()) {
+        return;
+      }
+
+      let imagePath = formData.image;
+
+      // If we have a new image (local URI), upload it first
+      if (imageUri && imageUri.startsWith('file://')) {
+        try {
+          imagePath = await uploadImage(imageUri);
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          Alert.alert('Greška', 'Došlo je do greške prilikom uploada slike. Pokušajte ponovo.');
+          return;
         }
       }
+
+      // Convert date from DD.MM.YYYY to YYYY-MM-DD format
+      let formattedDate = formData.date;
+      if (formData.date && formData.date.includes('.')) {
+        const [day, month, year] = formData.date.split('.');
+        formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+
+      // Prepare final form data
+      const finalFormData = {
+        ...formData,
+        image: imagePath,
+        date: formattedDate
+      };
+
+      // Submit the form - either create or update
+      if (editMode && editData?._id) {
+        await predavanjaService.updateItem(editData._id, finalFormData);
+        Alert.alert('Uspjeh', 'Uspješno ste ažurirali predavanje!');
+      } else {
+        await predavanjaService.createPredavanje(finalFormData);
+        Alert.alert('Uspjeh', 'Uspješno ste dodali predavanje!');
+      }
       
-      await predavanjaService.createPredavanje(submitData);
-      showToast('Ders je uspješno dodann!', 'success');
-      setTimeout(() => {
-        onSuccess?.();
-      }, 1500);
+      // Call success callback
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // Clear form only if not in edit mode
+      if (!editMode) {
+        setFormData({
+          title: '',
+          description: '',
+          date: format(new Date(), 'dd.MM.yyyy'),
+          time: '',
+          address: '',
+          city: '',
+          speaker: '',
+          daijaId: '',
+          organization: '',
+          organizationId: '',
+          image: '',
+          status: 'pending'
+        });
+        setImageUri(null);
+        setSelectedDate(new Date());
+      }
+      
     } catch (error) {
-      console.error('Error creating lecture:', error);
-      showToast('Došlo je do greške prilikom dodavanja predavanja', 'error');
+      console.error('Error submitting form:', error);
+      const errorMessage = editMode ? 'Došlo je do greške prilikom ažuriranja. Pokušajte ponovo.' : 'Došlo je do greške prilikom spremanja. Pokušajte ponovo.';
+      Alert.alert('Greška', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -517,7 +626,7 @@ const LectureForm = ({ onBack, onSuccess }) => {
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Dodaj Ders</Text>
+        <Text style={styles.headerTitle}>{editMode ? 'Uredi Ders' : 'Dodaj Ders'}</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -651,7 +760,10 @@ const LectureForm = ({ onBack, onSuccess }) => {
           disabled={loading}
         >
           <Text style={styles.submitButtonText}>
-            {loading ? 'Dodavanje...' : 'Dodaj Ders'}
+            {loading 
+              ? (editMode ? 'Ažuriranje...' : 'Dodavanje...') 
+              : (editMode ? 'Ažuriraj Ders' : 'Dodaj Ders')
+            }
           </Text>
         </TouchableOpacity>
       </View>

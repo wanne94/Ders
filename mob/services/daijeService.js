@@ -7,6 +7,19 @@ const daijeService = {
     return response.data;
   },
 
+  getAllDaijeForAdmin: async () => {
+    try {
+      // Try admin endpoint first
+      const response = await apiClient.get('/admin/daije');
+      return response.data;
+    } catch (error) {
+      // If admin endpoint fails (e.g., not authenticated), fall back to public endpoint
+      console.warn('Admin daije endpoint failed, falling back to public endpoint:', error.message);
+      const response = await apiClient.get(`${ENV.API_ENDPOINTS.DAIJE}/public`);
+      return response.data;
+    }
+  },
+
   getDaijaById: async (id) => {
     const response = await apiClient.get(`${ENV.API_ENDPOINTS.DAIJE}/${id}`);
     return response.data;
@@ -37,12 +50,21 @@ const daijeService = {
     return response.data;
   },
 
-  updateStatus: async (id, status, reason = null) => {
-    const payload = { status };
-    if (reason) payload.rejectionReason = reason;
-
-    const response = await apiClient.patch(`${ENV.API_ENDPOINTS.DAIJE}/${id}`, payload);
+  updateStatus: async (id, status, reason = '') => {
+    const response = await apiClient.patch(`${ENV.API_ENDPOINTS.DAIJE}/${id}`, {
+      status,
+      reason
+    });
     return response.data;
+  },
+
+  // Add new methods for dashboard functionality
+  updateItem: async (id, itemData) => {
+    return await daijeService.updateDaija(id, itemData);
+  },
+
+  deleteItem: async (id) => {
+    return await daijeService.deleteDaija(id);
   }
 };
 

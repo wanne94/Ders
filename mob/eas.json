@@ -1,10 +1,6 @@
 {
   "cli": {
-    "version": ">= 16.7.0",
-    "appVersionSource": "remote",
-    "experiments": {
-      "sourceRoot": "mob"
-    }
+    "appVersionSource": "local"
   },
   "build": {
     "development": {

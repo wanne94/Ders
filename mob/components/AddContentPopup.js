@@ -32,29 +32,29 @@ const COLORS = {
   border: '#e2e8f0',
 };
 
-const AddContentPopup = ({ visible, onClose, onSuccess, initialType = null }) => {
+const AddContentPopup = ({ visible, onClose, onSuccess, initialType = null, editMode = false, editData = null }) => {
   const slideAnim = useRef(new Animated.Value(screenHeight)).current;
   const [selectedType, setSelectedType] = useState(initialType);
   
   const contentTypes = [
     {
       id: 'lecture',
-      title: 'Dodaj ders',
-      description: 'Objavi novi ders',
+      title: editMode ? 'Uredi ders' : 'Dodaj ders',
+      description: editMode ? 'Uredi postojeći ders' : 'Objavi novi ders',
       icon: 'book-outline',
       color: COLORS.primary
     },
     {
       id: 'daija',
-      title: 'Dodaj Daiju',
-      description: 'Dodaj novog daiju',
+      title: editMode ? 'Uredi Daiju' : 'Dodaj Daiju',
+      description: editMode ? 'Uredi postojeću daiju' : 'Dodaj novog daiju',
       icon: 'person-outline',
       color: COLORS.secondary
     },
     {
       id: 'organization',
-      title: 'Dodaj Udruženje',
-      description: 'Dodaj novo udruženje',
+      title: editMode ? 'Uredi Udruženje' : 'Dodaj Udruženje',
+      description: editMode ? 'Uredi postojeće udruženje' : 'Dodaj novo udruženje',
       icon: 'business-outline',
       color: COLORS.success
     },
@@ -69,7 +69,12 @@ const AddContentPopup = ({ visible, onClose, onSuccess, initialType = null }) =>
 
   useEffect(() => {
     if (visible) {
-      setSelectedType(initialType);
+      // If in edit mode, directly set the selected type and skip type selection
+      if (editMode && initialType) {
+        setSelectedType(initialType);
+      } else {
+        setSelectedType(initialType);
+      }
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 300,
@@ -84,7 +89,7 @@ const AddContentPopup = ({ visible, onClose, onSuccess, initialType = null }) =>
       // Reset selected type when closing
       setTimeout(() => setSelectedType(null), 300);
     }
-  }, [visible, slideAnim, initialType]);
+  }, [visible, slideAnim, initialType, editMode]);
 
   const handleTypeSelect = (type) => {
     setSelectedType(type);
@@ -97,7 +102,13 @@ const AddContentPopup = ({ visible, onClose, onSuccess, initialType = null }) =>
   };
 
   const handleBack = () => {
-    setSelectedType(null);
+    if (editMode) {
+      // In edit mode, go back to dashboard
+      onClose();
+    } else {
+      // In add mode, go back to type selection
+      setSelectedType(null);
+    }
   };
 
   const handleSuccess = () => {
@@ -119,7 +130,7 @@ const AddContentPopup = ({ visible, onClose, onSuccess, initialType = null }) =>
       ]}
     >
       <View style={styles.sheetHeader}>
-        <Text style={styles.sheetTitle}>Dodaj sadržaj</Text>
+        <Text style={styles.sheetTitle}>{editMode ? 'Uredi sadržaj' : 'Dodaj sadržaj'}</Text>
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
           <Ionicons name="close" size={24} color={COLORS.gray} />
         </TouchableOpacity>
@@ -144,11 +155,11 @@ const AddContentPopup = ({ visible, onClose, onSuccess, initialType = null }) =>
   const renderForm = () => {
     switch (selectedType) {
       case 'lecture':
-        return <LectureForm onBack={handleBack} onSuccess={handleSuccess} />;
+        return <LectureForm onBack={handleBack} onSuccess={handleSuccess} editMode={editMode} editData={editData} />;
       case 'daija':
-        return <DaijaForm onBack={handleBack} onSuccess={handleSuccess} />;
+        return <DaijaForm onBack={handleBack} onSuccess={handleSuccess} editMode={editMode} editData={editData} />;
       case 'organization':
-        return <OrganizationForm onBack={handleBack} onSuccess={handleSuccess} />;
+        return <OrganizationForm onBack={handleBack} onSuccess={handleSuccess} editMode={editMode} editData={editData} />;
       case 'suggestion':
         return <SuggestionForm onBack={handleBack} onSuccess={handleSuccess} />;
       default:
@@ -159,7 +170,7 @@ const AddContentPopup = ({ visible, onClose, onSuccess, initialType = null }) =>
   return (
     <Modal
       visible={visible}
-      transparent={selectedType ? false : true}
+      transparent={false}
       animationType="none"
       onRequestClose={selectedType ? handleBack : onClose}
     >

@@ -6,7 +6,7 @@
  * - Any legacy data that hasn't been migrated yet
  */
 
-const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL || 'http://localhost:3000';
+const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL || 'http://192.168.0.20:5003';  // Replace X with your actual local IP
 
 /**
  * Get the full URL for an image
@@ -85,6 +85,52 @@ export const getLogoUrl = () => {
 export const getFaviconUrl = () => {
   // Mobile app always uses web URL, so use upload path (development path)
   return getImageUrl('/upload/images/favicon.png');
+};
+
+/**
+ * Upload an image to the server
+ * @param {string} uri - The local URI of the image to upload
+ * @returns {Promise<string>} - The path of the uploaded image on the server
+ */
+export const uploadImage = async (uri) => {
+  try {
+    // Create form data
+    const formData = new FormData();
+    
+    // Get the filename from the URI
+    const filename = uri.split('/').pop();
+    
+    // Infer the type from the extension
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : 'image/jpeg';
+    
+    // Append the image file to form data
+    formData.append('image', {
+      uri,
+      name: filename,
+      type
+    });
+
+    // Send the request to the server
+    const response = await fetch(`${WEB_URL}/api/upload-image`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Upload failed');
+    }
+
+    return data.path;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error;
+  }
 };
 
 export default {

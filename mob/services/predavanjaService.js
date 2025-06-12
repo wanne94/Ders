@@ -62,12 +62,26 @@ const predavanjaService = {
     return response.data; // Axios interceptor returns full response, so we need .data
   },
 
-  updateStatus: async (id, status, reason = null) => {
-    const payload = { status };
-    if (reason) payload.rejectionReason = reason;
+  updateStatus: async (id, status, reason = '') => {
+    try {
+      const response = await apiClient.patch(`${ENV.API_ENDPOINTS.PREDAVANJA}/${id}`, {
+        status,
+        rejectionReason: reason
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating status:', error);
+      throw error;
+    }
+  },
 
-    const response = await apiClient.patch(`${ENV.API_ENDPOINTS.PREDAVANJA}/${id}`, payload);
-    return response.data; // Axios interceptor returns full response, so we need .data
+  // Add new methods for dashboard functionality
+  updateItem: async (id, itemData) => {
+    return await predavanjaService.updatePredavanje(id, itemData);
+  },
+
+  deleteItem: async (id) => {
+    return await predavanjaService.deletePredavanje(id);
   }
 };
 

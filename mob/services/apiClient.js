@@ -14,6 +14,8 @@ class ApiClient {
   async request(url, options = {}) {
     const fullUrl = url.startsWith('http') ? url : `${this.baseURL}${url}`;
     
+    console.log('Making API request to:', fullUrl);
+    
     // Add default headers
     const headers = {
       ...this.defaultHeaders,
@@ -71,6 +73,12 @@ class ApiClient {
       }
 
       if (!response.ok) {
+        console.error('API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: fullUrl,
+          data: responseData.data
+        });
         const error = new Error(`HTTP Error: ${response.status}`);
         error.response = responseData;
         throw error;
@@ -110,15 +118,18 @@ class ApiClient {
     });
   }
 
-  delete(url, config = {}) {
-    return this.request(url, { ...config, method: 'DELETE' });
-  }
-
   patch(url, data, config = {}) {
     return this.request(url, {
       ...config,
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  delete(url, config = {}) {
+    return this.request(url, {
+      ...config,
+      method: 'DELETE',
     });
   }
 }

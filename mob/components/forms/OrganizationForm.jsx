@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import udruzenjaService from '../../services/udruzenjaService';
 import Toast from '../Toast';
 import * as ImagePicker from 'expo-image-picker';
+import { uploadImage, getImageUrl } from '../../utils/imageUtils';
 
 const COLORS = {
   primary: '#022C43',
@@ -31,23 +32,50 @@ const COLORS = {
   border: '#e2e8f0',
 };
 
-const OrganizationForm = ({ onBack, onSuccess }) => {
+const OrganizationForm = ({ onBack, onSuccess, editMode = false, editData = null }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     address: '',
     city: '',
-    facebook: '',
-    instagram: '',
-    telegram: '',
-    viber: '',
+    phone: '',
+    email: '',
+    website: '',
     image: '',
     status: 'pending'
   });
   
   const [loading, setLoading] = useState(false);
-  const [imageUri, setImageUri] = useState(null);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+  const [imageUri, setImageUri] = useState(null);
+
+  useEffect(() => {
+    // If in edit mode, populate form with existing data
+    if (editMode && editData) {
+      populateFormWithEditData();
+    }
+  }, [editMode, editData]);
+
+  const populateFormWithEditData = () => {
+    if (!editData) return;
+    
+    setFormData({
+      name: editData.name || '',
+      description: editData.description || '',
+      address: editData.address || '',
+      city: editData.city || '',
+      phone: editData.phone || '',
+      email: editData.email || '',
+      website: editData.website || '',
+      image: editData.image || '',
+      status: editData.status || 'pending'
+    });
+
+    // Set image URI if exists
+    if (editData.image) {
+      setImageUri(getImageUrl(editData.image));
+    }
+  };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -149,18 +177,65 @@ const OrganizationForm = ({ onBack, onSuccess }) => {
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
-
     try {
       setLoading(true);
-      await udruzenjaService.createUdruzenje(formData);
-      showToast('Udruženje je uspješno dodano!', 'success');
-      setTimeout(() => {
-        onSuccess?.();
-      }, 1500);
+
+      // Validate required fields
+      if (!validateForm()) return;
+
+      let imagePath = formData.image;
+
+      // If we have a new image (local URI), upload it first
+      if (imageUri && imageUri.startsWith('file://')) {
+        try {
+          imagePath = await uploadImage(imageUri);
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          Alert.alert('Greška', 'Došlo je do greške prilikom uploada slike. Pokušajte ponovo.');
+          return;
+        }
+      }
+
+      // Prepare final form data
+      const finalFormData = {
+        ...formData,
+        image: imagePath
+      };
+
+      // Submit the form - either create or update
+      if (editMode && editData?._id) {
+        await udruzenjaService.updateItem(editData._id, finalFormData);
+        Alert.alert('Uspjeh', 'Uspješno ste ažurirali udruženje!');
+      } else {
+        await udruzenjaService.createUdruzenje(finalFormData);
+        Alert.alert('Uspjeh', 'Uspješno ste dodali udruženje!');
+      }
+      
+      // Call success callback
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // Clear form only if not in edit mode
+      if (!editMode) {
+        setFormData({
+          name: '',
+          description: '',
+          address: '',
+          city: '',
+          phone: '',
+          email: '',
+          website: '',
+          image: '',
+          status: 'pending'
+        });
+        setImageUri(null);
+      }
+      
     } catch (error) {
-      console.error('Error creating organization:', error);
-      showToast('Došlo je do greške prilikom dodavanja udruženja', 'error');
+      console.error('Error submitting form:', error);
+      const errorMessage = editMode ? 'Došlo je do greške prilikom ažuriranja. Pokušajte ponovo.' : 'Došlo je do greške prilikom spremanja. Pokušajte ponovo.';
+      Alert.alert('Greška', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -193,7 +268,7 @@ const OrganizationForm = ({ onBack, onSuccess }) => {
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Dodaj Udruženje</Text>
+        <Text style={styles.headerTitle}>{editMode ? 'Uredi Udruženje' : 'Dodaj Udruženje'}</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -250,7 +325,10 @@ const OrganizationForm = ({ onBack, onSuccess }) => {
           disabled={loading}
         >
           <Text style={styles.submitButtonText}>
-            {loading ? 'Dodavanje...' : 'Dodaj Udruženje'}
+            {loading 
+              ? (editMode ? 'Ažuriranje...' : 'Dodavanje...') 
+              : (editMode ? 'Ažuriraj Udruženje' : 'Dodaj Udruženje')
+            }
           </Text>
         </TouchableOpacity>
       </View>
