@@ -4,11 +4,11 @@ export default {
     slug: "ders",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/logo.jpg",
+    icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: false,
     splash: {
-      image: "./assets/logo.jpg",
+      image: "./assets/splash-icon.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff"
     },
@@ -22,7 +22,7 @@ export default {
     android: {
       package: "com.wanne.mobileapp",
       adaptiveIcon: {
-        foregroundImage: "./assets/logo.jpg",
+        foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff"
       },
       edgeToEdgeEnabled: true,
@@ -34,7 +34,7 @@ export default {
       ]
     },
     web: {
-      favicon: "./assets/logo.jpg"
+      favicon: "./assets/favicon.png"
     },
     plugins: [
       [
