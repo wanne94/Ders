@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "mobile-app",
+    "name": "Ders",
     "slug": "mobile-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.jpg",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo.jpg",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -28,8 +28,10 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
-      ]
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.wanne.mobileapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -42,6 +44,12 @@
           "cameraPermission": "Ova aplikacija koristi kameru za dodavanje slika u sadržaj."
         }
       ]
-    ]
+    ],
+    "extra": {},
+
+    "assetBundlePatterns": [
+  "assets/**"
+]
+
   }
 }

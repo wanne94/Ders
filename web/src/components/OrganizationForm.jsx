@@ -179,16 +179,18 @@ const OrganizationForm = ({ open, onClose, onSuccess, approvalEnabled = true, or
           size: formData.imageFile.size,
           type: formData.imageFile.type
         });
-        console.log('🌐 Upload URL:', `${process.env.NEXT_PUBLIC_API_URL}/api/upload`);
+        console.log('🌐 Upload URL:', `${process.env.NEXT_PUBLIC_API_URL}/upload-image`);
         
         try {
-          const uploadResponse = await axiosInstance.post('/upload', imageFormData, {
-            // Remove explicit Content-Type header - let axios set it automatically with boundary
+          const uploadResponse = await axiosInstance.post('/upload-image', imageFormData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
           });
 
           console.log('✅ Upload response:', uploadResponse.data);
           if (uploadResponse.data.success) {
-            imagePath = uploadResponse.data.path; // Koristimo path umjesto filename
+            imagePath = uploadResponse.data.path;
             console.log('🖼️ Image uploaded successfully:', imagePath);
             console.log('🔄 UPLOAD SUCCESS - New image path:', imagePath);
           } else {

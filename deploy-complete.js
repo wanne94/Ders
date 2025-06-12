@@ -270,14 +270,41 @@ async function buildWeb() {
   
   process.chdir('web');
   
+  // Obriši postojeći build cache
+  if (fs.existsSync('.next')) {
+    log('🧹 Brisanje postojećeg build cache-a...', 'yellow');
+    try {
+      // Pokušaj sa PowerShell komandom
+      execCommand('Remove-Item -Recurse -Force .next', { shell: true });
+    } catch (error) {
+      // Ako ne radi, pokušaj sa Node.js fs
+      const path = require('path');
+      fs.rmSync('.next', { recursive: true, force: true });
+    }
+  }
+  
   // Provjeri da li node_modules postoji, ako ne instaliraj dependencies
   if (!fs.existsSync('node_modules')) {
     log('📦 Instaliranje dependencies...', 'yellow');
     execCommand('npm install');
   }
   
-  execCommand('npm run build');
-  process.chdir('..');
+  // Postavi NODE_ENV na production za build
+  const originalNodeEnv = process.env.NODE_ENV;
+  process.env.NODE_ENV = 'production';
+  log('🔧 NODE_ENV postavljen na production za build', 'yellow');
+  
+  try {
+    execCommand('npm run build');
+  } finally {
+    // Vrati originalni NODE_ENV
+    if (originalNodeEnv) {
+      process.env.NODE_ENV = originalNodeEnv;
+    } else {
+      delete process.env.NODE_ENV;
+    }
+    process.chdir('..');
+  }
 }
 
 // Deploy web aplikacije
@@ -339,6 +366,10 @@ async function deployServer() {
   try {
     await ensureDirectories(conn);
     
+    // Kopiraj .env.production kao .env za production konfiguraciju
+    log('🔧 Postavljanje production environment...', 'yellow');
+    await executeSSHCommand(conn, `cd ${CONFIG.server.serverPath} && cp .env.production .env`);
+    
     // Install dependencies
     await executeSSHCommand(conn, `cd ${CONFIG.server.serverPath} && npm install --production`);
     
@@ -346,14 +377,14 @@ async function deployServer() {
     const serverExists = await checkPM2Process(conn, CONFIG.pm2.serverApp);
     
     if (serverExists) {
-      log('🔄 Restartovanje server aplikacije...', 'yellow');
-      await executeSSHCommand(conn, `pm2 restart ${CONFIG.pm2.serverApp}`);
-    } else {
-      log('🚀 Pokretanje server aplikacije...', 'yellow');
-      await executeSSHCommand(conn, 
-        `cd ${CONFIG.server.serverPath} && pm2 start index.js --name "${CONFIG.pm2.serverApp}"`
-      );
+      log('🔄 Zaustavljanje postojeće server aplikacije...', 'yellow');
+      await executeSSHCommand(conn, `pm2 delete ${CONFIG.pm2.serverApp}`);
     }
+    
+    log('🚀 Pokretanje server aplikacije sa production konfigurацијом...', 'yellow');
+    await executeSSHCommand(conn, 
+      `cd ${CONFIG.server.serverPath} && NODE_ENV=production pm2 start index.js --name "${CONFIG.pm2.serverApp}"`
+    );
     
     log('✅ Server aplikacija uspešno deployovana!', 'green');
     

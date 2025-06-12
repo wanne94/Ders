@@ -1,10 +1,28 @@
 const express = require('express');
-require('dotenv').config();
+// Load environment-specific configuration
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Determine which .env file to load based on NODE_ENV
+const envFile = process.env.NODE_ENV === 'development' 
+  ? '.env.development' 
+  : process.env.NODE_ENV === 'production' 
+    ? '.env.production' 
+    : '.env.local';
+
+console.log(`🔧 Loading environment from: ${envFile}`);
+dotenv.config({ path: path.resolve(__dirname, envFile) });
+
+// Debug environment variables
+console.log('🌍 NODE_ENV:', process.env.NODE_ENV);
+console.log('📦 MONGODB_URI loaded:', process.env.MONGODB_URI ? 'YES' : 'NO');
+if (process.env.MONGODB_URI) {
+  console.log('📦 MONGODB_URI (masked):', process.env.MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//****:****@'));
+}
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const path = require('path');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const winston = require('winston');
@@ -15,7 +33,6 @@ const multer = require('multer');
 const { generateToken, verifyToken, authMiddleware: jwtAuthMiddleware } = require('./utils/jwt');
 
 // Import routes
-const uploadRoutes = require('./routes/upload');
 const usersRouter = require('./routes/users');
 const lecturesRouter = require('./routes/lecturesRoutes');
 
@@ -139,14 +156,9 @@ if (isProduction) {
 // Uvijek servira public folder
 // Static files are now served by Next.js from web/public
 
-// Create uploads directory if it doesn't exist - for saving uploaded files
-const uploadsDir = path.join(__dirname, '../web/public/uploads/images');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Note: Static files are served by Next.js from web/public/uploads
-// No need to serve uploads from server - Next.js handles this
+// Serve uploads directory - unified path for both environments
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+console.log('📁 Serving uploads from server/uploads (unified for both development and production)');
 
 // Basic health check route
 app.get('/', (req, res) => {
@@ -205,7 +217,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Use upload routes
-app.use('/api/upload', uploadRoutes);
+app.use('/api/upload-image', require('./routes/uploadImage'));
 
 // API routes
 app.use('/api', express.json());
@@ -317,12 +329,16 @@ const canUpdateProfile = (req, res, next) => {
   }
 };
 
-// MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/predavanja';
+// MongoDB Connection - automatski odabir baze na osnovu NODE_ENV
+const isDevelopment = process.env.NODE_ENV === 'development';
+const MONGODB_URI = isDevelopment 
+  ? (process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/Predavanja')
+  : (process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/Predavanja');
 
 console.log('Starting server setup...');
 console.log(`PORT: ${PORT}`);
 console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`Environment: ${isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'}`);
 console.log(`MongoDB URI: ${MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//****:****@')}`);
 
 const connectDB = async () => {
@@ -1638,7 +1654,7 @@ app.get('/api/daije/:id', async (req, res) => {
 });
 
 // Add new daija
-app.post('/api/daije', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+app.post('/api/daije', authenticateToken, async (req, res) => {
   try {
     logger.info('Adding new daija - Request body:', {
       body: req.body,
@@ -1859,7 +1875,7 @@ app.get('/api/organizations/:id', async (req, res) => {
 });
 
 // Add new organization
-app.post('/api/organizations', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+app.post('/api/organizations', authenticateToken, async (req, res) => {
   try {
     logger.info('Adding new organization - Request body:', {
       body: req.body,
@@ -3732,3 +3748,4 @@ app.get('/api/daije/public', async (req, res) => {
     res.status(500).json({ message: 'Greška pri dohvaćanju daija' });
   }
 });
+

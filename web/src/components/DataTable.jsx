@@ -66,6 +66,7 @@ const ImageCell = memo(({ src, alt, defaultSrc }) => {
     />
   );
 });
+ImageCell.displayName = 'ImageCell';
 
 // Komponenta za akcije sa dropdown menijem
 const ActionsMenu = memo(({ item, type, onEdit, onDelete, onDuplicate, onArchive }) => {
@@ -162,6 +163,7 @@ const ActionsMenu = memo(({ item, type, onEdit, onDelete, onDuplicate, onArchive
     </>
   );
 });
+ActionsMenu.displayName = 'ActionsMenu';
 
 // Komponenta za red u tabeli
 const TableRowMemo = memo(({ 
@@ -235,6 +237,7 @@ const TableRowMemo = memo(({
     </TableRow>
   );
 });
+TableRowMemo.displayName = 'TableRowMemo';
 
 // Komponenta za bulk akcije
 const BulkActionsToolbar = memo(({ 
@@ -335,6 +338,7 @@ const BulkActionsToolbar = memo(({
     </Toolbar>
   );
 });
+BulkActionsToolbar.displayName = 'BulkActionsToolbar';
 
 const DataTable = ({ 
   data, 

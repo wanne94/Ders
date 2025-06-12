@@ -11,6 +11,7 @@ import AddIcon from '@mui/icons-material/Add';
 import Navigation from '@/components/Navigation';
 import { usersService } from '@/services';
 import DataTable from '@/components/DataTable';
+import UserForm from '@/components/UserForm';
 // import { UserForm } from '@shared/dashboard';
 
 const Users = () => {

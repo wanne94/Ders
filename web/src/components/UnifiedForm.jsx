@@ -355,7 +355,7 @@ const UnifiedForm = ({
         imageFormData.append('image', formData.imageFile);
 
         try {
-          const uploadResponse = await axiosInstance.post('/upload', imageFormData);
+          const uploadResponse = await axiosInstance.post('/upload-image', imageFormData);
           if (uploadResponse.data.success) {
             imagePath = uploadResponse.data.path;
           } else {

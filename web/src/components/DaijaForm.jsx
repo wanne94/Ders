@@ -184,7 +184,11 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
         });
         
         try {
-          const uploadResponse = await axiosInstance.post('/upload', imageFormData);
+          const uploadResponse = await axiosInstance.post('/upload-image', imageFormData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          });
 
           console.log('✅ Upload response:', uploadResponse.data);
           if (uploadResponse.data.success) {
@@ -209,12 +213,12 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
 
       // If no image is provided, use default image
       const finalFormData = {
-        name: formData.name, // Use name field for backend
+        name: formData.name,
         title: formData.title,
         biography: formData.biography,
         status: formData.status,
         education: formData.education,
-        image: formData.imageFile ? imagePath : (daija?.image || getDefaultDaijaImage())
+        image: imagePath || getDefaultDaijaImage()
       };
 
       // Remove imageFile from the data sent to server
@@ -222,15 +226,12 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
 
       let response;
       if (daija) {
-        // Update existing daija
         response = await axiosInstance.put(`/daije/${daija._id}`, finalFormData);
       } else {
-        // Create new daija with approval status based on settings
-        const daijaData = {
+        response = await axiosInstance.post('/daije', {
           ...finalFormData,
           status: approvalEnabled ? 'pending' : 'approved'
-        };
-        response = await axiosInstance.post('/daije', daijaData);
+        });
       }
       
       setSuccess(true);

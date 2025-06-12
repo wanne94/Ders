@@ -1,0 +1,60 @@
+export default {
+  expo: {
+    name: "mobile-app",
+    slug: "mobile-app",
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/icon.png",
+    userInterfaceStyle: "light",
+    newArchEnabled: false,
+    splash: {
+      image: "./assets/splash-icon.png",
+      resizeMode: "contain",
+      backgroundColor: "#ffffff"
+    },
+    ios: {
+      supportsTablet: true,
+      infoPlist: {
+        NSCameraUsageDescription: "Ova aplikacija koristi kameru za dodavanje slika u sadržaj.",
+        NSPhotoLibraryUsageDescription: "Ova aplikacija pristupa galeriji slika za dodavanje slika u sadržaj."
+      }
+    },
+    android: {
+      package: "com.wanne.mobileapp",
+      adaptiveIcon: {
+        foregroundImage: "./assets/adaptive-icon.png",
+        backgroundColor: "#ffffff"
+      },
+      edgeToEdgeEnabled: true,
+      permissions: [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    web: {
+      favicon: "./assets/favicon.png"
+    },
+    plugins: [
+      [
+        "expo-image-picker",
+        {
+          photosPermission: "Ova aplikacija pristupa galeriji slika za dodavanje slika u sadržaj.",
+          cameraPermission: "Ova aplikacija koristi kameru za dodavanje slika u sadržaj."
+        }
+      ]
+    ],
+    // Optimizacije za smanjenje veličine build-a
+    assetBundlePatterns: [
+      "assets/**/*"
+    ],
+    updates: {
+      fallbackToCacheTimeout: 0
+    },
+    extra: {
+      eas: {
+        projectId: "35110304-fd17-4acb-b1af-7223a72c73d3"
+      }
+    }
+  }
+}; 

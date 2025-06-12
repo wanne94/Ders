@@ -2,8 +2,15 @@ import apiClient from './apiClient';
 import { ENV } from './config';
 
 const daijeService = {
+  // Public endpoint - returns only approved daije
   getAllDaije: async () => {
     const response = await apiClient.get(`${ENV.API_ENDPOINTS.DAIJE}/public`);
+    return response;
+  },
+
+  // Admin endpoint - returns all daije including pending/rejected
+  getAllDaijeForAdmin: async () => {
+    const response = await apiClient.get('/admin/daije');
     return response;
   },
 

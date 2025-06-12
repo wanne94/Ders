@@ -27,7 +27,7 @@ export const getImageUrl = (imagePath) => {
   }
   
   // For uploads, serve from Next.js public directory via web URL
-  if (imagePath.includes('uploads/')) {
+  if (imagePath.includes('uploads/') || imagePath.includes('upload/')) {
     // Ensure path starts with / for Next.js public directory
     const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
     return `${WEB_URL}${cleanPath}`;
@@ -47,7 +47,8 @@ export const getImageUrl = (imagePath) => {
  * @returns {string} - The default lecture image URL
  */
 export const getDefaultLectureImage = () => {
-  return getImageUrl('/uploads/images/predavanjeslika.jpg');
+  // Mobile app always uses web URL, so use upload path (development path)
+  return getImageUrl('/upload/images/predavanjeslika.jpg');
 };
 
 /**
@@ -55,7 +56,8 @@ export const getDefaultLectureImage = () => {
  * @returns {string} - The default daija image URL
  */
 export const getDefaultDaijaImage = () => {
-  return getImageUrl('/uploads/images/daijaslika.jpg');
+  // Mobile app always uses web URL, so use upload path (development path)
+  return getImageUrl('/upload/images/daijaslika.jpg');
 };
 
 /**
@@ -63,7 +65,8 @@ export const getDefaultDaijaImage = () => {
  * @returns {string} - The default organization image URL
  */
 export const getDefaultOrganizationImage = () => {
-  return getImageUrl('/uploads/images/udruzenjeslika.jpg');
+  // Mobile app always uses web URL, so use upload path (development path)
+  return getImageUrl('/upload/images/udruzenjeslika.jpg');
 };
 
 /**
@@ -71,7 +74,8 @@ export const getDefaultOrganizationImage = () => {
  * @returns {string} - The logo URL
  */
 export const getLogoUrl = () => {
-  return getImageUrl('/uploads/logo.jpg');
+  // Mobile app always uses web URL, so use upload path (development path)
+  return getImageUrl('/upload/logo.jpg');
 };
 
 /**
@@ -79,7 +83,8 @@ export const getLogoUrl = () => {
  * @returns {string} - The favicon URL
  */
 export const getFaviconUrl = () => {
-  return getImageUrl('/uploads/images/favicon.png');
+  // Mobile app always uses web URL, so use upload path (development path)
+  return getImageUrl('/upload/images/favicon.png');
 };
 
 export default {

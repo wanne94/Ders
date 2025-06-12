@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    Box,
-    Alert,
-    Snackbar,
-    TextField,
-    Typography,
-    MenuItem,
-    FormControl,
-    InputLabel,
-    Select
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Box,
+  Alert,
+  Snackbar,
+  TextField,
+  Typography,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -254,7 +254,7 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
     
     // Validacija za daije
     if (!useCustomSpeaker && !formData.daijaId) {
-      errors.push('Molimo odaberite daju ili unesite ime daije');
+      errors.push('Molimo odaberite daiu ili unesite ime daije');
     }
     
     if (useCustomSpeaker && (!formData.speaker || !formData.speaker.trim())) {
@@ -301,14 +301,22 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
         console.log('📁 File details:', {
           name: formData.imageFile.name,
           size: formData.imageFile.size,
-          type: formData.imageFile.type
+          type: formData.imageFile.type,
+          formDataKeys: Array.from(imageFormData.keys()),
+          formDataHasFile: imageFormData.has('image')
         });
         
         try {
-          const uploadResponse = await axiosInstance.post('/upload', imageFormData);
+          // Use axiosInstance which is already configured with the correct baseURL
+          const uploadResponse = await axiosInstance.post('/upload-image', imageFormData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          });
 
           console.log('✅ Upload response:', uploadResponse.data);
           if (uploadResponse.data.success) {
+            // Store just the relative path, getImageUrl will handle the full URL
             imagePath = uploadResponse.data.path;
             console.log('🖼️ Image uploaded successfully:', imagePath);
             console.log('🔄 UPLOAD SUCCESS - New image path:', imagePath);
@@ -320,7 +328,8 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
             message: uploadError.message,
             status: uploadError.response?.status,
             statusText: uploadError.response?.statusText,
-            data: uploadError.response?.data
+            data: uploadError.response?.data,
+            config: uploadError.config
           });
           throw new Error('Upload failed: ' + (uploadError.response?.data?.message || uploadError.message));
         }
@@ -686,7 +695,7 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
           severity="success"
           sx={{ cursor: 'default' }}
         >
-          {isEditing ? 'Predavanje uspješno ažurirano' : 'Predavanje uspješno dodano'}
+          {isEditing ? 'Ders uspješno uređen' : 'Ders uspješno dodan, nakon odobrenja može biti vidljiv na stranici'}
         </Alert>
       </Snackbar>
     </>

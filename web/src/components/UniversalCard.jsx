@@ -15,7 +15,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import BusinessIcon from '@mui/icons-material/Business';
 import SchoolIcon from '@mui/icons-material/School';
 import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrganizationSlug } from '../utils/dataHelpers';
-import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '../utils/imageUtils';
+import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
 
 const UniversalCard = ({ data }) => {
   const router = useRouter();
@@ -213,11 +213,11 @@ const UniversalCard = ({ data }) => {
         e.target.onerror = null; // Prevent infinite loop
         // Use appropriate default image based on type
         if (displayData.type === 'lecture') {
-          e.target.src = '/uploads/images/predavanjeslika.jpg';
+          e.target.src = getDefaultLectureImage();
         } else if (displayData.type === 'daija') {
-          e.target.src = '/uploads/images/daijaslika.jpg';
+          e.target.src = getDefaultDaijaImage();
         } else if (displayData.type === 'organization') {
-          e.target.src = '/uploads/images/udruzenjeslika.jpg';
+          e.target.src = getDefaultOrganizationImage();
         }
       }}
       style={{ 

@@ -6,15 +6,21 @@
  * - Any legacy data that hasn't been migrated yet
  */
 
+// Use environment-specific server URL for images
+const IMAGE_SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://ders.ba';
+
 /**
  * Get the full URL for an image
  * @param {string} imagePath - The image path (can be relative or full URL or base64 data)
  * @returns {string} - The full image URL or base64 data string
  */
 export const getImageUrl = (imagePath) => {
-  if (!imagePath) return null;
+  // Use unified /uploads/images/ path for both development and production
+  const defaultImage = '/uploads/images/default.jpg';
   
-  // If it's a base64 data URL, return as is (backward compatibility)
+  if (!imagePath) return `${IMAGE_SERVER_URL}${defaultImage}`;
+  
+  // If it's a base64 data URL, return as is
   if (imagePath.startsWith('data:')) {
     return imagePath;
   }
@@ -24,20 +30,27 @@ export const getImageUrl = (imagePath) => {
     return imagePath;
   }
   
-  // For uploads, serve from Next.js public directory
-  if (imagePath.includes('uploads/')) {
-    // Ensure path starts with / for Next.js public directory
-    const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    return cleanPath;
+  // Remove 'public' from the path if it exists
+  let cleanPath = imagePath;
+  if (cleanPath.startsWith('public/')) {
+    cleanPath = cleanPath.substring(7); // Remove 'public/' prefix
   }
   
-  // If it starts with /, it's a public path - serve from Next.js public directory
-  if (imagePath.startsWith('/')) {
-    return imagePath;
+  // Ensure we use unified /uploads/images/ path for both environments
+  if (cleanPath.startsWith('/upload/images/')) {
+    cleanPath = cleanPath.replace('/upload/images/', '/uploads/images/');
+  } else if (cleanPath.startsWith('upload/images/')) {
+    cleanPath = cleanPath.replace('upload/images/', '/uploads/images/');
   }
   
-  // For other paths, construct path for Next.js public directory
-  return `/${imagePath}`;
+  // Ensure path starts with /uploads/images/ if it contains images
+  if (!cleanPath.startsWith('/uploads/') && cleanPath.includes('images/')) {
+    cleanPath = `/uploads/images/${cleanPath.replace(/^\/+/, '').replace(/^images\//, '')}`;
+  }
+  
+  // Ensure path starts with /
+  cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+  return `${IMAGE_SERVER_URL}${cleanPath}`;
 };
 
 /**
@@ -45,7 +58,8 @@ export const getImageUrl = (imagePath) => {
  * @returns {string} - The default lecture image URL
  */
 export const getDefaultLectureImage = () => {
-  return getImageUrl('/uploads/images/predavanjeslika.jpg');
+  const imagePath = '/uploads/images/predavanjeslika.jpg';
+  return `${IMAGE_SERVER_URL}${imagePath}`;
 };
 
 /**
@@ -53,7 +67,8 @@ export const getDefaultLectureImage = () => {
  * @returns {string} - The default daija image URL
  */
 export const getDefaultDaijaImage = () => {
-  return getImageUrl('/uploads/images/daijaslika.jpg');
+  const imagePath = '/uploads/images/daijaslika.jpg';
+  return `${IMAGE_SERVER_URL}${imagePath}`;
 };
 
 /**
@@ -61,7 +76,8 @@ export const getDefaultDaijaImage = () => {
  * @returns {string} - The default organization image URL
  */
 export const getDefaultOrganizationImage = () => {
-  return getImageUrl('/uploads/images/udruzenjeslika.jpg');
+  const imagePath = '/uploads/images/udruzenjeslika.jpg';
+  return `${IMAGE_SERVER_URL}${imagePath}`;
 };
 
 /**
@@ -69,7 +85,8 @@ export const getDefaultOrganizationImage = () => {
  * @returns {string} - The logo URL
  */
 export const getLogoUrl = () => {
-  return getImageUrl('/uploads/logo.jpg');
+  const logoPath = '/uploads/logo.jpg';
+  return `${IMAGE_SERVER_URL}${logoPath}`;
 };
 
 /**
@@ -77,7 +94,8 @@ export const getLogoUrl = () => {
  * @returns {string} - The favicon URL
  */
 export const getFaviconUrl = () => {
-  return getImageUrl('/uploads/images/favicon.png');
+  const faviconPath = '/uploads/images/favicon.png';
+  return `${IMAGE_SERVER_URL}${faviconPath}`;
 };
 
 export default {

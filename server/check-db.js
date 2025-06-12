@@ -1,7 +1,23 @@
+// Load environment-specific configuration
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Determine which .env file to load based on NODE_ENV
+const envFile = process.env.NODE_ENV === 'development' 
+  ? '.env.development' 
+  : process.env.NODE_ENV === 'production' 
+    ? '.env' 
+    : '.env.local';
+
+console.log(`🔧 Loading environment from: ${envFile}`);
+dotenv.config({ path: path.resolve(__dirname, envFile) });
+
 const mongoose = require('mongoose');
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/ders');
+// Connect to MongoDB using environment variable
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/Predavanja';
+console.log(`🔗 Connecting to: ${MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//****:****@')}`);
+mongoose.connect(MONGODB_URI);
 
 // Define schema (copy from the model)
 const daijaSchema = new mongoose.Schema({

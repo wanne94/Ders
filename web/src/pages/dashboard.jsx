@@ -1,20 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/utils/ProtectedRoute';
 import {
-  Box,
-  Typography,
-  Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Alert,
-  Snackbar,
-  useMediaQuery,
-  useTheme,
-  CircularProgress,
+    Box,
+    Typography,
+    Paper,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    TextField,
+    Alert,
+    Snackbar,
+    useMediaQuery,
+    useTheme,
+    CircularProgress,
 } from '@mui/material';
 import { jwtDecode } from 'jwt-decode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -148,7 +148,7 @@ const Dashboard = () => {
       const [usersRes, lecturesRes, daijeRes, orgsRes, suggestionsRes, archivedSuggestionsRes, suggestionsCountRes] = await Promise.all([
         usersService.getAllUsers(),
         predavanjaService.getAllPredavanjaForAdmin(),
-        daijeService.getAllDaije(),
+        daijeService.getAllDaijeForAdmin(),
         udruzenjaService.getAllUdruzenjaForAdmin(),
         suggestionsService.getAllSuggestions(),
         suggestionsService.getArchivedSuggestions(),

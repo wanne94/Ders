@@ -139,7 +139,7 @@ const Settings = ({ approvalSettings, setApprovalSettings }) => {
       {hasChanges && (
         <Box sx={{ mt: 3, p: 2, bgcolor: 'warning.light', borderRadius: 1, mb: 2 }}>
           <Typography variant="body2" color="warning.dark">
-            Imate nespašene promjene. Kliknite na "Spasi promjene" da ih sačuvate.
+            Imate nespašene promjene. Kliknite na &quot;Spasi promjene&quot; da ih sačuvate.
           </Typography>
         </Box>
       )}
