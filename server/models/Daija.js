@@ -26,7 +26,7 @@ const daijaSchema = new mongoose.Schema({
   },
   shortDescription: {
     type: String,
-    required: falseI
+    required: false
   },
   education: [{
     type: String

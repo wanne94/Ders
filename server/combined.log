@@ -22353,3 +22353,687 @@
 {"level":"info","message":"Found 2 approved daije for public endpoint","timestamp":"2025-06-12T22:42:08.426Z"}
 {"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-12T22:42:08.427Z"}
 {"level":"info","message":"Found 2 approved daije for public endpoint","timestamp":"2025-06-12T22:42:08.428Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T14:55:50.520Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T14:55:50.522Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T14:55:50.556Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-13T14:55:50.561Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T14:55:55.354Z"}
+{"level":"info","message":"Found 5 public lectures","timestamp":"2025-06-13T14:55:55.392Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T14:55:55.397Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T14:55:55.401Z"}
+{"level":"info","message":"Found 5 public lectures","timestamp":"2025-06-13T14:55:55.404Z"}
+{"level":"info","message":"Found 21 approved organizations for public endpoint","timestamp":"2025-06-13T14:55:55.420Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T14:55:55.496Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T14:55:55.498Z"}
+{"level":"info","message":"Found 21 approved organizations for public endpoint","timestamp":"2025-06-13T14:55:55.500Z"}
+{"level":"info","message":"Found 2 approved daije for public endpoint","timestamp":"2025-06-13T14:55:55.505Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T14:55:55.594Z"}
+{"level":"info","message":"Found 2 approved daije for public endpoint","timestamp":"2025-06-13T14:55:55.596Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T14:56:08.946Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T14:56:08.948Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T14:56:08.980Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-13T14:56:08.985Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T14:57:17.470Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T14:57:17.472Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T14:57:17.511Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-13T14:57:17.516Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T14:57:55.260Z"}
+{"level":"info","message":"Found 5 public lectures","timestamp":"2025-06-13T14:57:55.273Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T14:57:55.278Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T14:57:55.283Z"}
+{"level":"info","message":"Found 5 public lectures","timestamp":"2025-06-13T14:57:55.285Z"}
+{"level":"info","message":"Found 21 approved organizations for public endpoint","timestamp":"2025-06-13T14:57:55.293Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T14:57:55.408Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T14:57:55.410Z"}
+{"level":"info","message":"Found 21 approved organizations for public endpoint","timestamp":"2025-06-13T14:57:55.413Z"}
+{"level":"info","message":"Found 2 approved daije for public endpoint","timestamp":"2025-06-13T14:57:55.416Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T14:57:55.571Z"}
+{"level":"info","message":"Found 2 approved daije for public endpoint","timestamp":"2025-06-13T14:57:55.573Z"}
+{"level":"warn","message":"MongoDB disconnected","timestamp":"2025-06-13T15:28:59.789Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T15:45:50.037Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T15:45:50.039Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T15:45:51.129Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-13T15:45:51.133Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T15:51:29.318Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T15:51:29.320Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T15:51:30.450Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-13T15:51:30.453Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T16:01:31.948Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T16:01:31.951Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T16:01:32.933Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-13T16:01:32.937Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T16:06:29.192Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T16:06:29.193Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T16:06:30.330Z"}
+{"address":"0.0.0.0","code":"EADDRINUSE","errno":-98,"level":"error","message":"Server error: listen EADDRINUSE: address already in use 0.0.0.0:5003","port":5003,"stack":"Error: listen EADDRINUSE: address already in use 0.0.0.0:5003\n    at Server.setupListenHandle [as _listen2] (node:net:1811:16)\n    at listenInCluster (node:net:1859:12)\n    at doListen (node:net:2008:7)\n    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)","syscall":"listen","timestamp":"2025-06-13T16:06:30.334Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T16:09:21.649Z"}
+{"level":"info","message":"Found 17 approved daije","timestamp":"2025-06-13T16:09:21.722Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T16:15:13.165Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T16:15:13.167Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T16:15:14.248Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-13T16:15:14.251Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T17:37:14.751Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T17:37:14.753Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T17:37:15.368Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-13T17:37:15.372Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T17:37:56.480Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T17:37:56.483Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T17:37:57.660Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-13T17:37:57.664Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T17:41:44.970Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T17:41:44.972Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T17:41:45.652Z"}
+{"address":"0.0.0.0","code":"EADDRINUSE","errno":-98,"level":"error","message":"Server error: listen EADDRINUSE: address already in use 0.0.0.0:5003","port":5003,"stack":"Error: listen EADDRINUSE: address already in use 0.0.0.0:5003\n    at Server.setupListenHandle [as _listen2] (node:net:1811:16)\n    at listenInCluster (node:net:1859:12)\n    at doListen (node:net:2008:7)\n    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)","syscall":"listen","timestamp":"2025-06-13T17:41:45.656Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T17:42:14.381Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T17:42:14.460Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T17:42:14.684Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T17:44:17.757Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T17:44:17.759Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T17:44:18.815Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-13T17:44:18.819Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:45:56.360Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:45:56.489Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:45:56.496Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:45:56.503Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T18:45:57.598Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:45:56.101Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:45:56.109Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:45:56.157Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:45:56.210Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T17:45:56.259Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:45:56.328Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:45:56.378Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:07.647Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:07.704Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:07.712Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:07.762Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:13.251Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:13.309Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:13.315Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:13.368Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:13.370Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:13.426Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:13.436Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:13.490Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T17:46:13.494Z"}
+{"level":"info","message":"Found 0 approved lectures for daija:","timestamp":"2025-06-13T17:46:13.547Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T17:46:13.563Z"}
+{"level":"info","message":"Found 0 approved lectures for daija:","timestamp":"2025-06-13T17:46:13.616Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:16.310Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:16.364Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:16.369Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:16.420Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:46:18.995Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:46:19.101Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:46:19.103Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:46:19.109Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T17:46:19.168Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:19.184Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:46:19.201Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:19.242Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:46:19.322Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T17:46:19.377Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:19.428Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:19.483Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:25.810Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:25.872Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:25.876Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:25.936Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:34.396Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:34.461Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:34.466Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:34.523Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:34.526Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T17:46:34.531Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:34.580Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:34.590Z"}
+{"level":"info","message":"Found 1 approved lectures for daija:","timestamp":"2025-06-13T17:46:34.643Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:34.648Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T17:46:34.706Z"}
+{"level":"info","message":"Found 1 approved lectures for daija:","timestamp":"2025-06-13T17:46:34.812Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:38.718Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:38.780Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:46:38.785Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:46:38.842Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:48:13.972Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:48:14.036Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:48:14.040Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T17:48:14.045Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:48:14.095Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:48:14.101Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:48:14.156Z"}
+{"level":"info","message":"Found 1 approved lectures for daija:","timestamp":"2025-06-13T17:48:14.158Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:48:14.160Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T17:48:14.162Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:48:14.216Z"}
+{"level":"info","message":"Found 1 approved lectures for daija:","timestamp":"2025-06-13T17:48:14.263Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:48:16.323Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:48:16.379Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:48:16.388Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:48:16.440Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:51:31.775Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:51:31.832Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:51:31.836Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:51:31.888Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:52:19.371Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:52:19.431Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:52:19.434Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:52:19.486Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:52:24.139Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:52:24.252Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:52:24.255Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:52:24.260Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T17:52:24.311Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:52:24.335Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:52:24.355Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:52:24.387Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:52:24.464Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T17:52:24.515Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:52:24.595Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:52:24.644Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:52:59.995Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:53:00.050Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:53:00.054Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:53:00.104Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:53:00.108Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T17:53:00.115Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:53:00.155Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:53:00.160Z"}
+{"level":"info","message":"Found 0 approved lectures for daija:","timestamp":"2025-06-13T17:53:00.169Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:53:00.208Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T17:53:00.236Z"}
+{"level":"info","message":"Found 0 approved lectures for daija:","timestamp":"2025-06-13T17:53:00.284Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:53:02.406Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:53:02.514Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:53:02.517Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:53:02.522Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T17:53:02.575Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:53:02.609Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:53:02.613Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:53:02.662Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:53:02.721Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T17:53:02.771Z"}
+{"level":"info","message":"Fetching public daije for dashboard","timestamp":"2025-06-13T17:53:02.870Z"}
+{"level":"info","message":"Found 15 approved daije for public endpoint","timestamp":"2025-06-13T17:53:02.921Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:55:42.351Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:55:42.468Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:55:42.483Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T17:55:42.533Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T17:55:42.705Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T17:55:42.768Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T17:55:43.010Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:59:45.170Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:59:45.289Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:59:45.292Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:59:45.406Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:59:47.529Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T17:59:47.587Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:59:47.592Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T17:59:47.648Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T17:59:50.169Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T17:59:50.232Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T17:59:50.456Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T17:59:50.459Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T17:59:50.513Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T17:59:50.757Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:59:52.650Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:59:52.764Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T17:59:52.767Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:59:52.777Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T17:59:52.831Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T17:59:52.878Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T17:59:52.895Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T17:59:52.957Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T17:59:53.017Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T17:59:53.072Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T17:59:53.197Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T17:59:53.200Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T17:59:53.254Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T17:59:53.320Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:00:29.226Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:00:29.359Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:00:29.362Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:00:29.479Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T18:00:29.485Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T18:00:29.549Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T18:00:29.552Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T18:00:29.615Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:00:29.619Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:00:29.680Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:00:29.750Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:00:29.754Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:00:29.816Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:00:29.883Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T18:09:17.288Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T18:09:17.290Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T18:09:18.302Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T18:09:18.304Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T18:09:18.390Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-13T18:09:18.395Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T18:09:18.899Z"}
+{"address":"0.0.0.0","code":"EADDRINUSE","errno":-98,"level":"error","message":"Server error: listen EADDRINUSE: address already in use 0.0.0.0:5003","port":5003,"stack":"Error: listen EADDRINUSE: address already in use 0.0.0.0:5003\n    at Server.setupListenHandle [as _listen2] (node:net:1811:16)\n    at listenInCluster (node:net:1859:12)\n    at doListen (node:net:2008:7)\n    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)","syscall":"listen","timestamp":"2025-06-13T18:09:18.904Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:09:21.438Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:09:21.561Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:09:21.568Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T18:09:21.583Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T18:09:21.642Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:09:21.668Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T18:09:21.709Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:09:21.715Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T18:09:21.761Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:09:21.775Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:09:22.012Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:09:22.018Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:09:22.074Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:09:22.330Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:09:28.269Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:09:28.338Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:09:28.601Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:09:28.604Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:09:28.667Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T19:09:29.916Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T19:09:29.919Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T19:09:29.924Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:09:28.452Z"}
+{"level":"info","message":"Found 0 approved lectures for daija:","timestamp":"2025-06-13T18:09:28.459Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:09:28.691Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:09:28.693Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:09:28.750Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:09:28.828Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T18:09:28.838Z"}
+{"level":"info","message":"Found 0 approved lectures for daija:","timestamp":"2025-06-13T18:09:28.895Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:09:32.387Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:09:32.505Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:09:32.508Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T18:09:32.513Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T18:09:32.575Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:09:32.617Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:09:32.621Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:09:32.681Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T18:09:32.710Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:09:32.762Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T18:09:32.766Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:09:32.813Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:09:32.871Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:09:32.935Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:11:45.513Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:11:45.638Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:11:45.641Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T18:11:45.647Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T18:11:45.711Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:11:45.757Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:11:45.828Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:11:45.889Z"}
+{"level":"info","message":"Fetching public organizations for dashboard","timestamp":"2025-06-13T18:11:45.909Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:11:45.960Z"}
+{"level":"info","message":"Found 3 approved organizations for public endpoint","timestamp":"2025-06-13T18:11:45.972Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:11:46.077Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:11:46.136Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:11:46.204Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:12:48.381Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:12:48.534Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T18:12:48.542Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T18:12:48.603Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T18:12:48.728Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:12:48.744Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:12:48.812Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:12:48.937Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T18:19:15.026Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T18:19:15.086Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T18:19:15.149Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T18:19:15.152Z"}
+{"level":"info","message":"Fetching lectures by organization ID:","timestamp":"2025-06-13T18:19:15.159Z"}
+{"level":"info","message":"Found 0 approved lectures for organization:","timestamp":"2025-06-13T18:19:15.210Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T18:19:15.212Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T18:19:15.272Z"}
+{"level":"info","message":"Fetching lectures by organization ID:","timestamp":"2025-06-13T18:19:15.284Z"}
+{"level":"info","message":"Found 0 approved lectures for organization:","timestamp":"2025-06-13T18:19:15.337Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:19:54.853Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:19:54.920Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:19:55.013Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:19:55.015Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:19:55.080Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:19:55.150Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:19:55.863Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:19:55.913Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:19:55.985Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:19:55.987Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:19:56.048Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:19:56.122Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:19:56.124Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T18:19:56.130Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:19:56.189Z"}
+{"level":"info","message":"Found 0 approved lectures for daija:","timestamp":"2025-06-13T18:19:56.196Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:19:56.261Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:19:56.265Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:19:56.322Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:19:56.401Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T18:19:56.407Z"}
+{"level":"info","message":"Found 0 approved lectures for daija:","timestamp":"2025-06-13T18:19:56.457Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:24:13.580Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:24:13.641Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:24:13.713Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T18:24:13.722Z"}
+{"level":"info","message":"Found 0 approved lectures for daija:","timestamp":"2025-06-13T18:24:13.776Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:24:33.392Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:24:33.450Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:24:33.524Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T18:24:33.533Z"}
+{"level":"info","message":"Found 0 approved lectures for daija:","timestamp":"2025-06-13T18:24:33.591Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:24:43.939Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:24:43.998Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:24:44.073Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:24:44.076Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:24:44.139Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:24:44.210Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:24:47.589Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:24:47.700Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:24:47.703Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T18:24:47.709Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T18:24:47.767Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:24:47.802Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T18:24:47.824Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T18:24:47.826Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T18:24:47.880Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:24:47.883Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:24:47.935Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T18:24:47.944Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:24:48.183Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:24:48.186Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:24:48.242Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:24:48.310Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T18:24:52.334Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T18:24:52.397Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T18:24:52.459Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T18:24:52.462Z"}
+{"level":"info","message":"Fetching lectures by organization ID:","timestamp":"2025-06-13T18:24:52.469Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T18:24:52.522Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T18:24:52.585Z"}
+{"level":"info","message":"Found 1 approved lectures for organization:","timestamp":"2025-06-13T18:24:52.590Z"}
+{"level":"info","message":"Fetching lectures by organization ID:","timestamp":"2025-06-13T18:24:52.594Z"}
+{"level":"info","message":"Found 1 approved lectures for organization:","timestamp":"2025-06-13T18:24:52.713Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T18:24:55.210Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T18:24:55.273Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T18:24:55.338Z"}
+{"level":"info","message":"Fetching lectures by organization ID:","timestamp":"2025-06-13T18:24:55.345Z"}
+{"level":"info","message":"Found 1 approved lectures for organization:","timestamp":"2025-06-13T18:24:55.462Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:24:58.481Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:24:58.608Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T18:24:58.611Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T18:24:58.728Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T18:24:58.730Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T18:24:58.789Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T18:24:58.851Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T18:24:58.854Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T18:24:58.912Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:24:58.957Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T18:24:58.970Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:24:59.022Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:24:59.091Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T18:24:59.094Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T18:24:59.152Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T18:24:59.216Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T19:25:16.939Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T19:25:17.072Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T19:25:17.074Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T19:25:17.193Z"}
+{"level":"info","message":"Fetching daija by ID:","timestamp":"2025-06-13T19:25:17.200Z"}
+{"id":"684970ca9c5446f88de49152","level":"info","message":"Daija found:","name":"Enes Julardžija","timestamp":"2025-06-13T19:25:17.259Z"}
+{"level":"info","message":"Fetching organization by ID:","timestamp":"2025-06-13T19:25:17.263Z"}
+{"id":"684775c777bc84a3b3d79700","level":"info","message":"Organization found:","name":"UG Alternativa","timestamp":"2025-06-13T19:25:17.324Z"}
+{"level":"info","message":"Fetching daija by ID:","timestamp":"2025-06-13T19:25:17.328Z"}
+{"id":"684970ca9c5446f88de49152","level":"info","message":"Daija found:","name":"Enes Julardžija","timestamp":"2025-06-13T19:25:17.385Z"}
+{"level":"info","message":"Fetching organization by ID:","timestamp":"2025-06-13T19:25:17.387Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T19:25:17.431Z"}
+{"level":"info","message":"Fetching lectures by organization ID:","timestamp":"2025-06-13T19:25:17.433Z"}
+{"id":"684775c777bc84a3b3d79700","level":"info","message":"Organization found:","name":"UG Alternativa","timestamp":"2025-06-13T19:25:17.444Z"}
+{"level":"info","message":"Found 1 approved lectures for organization:","timestamp":"2025-06-13T19:25:17.553Z"}
+{"level":"info","message":"Fetching lectures by organization ID:","timestamp":"2025-06-13T19:25:17.556Z"}
+{"level":"info","message":"Found 1 approved lectures for daija:","timestamp":"2025-06-13T19:25:17.557Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T19:25:17.562Z"}
+{"level":"info","message":"Found 1 approved lectures for organization:","timestamp":"2025-06-13T19:25:17.677Z"}
+{"level":"info","message":"Found 1 approved lectures for daija:","timestamp":"2025-06-13T19:25:17.689Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T19:25:18.584Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T19:25:18.711Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T19:25:18.714Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T19:25:18.720Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T19:25:18.776Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T19:25:18.838Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T19:25:18.840Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T19:25:18.847Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T19:25:18.907Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T19:25:18.941Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T19:25:18.981Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T19:25:18.993Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T19:25:19.054Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T19:25:19.169Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T19:25:19.225Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T19:25:19.292Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T19:25:21.250Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T19:25:21.312Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T19:25:21.388Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T19:25:21.390Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T19:25:21.446Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T19:25:21.510Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T19:25:21.513Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T19:25:21.518Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T19:25:21.572Z"}
+{"level":"info","message":"Found 0 approved lectures for daija:","timestamp":"2025-06-13T19:25:21.578Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T19:25:21.634Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T19:25:21.637Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T19:25:21.697Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T19:25:21.758Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-13T19:25:21.763Z"}
+{"level":"info","message":"Found 0 approved lectures for daija:","timestamp":"2025-06-13T19:25:21.817Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T19:25:22.620Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T19:25:22.728Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T19:25:22.731Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T19:25:22.735Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T19:25:22.794Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T19:25:22.838Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T19:25:22.853Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T19:25:22.856Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T19:25:22.915Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T19:25:22.928Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T19:25:22.974Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T19:25:22.984Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T19:25:23.048Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T19:25:23.050Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T19:25:23.112Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T19:25:23.178Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T19:25:25.977Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T19:25:26.031Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T19:25:26.090Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T19:25:26.093Z"}
+{"level":"info","message":"Fetching lectures by organization ID:","timestamp":"2025-06-13T19:25:26.101Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T19:25:26.151Z"}
+{"level":"info","message":"Found 1 approved lectures for organization:","timestamp":"2025-06-13T19:25:26.211Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T19:25:26.213Z"}
+{"level":"info","message":"Fetching lectures by organization ID:","timestamp":"2025-06-13T19:25:26.308Z"}
+{"level":"info","message":"Found 1 approved lectures for organization:","timestamp":"2025-06-13T19:25:26.421Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T19:25:27.495Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T19:25:27.623Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T19:25:27.626Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T19:25:27.634Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T19:25:27.687Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T19:25:27.742Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T19:25:27.748Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T19:25:27.751Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T19:25:27.807Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T19:25:27.813Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T19:25:27.866Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T19:25:27.890Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T19:25:27.948Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T19:25:27.951Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T19:25:28.004Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T19:25:28.067Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-13T20:26:12.866Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-13T20:26:12.868Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-13T20:26:14.057Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-13T20:26:14.061Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T20:28:00.600Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T20:28:00.745Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T20:28:00.753Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T20:28:00.761Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T20:28:00.821Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T20:28:00.865Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T20:28:00.887Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T20:28:00.890Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T20:28:00.941Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T20:28:00.951Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T20:28:01.001Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T20:28:01.014Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T20:28:01.835Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T20:28:01.837Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T20:28:01.899Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T20:28:02.148Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T20:28:16.197Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T20:28:16.322Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T20:28:16.325Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T20:28:16.332Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T20:28:16.390Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T20:28:16.437Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T20:28:16.451Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T20:28:16.454Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T20:28:16.515Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T20:28:16.522Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T20:28:16.575Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T20:28:16.583Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T20:28:16.823Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T20:28:16.826Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T21:28:17.793Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T20:28:16.612Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T20:31:36.368Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T20:31:36.480Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T20:31:36.482Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T20:31:36.488Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T20:31:36.538Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T20:31:36.588Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T20:31:36.599Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T20:31:36.603Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T20:31:36.659Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T20:31:36.709Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T20:31:36.716Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T20:31:36.765Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T20:31:36.844Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T20:31:36.846Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T20:31:36.905Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T20:31:36.967Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-13T20:32:29.515Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-13T20:32:29.635Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-13T20:32:29.676Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-13T20:32:29.738Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-13T20:32:29.809Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-13T20:32:29.924Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-13T20:32:29.986Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-13T20:32:30.066Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-14T03:35:01.578Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-14T03:35:01.579Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-14T03:35:02.611Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-14T03:35:02.615Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:38:54.078Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:38:54.199Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:38:54.206Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-14T03:38:54.217Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-14T03:38:54.271Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:38:54.301Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T03:38:54.330Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-14T03:38:54.341Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-14T03:38:54.393Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-14T03:38:54.432Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T03:38:54.445Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T03:38:54.490Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T03:38:54.725Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-14T03:38:54.728Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T03:38:54.789Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T03:38:54.993Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:39:01.394Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:39:01.529Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:39:01.531Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:39:01.648Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-14T03:39:03.836Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-14T03:39:03.891Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T03:39:03.944Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-14T03:39:03.946Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-14T03:39:03.997Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T03:39:04.048Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-14T03:39:05.217Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T03:39:05.275Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T03:39:05.486Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-14T03:39:05.488Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T03:39:05.536Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T03:39:05.746Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:39:07.586Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:39:07.688Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:39:07.689Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:39:07.786Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-14T03:39:07.788Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-14T03:39:07.836Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T03:39:07.886Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-14T03:39:07.888Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-14T03:39:07.934Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T03:39:07.987Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-14T03:39:07.989Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T03:39:08.040Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T03:39:08.254Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-14T03:39:08.256Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T03:39:08.305Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T03:39:08.363Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:39:09.917Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:39:10.026Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:39:10.029Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:39:10.136Z"}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-14T03:45:02.754Z"}
+{"level":"info","message":"MongoDB connection state:","timestamp":"2025-06-14T03:45:02.755Z"}
+{"level":"info","message":"Database performance indexes created","timestamp":"2025-06-14T03:45:03.747Z"}
+{"level":"info","message":"HTTP Server is running on port 5003","timestamp":"2025-06-14T03:45:03.751Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:46:31.154Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:46:31.277Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:46:31.284Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:46:31.376Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:49:39.714Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:49:39.806Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:49:39.808Z"}
+{"level":"info","message":"Fetching daija by ID:","timestamp":"2025-06-14T03:49:39.815Z"}
+{"id":"6846c17bf5b6e1b83b85b95b","level":"info","message":"Daija found:","name":"Jasmin Durić","timestamp":"2025-06-14T03:49:39.871Z"}
+{"level":"info","message":"Fetching organization by ID:","timestamp":"2025-06-14T03:49:39.874Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:49:39.897Z"}
+{"level":"info","message":"Fetching daija by ID:","timestamp":"2025-06-14T03:49:39.902Z"}
+{"id":"684775e477bc84a3b3d79703","level":"info","message":"Organization found:","name":"OU Palma","timestamp":"2025-06-14T03:49:39.927Z"}
+{"level":"info","message":"Fetching organization by ID:","timestamp":"2025-06-14T03:49:39.929Z"}
+{"id":"6846c17bf5b6e1b83b85b95b","level":"info","message":"Daija found:","name":"Jasmin Durić","timestamp":"2025-06-14T03:49:39.947Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-14T03:49:39.953Z"}
+{"level":"info","message":"Fetching lectures by organization ID:","timestamp":"2025-06-14T03:49:39.972Z"}
+{"id":"684775e477bc84a3b3d79703","level":"info","message":"Organization found:","name":"OU Palma","timestamp":"2025-06-14T03:49:39.978Z"}
+{"level":"info","message":"Found 1 approved lectures for daija:","timestamp":"2025-06-14T03:49:40.047Z"}
+{"level":"info","message":"Fetching lectures by daija ID:","timestamp":"2025-06-14T03:49:40.050Z"}
+{"level":"info","message":"Found 1 approved lectures for organization:","timestamp":"2025-06-14T03:49:40.073Z"}
+{"level":"info","message":"Fetching lectures by organization ID:","timestamp":"2025-06-14T03:49:40.076Z"}
+{"level":"info","message":"Found 1 approved lectures for daija:","timestamp":"2025-06-14T03:49:40.148Z"}
+{"level":"info","message":"Found 1 approved lectures for organization:","timestamp":"2025-06-14T03:49:40.180Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:49:53.038Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:49:53.151Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:49:53.154Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:49:53.265Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:49:57.294Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:49:57.407Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T03:49:57.410Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-14T03:49:57.415Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-14T03:49:57.465Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T03:49:57.515Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T03:49:57.526Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-14T03:49:57.529Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-14T03:49:57.588Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-14T03:49:57.595Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T03:49:57.640Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T03:49:57.653Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T03:49:57.878Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-14T03:49:57.880Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T03:49:57.933Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T03:49:58.179Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-14T03:49:59.748Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-14T03:49:59.750Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-14T03:49:59.803Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T03:49:59.812Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T03:49:59.861Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T03:50:00.033Z"}

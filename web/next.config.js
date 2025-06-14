@@ -9,6 +9,41 @@ console.log(`🌍 Next.js Environment: ${envConfig.NODE_ENV}`);
 const nextConfig = {
   reactStrictMode: true,
   
+  // Explicitly disable static generation
+  output: undefined, // Ensure no static export
+  trailingSlash: false, // Disable trailing slash for static files
+  generateEtags: false, // Disable ETags for static content
+  distDir: '.next', // Standard build directory
+  
+  // Force all pages to be server-side rendered
+  // No static optimization
+  poweredByHeader: false,
+  
+  // Images configuration - allow loading from server in both environments
+  // Disable image caching completely
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5003',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ders.ba',
+        pathname: '/uploads/**',
+      },
+    ],
+    // Disable image optimization and caching
+    unoptimized: true,
+    // Set minimum cache TTL to 0 (no cache)
+    minimumCacheTTL: 0,
+  },
+  
+  // Increase static generation timeout
+  staticPageGenerationTimeout: 120,
+  
   // Environment variables that will be available in the browser
   env: {
     NEXT_PUBLIC_API_URL: envConfig.API_URL,

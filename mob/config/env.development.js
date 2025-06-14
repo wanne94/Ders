@@ -1,8 +1,6 @@
-import { getLocalApiUrl, getLocalServerUrl } from './network';
-
 export const ENV = {
-  API_URL: getLocalApiUrl(),
-  SERVER_URL: getLocalServerUrl(),
+  API_URL: 'https://ders.ba/api',
+  SERVER_URL: 'https://ders.ba',
   APP_NAME: 'DERS Mobile',
   ENV_NAME: 'development',
   DEBUG: true,

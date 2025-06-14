@@ -2,6 +2,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'rea
 import { format } from 'date-fns';
 import { bs } from 'date-fns/locale';
 import { getImageUrl, getDefaultDaijaImage, getDefaultLectureImage, getDefaultOrganizationImage } from '../utils/imageUtils';
+import { useState } from 'react';
 
 const { width } = Dimensions.get('window');
 
@@ -34,6 +35,8 @@ const Icons = {
 };
 
 const UniverzalCard = ({ data, onPress, style }) => {
+  const [imageError, setImageError] = useState(false);
+  
   // Handle null or undefined data
   if (!data) {
     return null;
@@ -192,24 +195,20 @@ const UniverzalCard = ({ data, onPress, style }) => {
 
         {/* Right Column - Image */}
         <View style={styles.imageColumn}>
-          {data.image ? (
-            <Image
-              source={{ uri: getImageUrl(data.image) }}
-              style={styles.image}
-              resizeMode="cover"
-            />
-          ) : (
-            <Image
-              source={{ uri: displayData.type === 'daija' 
-                ? getDefaultDaijaImage() 
-                : displayData.type === 'organization'
-                ? getDefaultOrganizationImage()
-                : getDefaultLectureImage() 
-              }}
-              style={styles.image}
-              resizeMode="cover"
-            />
-          )}
+          <Image
+            source={{ uri: 
+              imageError || !data.image 
+                ? (displayData.type === 'daija' 
+                  ? getDefaultDaijaImage() 
+                  : displayData.type === 'organization'
+                  ? getDefaultOrganizationImage()
+                  : getDefaultLectureImage())
+                : getImageUrl(data.image)
+            }}
+            style={styles.image}
+            resizeMode="cover"
+            onError={() => setImageError(true)}
+          />
         </View>
       </View>
     </TouchableOpacity>

@@ -1672,8 +1672,24 @@ app.get('/api/daije', async (req, res) => {
     const daije = await Daija.find({ status: 'approved' }).sort({ name: 1 });
     logger.info(`Found ${daije.length} approved daije`);
     
-    // Return daije as-is with name field (no firstName mapping)
-    res.json(daije);
+    // Add lecture count for each daija
+    const daijeWithLectureCount = await Promise.all(
+      daije.map(async (daija) => {
+        // Count approved lectures for this daija
+        const lectureCount = await Lecture.countDocuments({ 
+          daija: daija._id, 
+          status: 'approved' 
+        });
+        
+        return {
+          ...daija.toObject(),
+          lectureCount: lectureCount
+        };
+      })
+    );
+    
+    logger.info(`Processed ${daijeWithLectureCount.length} daije with lecture counts`);
+    res.json(daijeWithLectureCount);
   } catch (error) {
     logger.error('Error fetching daije:', error);
     res.status(500).json({ message: 'Greška pri dohvaćanju daija' });
@@ -1889,9 +1905,26 @@ app.get('/api/organizations', async (req, res) => {
   try {
     logger.info('Fetching all organizations');
     const organizations = await Organization.find({ status: 'approved' }).sort({ name: 1 });
-
     logger.info(`Found ${organizations.length} approved organizations`);
-    res.json(organizations);
+    
+    // Add lecture count for each organization
+    const organizationsWithLectureCount = await Promise.all(
+      organizations.map(async (organization) => {
+        // Count approved lectures for this organization
+        const lectureCount = await Lecture.countDocuments({ 
+          organizationId: organization._id, 
+          status: 'approved' 
+        });
+        
+        return {
+          ...organization.toObject(),
+          lectureCount: lectureCount
+        };
+      })
+    );
+    
+    logger.info(`Processed ${organizationsWithLectureCount.length} organizations with lecture counts`);
+    res.json(organizationsWithLectureCount);
   } catch (error) {
     logger.error('Error fetching organizations:', error);
     res.status(500).json({ message: 'Greška pri dohvaćanju organizacija' });

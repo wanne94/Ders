@@ -2,7 +2,7 @@
 // Ažurirajte ovu IP adresu ako se promeni IP adresa vašeg računara
 export const NETWORK_CONFIG = {
   // Vaša trenutna IP adresa u lokalnoj mreži
-  LOCAL_IP: '192.168.0.20',
+  LOCAL_IP: '172.31.112.1',
   
   // Port na kome radi vaš lokalni server
   LOCAL_PORT: '5003',

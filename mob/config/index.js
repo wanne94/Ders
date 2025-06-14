@@ -1,8 +1,9 @@
 import { ENV as DEV_ENV } from './env.development';
 import { ENV as PROD_ENV } from './env.production';
 
-// Za sada uvek koristimo development environment
-const isDevelopment = true; // Eksplicitno postavljamo na development
+// Određujemo environment na osnovu Expo konstantiog
+// __DEV__ je true samo tokom development-a
+const isDevelopment = __DEV__;
 
 // Eksportuj odgovarajuću konfiguraciju
 export const ENV = isDevelopment ? DEV_ENV : PROD_ENV;

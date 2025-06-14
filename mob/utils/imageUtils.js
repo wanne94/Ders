@@ -6,7 +6,9 @@
  * - Any legacy data that hasn't been migrated yet
  */
 
-const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL || 'http://192.168.0.20:5003';  // Replace X with your actual local IP
+import { getServerUrl } from '../config';
+
+const WEB_URL = getServerUrl();
 
 /**
  * Get the full URL for an image

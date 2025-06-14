@@ -3,7 +3,7 @@ import { ENV } from './config';
 
 const udruzenjaService = {
   getAllUdruzenja: async () => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.UDRUZENJA}/public`);
+    const response = await apiClient.get(ENV.API_ENDPOINTS.UDRUZENJA);
     return response;
   },
 

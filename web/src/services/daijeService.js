@@ -2,9 +2,9 @@ import apiClient from './apiClient';
 import { ENV } from './config';
 
 const daijeService = {
-  // Public endpoint - returns only approved daije
+  // Public endpoint - returns only approved daije with lecture count
   getAllDaije: async () => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.DAIJE}/public`);
+    const response = await apiClient.get(ENV.API_ENDPOINTS.DAIJE);
     return response;
   },
 

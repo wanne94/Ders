@@ -40,6 +40,7 @@ const COLORS = {
 const UniversalProfile = ({ data, type, onBack }) => {
   const [relatedLectures, setRelatedLectures] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   // Format date with day name
   const formatDateWithDay = (dateString) => {
@@ -98,16 +99,19 @@ const UniversalProfile = ({ data, type, onBack }) => {
   }
 
   const getProfileImage = () => {
-    switch (type) {
-      case 'daija':
-        return getImageUrl(data.image) || getDefaultDaijaImage();
-      case 'organization':
-        return getImageUrl(data.image) || getDefaultOrganizationImage();
-      case 'lecture':
-        return getImageUrl(data.image) || getDefaultLectureImage();
-      default:
-        return getDefaultLectureImage();
+    if (imageError || !data.image) {
+      switch (type) {
+        case 'daija':
+          return getDefaultDaijaImage();
+        case 'organization':
+          return getDefaultOrganizationImage();
+        case 'lecture':
+          return getDefaultLectureImage();
+        default:
+          return getDefaultLectureImage();
+      }
     }
+    return getImageUrl(data.image);
   };
 
   const getProfileTitle = () => {
@@ -469,6 +473,7 @@ const UniversalProfile = ({ data, type, onBack }) => {
                 type === 'daija' ? styles.circularImage : styles.rectangularImage
               ]}
               resizeMode="cover"
+              onError={() => setImageError(true)}
             />
           </View>
 

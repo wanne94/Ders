@@ -121,16 +121,7 @@ export const sortEntitiesByUpcomingLecture = (entities, allLectures = []) => {
       ...entity,
       hasUpcoming: hasUpcomingLectures(entity, allLectures)
     }))
-    .sort((a, b) => {
-      // Entities with upcoming lectures first
-      if (a.hasUpcoming && !b.hasUpcoming) return -1;
-      if (!a.hasUpcoming && b.hasUpcoming) return 1;
-      
-      // Within each group, sort alphabetically by name
-      const nameA = (a.name || '').toLowerCase();
-      const nameB = (b.name || '').toLowerCase();
-      return nameA.localeCompare(nameB);
-    });
+    .sort(() => Math.random() - 0.5);
 };
 
 /**

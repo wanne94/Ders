@@ -1,16 +1,11 @@
-import { useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
-  Animated,
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const { width } = Dimensions.get('window');
 
 const COLORS = {
   primary: '#022C43',
@@ -24,27 +19,12 @@ const SERVER_URL = 'https://ders.ba';
 
 const Header = ({ onMenuPress, title }) => {
   const insets = useSafeAreaInsets();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuAnimation = useState(new Animated.Value(0))[0];
 
   const toggleMenu = () => {
-    const toValue = isMenuOpen ? 0 : 1;
-    Animated.spring(menuAnimation, {
-      toValue,
-      useNativeDriver: true,
-      friction: 8,
-      tension: 100
-    }).start();
-    setIsMenuOpen(!isMenuOpen);
     if (onMenuPress) {
-      onMenuPress(!isMenuOpen);
+      onMenuPress();
     }
   };
-
-  const menuTranslateX = menuAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [width, 0]
-  });
 
   return (
     <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
@@ -60,7 +40,12 @@ const Header = ({ onMenuPress, title }) => {
         <Text style={styles.title}>{title}</Text>
       )}
 
-      <TouchableOpacity onPress={toggleMenu} style={styles.menuButton}>
+      <TouchableOpacity 
+        onPress={toggleMenu} 
+        style={styles.menuButton}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        activeOpacity={0.7}
+      >
         <View style={styles.menuIcon}>
           <View style={styles.menuBar} />
           <View style={styles.menuBar} />
@@ -104,7 +89,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   menuButton: {
-    padding: 8,
+    padding: 12,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   menuIcon: {
     width: 24,

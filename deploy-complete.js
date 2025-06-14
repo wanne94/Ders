@@ -274,12 +274,11 @@ async function buildWeb() {
   if (fs.existsSync('.next')) {
     log('🧹 Brisanje postojećeg build cache-a...', 'yellow');
     try {
-      // Pokušaj sa PowerShell komandom
-      execCommand('Remove-Item -Recurse -Force .next', { shell: true });
-    } catch (error) {
-      // Ako ne radi, pokušaj sa Node.js fs
-      const path = require('path');
+      // Koristi Node.js fs umesto PowerShell komande
       fs.rmSync('.next', { recursive: true, force: true });
+      log('✅ Cache obrisan uspešno', 'green');
+    } catch (error) {
+      log(`⚠️ Greška pri brisanju cache-a: ${error.message}`, 'yellow');
     }
   }
   

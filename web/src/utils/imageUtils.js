@@ -1,12 +1,14 @@
 /**
  * Utility functions for handling image URLs
  * 
+ * All images are loaded from server directory in both development and production
+ * 
  * NOTE: Base64 support is maintained for backward compatibility with:
  * - Existing database records that may still contain base64 images
  * - Any legacy data that hasn't been migrated yet
  */
 
-// Use environment-specific server URL for images
+// Always use server URL for images - no local public folder
 const IMAGE_SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://ders.ba';
 
 /**
@@ -15,7 +17,7 @@ const IMAGE_SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://ders.ba'
  * @returns {string} - The full image URL or base64 data string
  */
 export const getImageUrl = (imagePath) => {
-  // Use unified /uploads/images/ path for both development and production
+  // Always load from server - unified /uploads/images/ path for both development and production
   const defaultImage = '/uploads/images/default.jpg';
   
   if (!imagePath) return `${IMAGE_SERVER_URL}${defaultImage}`;
@@ -30,7 +32,7 @@ export const getImageUrl = (imagePath) => {
     return imagePath;
   }
   
-  // Remove 'public' from the path if it exists
+  // Remove 'public' from the path if it exists (legacy cleanup)
   let cleanPath = imagePath;
   if (cleanPath.startsWith('public/')) {
     cleanPath = cleanPath.substring(7); // Remove 'public/' prefix
@@ -50,7 +52,12 @@ export const getImageUrl = (imagePath) => {
   
   // Ensure path starts with /
   cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
-  return `${IMAGE_SERVER_URL}${cleanPath}`;
+  
+  // Always return server URL - no local public folder usage
+  // Add timestamp to prevent caching
+  const timestamp = Date.now();
+  const separator = cleanPath.includes('?') ? '&' : '?';
+  return `${IMAGE_SERVER_URL}${cleanPath}${separator}t=${timestamp}`;
 };
 
 /**
@@ -59,7 +66,8 @@ export const getImageUrl = (imagePath) => {
  */
 export const getDefaultLectureImage = () => {
   const imagePath = '/uploads/images/predavanjeslika.jpg';
-  return `${IMAGE_SERVER_URL}${imagePath}`;
+  const timestamp = Date.now();
+  return `${IMAGE_SERVER_URL}${imagePath}?t=${timestamp}`;
 };
 
 /**
@@ -68,7 +76,8 @@ export const getDefaultLectureImage = () => {
  */
 export const getDefaultDaijaImage = () => {
   const imagePath = '/uploads/images/daijaslika.jpg';
-  return `${IMAGE_SERVER_URL}${imagePath}`;
+  const timestamp = Date.now();
+  return `${IMAGE_SERVER_URL}${imagePath}?t=${timestamp}`;
 };
 
 /**
@@ -77,7 +86,8 @@ export const getDefaultDaijaImage = () => {
  */
 export const getDefaultOrganizationImage = () => {
   const imagePath = '/uploads/images/udruzenjeslika.jpg';
-  return `${IMAGE_SERVER_URL}${imagePath}`;
+  const timestamp = Date.now();
+  return `${IMAGE_SERVER_URL}${imagePath}?t=${timestamp}`;
 };
 
 /**
@@ -86,7 +96,8 @@ export const getDefaultOrganizationImage = () => {
  */
 export const getLogoUrl = () => {
   const logoPath = '/uploads/logo.jpg';
-  return `${IMAGE_SERVER_URL}${logoPath}`;
+  const timestamp = Date.now();
+  return `${IMAGE_SERVER_URL}${logoPath}?t=${timestamp}`;
 };
 
 /**
@@ -95,7 +106,8 @@ export const getLogoUrl = () => {
  */
 export const getFaviconUrl = () => {
   const faviconPath = '/uploads/images/favicon.png';
-  return `${IMAGE_SERVER_URL}${faviconPath}`;
+  const timestamp = Date.now();
+  return `${IMAGE_SERVER_URL}${faviconPath}?t=${timestamp}`;
 };
 
 export default {

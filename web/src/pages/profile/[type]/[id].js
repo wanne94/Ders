@@ -32,6 +32,7 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import TwitterIcon from '@mui/icons-material/Twitter';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
+import ClassIcon from '@mui/icons-material/Class';
 import PageLayout from '../../../components/PageLayout';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 import UniversalCard from '../../../components/UniversalCard';
@@ -556,6 +557,21 @@ const UnifiedProfile = () => {
                         )}
                       </Box>
 
+                      {/* Lecture Count */}
+                      <Box sx={{ mb: 3 }}>
+                        <Chip
+                          icon={<ClassIcon />}
+                          label={`Broj predavanja: ${lectures.length || 0}`}
+                          variant="outlined"
+                          sx={{ 
+                            color: 'white',
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            fontSize: '1rem',
+                            '& .MuiChip-icon': { color: 'white' }
+                          }}
+                        />
+                      </Box>
+
                       {/* Social Media Links */}
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         {profileData.linkedin && (
@@ -787,9 +803,7 @@ const UnifiedProfile = () => {
             <Paper 
               elevation={0}
               sx={{ 
-                background: type === 'organization' ? 
-                  'linear-gradient(135deg, #9C27B0 0%, #6A1B9A 100%)' :
-                  'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
+                background: 'linear-gradient(135deg, #022C43 0%, #055A87 100%)',
                 color: 'white',
                 borderRadius: 4,
                 overflow: 'hidden',
@@ -933,6 +947,17 @@ const UnifiedProfile = () => {
                               }}
                             />
                           )}
+                          <Chip
+                            icon={<ClassIcon />}
+                            label={`Broj predavanja: ${lectures.length || 0}`}
+                            variant="outlined"
+                            sx={{ 
+                              color: 'white',
+                              borderColor: 'rgba(255, 255, 255, 0.3)',
+                              fontSize: '1rem',
+                              '& .MuiChip-icon': { color: 'white' }
+                            }}
+                          />
                         </Box>
                       )}
 
@@ -995,7 +1020,7 @@ const UnifiedProfile = () => {
                                                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                              <Box
                                sx={{
-                                 backgroundColor: '#9C27B0',
+                                 backgroundColor: '#022C43',
                                  borderRadius: '50%',
                                  p: 1.5,
                                  mr: 2
@@ -1049,7 +1074,7 @@ const UnifiedProfile = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                             <Box
                               sx={{
-                                backgroundColor: '#4CAF50',
+                                backgroundColor: '#022C43',
                                 borderRadius: '50%',
                                 p: 1.5,
                                 mr: 2
@@ -1116,7 +1141,7 @@ const UnifiedProfile = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                             <Box
                               sx={{
-                                backgroundColor: '#FF9800',
+                                backgroundColor: '#022C43',
                                 borderRadius: '50%',
                                 p: 1.5,
                                 mr: 2

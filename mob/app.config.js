@@ -2,6 +2,7 @@ export default {
   expo: {
     name: "ders",
     slug: "mobile-app",
+    scheme: "ders",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",

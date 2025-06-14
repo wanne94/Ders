@@ -454,7 +454,7 @@ const ActiveOrganizations = ({ organizations, lectures }) => {
         Udruženja
       </Typography>
       <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
-        Udruženja sa nedavno najvljenim dersom
+        Upoznaj 10 nasumično odabranih udruženja.
       </Typography>
 
       {approvedOrganizations.length === 0 ? (
@@ -600,10 +600,15 @@ const ActiveDaije = ({ daije, lectures }) => {
 
   useEffect(() => {
     if (daije && lectures) {
-      // Privremeno koristimo jednostavno sortiranje umesto složene funkcije
+      // Filtriramo samo odobrene daije
       const approvedDaije = (daije || []).filter(daija => daija.status === 'approved');
-      const sortedDaije = approvedDaije.slice(0, 10);
-      setDisplayDaije(sortedDaije || []);
+      
+      // Nasumično mešamo array
+      const shuffled = [...approvedDaije].sort(() => Math.random() - 0.5);
+      
+      // Uzimamo prvih 10
+      const randomDaije = shuffled.slice(0, 10);
+      setDisplayDaije(randomDaije || []);
     }
   }, [daije, lectures]);
 
@@ -620,7 +625,7 @@ const ActiveDaije = ({ daije, lectures }) => {
         Daije
       </Typography>
       <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
-      Daije koje imaju najavljen ders ili imaju profil na platformi.
+      Upoznaj 10 nasumično odabranih daija.
       </Typography>
 
       {approvedDaije.length === 0 ? (
