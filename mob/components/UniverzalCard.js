@@ -42,6 +42,19 @@ const UniverzalCard = ({ data, onPress, style }) => {
     return null;
   }
 
+  // Debug image URL for daije
+  if (data.type === 'daija' || data.name) {
+    const imageUrl = imageError || !data.image 
+      ? getDefaultDaijaImage() 
+      : getImageUrl(data.image);
+    console.log('🖼️ Daija image debug:', {
+      name: data.name,
+      originalImage: data.image,
+      imageError,
+      finalImageUrl: imageUrl
+    });
+  }
+
   // Format date with day name
   const formatDateWithDay = (dateString) => {
     if (!dateString) return null;
@@ -60,7 +73,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
           type: 'lecture',
           title: data.title,
           items: [
-            data.speaker && { icon: 'Person', text: data.speaker },
+            { icon: "Person", text: data.daija && typeof data.daija === "object" ? `${data.daija.title || ""} ${data.daija.name || ""}`.trim() || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
             data.organization && { icon: 'Business', text: data.organization },
             data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
             data.time && { icon: 'Time', text: data.time },
@@ -76,7 +89,8 @@ const UniverzalCard = ({ data, onPress, style }) => {
           
           items: [
             data.title && { icon: 'School', text: data.title + '.' },
-            data.shortDescription && { icon: 'Description', text: data.shortDescription }
+            data.shortDescription && { icon: 'Description', text: data.shortDescription },
+            data.lectureCount !== undefined && { icon: "MenuBook", text: `Broj predavanja: ${data.lectureCount || 0}` },
           ].filter(Boolean)
         };
       
@@ -87,7 +101,8 @@ const UniverzalCard = ({ data, onPress, style }) => {
           items: [
             data.address && { icon: 'LocationOn', text: data.address },
             data.city && { icon: 'LocationCity', text: data.city },
-            data.shortDescription && { icon: 'Description', text: data.shortDescription }
+            data.shortDescription && { icon: 'Description', text: data.shortDescription },
+            data.lectureCount !== undefined && { icon: "MenuBook", text: `Broj predavanja: ${data.lectureCount || 0}` },
           ].filter(Boolean)
         };
       
@@ -98,7 +113,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
             type: 'lecture',
             title: data.title,
             items: [
-              data.speaker && { icon: 'Person', text: data.speaker },
+              { icon: "Person", text: data.daija && typeof data.daija === "object" ? `${data.daija.title || ""} ${data.daija.name || ""}`.trim() || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
               data.organization && { icon: 'Business', text: data.organization },
               data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
               data.time && { icon: 'Time', text: data.time },
@@ -127,7 +142,8 @@ const UniverzalCard = ({ data, onPress, style }) => {
             items: [
               data.address && { icon: 'LocationOn', text: data.address },
               data.city && { icon: 'LocationCity', text: data.city },
-              data.shortDescription && { icon: 'Description', text: data.shortDescription }
+              data.shortDescription && { icon: 'Description', text: data.shortDescription },
+              data.lectureCount !== undefined && { icon: "MenuBook", text: `Broj predavanja: ${data.lectureCount || 0}` },
             ].filter(Boolean)
           };
         }
@@ -218,6 +234,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
 const styles = StyleSheet.create({
   container: {
     width: width * 0.9, // 90% širine ekrana
+    height: 230,
     alignSelf: 'center', // centriraj karticu
     backgroundColor: COLORS.white,
     borderRadius: 12,
@@ -227,19 +244,20 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3.84,
+    shadowRadius: 2.84,
+    justifyContent: 'center',
     marginBottom: 6,
     // Removed minHeight to allow dynamic height based on content
   },
   cardTitleContainer: {
-    marginBottom: 12,
+    marginBottom: 10,
     alignItems: 'flex-start',
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.primary,
-    lineHeight: 22,
+    lineHeight: 24,
     textAlign: 'center',
   },
   contentRow: {
@@ -264,7 +282,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   infoItemsContainer: {
-    gap: 4,
+    gap: 2,
   },
   infoItem: {
     flexDirection: 'row',
@@ -273,7 +291,7 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 16,
-    width: 16,
+    width: 20,
     textAlign: 'center',
   },
   infoText: {

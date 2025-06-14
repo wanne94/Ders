@@ -9,6 +9,8 @@
 import { getServerUrl } from '../config';
 
 const WEB_URL = getServerUrl();
+// Server URL za slike - backend server koji služi uploads folder
+const SERVER_URL = 'http://ders.ba:5003';
 
 /**
  * Get the full URL for an image
@@ -28,15 +30,20 @@ export const getImageUrl = (imagePath) => {
     return imagePath;
   }
   
-  // For uploads, serve from Next.js public directory via web URL
+  // For uploads, serve from backend server instead of Next.js
   if (imagePath.includes('uploads/') || imagePath.includes('upload/')) {
-    // Ensure path starts with / for Next.js public directory
+    // Ensure path starts with / for server route
     const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    return `${WEB_URL}${cleanPath}`;
+    return `${SERVER_URL}${cleanPath}`;
   }
   
-  // If it starts with /, it's a public path - serve from Next.js public directory
+  // If it starts with /, check if it's an upload path
   if (imagePath.startsWith('/')) {
+    // If it's an upload path, use server URL
+    if (imagePath.includes('uploads/')) {
+      return `${SERVER_URL}${imagePath}`;
+    }
+    // For other public assets, use web URL
     return `${WEB_URL}${imagePath}`;
   }
   

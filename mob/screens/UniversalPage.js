@@ -178,7 +178,12 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
           data.map((item, index) => (
             <UniverzalCard
               key={item?.id || item?._id || index}
-              data={item}
+              data={{
+                ...item,
+                type: type === 'lectures' ? 'predavanje' : 
+                      type === 'speakers' ? 'daija' : 
+                      type === 'organizations' ? 'udruženje' : item.type
+              }}
               onPress={() => handleItemPress(item)}
             />
           ))
@@ -191,7 +196,12 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
 // API functions using the real services
 const fetchLectures = async () => {
   try {
-    const data = await predavanjaService.getAllPredavanja();
+    // Use the same endpoint as home page to get populated daija data
+    const response = await fetch(`https://ders.ba/api/lectures/dashboard/public`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
     return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching lectures:', error);

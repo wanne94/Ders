@@ -1,3 +1,6 @@
+console.log('🚀 App.js loading...');
+console.log('📱 ENV:', ENV);
+
 import { useState, useEffect } from 'react';
 import {
   StatusBar,
@@ -103,7 +106,10 @@ const fetchLectures = async () => {
         id: l._id, 
         title: l.title, 
         status: l.status,
-        date: l.date 
+        date: l.date,
+        speaker: l.speaker,
+        daija: l.daija,
+        daijaId: l.daijaId
       })));
     }
     
@@ -202,6 +208,83 @@ const LecturesSection = ({ onProfileOpen, allLectures = [] }) => {
               onPress={() => {
                 if (lecture && onProfileOpen) {
                   onProfileOpen(lecture, 'lecture');
+                }
+              }}
+            />
+          ) : null
+        ))}
+      </View>
+    </View>
+  );
+};
+
+
+// Upcoming Lectures Section Component - sorted by date
+const UpcomingLecturesSection = ({ onProfileOpen }) => {
+  const [lectures, setLectures] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadLectures = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchLectures();
+        
+        // Sort by date - earliest (closest to today) first
+        const sortedData = Array.isArray(data) ? data.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return dateA - dateB; // Ascending order (najskoriji na vrhu)
+        }) : [];
+        
+        setLectures(sortedData.slice(0, 10)); // Maksimalno 10 predavanja
+      } catch (err) {
+        console.error("Error loading upcoming lectures:", err);
+        setLectures([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadLectures();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Najavljeni dersovi</Text>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  if (!lectures?.length) {
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Najavljeni dersovi</Text>
+        <Text style={styles.emptyText}>Trenutno nema dostupnih dersova.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Najavljeni dersovi</Text>
+      <Text style={styles.sectionSubtitle}>
+        Predavanja sortirana po datumu - najskoriji na vrhu
+      </Text>
+      <View style={styles.cardsContainer}>
+        {lectures?.map((lecture, index) => (
+          lecture ? (
+            <UniverzalCard
+              key={`upcoming-lecture-${lecture?._id || lecture?.id || index}`}
+              data={{
+                ...lecture,
+                type: "predavanje"
+              }}
+              onPress={() => {
+                if (lecture && onProfileOpen) {
+                  onProfileOpen(lecture, "lecture");
                 }
               }}
             />
@@ -573,7 +656,7 @@ export default function App() {
   const handleTabPress = (tabId) => {
     if (tabId === 'add') {
       if (!isAuthenticated) {
-        Alert.alert('Greška', 'Morate biti ulogovani za dodavanje sadržaja');
+        Alert.alert('Info', 'Morate biti ulogovani za dodavanje sadržaja');
         setActiveTab('auth');
         return;
       }
@@ -679,7 +762,7 @@ export default function App() {
         return (
           <>
             <HeroSection key={`hero-${refreshKey}`} />
-            <LecturesSection key={`lectures-${refreshKey}`} onProfileOpen={handleProfileOpen} allLectures={allLectures} />
+            <UpcomingLecturesSection key={`upcoming-lectures-${refreshKey}`} onProfileOpen={handleProfileOpen} />
             <RegistrationBenefits key={`benefits-${refreshKey}`} onAuthNavigate={handleAuthNavigate} />
             <DaijeSection key={`daije-${refreshKey}`} onProfileOpen={handleProfileOpen} allLectures={allLectures} />
             <UdruzenjaSection key={`udruzenja-${refreshKey}`} onProfileOpen={handleProfileOpen} allLectures={allLectures} />

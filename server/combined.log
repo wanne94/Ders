@@ -23037,3 +23037,50 @@
 {"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T03:49:59.812Z"}
 {"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T03:49:59.861Z"}
 {"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T03:50:00.033Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T04:07:42.425Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T04:07:42.527Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-14T04:07:42.536Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-14T04:07:42.581Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T04:07:42.634Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-14T04:07:42.687Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T04:07:42.736Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T04:07:42.949Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T04:22:57.969Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T04:22:58.081Z"}
+{"level":"info","message":"Fetching public lectures","timestamp":"2025-06-14T04:22:58.083Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-14T04:22:58.088Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-14T04:22:58.140Z"}
+{"level":"info","message":"Found 2 public lectures","timestamp":"2025-06-14T04:22:58.188Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T04:22:58.203Z"}
+{"level":"info","message":"Fetching all organizations","timestamp":"2025-06-14T04:22:58.234Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-14T04:22:58.238Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T04:22:58.292Z"}
+{"level":"info","message":"Found 3 approved organizations","timestamp":"2025-06-14T04:22:58.303Z"}
+{"level":"info","message":"Processed 3 organizations with lecture counts","timestamp":"2025-06-14T04:22:58.396Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T04:22:58.534Z"}
+{"level":"info","message":"Fetching all daije","timestamp":"2025-06-14T04:22:58.536Z"}
+{"level":"info","message":"Found 15 approved daije","timestamp":"2025-06-14T04:22:58.591Z"}
+{"level":"info","message":"Processed 15 daije with lecture counts","timestamp":"2025-06-14T04:22:58.657Z"}
+{"level":"info","message":"Fetching public settings for dashboard","timestamp":"2025-06-14T04:23:06.813Z"}
+{"approvalSettings":{"daija":true,"lecture":true,"organization":true},"level":"info","message":"Found settings for dashboard:","timestamp":"2025-06-14T04:23:06.870Z"}
+{"level":"info","message":"Fetching public users for dashboard","timestamp":"2025-06-14T04:23:06.873Z"}
+{"level":"info","message":"Found 1 users for dashboard","timestamp":"2025-06-14T04:23:06.929Z"}
+{"level":"info","message":"Fetching lectures for user:","timestamp":"2025-06-14T04:23:06.933Z"}
+{"0":{"id":"684c54d1824447c2cb674e54","status":"rejected","title":"test"},"1":{"id":"684b45c8029fc23960ef9753","status":"approved","title":"U potrazi za smislom života"},"2":{"id":"68487cd75e0a4fb9d63d8b62","status":"approved","title":"On je Allah"},"level":"info","message":"Found 3 lectures:","timestamp":"2025-06-14T04:23:07.043Z"}
+{"allowedRoles":["admin","super_admin"],"level":"info","message":"Checking admin/super_admin access:","role":"super_admin","timestamp":"2025-06-14T04:23:07.056Z","user":{"exp":1750336603,"iat":1749731803,"id":"684ac7db472c4651c8267b81","role":"super_admin","username":"Avdo"}}
+{"level":"info","message":"Access granted for role:","timestamp":"2025-06-14T04:23:07.056Z"}
+{"level":"info","message":"Admin fetching all daije (including pending/rejected)","timestamp":"2025-06-14T04:23:07.056Z"}
+{"allowedRoles":["admin","super_admin"],"level":"info","message":"Checking admin/super_admin access:","role":"super_admin","timestamp":"2025-06-14T04:23:07.111Z","user":{"exp":1750336603,"iat":1749731803,"id":"684ac7db472c4651c8267b81","role":"super_admin","username":"Avdo"}}
+{"level":"info","message":"Access granted for role:","timestamp":"2025-06-14T04:23:07.112Z"}
+{"level":"info","message":"Admin fetching all organizations (including pending/rejected)","timestamp":"2025-06-14T04:23:07.112Z"}
+{"level":"info","message":"Found 15 daije for admin","timestamp":"2025-06-14T04:23:07.115Z"}
+{"level":"info","message":"Fetching public suggestions for dashboard","timestamp":"2025-06-14T04:23:07.122Z"}
+{"level":"info","message":"Fetching public archived suggestions for dashboard","timestamp":"2025-06-14T04:23:07.126Z"}
+{"level":"info","message":"Fetching public suggestions count for dashboard","timestamp":"2025-06-14T04:23:07.127Z"}
+{"level":"info","message":"Fetching public settings for dashboard","timestamp":"2025-06-14T04:23:07.128Z"}
+{"0":{"name":"Centar","status":"approved"},"1":{"name":"OU Palma","status":"approved"},"2":{"name":"UG Alternativa","status":"approved"},"level":"info","message":"Found 3 organizations for admin with statuses:","timestamp":"2025-06-14T04:23:07.164Z"}
+{"level":"info","message":"Found 0 suggestions for dashboard","timestamp":"2025-06-14T04:23:07.177Z"}
+{"level":"info","message":"Found 0 archived suggestions for dashboard","timestamp":"2025-06-14T04:23:07.180Z"}
+{"approvalSettings":{"daija":true,"lecture":true,"organization":true},"level":"info","message":"Found settings for dashboard:","timestamp":"2025-06-14T04:23:07.182Z"}
+{"approved":0,"level":"info","message":"Found suggestions count for dashboard:","pending":0,"rejected":0,"timestamp":"2025-06-14T04:23:07.333Z","total":0}
+{"level":"info","message":"Connected to MongoDB Database: Predavanja","timestamp":"2025-06-14T04:36:01.934Z"}

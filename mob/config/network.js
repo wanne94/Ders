@@ -1,8 +1,8 @@
 // Network configuration for development
-// Ažurirajte ovu IP adresu ako se promeni IP adresa vašeg računara
+// WSL2 ima problem sa networking - koristićemo localhost umjesto IP adrese
 export const NETWORK_CONFIG = {
-  // Vaša trenutna IP adresa u lokalnoj mreži
-  LOCAL_IP: '172.31.112.1',
+  // Za WSL2 koristimo localhost umjesto IP adrese
+  LOCAL_IP: 'localhost',
   
   // Port na kome radi vaš lokalni server
   LOCAL_PORT: '5003',

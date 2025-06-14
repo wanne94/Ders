@@ -1,0 +1,9 @@
+@echo off
+echo Pokretanje Expo servera iz Windows okruzenja...
+cd /d C:\react-apps\predavanje\mob
+echo Ubijanje postojecih Expo servera...
+taskkill /f /im node.exe /t >nul 2>&1
+timeout /t 2 >nul
+echo Pokretanje novog Expo servera...
+npx expo start --tunnel --clear
+pause

@@ -444,7 +444,7 @@ app.get('/api/lectures', async (req, res) => {
 
     const lectures = await Lecture.find()
       .populate('organization', 'name')
-      .populate('daija', 'name title')
+      .populate('daija', 'name title image')
       .populate('createdBy', 'firstName lastName email')
       .sort({ createdAt: -1 });
 
@@ -503,18 +503,18 @@ app.get('/api/lectures/dashboard/public', async (req, res) => {
       // No date filtering - show all lectures for dashboard
     })
       .populate('organization', 'name')
-      .populate('daija', 'name title')
+      .populate('daija', 'name title image')
       .sort({ date: 1 });
 
     logger.info(`Found ${lectures.length} dashboard lectures`);
     
-    
-    
-    
-    // Transform lectures to include daijaId for frontend compatibility
+    // Transform lectures to include daijaId and speaker for frontend compatibility
     const transformedLectures = lectures.map(lecture => ({
       ...lecture.toObject(),
-      daijaId: lecture.daija || null
+      daijaId: lecture.daija ? lecture.daija._id : null,
+      speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
+        ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
+        : lecture.speaker || 'Nepoznat predavač'
     }));
 
     res.json(transformedLectures);
@@ -672,8 +672,24 @@ app.get('/api/daije/public', async (req, res) => {
     
     logger.info(`Found ${daije.length} approved daije for public endpoint`);
     
-    // Return daije as-is with name field (no firstName mapping)
-    res.json(daije);
+    // Add lecture count for each daija
+    const daijeWithLectureCount = await Promise.all(
+      daije.map(async (daija) => {
+        // Count approved lectures for this daija
+        const lectureCount = await Lecture.countDocuments({ 
+          daija: daija._id, 
+          status: 'approved' 
+        });
+        
+        return {
+          ...daija.toObject(),
+          lectureCount: lectureCount
+        };
+      })
+    );
+    
+    // Return daije with lecture counts
+    res.json(daijeWithLectureCount);
   } catch (error) {
     logger.error('Error fetching public daije:', error);
     res.status(500).json({ message: 'Greška pri dohvaćanju daija' });
@@ -689,8 +705,23 @@ app.get('/api/organizations/public', async (req, res) => {
     // Admins can use /api/admin/organizations to get all organizations including pending/rejected
     const organizations = await Organization.find({ status: 'approved' }).sort({ name: 1 });
     
-    logger.info(`Found ${organizations.length} approved organizations for public endpoint`);
-    res.json(organizations);
+    // Add lecture count for each organization
+    const organizationsWithLectureCount = await Promise.all(
+      organizations.map(async (organization) => {
+        // Count approved lectures for this organization
+        const lectureCount = await Lecture.countDocuments({ 
+          organizationId: organization._id, 
+          status: 'approved' 
+        });
+        
+        return {
+          ...organization.toObject(),
+          lectureCount: lectureCount
+        };
+      })
+    );
+    
+    res.json(organizationsWithLectureCount);
   } catch (error) {
     logger.error('Error fetching public organizations:', error);
     res.status(500).json({ message: 'Greška pri dohvaćanju organizacija' });
@@ -1038,7 +1069,7 @@ app.get('/api/lectures/public', async (req, res) => {
       })
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
         .populate('organization', 'name')
-        .populate('daija', 'name title')
+        .populate('daija', 'name title image')
         .sort({ date: 1 })
         .hint({ status: 1, date: 1 }) // 🚀 Force index usage
         .lean()
@@ -1055,7 +1086,7 @@ app.get('/api/lectures/public', async (req, res) => {
       })
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
         .populate('organization', 'name')
-        .populate('daija', 'name title')
+        .populate('daija', 'name title image')
         .sort({ date: 1 })
         .lean()
         .exec();
@@ -1149,7 +1180,7 @@ app.get('/api/lectures/:id', async (req, res) => {
     
     const lecture = await Lecture.findById(req.params.id)
       .populate('createdBy', 'firstName lastName email')
-      .populate('daija', 'name title');
+      .populate('daija', 'name title image');
     
     if (!lecture) {
       logger.warn('Lecture not found with ID:', req.params.id);
@@ -1185,7 +1216,7 @@ app.get('/api/lectures/daija/:daijaId', async (req, res) => {
       status: 'approved'  // Only show approved lectures to public
     })
       .populate('createdBy', 'firstName lastName email')
-      .populate('daija', 'name title');
+      .populate('daija', 'name title image');
     logger.info(`Found ${lectures.length} approved lectures for daija:`, req.params.daijaId);
     
     // Transform lectures to include daijaId for frontend compatibility
@@ -1211,7 +1242,7 @@ app.get('/api/lectures/organization/:organizationId', async (req, res) => {
       status: 'approved'  // Only show approved lectures to public
     })
       .populate('createdBy', 'firstName lastName email')
-      .populate('daija', 'name title');
+      .populate('daija', 'name title image');
     logger.info(`Found ${lectures.length} approved lectures for organization:`, req.params.organizationId);
     
     // Transform lectures to include daijaId for frontend compatibility
@@ -1244,7 +1275,7 @@ app.get('/api/lectures/pending', authenticateToken, isAdminOrSuperAdmin, async (
     
     const lectures = await Lecture.find({ status: 'pending' })
       .populate('createdBy', 'firstName lastName email')
-      .populate('daija', 'name title')
+      .populate('daija', 'name title image')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -1294,7 +1325,7 @@ app.get('/api/lectures/approved', async (req, res) => {
     })
       .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
       .populate('organization', 'name')
-      .populate('daija', 'name title')
+      .populate('daija', 'name title image')
       .sort({ date: 1 })
       .skip(skip)
       .limit(limit)
@@ -1346,7 +1377,7 @@ app.get('/api/lectures/latest', async (req, res) => {
     })
       .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
       .populate('organization', 'name')
-      .populate('daija', 'name title')
+      .populate('daija', 'name title image')
       .sort({ date: 1 })
       .limit(limit)
       .lean()

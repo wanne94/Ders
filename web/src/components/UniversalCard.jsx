@@ -1,12 +1,11 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  CardActionArea,
-  Divider
+    Card,
+    CardContent,
+    Typography,
+    Box,
+    CardActionArea
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
@@ -61,10 +60,13 @@ const UniversalCard = ({ data }) => {
           titlePrefix: data.title,
           image: data.image || getDefaultDaijaImage(),
           imageStyle: { borderRadius: '50%' },
-          lectureCount: data.lectureCount,
           infoItems: [
             data.specialization && { icon: <SchoolIcon />, text: data.specialization },
-            data.city && { icon: <LocationCityIcon />, text: data.city }
+            data.city && { icon: <LocationCityIcon />, text: data.city },
+            data.lectureCount !== undefined && { 
+              icon: <ClassIcon />, 
+              text: `Broj predavanja: ${data.lectureCount || 0}`,           
+            }
           ].filter(Boolean),
           onClick: () => {
             const slug = generateDaijaSlug(data);
@@ -78,7 +80,6 @@ const UniversalCard = ({ data }) => {
           title: data.name,
           image: data.image || getDefaultOrganizationImage(),
           imageStyle: { borderRadius: '8px' },
-          lectureCount: data.lectureCount,
           infoItems: [
             data.shortDescription && { icon: <BusinessIcon />, text: data.shortDescription },
             data.address && { icon: <LocationOnIcon />, text: data.address },
@@ -124,58 +125,42 @@ const UniversalCard = ({ data }) => {
           <Box sx={{ display: 'flex', height: '100%' }}>
             {/* Left side - Information */}
             <Box sx={{ flex: 1, pr: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              {/* Title prefix (for daija titles) - centered */}
+              {/* Title prefix (for daija titles) */}
               {displayData.titlePrefix && (
                 <Typography 
                   variant="body2" 
                   sx={{ 
+                    
                     fontSize: '12px',
                     color: 'text.secondary',
                     mb: 0.5,
-                    textTransform: 'lowercase',
-                    textAlign: 'center'
+                    textTransform: 'lowercase'
                   }}
                 >
                   {displayData.titlePrefix}
                 </Typography>
               )}
 
-              {/* Main title - centered */}
+              {/* Main title */}
               <Typography 
                 variant="h6" 
                 component="h2" 
                 sx={{
+                  
                   fontSize: '18px',
+                  
                   fontWeight: 600,
-                  mb: displayData.lectureCount !== undefined ? 0.5 : 1,
+                  mb: 1,
                   overflow: 'hidden',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
-                  textAlign: 'center'
                 }}
               >
                 {displayData.title}
               </Typography>
 
-              {/* Lecture count for daije and organizations - below name with divider, centered */}
-              {displayData.lectureCount !== undefined && (
-                <Box sx={{ mb: 1, textAlign: 'center' }}>
-                  <Divider sx={{ mb: 0.5 }} />
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      fontSize: '13px',
-                      color: 'text.secondary',
-                      fontWeight: 500
-                    }}
-                  >
-                    Broj predavanja: {displayData.lectureCount || 0}
-                  </Typography>
-                </Box>
-              )}
-
-              {/* Info items - left aligned */}
+              {/* Info items */}
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 {displayData.infoItems.map((item, index) => (
                   <Box 
@@ -209,49 +194,49 @@ const UniversalCard = ({ data }) => {
 
             {/* Right side - Image */}
             <Box 
-              sx={{
-                width: '100px',
-                height: '100%',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Box
-                sx={{
-                  width: '100px',
-                  height: '100px',
-                  overflow: 'hidden',
-                  borderRadius: displayData.imageStyle?.borderRadius || '0',
-                  bgcolor: 'background.default',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <img
-                  src={imageUrl}
-                  alt={displayData.title}
-                  onError={(e) => {
-                    e.target.onerror = null; // Prevent infinite loop
-                    // Use appropriate default image based on type
-                    if (displayData.type === 'lecture') {
-                      e.target.src = getDefaultLectureImage();
-                    } else if (displayData.type === 'daija') {
-                      e.target.src = getDefaultDaijaImage();
-                    } else if (displayData.type === 'organization') {
-                      e.target.src = getDefaultOrganizationImage();
-                    }
-                  }}
-                  style={{ 
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
-                />
-              </Box>
-            </Box>
+  sx={{
+    width: '100px',
+    height: '100%',
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }}
+>
+  <Box
+    sx={{
+      width: '100px',
+      height: '100px',
+      overflow: 'hidden',
+      borderRadius: displayData.imageStyle?.borderRadius || '0',
+      bgcolor: 'background.default',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}
+  >
+    <img
+      src={imageUrl}
+      alt={displayData.title}
+      onError={(e) => {
+        e.target.onerror = null; // Prevent infinite loop
+        // Use appropriate default image based on type
+        if (displayData.type === 'lecture') {
+          e.target.src = getDefaultLectureImage();
+        } else if (displayData.type === 'daija') {
+          e.target.src = getDefaultDaijaImage();
+        } else if (displayData.type === 'organization') {
+          e.target.src = getDefaultOrganizationImage();
+        }
+      }}
+      style={{ 
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover'
+      }}
+    />
+  </Box>
+</Box>
 
           </Box>
         </CardContent>
@@ -260,4 +245,4 @@ const UniversalCard = ({ data }) => {
   );
 };
 
-export default UniversalCard;
+export default UniversalCard; 

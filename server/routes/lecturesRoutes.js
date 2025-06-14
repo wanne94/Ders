@@ -43,6 +43,7 @@ router.get('/public', async (req, res) => {
       })
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
         .populate('organization', 'name')
+        .populate('daija', 'name title image')
         .sort({ date: 1 })
         .hint({ status: 1, date: 1 }) // 🚀 Force index usage
         .lean()
@@ -59,6 +60,7 @@ router.get('/public', async (req, res) => {
       })
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
         .populate('organization', 'name')
+        .populate('daija', 'name title image')
         .sort({ date: 1 })
         .lean()
         .exec();
@@ -76,9 +78,13 @@ router.get('/public', async (req, res) => {
     // 🚀 LIGHTNING-FAST transformation - pre-allocate array for better performance
     const transformedLectures = new Array(lectures.length);
     for (let i = 0; i < lectures.length; i++) {
+      const lecture = lectures[i];
       transformedLectures[i] = {
-        ...lectures[i],
-        daijaId: lectures[i].daija || null
+        ...lecture,
+        daijaId: lecture.daija ? lecture.daija._id : null,
+        speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
+          ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
+          : lecture.speaker || 'Nepoznat predavač'
       };
     }
 
