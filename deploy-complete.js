@@ -247,9 +247,25 @@ async function uploadDirectory(localPath, remotePath, excludePatterns = []) {
     const conn = await createSSHConnection();
     
     try {
-      // Obriši postojeći sadržaj i raspakuj zip
-      await executeSSHCommand(conn, `rm -rf ${remotePath}/* && mkdir -p ${remotePath}`);
-      await executeSSHCommand(conn, `cd ${remotePath} && unzip -o ${remotePath}.zip && rm ${remotePath}.zip`);
+      // Obriši postojeći sadržaj ALI SAČUVAJ uploads folder
+      await executeSSHCommand(conn, `
+        # Sačuvaj uploads folder ako postoji
+        if [ -d "${remotePath}/uploads" ]; then
+          mv ${remotePath}/uploads /tmp/backup_uploads_$$ || true
+        fi
+        
+        # Obriši sve osim uploads foldera
+        find ${remotePath}/* -maxdepth 0 -name uploads -prune -o -exec rm -rf {} \\; 2>/dev/null || true
+        
+        # Raspakuj novi sadržaj
+        cd ${remotePath} && unzip -o ${remotePath}.zip && rm ${remotePath}.zip
+        
+        # Vrati uploads folder ako je bio sačuvan
+        if [ -d "/tmp/backup_uploads_$$" ]; then
+          rm -rf ${remotePath}/uploads 2>/dev/null || true
+          mv /tmp/backup_uploads_$$ ${remotePath}/uploads
+        fi
+      `);
       
       log('✅ Upload završen uspešno!', 'green');
     } finally {
@@ -356,7 +372,7 @@ async function deployServer() {
   await uploadDirectory(
     './server',
     CONFIG.server.serverPath,
-    ['node_modules', '.git', 'logs', '*.log']
+    ['node_modules', '.git', 'logs', '*.log', 'uploads', 'public/uploads']
   );
 
   // SSH konekcija za restart

@@ -2,6 +2,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'rea
 import { format } from 'date-fns';
 import { bs } from 'date-fns/locale';
 import { getImageUrl, getDefaultDaijaImage, getDefaultLectureImage, getDefaultOrganizationImage } from '../utils/imageUtils';
+import { formatDaijaTitle } from '../utils';
 import { useState } from 'react';
 
 const { width } = Dimensions.get('window');
@@ -69,9 +70,13 @@ const UniverzalCard = ({ data, onPress, style }) => {
     
     switch (entityType) {
       case 'predavanje':
+        // Check if lecture is in the past
+        const isPastLecture = data.date ? new Date(data.date) < new Date() : false;
+        
         return {
           type: 'lecture',
           title: data.title,
+          isPastLecture,
           items: [
             { icon: "Person", text: data.daija && typeof data.daija === "object" ? `${data.daija.title || ""} ${data.daija.name || ""}`.trim() || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
             data.organization && { icon: 'Business', text: data.organization },
@@ -85,11 +90,11 @@ const UniverzalCard = ({ data, onPress, style }) => {
       case 'daija':
         return {
           type: 'daija',
-          title: data.name || 'Nepoznata daija',
+          title: formatDaijaTitle(data.name, data.title) || 'Nepoznata daija',
           
           items: [
-            data.title && { icon: 'School', text: data.title + '.' },
-            data.shortDescription && { icon: 'Description', text: data.shortDescription },
+            data.shortDescription && { icon: 'Description', text: data.shortDescription }
+,
             data.lectureCount !== undefined && { icon: "MenuBook", text: `Broj predavanja: ${data.lectureCount || 0}` },
           ].filter(Boolean)
         };
@@ -101,7 +106,8 @@ const UniverzalCard = ({ data, onPress, style }) => {
           items: [
             data.address && { icon: 'LocationOn', text: data.address },
             data.city && { icon: 'LocationCity', text: data.city },
-            data.shortDescription && { icon: 'Description', text: data.shortDescription },
+            data.shortDescription && { icon: 'Description', text: data.shortDescription }
+,
             data.lectureCount !== undefined && { icon: "MenuBook", text: `Broj predavanja: ${data.lectureCount || 0}` },
           ].filter(Boolean)
         };
@@ -109,9 +115,13 @@ const UniverzalCard = ({ data, onPress, style }) => {
       default:
         // Fallback for unknown types or when type field is not available
         if (data.title && (data.speaker || data.daija)) {
+          // Check if lecture is in the past
+          const isPastLecture = data.date ? new Date(data.date) < new Date() : false;
+          
           return {
             type: 'lecture',
             title: data.title,
+            isPastLecture,
             items: [
               { icon: "Person", text: data.daija && typeof data.daija === "object" ? `${data.daija.title || ""} ${data.daija.name || ""}`.trim() || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
               data.organization && { icon: 'Business', text: data.organization },
@@ -142,7 +152,8 @@ const UniverzalCard = ({ data, onPress, style }) => {
             items: [
               data.address && { icon: 'LocationOn', text: data.address },
               data.city && { icon: 'LocationCity', text: data.city },
-              data.shortDescription && { icon: 'Description', text: data.shortDescription },
+              data.shortDescription && { icon: 'Description', text: data.shortDescription }
+,
               data.lectureCount !== undefined && { icon: "MenuBook", text: `Broj predavanja: ${data.lectureCount || 0}` },
             ].filter(Boolean)
           };
@@ -171,6 +182,18 @@ const UniverzalCard = ({ data, onPress, style }) => {
       onPress={onPress}
       activeOpacity={0.7}
     >
+      {/* Status badge for lectures */}
+      {displayData.type === 'lecture' && displayData.isPastLecture !== undefined && (
+        <View style={styles.statusBadge}>
+          <Text style={[
+            styles.statusBadgeText, 
+            displayData.isPastLecture ? styles.statusBadgePast : styles.statusBadgeFuture
+          ]}>
+            {displayData.isPastLecture ? '🔴 Prošlo' : '🟢 Uskoro'}
+          </Text>
+        </View>
+      )}
+      
       {/* Card Title - Above both columns */}
       <View style={styles.cardTitleContainer}>
         <Text style={styles.cardTitle} numberOfLines={2}>
@@ -221,7 +244,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
                   : getDefaultLectureImage())
                 : getImageUrl(data.image)
             }}
-            style={styles.image}
+            style={displayData.type === 'daija' ? styles.imageDaija : styles.image}
             resizeMode="cover"
             onError={() => setImageError(true)}
           />
@@ -234,7 +257,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
 const styles = StyleSheet.create({
   container: {
     width: width * 0.9, // 90% širine ekrana
-    height: 230,
+    minHeight: 250,
     alignSelf: 'center', // centriraj karticu
     backgroundColor: COLORS.white,
     borderRadius: 12,
@@ -247,7 +270,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2.84,
     justifyContent: 'center',
     marginBottom: 6,
-    // Removed minHeight to allow dynamic height based on content
   },
   cardTitleContainer: {
     marginBottom: 10,
@@ -301,15 +323,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   imageColumn: {
-    width: 100,
-    justifyContent: 'center', // Center image vertically
-    alignItems: 'center',
-    alignSelf: 'center', // Center the entire image column vertically
+    width: 120,
+    justifyContent: 'center',
+    alignItems: 'stretch',
+    alignSelf: 'stretch',
   },
   image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+    minHeight: 165,
+  },
+  imageDaija: {
     width: 100,
     height: 100,
-    borderRadius: 8,
+    borderRadius: 50, // Circular for daije, like web version
   },
   imagePlaceholder: {
     width: 100,
@@ -322,6 +350,31 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 24,
     color: COLORS.gray,
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    zIndex: 1,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  statusBadgePast: {
+    color: '#c62828',
+  },
+  statusBadgeFuture: {
+    color: '#2e7d32',
   },
 });
 

@@ -156,9 +156,14 @@ if (isProduction) {
 // Uvijek servira public folder
 // Static files are now served by Next.js from web/public
 
-// Serve uploads directory - unified path for both environments
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-console.log('📁 Serving uploads from server/uploads (unified for both development and production)');
+// In development, uploads are handled by production server (https://ders.ba)
+// This prevents local file storage and ensures consistency
+if (process.env.NODE_ENV === 'production') {
+  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+  console.log('📁 Serving uploads from server/uploads (production only)');
+} else {
+  console.log('📁 Development mode: uploads handled by production server (https://ders.ba)');
+}
 
 // Basic health check route
 app.get('/', (req, res) => {
@@ -1056,21 +1061,17 @@ app.get('/api/lectures/public', async (req, res) => {
     console.log('🔍 [PERFORMANCE] Starting super-optimized database query...');
     
     // 🚀 SUPER-OPTIMIZED QUERY with forced index usage and minimal data transfer
-    const currentDate = new Date();
-    // Set to start of today to include today's lectures
-    const startOfToday = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
     
     // Method 1: Try with hint to force index usage
     let lectures;
     try {
       lectures = await Lecture.find({ 
-        status: 'approved',
-        date: { $gte: startOfToday }  // Include today's lectures and future ones
+        status: 'approved'
+        // Removed date filter to show all lectures including past ones
       })
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
         .populate('organization', 'name')
         .populate('daija', 'name title image')
-        .sort({ date: 1 })
         .hint({ status: 1, date: 1 }) // 🚀 Force index usage
         .lean()
         .exec();
@@ -1081,13 +1082,12 @@ app.get('/api/lectures/public', async (req, res) => {
       
       // Fallback: Regular optimized query
       lectures = await Lecture.find({ 
-        status: 'approved',
-        date: { $gte: startOfToday }  // Include today's lectures and future ones
+        status: 'approved'
+        // Removed date filter to show all lectures including past ones
       })
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
         .populate('organization', 'name')
         .populate('daija', 'name title image')
-        .sort({ date: 1 })
         .lean()
         .exec();
     }
@@ -1118,6 +1118,40 @@ app.get('/api/lectures/public', async (req, res) => {
     const transformDuration = transformEndTime - transformStartTime;
     console.log(`⚡ [PERFORMANCE] Lightning-fast data transformation completed in: ${transformDuration}ms`);
     
+    // 🚀 CUSTOM SORTING: Future lectures first (ascending date), then past lectures (descending date)
+    const sortStartTime = Date.now();
+    console.log('📅 [PERFORMANCE] Starting custom date-based sorting...');
+    
+    const now = new Date();
+    const futureLectures = [];
+    const pastLectures = [];
+    
+    // Separate future and past lectures
+    for (let i = 0; i < transformedLectures.length; i++) {
+      const lecture = transformedLectures[i];
+      const lectureDate = new Date(lecture.date);
+      
+      if (lectureDate >= now) {
+        futureLectures.push(lecture);
+      } else {
+        pastLectures.push(lecture);
+      }
+    }
+    
+    // Sort future lectures by date ascending (earliest first)
+    futureLectures.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // Sort past lectures by date descending (most recent first)
+    pastLectures.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Combine: future lectures first, then past lectures
+    const sortedLectures = [...futureLectures, ...pastLectures];
+    
+    const sortEndTime = Date.now();
+    const sortDuration = sortEndTime - sortStartTime;
+    console.log(`📅 [PERFORMANCE] Custom sorting completed in: ${sortDuration}ms`);
+    console.log(`📊 [PERFORMANCE] Future lectures: ${futureLectures.length}, Past lectures: ${pastLectures.length}`);
+    
     // Debug: Total endpoint timing
     const totalEndTime = Date.now();
     const totalDuration = totalEndTime - startTime;
@@ -1125,6 +1159,7 @@ app.get('/api/lectures/public', async (req, res) => {
     console.log('📈 [PERFORMANCE] Super-optimized endpoint timing breakdown:');
     console.log(`  - Database query: ${queryDuration}ms (${((queryDuration/totalDuration)*100).toFixed(1)}%)`);
     console.log(`  - Data transformation: ${transformDuration}ms (${((transformDuration/totalDuration)*100).toFixed(1)}%)`);
+    console.log(`  - Custom sorting: ${sortDuration}ms (${((sortDuration/totalDuration)*100).toFixed(1)}%)`);
     console.log(`  - Total endpoint time: ${totalDuration}ms`);
     
     // Performance improvement metrics
@@ -1139,14 +1174,17 @@ app.get('/api/lectures/public', async (req, res) => {
     res.set({
       'X-Query-Time': `${queryDuration}ms`,
       'X-Transform-Time': `${transformDuration}ms`,
+      'X-Sort-Time': `${sortDuration}ms`,
       'X-Total-Time': `${totalDuration}ms`,
       'X-Lecture-Count': lectures.length,
+      'X-Future-Count': futureLectures.length,
+      'X-Past-Count': pastLectures.length,
       'X-Performance-Grade': performanceGrade,
-      'X-Optimized': 'super-optimized',
+      'X-Optimized': 'super-optimized-with-custom-sort',
       'X-Index-Hint': 'forced'
     });
 
-    res.json(transformedLectures);
+    res.json(sortedLectures);
   } catch (error) {
     const errorTime = Date.now();
     const errorDuration = errorTime - startTime;
@@ -1730,6 +1768,11 @@ app.get('/api/daije', async (req, res) => {
 // Get single daija by ID
 app.get('/api/daije/:id', async (req, res) => {
   try {
+    // Validate ObjectId format
+    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid daija ID format' });
+    }
+    
     logger.info('Fetching daija by ID:', req.params.id);
     const daija = await Daija.findById(req.params.id);
     
@@ -3840,22 +3883,4 @@ app.post('/api/debug/approve-pending-organizations', async (req, res) => {
   }
 });
 
-// Public daije endpoint for dashboard
-app.get('/api/daije/public', async (req, res) => {
-  try {
-    logger.info('Fetching public daije for dashboard');
-    
-    // Always return only approved daije for public endpoint (even for admins)
-    // Admins can use /api/admin/daije to get all daije including pending/rejected
-    const daije = await Daija.find({ status: 'approved' }).sort({ name: 1 });
-    
-    logger.info(`Found ${daije.length} approved daije for public endpoint`);
-    
-    // Return daije as-is with name field (no firstName mapping)
-    res.json(daije);
-  } catch (error) {
-    logger.error('Error fetching public daije:', error);
-    res.status(500).json({ message: 'Greška pri dohvaćanju daija' });
-  }
-});
 

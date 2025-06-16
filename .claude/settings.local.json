@@ -40,7 +40,14 @@
       "Bash(vi:*)",
       "Bash(python3:*)",
       "Bash(npx babel:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npm test)",
+      "Bash(/dev/null)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx eas build:*)",
+      "Bash(npm why:*)",
+      "Bash(true)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

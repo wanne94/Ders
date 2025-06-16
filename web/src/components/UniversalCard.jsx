@@ -5,7 +5,8 @@ import {
     CardContent,
     Typography,
     Box,
-    CardActionArea
+    CardActionArea,
+    Chip
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
@@ -17,6 +18,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import ClassIcon from '@mui/icons-material/Class';
 import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrganizationSlug } from '../utils/dataHelpers';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
+import { formatDaijaTitle } from '../utils';
 
 const UniversalCard = ({ data }) => {
   const router = useRouter();
@@ -30,11 +32,15 @@ const UniversalCard = ({ data }) => {
     
     switch (entityType) {
       case 'predavanje':
+        // Check if lecture is in the past
+        const isPastLecture = data.date ? new Date(data.date) < new Date() : false;
+        
         return {
           type: 'lecture',
           title: data.title,
           image: data.image || getDefaultLectureImage(),
           imageStyle: { borderRadius: '8px' },
+          isPastLecture,
           infoItems: [
             { icon: <PersonIcon />, text: 
               data.daija && typeof data.daija === 'object' 
@@ -49,15 +55,15 @@ const UniversalCard = ({ data }) => {
           ].filter(Boolean),
           onClick: () => {
             const slug = generateLectureSlug(data);
-            router.push(`/profile/lecture/${slug}`);
+            router.push(`/profile/lecture/${data._id}`);
           }
         };
       
       case 'daija':
         return {
           type: 'daija',
-          title: data.name,
-          titlePrefix: data.title,
+          title: formatDaijaTitle(data.name, data.title),
+          titlePrefix: null,
           image: data.image || getDefaultDaijaImage(),
           imageStyle: { borderRadius: '50%' },
           infoItems: [
@@ -70,7 +76,7 @@ const UniversalCard = ({ data }) => {
           ].filter(Boolean),
           onClick: () => {
             const slug = generateDaijaSlug(data);
-            router.push(`/profile/daija/${slug}`);
+            router.push(`/profile/daija/${data._id}`);
           }
         };
       
@@ -87,7 +93,7 @@ const UniversalCard = ({ data }) => {
           ].filter(Boolean),
           onClick: () => {
             const slug = generateOrganizationSlug(data);
-            router.push(`/profile/organization/${slug}`);
+            router.push(`/profile/organization/${data._id}`);
           }
         };
       
@@ -120,6 +126,24 @@ const UniversalCard = ({ data }) => {
         }
       }}
     >
+      {/* Status badge for lectures */}
+      {displayData.type === 'lecture' && displayData.isPastLecture !== undefined && (
+        <Chip
+          label={displayData.isPastLecture ? '🔴 Prošlo' : '🟢 Uskoro'}
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            zIndex: 1,
+            backgroundColor: displayData.isPastLecture ? '#ffebee' : '#e8f5e9',
+            color: displayData.isPastLecture ? '#c62828' : '#2e7d32',
+            fontWeight: 'bold',
+            fontSize: '0.75rem'
+          }}
+        />
+      )}
+      
       <CardActionArea onClick={displayData.onClick} sx={{ height: '100%' }}>
         <CardContent sx={{ height: '100%', p: 2 }}>
           <Box sx={{ display: 'flex', height: '100%' }}>
@@ -134,7 +158,6 @@ const UniversalCard = ({ data }) => {
                     fontSize: '12px',
                     color: 'text.secondary',
                     mb: 0.5,
-                    textTransform: 'lowercase'
                   }}
                 >
                   {displayData.titlePrefix}
@@ -190,6 +213,7 @@ const UniversalCard = ({ data }) => {
                   </Box>
                 ))}
               </Box>
+
             </Box>
 
             {/* Right side - Image */}
@@ -245,4 +269,4 @@ const UniversalCard = ({ data }) => {
   );
 };
 
-export default UniversalCard; 
+export default UniversalCard;

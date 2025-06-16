@@ -19,11 +19,6 @@ const daijeService = {
     return response;
   },
 
-  getDaijaBySlug: async (slug) => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.DAIJE}/slug/${slug}`);
-    return response;
-  },
-
   getDaijaPredavanja: async (id) => {
     const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}?daija=${id}`);
     return response;

@@ -76,7 +76,7 @@ const userMenuItems = [
   }
 ];
 
-const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNavigate, onLogout, onAddContent, onAddContentWithType }) => {
+const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNavigate, onLogout, onAddContent, onAddContentWithType, onProfileNavigate }) => {
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const slideAnim = useState(new Animated.Value(width))[0];
   const overlayOpacity = useState(new Animated.Value(0))[0];
@@ -120,7 +120,7 @@ const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNaviga
         useNativeDriver: false,
       }).start();
     }
-  }, [isOpen]);
+  }, [isOpen, slideAnim, overlayOpacity, subMenuHeight]);
 
   React.useEffect(() => {
     // Animate submenu height
@@ -129,7 +129,7 @@ const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNaviga
       duration: 300,
       useNativeDriver: false,
     }).start();
-  }, [addMenuOpen]);
+  }, [addMenuOpen, subMenuHeight]);
 
   const handleMenuItemPress = (item) => {
     // Smooth close animation before navigation
@@ -384,6 +384,28 @@ const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNaviga
                   </TouchableOpacity>
                 ))}
               </Animated.View>
+
+              {/* Profile Option */}
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  handleOverlayPress();
+                  if (onProfileNavigate && user) {
+                    onProfileNavigate(user._id, 'user');
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.menuItemContent}>
+                  <Ionicons 
+                    name="person-circle-outline" 
+                    size={20} 
+                    color={COLORS.white} 
+                    style={styles.menuIcon}
+                  />
+                  <Text style={styles.menuItemText}>Moj profil</Text>
+                </View>
+              </TouchableOpacity>
 
               {/* Logout Option */}
               <TouchableOpacity

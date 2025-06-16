@@ -48,6 +48,7 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: envConfig.API_URL,
     NEXT_PUBLIC_SERVER_URL: envConfig.SERVER_URL,
+    NEXT_PUBLIC_IMAGE_SERVER_URL: envConfig.IMAGE_SERVER_URL,
     NEXT_PUBLIC_APP_URL: envConfig.APP_URL,
     NEXT_PUBLIC_DEBUG: envConfig.DEBUG.toString(),
     NEXT_PUBLIC_LOG_LEVEL: envConfig.LOG_LEVEL,
@@ -57,19 +58,15 @@ const nextConfig = {
     NEXT_PUBLIC_ENABLE_ANALYTICS: envConfig.ENABLE_ANALYTICS.toString(),
   },
 
-  // Only use webpackDevMiddleware in development
-  ...(process.env.NODE_ENV === 'development' && {
-    webpackDevMiddleware: config => {
+  webpack: (config, { dev }) => {
+    // Add watch options for development
+    if (dev) {
       config.watchOptions = {
         poll: 1000, // provjerava svakih 1s
         aggregateTimeout: 300,
         ignored: ['**/.next/**', '**/node_modules/**'],
       };
-      return config;
-    },
-  }),
-
-  webpack: config => {
+    }
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname, 'src'),

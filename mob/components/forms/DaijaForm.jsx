@@ -58,7 +58,7 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
     if (editMode && editData) {
       populateFormWithEditData();
     }
-  }, [editMode, editData]);
+  }, [editMode, editData, populateFormWithEditData]);
 
   const populateFormWithEditData = () => {
     if (!editData) return;
@@ -109,9 +109,6 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
     return true;
   };
 
-  const showToast = (message, type = 'success') => {
-    setToast({ visible: true, message, type });
-  };
 
   const hideToast = () => {
     setToast({ visible: false, message: '', type: 'success' });

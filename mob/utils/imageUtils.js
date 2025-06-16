@@ -1,16 +1,14 @@
 /**
- * Utility functions for handling image URLs
+ * Simple Mobile Image Utilities for consistent image handling
  * 
- * NOTE: Base64 support is maintained for backward compatibility with:
- * - Existing database records that may still contain base64 images
- * - Any legacy data that hasn't been migrated yet
+ * All images are loaded from server/uploads directory in both development and production
+ * Includes mobile-specific upload functionality
  */
 
 import { getServerUrl } from '../config';
 
-const WEB_URL = getServerUrl();
-// Server URL za slike - backend server koji služi uploads folder
-const SERVER_URL = 'http://ders.ba:5003';
+// Server configuration - use dynamic server URL based on environment
+const SERVER_URL = getServerUrl();
 
 /**
  * Get the full URL for an image
@@ -18,110 +16,83 @@ const SERVER_URL = 'http://ders.ba:5003';
  * @returns {string} - The full image URL or base64 data string
  */
 export const getImageUrl = (imagePath) => {
-  if (!imagePath) return null;
+  // Always load from server - unified /uploads/images/ path for both development and production
+  const defaultImage = '/uploads/images/default.jpg';
   
-  // If it's a base64 data URL, return as is (backward compatibility)
+  console.log('🖼️ [DEBUG] getImageUrl called with:', imagePath);
+  
+  if (!imagePath) {
+    const defaultUrl = `${SERVER_URL}${defaultImage}`;
+    console.log('🖼️ [DEBUG] No imagePath, returning default:', defaultUrl);
+    return defaultUrl;
+  }
+  
+  // If it's a base64 data URL, return as is
   if (imagePath.startsWith('data:')) {
+    console.log('🖼️ [DEBUG] Base64 image, returning as is');
+    return imagePath;
+  }
+  
+  // If it's a local file URI (mobile specific), return as is for preview
+  if (imagePath.startsWith('file://')) {
+    console.log('🖼️ [DEBUG] Local file URI, returning as is');
     return imagePath;
   }
   
   // If it's already a full URL, return as is
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    console.log('🖼️ [DEBUG] Full URL, returning as is:', imagePath);
     return imagePath;
   }
   
-  // For uploads, serve from backend server instead of Next.js
-  if (imagePath.includes('uploads/') || imagePath.includes('upload/')) {
-    // Ensure path starts with / for server route
-    const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    return `${SERVER_URL}${cleanPath}`;
+  // Remove 'public' from the path if it exists (legacy cleanup)
+  let cleanPath = imagePath;
+  if (cleanPath.startsWith('public/')) {
+    cleanPath = cleanPath.substring(7); // Remove 'public/' prefix
   }
   
-  // If it starts with /, check if it's an upload path
-  if (imagePath.startsWith('/')) {
-    // If it's an upload path, use server URL
-    if (imagePath.includes('uploads/')) {
-      return `${SERVER_URL}${imagePath}`;
-    }
-    // For other public assets, use web URL
-    return `${WEB_URL}${imagePath}`;
+  // Ensure we use unified /uploads/images/ path for both environments
+  if (cleanPath.startsWith('/upload/images/')) {
+    cleanPath = cleanPath.replace('/upload/images/', '/uploads/images/');
+  } else if (cleanPath.startsWith('upload/images/')) {
+    cleanPath = cleanPath.replace('upload/images/', '/uploads/images/');
   }
   
-  // For other paths, construct path for Next.js public directory
-  return `${WEB_URL}/${imagePath}`;
+  // Ensure path starts with /uploads/images/ if it contains images
+  if (!cleanPath.startsWith('/uploads/') && cleanPath.includes('images/')) {
+    cleanPath = `/uploads/images/${cleanPath.replace(/^\/+/, '').replace(/^images\//, '')}`;
+  }
+  
+  // Ensure path starts with /
+  cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+  
+  // Always return server URL - no local public folder usage
+  const finalUrl = `${SERVER_URL}${cleanPath}`;
+  console.log('🖼️ [DEBUG] Final image URL:', finalUrl);
+  return finalUrl;
 };
 
 /**
- * Get the default image URL for lectures
- * @returns {string} - The default lecture image URL
+ * Upload image to server (mobile-specific)
+ * @param {string} imageUri - Local image URI from ImagePicker
+ * @param {string} fileName - Optional filename
+ * @returns {Promise<Object>} - Upload response with image path
  */
-export const getDefaultLectureImage = () => {
-  // Mobile app always uses web URL, so use upload path (development path)
-  return getImageUrl('/upload/images/predavanjeslika.jpg');
-};
-
-/**
- * Get the default image URL for daijas
- * @returns {string} - The default daija image URL
- */
-export const getDefaultDaijaImage = () => {
-  // Mobile app always uses web URL, so use upload path (development path)
-  return getImageUrl('/upload/images/daijaslika.jpg');
-};
-
-/**
- * Get the default image URL for organizations
- * @returns {string} - The default organization image URL
- */
-export const getDefaultOrganizationImage = () => {
-  // Mobile app always uses web URL, so use upload path (development path)
-  return getImageUrl('/upload/images/udruzenjeslika.jpg');
-};
-
-/**
- * Get the logo URL
- * @returns {string} - The logo URL
- */
-export const getLogoUrl = () => {
-  // Mobile app always uses web URL, so use upload path (development path)
-  return getImageUrl('/upload/logo.jpg');
-};
-
-/**
- * Get the favicon URL
- * @returns {string} - The favicon URL
- */
-export const getFaviconUrl = () => {
-  // Mobile app always uses web URL, so use upload path (development path)
-  return getImageUrl('/upload/images/favicon.png');
-};
-
-/**
- * Upload an image to the server
- * @param {string} uri - The local URI of the image to upload
- * @returns {Promise<string>} - The path of the uploaded image on the server
- */
-export const uploadImage = async (uri) => {
+export const uploadImage = async (imageUri, fileName = null) => {
   try {
-    // Create form data
     const formData = new FormData();
     
-    // Get the filename from the URI
-    const filename = uri.split('/').pop();
+    // Create file object for FormData
+    const fileExtension = imageUri.split('.').pop() || 'jpg';
+    const finalFileName = fileName || `mobile-upload-${Date.now()}.${fileExtension}`;
     
-    // Infer the type from the extension
-    const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : 'image/jpeg';
-    
-    // Append the image file to form data
     formData.append('image', {
-      uri,
-      name: filename,
-      type
+      uri: imageUri,
+      type: `image/${fileExtension}`,
+      name: finalFileName,
     });
 
-    // Send the request to the server
-    const response = await fetch(`${WEB_URL}/api/upload-image`, {
+    const response = await fetch(`${SERVER_URL}/api/upload-image`, {
       method: 'POST',
       body: formData,
       headers: {
@@ -129,25 +100,79 @@ export const uploadImage = async (uri) => {
       },
     });
 
-    const data = await response.json();
+    const result = await response.json();
     
     if (!response.ok) {
-      throw new Error(data.error || 'Upload failed');
+      throw new Error(result.message || 'Upload failed');
     }
 
-    return data.path;
+    return result;
   } catch (error) {
-    console.error('Error uploading image:', error);
+    console.error('Image upload error:', error);
     throw error;
   }
 };
 
+/**
+ * Get the default image URL for lectures
+ * @returns {string} - The default lecture image URL
+ */
+export const getDefaultLectureImage = () => {
+  const imagePath = '/uploads/images/predavanjeslika.jpg';
+  const fullUrl = `${SERVER_URL}${imagePath}`;
+  console.log('🖼️ [DEBUG] Default lecture image URL:', fullUrl);
+  return fullUrl;
+};
+
+/**
+ * Get the default image URL for daijas
+ * @returns {string} - The default daija image URL
+ */
+export const getDefaultDaijaImage = () => {
+  const imagePath = '/uploads/images/daijaslika.jpg';
+  const fullUrl = `${SERVER_URL}${imagePath}`;
+  console.log('🖼️ [DEBUG] Default daija image URL:', fullUrl);
+  return fullUrl;
+};
+
+/**
+ * Get the default image URL for organizations
+ * @returns {string} - The default organization image URL
+ */
+export const getDefaultOrganizationImage = () => {
+  const imagePath = '/uploads/images/udruzenjeslika.jpg';
+  const fullUrl = `${SERVER_URL}${imagePath}`;
+  console.log('🖼️ [DEBUG] Default organization image URL:', fullUrl);
+  return fullUrl;
+};
+
+/**
+ * Get the logo URL
+ * @returns {string} - The logo URL
+ */
+export const getLogoUrl = () => {
+  // Return local asset path for offline capability
+  return require('../assets/logo.jpg');
+};
+
+/**
+ * Get the favicon URL
+ * @returns {string} - The favicon URL
+ */
+export const getFaviconUrl = () => {
+  const faviconPath = '/uploads/images/favicon.png';
+  return `${SERVER_URL}${faviconPath}`;
+};
+
+export { SERVER_URL };
+
 export default {
   getImageUrl,
+  uploadImage,
   getDefaultLectureImage,
   getDefaultDaijaImage,
   getDefaultOrganizationImage,
   getLogoUrl,
   getFaviconUrl,
-  WEB_URL
-}; 
+  SERVER_URL
+};

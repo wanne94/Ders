@@ -1,15 +1,12 @@
 import React from 'react';
-import Image from 'next/image';
 import { getLogoUrl } from '../utils/imageUtils';
 
 const LogoCircle = () => (
-  <Image
+  <img
     src={getLogoUrl()}
     alt="DERS Logo"
     width={50}
     height={50}
-    priority
-    unoptimized
     style={{
       marginTop: '10px',
       marginBottom: '10px',

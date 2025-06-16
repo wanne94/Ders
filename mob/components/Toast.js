@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const { width } = Dimensions.get('window');
 
 const COLORS = {
   primary: '#022C43',
@@ -77,7 +76,7 @@ const Toast = ({ visible, message, type = 'success', duration = 3000, onHide }) 
 
       return () => clearTimeout(timer);
     }
-  }, [visible, duration]);
+  }, [visible, duration, hideToast, opacityAnim, slideAnim]);
 
   const hideToast = () => {
     Animated.parallel([

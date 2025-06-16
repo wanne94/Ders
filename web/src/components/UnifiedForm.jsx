@@ -28,6 +28,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import PhoneIcon from '@mui/icons-material/Phone';
 import axiosInstance from '../utils/axiosConfig';
 import { getImageUrl } from '../utils/imageUtils';
+import { uploadImage } from '../utils/uploadService';
 
 const UnifiedForm = ({ 
   open, 
@@ -176,7 +177,7 @@ const UnifiedForm = ({
       }
 
       // Set image preview if editing - use getImageUrl to get proper server URL
-      if (data.image) {
+      if (data.image && data.image.trim() !== '') {
         setImagePreview(getImageUrl(data.image));
       }
     } else {
@@ -370,11 +371,11 @@ const UnifiedForm = ({
         imageFormData.append('image', formData.imageFile);
 
         try {
-          const uploadResponse = await axiosInstance.post('/upload-image', imageFormData);
-          if (uploadResponse.data.success) {
-            imagePath = uploadResponse.data.path;
+          const uploadResponse = await uploadImage(formData.imageFile);
+          if (uploadResponse.success) {
+            imagePath = uploadResponse.path;
           } else {
-            throw new Error('Upload failed: ' + (uploadResponse.data.error || 'Unknown error'));
+            throw new Error('Upload failed: ' + (uploadResponse.error || 'Unknown error'));
           }
         } catch (uploadError) {
           console.error('Upload error:', uploadError);

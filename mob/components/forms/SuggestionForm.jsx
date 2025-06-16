@@ -124,7 +124,7 @@ const SuggestionForm = ({ onBack, onSuccess }) => {
     setIsSubmitting(true);
 
     try {
-      const payload = {
+      const suggestionData = {
         description: description.trim(),
         referenceType: referenceType !== 'općenito' ? referenceType : null,
         referenceId: referenceType !== 'općenito' ? referenceId : null,
@@ -141,7 +141,7 @@ const SuggestionForm = ({ onBack, onSuccess }) => {
         { text: 'OK', onPress: onSuccess }
       ]);
       
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Greška', 'Greška pri slanju prijedloga');
     } finally {
       setIsSubmitting(false);

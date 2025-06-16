@@ -30,21 +30,25 @@ router.get('/public', async (req, res) => {
     console.log('🔍 [PERFORMANCE] Starting super-optimized database query...');
     
     // 🚀 SUPER-OPTIMIZED QUERY with forced index usage and minimal data transfer
-    const currentDate = new Date();
-    // Set to start of today to include today's lectures
-    const startOfToday = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
     
     // Method 1: Try with hint to force index usage
     let lectures;
     try {
       lectures = await Lecture.find({ 
-        status: 'approved',
-        date: { $gte: startOfToday }  // Include today's lectures and future ones
+        status: 'approved'
+        // Removed date filter to show all lectures including past ones
       })
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
-        .populate('organization', 'name')
-        .populate('daija', 'name title image')
-        .sort({ date: 1 })
+        .populate({
+          path: 'organizationId',
+          select: 'name',
+          strictPopulate: false
+        })
+        .populate({
+          path: 'daija',
+          select: 'name title image',
+          strictPopulate: false
+        })
         .hint({ status: 1, date: 1 }) // 🚀 Force index usage
         .lean()
         .exec();
@@ -55,13 +59,20 @@ router.get('/public', async (req, res) => {
       
       // Fallback: Regular optimized query
       lectures = await Lecture.find({ 
-        status: 'approved',
-        date: { $gte: startOfToday }  // Include today's lectures and future ones
+        status: 'approved'
+        // Removed date filter to show all lectures including past ones
       })
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
-        .populate('organization', 'name')
-        .populate('daija', 'name title image')
-        .sort({ date: 1 })
+        .populate({
+          path: 'organizationId',
+          select: 'name',
+          strictPopulate: false
+        })
+        .populate({
+          path: 'daija',
+          select: 'name title image',
+          strictPopulate: false
+        })
         .lean()
         .exec();
     }
@@ -92,6 +103,40 @@ router.get('/public', async (req, res) => {
     const transformDuration = transformEndTime - transformStartTime;
     console.log(`⚡ [PERFORMANCE] Lightning-fast data transformation completed in: ${transformDuration}ms`);
     
+    // 🚀 CUSTOM SORTING: Future lectures first (ascending date), then past lectures (descending date)
+    const sortStartTime = Date.now();
+    console.log('📅 [PERFORMANCE] Starting custom date-based sorting...');
+    
+    const now = new Date();
+    const futureLectures = [];
+    const pastLectures = [];
+    
+    // Separate future and past lectures
+    for (let i = 0; i < transformedLectures.length; i++) {
+      const lecture = transformedLectures[i];
+      const lectureDate = new Date(lecture.date);
+      
+      if (lectureDate >= now) {
+        futureLectures.push(lecture);
+      } else {
+        pastLectures.push(lecture);
+      }
+    }
+    
+    // Sort future lectures by date ascending (earliest first)
+    futureLectures.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // Sort past lectures by date descending (most recent first)
+    pastLectures.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Combine: future lectures first, then past lectures
+    const sortedLectures = [...futureLectures, ...pastLectures];
+    
+    const sortEndTime = Date.now();
+    const sortDuration = sortEndTime - sortStartTime;
+    console.log(`📅 [PERFORMANCE] Custom sorting completed in: ${sortDuration}ms`);
+    console.log(`📊 [PERFORMANCE] Future lectures: ${futureLectures.length}, Past lectures: ${pastLectures.length}`);
+    
     // Debug: Total endpoint timing
     const totalEndTime = Date.now();
     const totalDuration = totalEndTime - startTime;
@@ -99,6 +144,7 @@ router.get('/public', async (req, res) => {
     console.log('📈 [PERFORMANCE] Super-optimized endpoint timing breakdown:');
     console.log(`  - Database query: ${queryDuration}ms (${((queryDuration/totalDuration)*100).toFixed(1)}%)`);
     console.log(`  - Data transformation: ${transformDuration}ms (${((transformDuration/totalDuration)*100).toFixed(1)}%)`);
+    console.log(`  - Custom sorting: ${sortDuration}ms (${((sortDuration/totalDuration)*100).toFixed(1)}%)`);
     console.log(`  - Total endpoint time: ${totalDuration}ms`);
     
     // Performance improvement metrics
@@ -113,14 +159,17 @@ router.get('/public', async (req, res) => {
     res.set({
       'X-Query-Time': `${queryDuration}ms`,
       'X-Transform-Time': `${transformDuration}ms`,
+      'X-Sort-Time': `${sortDuration}ms`,
       'X-Total-Time': `${totalDuration}ms`,
       'X-Lecture-Count': lectures.length,
+      'X-Future-Count': futureLectures.length,
+      'X-Past-Count': pastLectures.length,
       'X-Performance-Grade': performanceGrade,
-      'X-Optimized': 'super-optimized',
+      'X-Optimized': 'super-optimized-with-custom-sort',
       'X-Index-Hint': 'forced'
     });
 
-    res.json(transformedLectures);
+    res.json(sortedLectures);
   } catch (error) {
     const errorTime = Date.now();
     const errorDuration = errorTime - startTime;
@@ -233,7 +282,7 @@ router.get('/approved', async (req, res) => {
   try {
     const lectures = await Lecture.find({ status: 'approved' })
       .populate('createdBy', 'firstName lastName email')
-      .sort({ date: 1 });
+      .sort({ date: -1 });
     
     // Transform lectures to include daijaId for frontend compatibility
     const transformedLectures = lectures.map(lecture => ({
@@ -252,7 +301,7 @@ router.get('/latest', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     const lectures = await Lecture.find({ status: 'approved' })
-      .sort({ date: 1 })
+      .sort({ date: -1 })
       .limit(limit);
     
     // Transform lectures to include daijaId for frontend compatibility

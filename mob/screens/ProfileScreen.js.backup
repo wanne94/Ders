@@ -1,0 +1,431 @@
+import { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+  Alert,
+  ActivityIndicator,
+  TouchableOpacity,
+  Image,
+  Linking,
+  Share,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { usersService } from '../services/usersService';
+import { getImageUrl } from '../utils/imageUtils';
+import { formatDateWithDay } from '../utils/dateUtils';
+import { getUserData } from '../utils/authHelpers';
+
+const { width, height } = Dimensions.get('window');
+
+const COLORS = {
+  primary: '#022C43',
+  primaryLight: '#055A87',
+  white: '#ffffff',
+  gray: '#666666',
+  lightGray: '#f5f5f5',
+  border: '#e0e0e0',
+  warning: '#FFA726',
+  success: '#66BB6A',
+  error: '#ef5350',
+};
+
+const ProfileScreen = ({ navigation, route }) => {
+  const { profileId, profileType = 'user' } = route.params || {};
+  
+  const [profileData, setProfileData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchProfileData();
+  }, [profileId, profileType]);
+
+  const fetchProfileData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      if (profileType === 'user' && profileId) {
+        // Get user data from local storage first
+        const currentUser = await getUserData();
+        if (currentUser && currentUser._id === profileId) {
+          // If it's the current user, use local data
+          setProfileData(currentUser);
+        } else {
+          // Otherwise fetch from API
+          const userData = await usersService.getUserById(profileId);
+          setProfileData(userData);
+        }
+      } else {
+        setError('Tip profila nije podržan');
+      }
+    } catch (error) {
+      console.error('Error fetching profile data:', error);
+      setError(error.response?.data?.message || 'Greška pri učitavanju profila');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBackPress = () => {
+    navigation.goBack();
+  };
+
+  const handleShare = async () => {
+    if (!profileData) return;
+
+    try {
+      const shareOptions = {
+        message: `Pogledajte profil: ${profileData.firstName} ${profileData.lastName}`,
+        title: `Profil - ${profileData.firstName} ${profileData.lastName}`,
+      };
+
+      await Share.share(shareOptions);
+    } catch (error) {
+      console.error('Error sharing profile:', error);
+    }
+  };
+
+  const openLocationInMaps = (address, city) => {
+    if (!address && !city) return;
+    
+    const fullAddress = [address, city].filter(Boolean).join(', ');
+    const encodedAddress = encodeURIComponent(fullAddress);
+    
+    const mapsUrl = `https://maps.google.com/maps?q=${encodedAddress}`;
+    
+    Linking.openURL(mapsUrl).catch(err => {
+      console.error('Error opening maps:', err);
+      Alert.alert('Greška', 'Nije moguće otvoriti mapu');
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Učitavam profil...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <View style={styles.errorContent}>
+          <Ionicons name="alert-circle-outline" size={48} color={COLORS.error} />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchProfileData}>
+            <Text style={styles.retryButtonText}>Pokušaj ponovo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+            <Ionicons name="arrow-back" size={20} color={COLORS.white} />
+            <Text style={styles.backButtonText}>Nazad</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <View style={styles.errorContainer}>
+        <View style={styles.errorContent}>
+          <Ionicons name="person-outline" size={48} color={COLORS.gray} />
+          <Text style={styles.errorText}>Profil nije pronađen</Text>
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+            <Ionicons name="arrow-back" size={20} color={COLORS.white} />
+            <Text style={styles.backButtonText}>Nazad</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Header with back button */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.headerBackButton} onPress={handleBackPress}>
+          <Ionicons name="arrow-back" size={24} color={COLORS.white} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profil</Text>
+        <TouchableOpacity style={styles.headerShareButton} onPress={handleShare}>
+          <Ionicons name="share-outline" size={24} color={COLORS.white} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Profile Hero Section */}
+      <View style={styles.heroSection}>
+        <View style={styles.profileImageContainer}>
+          <View style={styles.profileInitialsContainer}>
+            <Text style={styles.profileInitials}>
+              {profileData.username ? profileData.username.charAt(0).toUpperCase() : 'K'}
+            </Text>
+          </View>
+        </View>
+        
+        <View style={styles.profileInfo}>
+          <Text style={styles.profileName}>
+            {profileData.username || 'Nepoznat korisnik'}
+          </Text>
+          
+          {profileData.rid && (
+            <View style={styles.ridContainer}>
+              <Ionicons name="card-outline" size={16} color={COLORS.gray} />
+              <Text style={styles.ridText}>RID: {profileData.rid}</Text>
+            </View>
+          )}
+          
+          {profileData.role && (
+            <View style={styles.roleBadge}>
+              <Text style={styles.roleText}>
+                {profileData.role === 'super_admin' ? 'Super Admin' : 
+                 profileData.role === 'admin' ? 'Admin' : 'Korisnik'}
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* Profile Details */}
+      <View style={styles.detailsSection}>
+        <Text style={styles.sectionTitle}>Osnovne informacije</Text>
+        
+        {profileData.email && (
+          <View style={styles.detailItem}>
+            <Ionicons name="mail-outline" size={20} color={COLORS.primary} />
+            <Text style={styles.detailText}>
+              {profileData.email}
+            </Text>
+          </View>
+        )}
+
+        {profileData.createdAt && (
+          <View style={styles.detailItem}>
+            <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
+            <Text style={styles.detailText}>
+              Član od: {formatDateWithDay(profileData.createdAt)}
+            </Text>
+          </View>
+        )}
+      </View>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: COLORS.gray,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    padding: 20,
+  },
+  errorContent: {
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: COLORS.error,
+    textAlign: 'center',
+    marginVertical: 16,
+  },
+  retryButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  retryButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.gray,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.primary,
+    paddingTop: 50,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+  },
+  headerBackButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.white,
+  },
+  headerShareButton: {
+    padding: 8,
+  },
+  heroSection: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+    alignItems: 'center',
+  },
+  profileImageContainer: {
+    marginBottom: 16,
+  },
+  profileInitialsContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: COLORS.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: COLORS.white,
+  },
+  profileInitials: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: COLORS.white,
+  },
+  profileInfo: {
+    alignItems: 'center',
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.white,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  ridContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 4,
+  },
+  ridText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  roleBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  roleText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  detailsSection: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 16,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  detailText: {
+    flex: 1,
+    fontSize: 16,
+    color: COLORS.gray,
+    marginLeft: 12,
+  },
+  linkText: {
+    color: COLORS.primary,
+  },
+  bioSection: {
+    marginTop: 24,
+  },
+  bioText: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: COLORS.gray,
+    textAlign: 'justify',
+  },
+  expertiseSection: {
+    marginTop: 24,
+  },
+  expertiseContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  expertiseChip: {
+    backgroundColor: COLORS.lightGray,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  expertiseText: {
+    fontSize: 14,
+    color: COLORS.primary,
+    fontWeight: '500',
+  },
+  statsSection: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: COLORS.gray,
+    marginTop: 4,
+  },
+});
+
+export default ProfileScreen;

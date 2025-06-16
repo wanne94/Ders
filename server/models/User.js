@@ -40,6 +40,51 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin', 'super_admin'],
     default: 'user'
   },
+  // Profile information
+  firstName: {
+    type: String,
+    trim: true,
+    maxlength: 100
+  },
+  lastName: {
+    type: String,
+    trim: true,
+    maxlength: 100
+  },
+  profileImage: {
+    type: String,
+    trim: true
+  },
+  bio: {
+    type: String,
+    trim: true,
+    maxlength: 500
+  },
+  organization: {
+    type: String,
+    trim: true,
+    maxlength: 200
+  },
+  expertise: [{
+    type: String,
+    trim: true
+  }],
+  // Contact information
+  phone: {
+    type: String,
+    trim: true,
+    maxlength: 30
+  },
+  address: {
+    type: String,
+    trim: true,
+    maxlength: 200
+  },
+  city: {
+    type: String,
+    trim: true,
+    maxlength: 100
+  },
   // Sigurnosno pitanje za resetovanje lozinke
   securityQuestionIndex: {
     type: Number,
@@ -52,7 +97,7 @@ const userSchema = new mongoose.Schema({
     required: true,
     lowercase: true, // Čuvamo odgovor u malim slovima za lakše poređenje
     trim: true
-  }
+  },
 }, {
   timestamps: true
 });

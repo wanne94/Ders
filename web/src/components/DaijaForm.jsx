@@ -19,6 +19,7 @@ import {
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import axiosInstance from '../utils/axiosConfig';
 import { getDefaultDaijaImage, getImageUrl } from '../utils/imageUtils';
+import { uploadImage } from '../utils/uploadService';
 
 const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) => {
   const [formData, setFormData] = useState({
@@ -54,7 +55,7 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
       });
 
       // Set image preview if editing - use getImageUrl to get proper server URL
-      if (daija.image) {
+      if (daija.image && daija.image.trim() !== '') {
         setImagePreview(getImageUrl(daija.image));
       }
     } else {
@@ -184,19 +185,15 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
         });
         
         try {
-          const uploadResponse = await axiosInstance.post('/upload-image', imageFormData, {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          });
+          const uploadResponse = await uploadImage(formData.imageFile);
 
-          console.log('✅ Upload response:', uploadResponse.data);
-          if (uploadResponse.data.success) {
-            imagePath = uploadResponse.data.path;
+          console.log('✅ Upload response:', uploadResponse);
+          if (uploadResponse.success) {
+            imagePath = uploadResponse.path;
             console.log('🖼️ Image uploaded successfully:', imagePath);
             console.log('🔄 UPLOAD SUCCESS - New image path:', imagePath);
           } else {
-            throw new Error('Upload failed: ' + (uploadResponse.data.error || 'Unknown error'));
+            throw new Error('Upload failed: ' + (uploadResponse.error || 'Unknown error'));
           }
         } catch (uploadError) {
           console.error('❌ Upload error details:', {
@@ -294,9 +291,12 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
                         style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: 4 }}
                       />
                     </Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Kliknite za promjenu slike
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 1 }}>
+                      <CloudUploadIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                      <Typography variant="body2" color="text.secondary">
+                        Kliknite za promjenu slike
+                      </Typography>
+                    </Box>
                   </>
                 ) : (
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

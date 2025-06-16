@@ -6,7 +6,7 @@ const LecturePage = () => {
   const router = useRouter();
   const { id } = router.query;
 
-  return <ElementPage type="lecture" id={id} />;
+  return <ElementPage type="lectures" id={id} />;
 };
 
 export default LecturePage; 

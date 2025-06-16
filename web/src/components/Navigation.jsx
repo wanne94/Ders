@@ -34,6 +34,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import BusinessIcon from '@mui/icons-material/Business';
 import PersonIcon from '@mui/icons-material/Person';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoCircle from './LogoCircle.jsx';
 import LectureForm from './LectureForm.jsx';
 import DaijaForm from './DaijaForm.jsx';
@@ -58,6 +59,7 @@ const Navigation = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [addMenuAnchor, setAddMenuAnchor] = useState(null);
   const [mobileAddMenuOpen, setMobileAddMenuOpen] = useState(false);
+  const [accountMenuAnchor, setAccountMenuAnchor] = useState(null);
 
   // Scroll handler za skrivanje/prikazivanje navigacije
   useEffect(() => {
@@ -186,6 +188,30 @@ const Navigation = () => {
 
   const handleMobileAddMenuToggle = () => {
     setMobileAddMenuOpen(!mobileAddMenuOpen);
+  };
+
+  const handleProfileClick = () => {
+    router.push('/profile');
+    setDrawerOpen(false); // Zatvori drawer ako je otvoren
+  };
+
+  // Account menu handlers
+  const handleAccountMenuClick = (event) => {
+    setAccountMenuAnchor(event.currentTarget);
+  };
+
+  const handleAccountMenuClose = () => {
+    setAccountMenuAnchor(null);
+  };
+
+  const handleProfileFromAccountMenu = () => {
+    handleAccountMenuClose();
+    router.push('/profile');
+  };
+
+  const handleLogoutFromAccountMenu = () => {
+    handleAccountMenuClose();
+    handleLogout();
   };
 
   const renderMobileDrawer = () => (
@@ -389,11 +415,26 @@ const Navigation = () => {
         </>
       )}
 
-      {/* Odjavi se na dnu menija */}
+      {/* Profil i Odjavi se na dnu menija */}
       {isLoggedIn && (
         <>
           <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', mt: 2 }} />
           <List sx={{ py: 0 }}>
+            <ListItem
+              button
+              onClick={handleProfileClick}
+              sx={{
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
+                color: 'white',
+                py: 1.5,
+                px: 2
+              }}
+            >
+              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
+                <PersonIcon sx={{ fontSize: '1.2rem' }} />
+              </ListItemIcon>
+              <ListItemText primary="Profil" />
+            </ListItem>
             <ListItem
               button
               onClick={() => {
@@ -517,15 +558,16 @@ const Navigation = () => {
                 </>
               )}
               
-              {/* Odjavi se */}
-              <Button
-                color="inherit"
-                startIcon={<LogoutIcon />}
-                onClick={handleLogout}
-                sx={{ padding: '6px 8px', color: 'white' }}
-              >
-                Odjavi se
-              </Button>
+              {/* Account menu icon */}
+              <Tooltip title={user?.username || 'Nalog'} arrow>
+                <IconButton
+                  color="inherit"
+                  onClick={handleAccountMenuClick}
+                  sx={{ color: 'white' }}
+                >
+                  <AccountCircleIcon sx={{ fontSize: '2rem' }} />
+                </IconButton>
+              </Tooltip>
             </>
           ) : (
             <>
@@ -720,6 +762,50 @@ const Navigation = () => {
             <BusinessIcon />
           </ListItemIcon>
           <ListItemText primary="Dodaj udruženje" />
+        </MenuItem>
+      </Menu>
+
+      {/* Account Menu */}
+      <Menu
+        anchorEl={accountMenuAnchor}
+        open={Boolean(accountMenuAnchor)}
+        onClose={handleAccountMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        MenuListProps={{
+          sx: {
+            backgroundColor: 'primary.main',
+            color: 'white',
+            minWidth: '180px'
+          }
+        }}
+        sx={{
+          zIndex: 10000,
+          '& .MuiPaper-root': {
+            backgroundColor: 'primary.main',
+            color: 'white',
+            minWidth: '180px',
+            zIndex: 10000
+          }
+        }}
+      >
+        <MenuItem onClick={handleProfileFromAccountMenu} sx={{ color: 'white' }}>
+          <ListItemIcon sx={{ color: 'white' }}>
+            <PersonIcon />
+          </ListItemIcon>
+          <ListItemText primary="Profil" />
+        </MenuItem>
+        <MenuItem onClick={handleLogoutFromAccountMenu} sx={{ color: 'white' }}>
+          <ListItemIcon sx={{ color: 'white' }}>
+            <LogoutIcon />
+          </ListItemIcon>
+          <ListItemText primary="Odjavi se" />
         </MenuItem>
       </Menu>
     </>

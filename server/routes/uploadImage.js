@@ -28,23 +28,27 @@ const cleanupTempFile = async (filePath, maxRetries = 5, delay = 100) => {
   }
 };
 
-// Define upload directory - unified for both environments
-const uploadsDir = path.join(__dirname, '../uploads/images'); // Unified path - server/uploads/images
+// In development, we don't store files locally - everything goes to production server
+// In production, define upload directory
+const isDevelopment = process.env.NODE_ENV === 'development';
+const uploadsDir = isDevelopment ? null : path.join(__dirname, '../uploads/images');
 
 console.log('📁 Upload configuration:', {
   environment: process.env.NODE_ENV,
   uploadsDir: uploadsDir,
-  uploadsExists: fs.existsSync(uploadsDir)
+  localStorageEnabled: !isDevelopment
 });
 
-// Create uploads directory if it doesn't exist
-try {
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('✅ Created uploads directory:', uploadsDir);
+// Only create uploads directory in production
+if (!isDevelopment) {
+  try {
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+      console.log('✅ Created uploads directory:', uploadsDir);
+    }
+  } catch (error) {
+    console.error('❌ Error creating directories:', error);
   }
-} catch (error) {
-  console.error('❌ Error creating directories:', error);
 }
 
 // Configure multer for handling file uploads
@@ -98,6 +102,16 @@ router.post('/', upload.single('image'), async (req, res) => {
   if (!req.file) {
     console.log('❌ No file uploaded');
     return res.status(400).json({ success: false, message: 'No file uploaded' });
+  }
+
+  // In development mode, reject local uploads and inform to use production server
+  if (isDevelopment) {
+    console.log('⚠️ Development mode: Local uploads disabled. Use production server.');
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Development mode: Please upload images directly to production server (https://ders.ba)',
+      suggestion: 'Use the uploadService.js utility which automatically uploads to production'
+    });
   }
 
   try {
@@ -213,4 +227,4 @@ router.use((error, req, res, next) => {
   next();
 });
 
-module.exports = router; 
+module.exports = router;

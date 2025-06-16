@@ -39,6 +39,9 @@ module.exports = {
   IS_PRODUCTION: isProduction,
   ...envConfig,
   
+  // Image server configuration - always use production server for images
+  IMAGE_SERVER_URL: 'https://ders.ba',
+  
   // Helper functions
   getImageUrl: (imagePath) => {
     if (!imagePath) return null;
@@ -46,7 +49,7 @@ module.exports = {
     // If it's already a full URL, return as is
     if (imagePath.startsWith('http')) return imagePath;
     
-    // Unified path handling for both environments
+    // Unified path handling for both environments - always use production server for images
     let cleanPath = imagePath;
     
     // Ensure /uploads/images/ format for both development and production
@@ -55,16 +58,17 @@ module.exports = {
       cleanPath = `/uploads/images/${cleanPath.replace(/^\/+/, '')}`;
     }
     
-    return `${envConfig.SERVER_URL}${cleanPath}`;
+    // Always use production server for images regardless of environment
+    return `https://ders.ba${cleanPath}`;
   },
   
   getDefaultImages: () => ({
-    lecture: `${envConfig.SERVER_URL}/uploads/images/predavanjeslika.jpg`,
-    daija: `${envConfig.SERVER_URL}/uploads/images/daijaslika.jpg`,
-    organization: `${envConfig.SERVER_URL}/uploads/images/udruzenjeslika.jpg`,
-    default: `${envConfig.SERVER_URL}/uploads/images/default.jpg`,
-    logo: `${envConfig.SERVER_URL}/uploads/logo.jpg`,
-    favicon: `${envConfig.SERVER_URL}/uploads/images/favicon.png`
+    lecture: `https://ders.ba/uploads/images/predavanjeslika.jpg`,
+    daija: `https://ders.ba/uploads/images/daijaslika.jpg`,
+    organization: `https://ders.ba/uploads/images/udruzenjeslika.jpg`,
+    default: `https://ders.ba/uploads/images/default.jpg`,
+    logo: `https://ders.ba/uploads/images/logo.jpg`,
+    favicon: `https://ders.ba/uploads/images/favicon.png`
   })
 };
 

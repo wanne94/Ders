@@ -18,6 +18,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import PhoneIcon from '@mui/icons-material/Phone';
 import axiosInstance from '@/utils/axiosConfig';
 import { getImageUrl } from '../utils/imageUtils';
+import { uploadImage } from '../utils/uploadService';
 
 const OrganizationForm = ({ open, onClose, onSuccess, approvalEnabled = true, organization }) => {
   // Deduplikuj gradove za sigurnost - REMOVED
@@ -59,7 +60,7 @@ const OrganizationForm = ({ open, onClose, onSuccess, approvalEnabled = true, or
       });
 
       // Set image preview if editing - use getImageUrl to get proper server URL
-      if (organization.image) {
+      if (organization.image && organization.image.trim() !== '') {
         setImagePreview(getImageUrl(organization.image));
       }
     } else {
@@ -173,28 +174,22 @@ const OrganizationForm = ({ open, onClose, onSuccess, approvalEnabled = true, or
         const imageFormData = new FormData();
         imageFormData.append('image', formData.imageFile);
 
-        console.log('🔄 Starting image upload...');
+        console.log('🔄 Starting image upload to production server...');
         console.log('📁 File details:', {
           name: formData.imageFile.name,
           size: formData.imageFile.size,
           type: formData.imageFile.type
         });
-        console.log('🌐 Upload URL:', `${process.env.NEXT_PUBLIC_API_URL}/upload-image`);
         
         try {
-          const uploadResponse = await axiosInstance.post('/upload-image', imageFormData, {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          });
+          const uploadResponse = await uploadImage(formData.imageFile);
 
-          console.log('✅ Upload response:', uploadResponse.data);
-          if (uploadResponse.data.success) {
-            imagePath = uploadResponse.data.path;
-            console.log('🖼️ Image uploaded successfully:', imagePath);
-            console.log('🔄 UPLOAD SUCCESS - New image path:', imagePath);
+          console.log('✅ Upload response:', uploadResponse);
+          if (uploadResponse.success) {
+            imagePath = uploadResponse.path;
+            console.log('🖼️ Image uploaded successfully to production server:', imagePath);
           } else {
-            throw new Error('Upload failed: ' + (uploadResponse.data.error || 'Unknown error'));
+            throw new Error('Upload failed: ' + (uploadResponse.error || 'Unknown error'));
           }
         } catch (uploadError) {
           console.error('❌ Upload error details:', {
@@ -325,9 +320,12 @@ const OrganizationForm = ({ open, onClose, onSuccess, approvalEnabled = true, or
                         borderRadius: 1
                       }}
                     />
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Kliknite za promjenu slike
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 1 }}>
+                      <CloudUploadIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                      <Typography variant="body2" color="text.secondary">
+                        Kliknite za promjenu slike
+                      </Typography>
+                    </Box>
                   </Box>
                 ) : (
                   <Box sx={{ 

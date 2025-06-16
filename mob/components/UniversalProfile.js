@@ -1,12 +1,14 @@
 import {
-    View,
-    Text,
-    Image,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    Dimensions,
-    Alert,
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  Alert,
+  Modal,
+  Platform,
 } from 'react-native';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
@@ -14,6 +16,7 @@ import { bs } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
 import { getImageUrl, getDefaultDaijaImage, getDefaultLectureImage, getDefaultOrganizationImage } from '../utils/imageUtils';
 import UniverzalCard from './UniverzalCard';
+import ShareButton from './ShareButton';
 import predavanjaService from '../services/predavanjaService';
 import { sortLecturesByTime } from '../utils/sortingUtils';
 const { Linking } = require('react-native');
@@ -39,8 +42,8 @@ const COLORS = {
 
 const UniversalProfile = ({ data, type, onBack }) => {
   const [relatedLectures, setRelatedLectures] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   // Format date with day name
   const formatDateWithDay = (dateString) => {
@@ -54,7 +57,6 @@ const UniversalProfile = ({ data, type, onBack }) => {
     const fetchRelatedLectures = async () => {
       if (!data || !data._id) return;
       
-      setIsLoading(true);
       try {
         let lectures = [];
         
@@ -83,7 +85,7 @@ const UniversalProfile = ({ data, type, onBack }) => {
         console.error('Error fetching related lectures:', error);
         setRelatedLectures([]);
       } finally {
-        setIsLoading(false);
+        // removed unused isLoading state
       }
     };
 
@@ -466,15 +468,18 @@ const UniversalProfile = ({ data, type, onBack }) => {
         {/* Profile Hero Section */}
         <View style={styles.heroSection}>
           <View style={styles.imageContainer}>
-            <Image
-              source={{ uri: getProfileImage() }}
-              style={[
-                styles.profileImage,
-                type === 'daija' ? styles.circularImage : styles.rectangularImage
-              ]}
-              resizeMode="cover"
-              onError={() => setImageError(true)}
-            />
+            <TouchableOpacity onPress={() => setShowImageModal(true)}>
+              <Image
+                source={{ uri: getProfileImage() }}
+                style={[
+                  styles.profileImage,
+                  type === 'daija' ? styles.circularImage : 
+                  type === 'lecture' ? styles.lectureImage : styles.rectangularImage
+                ]}
+                resizeMode={type === 'lecture' ? 'contain' : 'cover'}
+                onError={() => setImageError(true)}
+              />
+            </TouchableOpacity>
           </View>
 
           <View style={styles.profileInfo}>
@@ -484,10 +489,74 @@ const UniversalProfile = ({ data, type, onBack }) => {
               <Text style={styles.profileSubtitle}>{data.title}</Text>
             )}
             
+            {type === 'lecture' && data.speaker && (
+              <>
+                <Text style={styles.profileSubtitle}>{data.speaker}</Text>
+                {data.daijaTitle && (
+                  <Text style={styles.profileDaijaTitle}>{data.daijaTitle}</Text>
+                )}
+              </>
+            )}
+            
             {data.shortDescription && (
               <Text style={styles.profileDescription}>{data.shortDescription}</Text>
             )}
           </View>
+
+          {/* Action Buttons for Lectures */}
+          {type === 'lecture' && (
+            <View style={styles.actionButtonsContainer}>
+              <ShareButton 
+                lecture={data} 
+                style={styles.actionButton}
+                textStyle={styles.actionButtonText}
+              />
+              {(data.address || data.city) && (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.locationButton]}
+                  onPress={() => {
+                    const fullAddress = [data.address, data.city].filter(Boolean).join(", ");
+                    const encodedAddress = encodeURIComponent(fullAddress);
+                    
+                    let mapsUrl;
+                    if (Platform.OS === 'ios') {
+                      mapsUrl = `maps://maps.apple.com/?q=${encodedAddress}&dirflg=d`;
+                    } else {
+                      mapsUrl = `google.navigation:q=${encodedAddress}`;
+                    }
+                    
+                    Linking.canOpenURL(mapsUrl).then(supported => {
+                      if (supported) {
+                        Linking.openURL(mapsUrl);
+                      } else {
+                        // Fallback to web maps
+                        const webUrl = `https://maps.google.com/maps?q=${encodedAddress}`;
+                        Linking.openURL(webUrl).catch(() => {
+                          Alert.alert(
+                            'Greška',
+                            'Nije moguće otvoriti mapu. Molimo pokušajte ponovo.',
+                            [{ text: 'U redu', style: 'default' }],
+                            { cancelable: true }
+                          );
+                        });
+                      }
+                    }).catch(() => {
+                      Alert.alert(
+                        'Greška',
+                        'Nije moguće otvoriti mapu. Molimo pokušajte ponovo.',
+                        [{ text: 'U redu', style: 'default' }],
+                        { cancelable: true }
+                      );
+                    });
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <Ionicons name="location-outline" size={18} color="#374151" />
+                  <Text style={styles.actionButtonText}>Lokacija</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
 
           {renderSocialMedia()}
         </View>
@@ -506,7 +575,7 @@ const UniversalProfile = ({ data, type, onBack }) => {
           {/* Related Lectures */}
           {relatedLectures.length > 0 && (
             <View style={styles.relatedSection}>
-              <Text style={styles.relatedTitle}>Povezana predavanja</Text>
+              <Text style={styles.relatedTitle}>Drugi najavljeni dersovi</Text>
               <View style={styles.relatedList}>
                 {relatedLectures.map((lecture) => (
                   <UniverzalCard
@@ -532,6 +601,35 @@ const UniversalProfile = ({ data, type, onBack }) => {
           )}
         </View>
       </ScrollView>
+      
+      {/* Full Screen Image Modal */}
+      <Modal
+        visible={showImageModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowImageModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity 
+            style={styles.modalOverlay} 
+            onPress={() => setShowImageModal(false)}
+          >
+            <View style={styles.modalContent}>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setShowImageModal(false)}
+              >
+                <Ionicons name="close" size={30} color={COLORS.white} />
+              </TouchableOpacity>
+              <Image
+                source={{ uri: getProfileImage() }}
+                style={styles.fullScreenImage}
+                resizeMode="contain"
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -561,7 +659,7 @@ const styles = StyleSheet.create({
   profileImage: {
     width: '100%',
     maxWidth: 350,
-    aspectRatio: 1 / 1, // prilagodi ako znaš odnos širina/visina
+    aspectRatio: 1 / 1,
     borderRadius: 12,
     borderWidth: 4,
     borderColor: 'rgba(255, 255, 255, 0.3)',
@@ -573,6 +671,14 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   rectangularImage: {
+    borderRadius: 12,
+    borderWidth: 4,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  lectureImage: {
+    width: '100%',
+    maxWidth: 350,
+    height: 400,
     borderRadius: 12,
     borderWidth: 4,
     borderColor: 'rgba(255, 255, 255, 0.3)',
@@ -600,6 +706,45 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     maxWidth: width - 60,
+  },
+  profileDaijaTitle: {
+    fontSize: 16,
+    color: COLORS.textLight,
+    fontStyle: 'italic',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 16,
+    flexWrap: 'wrap',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0, 0, 0, 0.06)',
+  },
+  actionButtonText: {
+    color: '#374151',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  locationButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
   },
   socialContainer: {
     marginTop: 20,
@@ -639,7 +784,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 16,
     gap: 16,
-    paddingBottom: 100, // Safe area for bottom navigation (80px height + 20px extra space)
+    paddingBottom: 100,
   },
   infoSection: {
     backgroundColor: COLORS.white,
@@ -682,26 +827,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   contactText: {
-    fontSize: 16,
-    color: COLORS.text,
-    flex: 1,
-  },
-  detailsList: {
-    gap: 8,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
-  },
-  detailLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
-    width: 100,
-  },
-  detailValue: {
     fontSize: 16,
     color: COLORS.text,
     flex: 1,
@@ -763,6 +888,38 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     lineHeight: 24,
     flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    height: '70%',
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: -50,
+    right: 10,
+    zIndex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    padding: 5,
+  },
+  fullScreenImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
 });
 

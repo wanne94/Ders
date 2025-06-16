@@ -1,10 +1,10 @@
-import jwt from 'jsonwebtoken';
-import asyncHandler from 'express-async-handler';
+const jwt = require('jsonwebtoken');
+const asyncHandler = require('express-async-handler');
 
 // Mock User model - replace with actual import when User model exists
-// import User from '../models/User.js';
+// const User = require('../models/User');
 
-export const protect = asyncHandler(async (req, res, next) => {
+const protect = asyncHandler(async (req, res, next) => {
   let token;
   
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -30,7 +30,7 @@ export const protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-export const isSuperAdmin = (req, res, next) => {
+const isSuperAdmin = (req, res, next) => {
   if (req.user && req.user.role === 'super_admin') {
     return next();
   }
@@ -41,7 +41,7 @@ export const isSuperAdmin = (req, res, next) => {
   });
 };
 
-export const isAdmin = (req, res, next) => {
+const isAdmin = (req, res, next) => {
   if (req.user && (req.user.role === 'admin' || req.user.role === 'super_admin')) {
     return next();
   }
@@ -50,4 +50,6 @@ export const isAdmin = (req, res, next) => {
     message: 'Forbidden: admin access required',
     userRole: req.user?.role || 'unknown'
   });
-}; 
+};
+
+module.exports = protect; 

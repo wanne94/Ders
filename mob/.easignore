@@ -92,6 +92,10 @@ CHANGELOG.md
 LICENSE
 AUTHORS
 
+# === NATIVE FOLDERS (za prebuild pristup) ===
+# Native folderi su obrisani - koristimo CNG pristup
+# android/ i ios/ će biti automatski generisani kad je potrebno
+
 # === MONOREPO / VANJSKI FOLDERI KOJI NISU APP ===
 ../Web/
 Web/

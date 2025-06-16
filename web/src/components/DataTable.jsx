@@ -1,4 +1,5 @@
 import { useState, useMemo, memo, useEffect } from 'react';
+import { formatDaijaTitle } from '../utils';
 import {
     Box,
     Table,
@@ -538,7 +539,7 @@ const DataTable = ({
           { id: 'title', label: 'Naslov', sortable: true, sortKey: 'title', getValue: (item) => item.title || 'N/A' },
           { id: 'speaker', label: 'Daija', sortable: true, sortKey: 'speaker', getValue: (item) => {
             if (item.daija && typeof item.daija === 'object') {
-              return `${item.daija.title || ''} ${item.daija.name || ''}`.trim() || 'N/A';
+              return formatDaijaTitle(item.daija.name, item.daija.title) || 'N/A';
             }
             return item.speaker || 'N/A';
           }},
