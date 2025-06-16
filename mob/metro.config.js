@@ -1,6 +1,18 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
 
 const config = getDefaultConfig(__dirname);
+
+// Ensure Metro only looks in the current project's node_modules
+config.resolver.nodeModulesPaths = [
+  path.resolve(__dirname, 'node_modules')
+];
+
+// Block parent node_modules
+config.resolver.blockList = [
+  /\/node_modules\/.*\/node_modules\//,
+  new RegExp(path.resolve(__dirname, '..', 'node_modules').replace(/[\\]/g, '\\\\') + '.*')
+];
 
 // Optimizacije za smanjenje bundle veličine
 config.resolver.assetExts.push('db', 'mp3', 'ttf', 'obj', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg');

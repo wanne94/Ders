@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  Switch,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -47,6 +48,16 @@ const ProfileScreen = ({ navigation }) => {
     confirmPassword: '' 
   });
   
+  // Notification preferences
+  const [notificationPreferences, setNotificationPreferences] = useState({
+    enabled: true,
+    newLectures: true
+  });
+  const [originalNotificationPreferences, setOriginalNotificationPreferences] = useState({
+    enabled: true,
+    newLectures: true
+  });
+  const [notificationPreferencesChanged, setNotificationPreferencesChanged] = useState(false);
   
   const [submitting, setSubmitting] = useState(false);
   
@@ -81,6 +92,16 @@ const ProfileScreen = ({ navigation }) => {
         if (isMountedRef.current) { setEmailForm({ email: userData.email || '', currentPassword: '' }); }
       }
       
+      // Load notification preferences
+      try {
+        const prefsResponse = await usersService.getNotificationPreferences();
+        if (prefsResponse.success && isMountedRef.current) {
+          if (isMountedRef.current) { setNotificationPreferences(prefsResponse.preferences); }
+          if (isMountedRef.current) { setOriginalNotificationPreferences(prefsResponse.preferences); }
+        }
+      } catch (prefError) {
+        console.log('Could not load notification preferences:', prefError);
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
       if (isMountedRef.current) { setError('Greška pri učitavanju profila.'); }
@@ -189,6 +210,56 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
+  const handleNotificationChange = (field, value) => {
+    const newPreferences = { ...notificationPreferences, [field]: value };
+    setNotificationPreferences(newPreferences);
+    
+    // Check if preferences have changed from original
+    const hasChanged = JSON.stringify(newPreferences) !== JSON.stringify(originalNotificationPreferences);
+    setNotificationPreferencesChanged(hasChanged);
+  };
+
+  const handleNotificationSubmit = async () => {
+    try {
+      setSubmitting(true);
+      setError('');
+
+      const response = await usersService.updateNotificationPreferences(notificationPreferences);
+      if (response.success) {
+        if (isMountedRef.current) {
+          setSuccess('Notification preferences ažurirane.');
+          setOriginalNotificationPreferences(notificationPreferences);
+          setNotificationPreferencesChanged(false);
+          
+          // Auto-clear success message after 3 seconds
+          const timeoutId = setTimeout(() => {
+            if (isMountedRef.current) {
+              setSuccess('');
+            }
+          }, 3000);
+          timeoutsRef.current.push(timeoutId);
+        }
+      } else {
+        if (isMountedRef.current) {
+          setError('Greška pri ažuriranju notification preferences.');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating notification preferences:', error);
+      if (isMountedRef.current) {
+        setError('Greška pri ažuriranju notification preferences.');
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setSubmitting(false);
+      }
+    }
+  };
+
+  const handleNotificationReset = () => {
+    setNotificationPreferences(originalNotificationPreferences);
+    setNotificationPreferencesChanged(false);
+  };
 
   const getRoleColor = (role) => {
     switch (role) {
@@ -298,6 +369,58 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
 
+        {/* Notification Settings Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="notifications-outline" size={20} color={COLORS.primary} />
+            <Text style={styles.cardTitle}>Notifikacije</Text>
+          </View>
+          <View style={styles.divider} />
+          
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>Omogući notifikacije</Text>
+            <Switch
+              value={notificationPreferences.enabled}
+              onValueChange={(value) => handleNotificationChange('enabled', value)}
+              trackColor={{ false: COLORS.lightGray, true: COLORS.primaryLight }}
+              thumbColor={notificationPreferences.enabled ? COLORS.primary : COLORS.gray}
+            />
+          </View>
+          
+          <View style={[styles.switchRow, { opacity: notificationPreferences.enabled ? 1 : 0.5 }]}>
+            <Text style={styles.switchLabel}>Nova predavanja</Text>
+            <Switch
+              value={notificationPreferences.newLectures}
+              onValueChange={(value) => handleNotificationChange('newLectures', value)}
+              disabled={!notificationPreferences.enabled}
+              trackColor={{ false: COLORS.lightGray, true: COLORS.primaryLight }}
+              thumbColor={notificationPreferences.newLectures ? COLORS.primary : COLORS.gray}
+            />
+          </View>
+          
+          {notificationPreferencesChanged && (
+            <View style={styles.notificationButtons}>
+              <TouchableOpacity 
+                style={styles.outlineButton}
+                onPress={handleNotificationReset}
+                disabled={submitting}
+              >
+                <Text style={styles.outlineButtonText}>Poništi</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.primaryButton}
+                onPress={handleNotificationSubmit}
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <ActivityIndicator size="small" color={COLORS.white} />
+                ) : (
+                  <Text style={styles.primaryButtonText}>Sačuvaj</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Email Change Dialog */}
@@ -317,6 +440,7 @@ const ProfileScreen = ({ navigation }) => {
             <TextInput
               style={styles.input}
               placeholder="Nova email adresa"
+              
               placeholderTextColor={COLORS.textSecondary}
               value={emailForm.email}
               onChangeText={(text) => setEmailForm({ ...emailForm, email: text })}

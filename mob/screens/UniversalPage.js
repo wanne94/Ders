@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, ScrollView, RefreshControl, ActivityIndicator, Text } from 'react-native';
+import { View, StyleSheet, Alert, ScrollView, ActivityIndicator, Text, SafeAreaView } from 'react-native';
 import UniverzalCard from '../components/UniverzalCard';
+import Menu from '../components/Menu';
 import udruzenjaService from '../services/udruzenjaService';
 import predavanjaService from '../services/predavanjaService';
 import daijeService from '../services/daijeService';
 import { formatDateWithDay } from '../utils/dateUtils';
 import { applySorting } from '../utils/sortingUtils';
+import { ENV } from '../config';
 
 const COLORS = {
   primary: '#022C43',
@@ -15,10 +17,11 @@ const COLORS = {
   lightGray: '#f5f5f5',
 };
 
-const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures = [] }) => {
+const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures = [], onNavigate, user, isAuthenticated }) => {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const getPageConfig = () => {
     switch (type) {
@@ -105,7 +108,7 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
 
   useEffect(() => {
     loadData();
-  }, [type, allLectures]);
+  }, [type]);
 
   const handleItemPress = (item) => {
     if (!item) return;
@@ -147,23 +150,57 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
   };
 
   const handleMenuPress = () => {
-    // Menu functionality can be added here if needed
+    setMenuOpen(true);
+  };
+
+  const handleMenuClose = () => {
+    setMenuOpen(false);
+  };
+
+  const handleMenuNavigate = (path) => {
+    if (onNavigate) {
+      onNavigate(path);
+    }
+  };
+
+  const handleAuthNavigate = () => {
+    if (onNavigate) {
+      onNavigate('auth');
+    }
+  };
+
+  const handleLogout = () => {
+    // TODO: Implement real logout logic
+    if (onNavigate) {
+      onNavigate('home');
+    }
+  };
+
+  const handleAddContent = () => {
+    if (onNavigate) {
+      onNavigate('add-content');
+    }
+  };
+
+  const handleAddContentWithType = (type) => {
+    // TODO: Implement specific content type adding
+    if (onNavigate) {
+      onNavigate('add-content');
+    }
+  };
+
+  const handleProfileNavigate = (userId, userType) => {
+    if (onNavigate) {
+      onNavigate('profile');
+    }
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isLoading}
-            onRefresh={loadData}
-            colors={[COLORS.primary]}
-            tintColor={COLORS.primary}
-          />
-        }
       >
         {isLoading ? (
           <View style={styles.loadingContainer}>
@@ -189,24 +226,58 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
           ))
         )}
       </ScrollView>
-    </View>
+      
+      <Menu 
+        isOpen={menuOpen}
+        onClose={handleMenuClose}
+        onNavigate={handleMenuNavigate}
+        isAuthenticated={isAuthenticated || false}
+        user={user}
+        onAuthNavigate={handleAuthNavigate}
+        onLogout={handleLogout}
+        onAddContent={handleAddContent}
+        onAddContentWithType={handleAddContentWithType}
+        onProfileNavigate={handleProfileNavigate}
+      />
+    </SafeAreaView>
   );
 };
 
 // API functions using the real services
+// Helper function to create fetch with timeout
+const fetchWithTimeout = (url, timeout = 5000) => {
+  return Promise.race([
+    fetch(url),
+    new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Request timeout')), timeout)
+    )
+  ]);
+};
+
 const fetchLectures = async () => {
-  try {
-    // Use the same endpoint as home page to get populated daija data
-    const response = await fetch(`https://ders.ba/api/lectures/dashboard/public`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  const urls = [
+    `${ENV.API_URL}/lectures/dashboard/public`,
+    `${ENV.BACKUP_API_URL}/lectures/dashboard/public`,
+    `${ENV.FALLBACK_API_URL}/lectures/dashboard/public`
+  ];
+  
+  for (const url of urls) {
+    try {
+      console.log('UniversalPage: Trying to fetch lectures from:', url);
+      const response = await fetchWithTimeout(url, 10000); // 10 second timeout for local development
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error(`UniversalPage: Error fetching from ${url}:`, error.message);
+      // Continue to next URL
     }
-    const data = await response.json();
-    return Array.isArray(data) ? data : [];
-  } catch (error) {
-    console.error('Error fetching lectures:', error);
-    return [];
   }
+  
+  console.error('UniversalPage: All fetch attempts failed');
+  return [];
 };
 
 const fetchDaije = async () => {
@@ -239,8 +310,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.lightGray,
   },
   contentContainer: {
-    padding: 16,
+    padding: 8,
     paddingBottom: 100, // Extra padding for bottom navigation
+    gap: 8, // Razmak između kartice
   },
   loadingContainer: {
     flex: 1,

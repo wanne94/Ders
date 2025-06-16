@@ -390,8 +390,8 @@ const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNaviga
                 style={styles.menuItem}
                 onPress={() => {
                   handleOverlayPress();
-                  if (onProfileNavigate && user) {
-                    onProfileNavigate(user._id, 'user');
+                  if (onProfileNavigate) {
+                    onProfileNavigate();
                   }
                 }}
                 activeOpacity={0.7}

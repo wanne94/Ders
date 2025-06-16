@@ -1,12 +1,20 @@
+// Text formatting utilities
+export const toTitleCase = (str) => {
+  if (!str) return '';
+  return str.toLowerCase().replace(/\w\S*/g, (txt) => 
+    txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+  );
+};
+
 // Daija title formatting utility
 export const formatDaijaTitle = (name, title) => {
   if (!name || !title) return name || '';
   
-  const capitalizedTitle = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase();
+  const lowercaseTitle = title.toLowerCase();
   
   if (title.toLowerCase() === 'prof') {
-    return `${name}, ${capitalizedTitle}.`;
+    return `${name}, ${lowercaseTitle}.`;
   }
   
-  return `${capitalizedTitle}. ${name}`;
+  return `${lowercaseTitle}. ${name}`;
 };

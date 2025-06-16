@@ -11,7 +11,9 @@ import {
   Switch,
   Dimensions,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  SafeAreaView,
+  StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
@@ -674,11 +676,13 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-    >
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#001a2e" />
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
       <ScrollView 
         style={styles.content} 
         contentContainerStyle={styles.scrollContent}
@@ -715,6 +719,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -722,6 +727,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  keyboardView: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -749,7 +757,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 120, // Extra padding for bottom navigation
   },
   tabsContainer: {
     flexDirection: 'row',

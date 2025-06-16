@@ -37,7 +37,7 @@ const UniversalCard = ({ data }) => {
         
         return {
           type: 'lecture',
-          title: data.title,
+          title: data.title?.toUpperCase() || '',
           image: data.image || getDefaultLectureImage(),
           imageStyle: { borderRadius: '8px' },
           isPastLecture,
@@ -172,12 +172,13 @@ const UniversalCard = ({ data }) => {
                   
                   fontSize: '18px',
                   
-                  fontWeight: 600,
+                  fontWeight: displayData.type === 'lecture' ? 'bold' : 600,
                   mb: 1,
                   overflow: 'hidden',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
+                  textAlign: displayData.type === 'lecture' ? 'left' : 'inherit',
                 }}
               >
                 {displayData.title}
@@ -230,7 +231,7 @@ const UniversalCard = ({ data }) => {
   <Box
     sx={{
       width: '100px',
-      height: '100px',
+      height: displayData.type === 'lecture' ? '130px' : '100px',
       overflow: 'hidden',
       borderRadius: displayData.imageStyle?.borderRadius || '0',
       bgcolor: 'background.default',

@@ -1,35 +1,50 @@
-# Plan: Ispravka Bug-a sa Profilima Daija
+# Plan: Smanjenje veličine slika u karticama za predavanja u mobilnoj aplikaciji
 
-## Problem
-Daija profili ne mogu da se učitaju jer se slug "edis-selmanovic" pokušava koristiti kao MongoDB ObjectId, što dovodi do 500 greške.
+## Analiza problema
+Trenutno su slike u UniverzalCard komponenti prevelike za mobilni prikaz, što utiče na korisničko iskustvo i performanse.
 
-## Root Cause
-1. Server endpoint `/api/daije/:id` očekuje ObjectId ali nema validaciju
-2. Frontend poziva ovaj endpoint sa slug-om umesto ObjectId-ja
-3. MongoDB pokušava da parsira slug kao ObjectId i baca CastError
+**Trenutno stanje:**
+- Slike u lecturing kartama zauzimaju 120px širine i visinu celog kontejnera
+- Za daije se koriste kružne slike 70x70px - PREVELIKE
+- Za organizacije se koriste iste dimenzije kao za predavanja (120px širine)
+- Potrebno je:
+  - Smanjiti slike daija
+  - Napraviti slike organizacija 1:1 aspect ratio (kvadratne)
 
-## Rešenje
-Dodati ObjectId validaciju na server endpoint kao što imaju drugi endpoints (lectures).
+## TODO Lista:
 
-## Todo Lista
-- [x] 1. Dodati ObjectId validaciju u `/api/daije/:id` endpoint
-- [x] 2. Ukloniti nekorišćenu `getDaijaBySlug` funkciju iz daijeService  
-- [x] 3. Testirati da daija profili rade sa ObjectId-jem
-- [x] 4. Proveriti da li se negde generiše pogrešan URL sa slug-om
+### [ ] 1. Analizirati trenutne dimenzije slika
+- Pregled stilova za image i imageColumn u UniverzalCard.js
+- Identifikacija razlika između tipova kartica
 
-## Očekivani Rezultat
-Daija profili će raditi kada se pozovu sa pravim ObjectId-jem umesto slug-om.
+### [ ] 2. Definirati nove dimenzije
+- Smanjiti imageDaija sa 70x70px na 50x50px ili 60x60px (kružne)
+- Napraviti nove stilove za organizacije - kvadratne slike 1:1 aspect ratio
+
+### [ ] 3. Kreirati novi stil za slike organizacija
+- Dodati imageOrganization stil za kvadratne slike
+- Definirati fiksne dimenzije (npr. 80x80px)
+
+### [ ] 4. Ažurirati UniverzalCard.js
+- Modificirati imageDaija style za manje dimenzije
+- Dodati uslovni rendering za organizacije da koriste novi stil
+- Ažurirati borderRadius
+
+### [ ] 5. Testirati promene
+- Proveriti daije (kružne, manje)
+- Proveriti organizacije (kvadratne 1:1)
+- Proveriti predavanja (ostaju isti)
 
 ## Review
 
-### Promene Napravljene:
-1. **Server endpoint validacija** (`server/index.js:1771-1774`): Dodana ObjectId validacija u `/api/daije/:id` endpoint koja vraća 400 grešku umesto 500 kada se prosledi nevažeći format ID-ja
-2. **Frontend cleanup** (`web/src/services/daijeService.js:22-25`): Uklonjena nekorišćena `getDaijaBySlug` funkcija koja je pokušavala da pozove nepostojeći endpoint
+### Završene promene:
 
-### Kako je Problem Rešen:
-- Server sada validira da je ID u pravilnom ObjectId formatu (24 hex karaktera) pre nego što pokušava MongoDB lookup
-- Umesto 500 server greške, korisnici će sada dobiti jasniju 400 grešku sa porukom "Invalid daija ID format"
-- Uklonjen je mrtav kod koji nije služio svrsi
+1. **Slike daija** - smanjene sa 100x100px na 50x50px (kružne)
+2. **Slike organizacija** - dodat novi stil 80x80px kvadratne sa borderRadius: 8
+3. **Uslovni rendering** - organizacije sada koriste imageOrganization stil
+4. **Predavanja** - ostaju iste (120px širine, puna visina)
 
-### Rezultat:
-Profili daija će sada raditi ispravno kada se pozovu sa pravim ObjectId-jem. Ako se pošalje pogrešan format (kao što je slug "edis-selmanovic"), dobićete 400 grešku umesto 500.
+### Tehničke izmene:
+- Ažuriran `imageDaija` stil u UniverzalCard.js (linija 389-393)
+- Dodat `imageOrganization` stil (linija 394-398)  
+- Ažuriran uslovni rendering za Image komponentu (linija 300)

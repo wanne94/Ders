@@ -1,13 +1,14 @@
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { format } from 'date-fns';
 import { bs } from 'date-fns/locale';
+import { Ionicons } from '@expo/vector-icons';
 import { getImageUrl, getDefaultDaijaImage, getDefaultLectureImage, getDefaultOrganizationImage } from '../utils/imageUtils';
-import { formatDaijaTitle } from '../utils';
+import { formatDaijaTitle, toTitleCase } from '../utils';
 import { useState } from 'react';
+// import { COLORS, TYPOGRAPHY, SPACING } from '../theme';
 
 const { width } = Dimensions.get('window');
 
-// Colors matching the app theme
 const COLORS = {
   primary: '#022C43',
   primaryLight: '#055A87',
@@ -15,24 +16,69 @@ const COLORS = {
   white: '#ffffff',
   gray: '#666666',
   lightGray: '#f5f5f5',
-  success: '#4CAF50',
-  warning: '#FF9800',
-  info: '#2196F3',
+  textLight: '#999999',
 };
 
-// Icon components using Unicode symbols to match web icons
+const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  card: {
+    padding: 16,
+    borderRadius: 12,
+    margin: 8,
+  },
+  gap: {
+    sm: 4,
+    md: 8,
+    lg: 12,
+  },
+};
+
+const TYPOGRAPHY = {
+  fontSize: {
+    xs: 12,
+    sm: 14,
+    md: 16,
+    lg: 18,
+    xl: 20,
+  },
+  textStyles: {
+    cardTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: COLORS.primary,
+      lineHeight: 24,
+    },
+    cardInfo: {
+      fontSize: 13,
+      color: COLORS.gray,
+      lineHeight: 18,
+    },
+    bodySmall: {
+      fontSize: 14,
+      color: COLORS.gray,
+      lineHeight: 20,
+    },
+  },
+};
+
+// Icon components using Ionicons to match web icons
 const Icons = {
-  Person: () => <Text style={styles.icon}>👤</Text>,
-  Business: () => <Text style={styles.icon}>🏢</Text>,
-  Calendar: () => <Text style={styles.icon}>📅</Text>,
-  Time: () => <Text style={styles.icon}>🕐</Text>,
-  LocationOn: () => <Text style={styles.icon}>📍</Text>,
-  LocationCity: () => <Text style={styles.icon}>🏙️</Text>,
-  School: () => <Text style={styles.icon}>🎓</Text>,
-  RecordVoiceOver: () => <Text style={styles.icon}>🎤</Text>,
-  MenuBook: () => <Text style={styles.icon}>📚</Text>,
-  Info: () => <Text style={styles.icon}>ℹ️</Text>,
-  Event: () => <Text style={styles.icon}>🎉</Text>,
+  Person: () => <Ionicons name="person" size={16} color={COLORS.gray} />,
+  Business: () => <Ionicons name="business" size={16} color={COLORS.gray} />,
+  Calendar: () => <Ionicons name="calendar" size={16} color={COLORS.gray} />,
+  Time: () => <Ionicons name="time" size={16} color={COLORS.gray} />,
+  LocationOn: () => <Ionicons name="location" size={16} color={COLORS.gray} />,
+  LocationCity: () => <Ionicons name="location-outline" size={16} color={COLORS.gray} />,
+  School: () => <Ionicons name="school" size={16} color={COLORS.gray} />,
+  RecordVoiceOver: () => <Ionicons name="mic" size={16} color={COLORS.gray} />,
+  MenuBook: () => <Ionicons name="book" size={16} color={COLORS.gray} />,
+  Info: () => <Ionicons name="information-circle" size={16} color={COLORS.gray} />,
+  Event: () => <Ionicons name="calendar" size={16} color={COLORS.gray} />,
+  Description: () => <Ionicons name="document-text" size={16} color={COLORS.gray} />,
 };
 
 const UniverzalCard = ({ data, onPress, style }) => {
@@ -75,7 +121,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
         
         return {
           type: 'lecture',
-          title: data.title,
+          title: data.title?.toUpperCase() || '',
           isPastLecture,
           items: [
             { icon: "Person", text: data.daija && typeof data.daija === "object" ? `${data.daija.title || ""} ${data.daija.name || ""}`.trim() || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
@@ -120,7 +166,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
           
           return {
             type: 'lecture',
-            title: data.title,
+            title: data.title?.toUpperCase() || '',
             isPastLecture,
             items: [
               { icon: "Person", text: data.daija && typeof data.daija === "object" ? `${data.daija.title || ""} ${data.daija.name || ""}`.trim() || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
@@ -185,18 +231,28 @@ const UniverzalCard = ({ data, onPress, style }) => {
       {/* Status badge for lectures */}
       {displayData.type === 'lecture' && displayData.isPastLecture !== undefined && (
         <View style={styles.statusBadge}>
-          <Text style={[
-            styles.statusBadgeText, 
-            displayData.isPastLecture ? styles.statusBadgePast : styles.statusBadgeFuture
-          ]}>
-            {displayData.isPastLecture ? '🔴 Prošlo' : '🟢 Uskoro'}
-          </Text>
+          <View style={styles.statusBadgeContent}>
+            <Ionicons 
+              name={displayData.isPastLecture ? "checkmark-circle" : "time"} 
+              size={12} 
+              color={displayData.isPastLecture ? '#c62828' : '#2e7d32'} 
+            />
+            <Text style={[
+              styles.statusBadgeText, 
+              displayData.isPastLecture ? styles.statusBadgePast : styles.statusBadgeFuture
+            ]}>
+              {displayData.isPastLecture ? 'Prošlo' : 'Uskoro'}
+            </Text>
+          </View>
         </View>
       )}
       
       {/* Card Title - Above both columns */}
       <View style={styles.cardTitleContainer}>
-        <Text style={styles.cardTitle} numberOfLines={2}>
+        <Text style={[
+          styles.cardTitle,
+          displayData.type === 'lecture' && styles.lectureTitle
+        ]} numberOfLines={2}>
           {displayData.title}
         </Text>
       </View>
@@ -244,7 +300,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
                   : getDefaultLectureImage())
                 : getImageUrl(data.image)
             }}
-            style={displayData.type === 'daija' ? styles.imageDaija : styles.image}
+            style={displayData.type === 'daija' ? styles.imageDaija : displayData.type === 'organization' ? styles.imageOrganization : styles.image}
             resizeMode="cover"
             onError={() => setImageError(true)}
           />
@@ -256,74 +312,74 @@ const UniverzalCard = ({ data, onPress, style }) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: width * 0.9, // 90% širine ekrana
-    minHeight: 250,
-    alignSelf: 'center', // centriraj karticu
+    width: width * 0.9,
+    height: 250,
+    alignSelf: 'center',
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: SPACING.card.borderRadius,
+    padding: SPACING.card.padding,
+    paddingTop: 40,
     flexDirection: 'column',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2.84,
+    ...{
+      elevation: 3,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2.84,
+    },
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: SPACING.card.margin,
   },
   cardTitleContainer: {
-    marginBottom: 10,
+    marginBottom: SPACING.md,
     alignItems: 'flex-start',
   },
   cardTitle: {
-    fontSize: 18,
+    ...TYPOGRAPHY.textStyles.cardTitle,
+  },
+  lectureTitle: {
     fontWeight: 'bold',
-    color: COLORS.primary,
-    lineHeight: 24,
-    textAlign: 'center',
   },
   contentRow: {
     flexDirection: 'row',
   },
   infoColumn: {
     flex: 1,
-    marginRight: 16,
-    justifyContent: 'center', // Center content vertically
+    marginRight: SPACING.md,
+    justifyContent: 'center',
   },
   titlePrefix: {
-    fontSize: 12,
-    color: COLORS.gray,
-    marginBottom: 2,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    color: COLORS.textLight,
+    marginBottom: SPACING.xs / 2,
     lineHeight: 14,
   },
-
   subtitle: {
-    fontSize: 13,
-    color: COLORS.gray,
-    marginBottom: 8,
-    lineHeight: 16,
+    ...TYPOGRAPHY.textStyles.bodySmall,
+    marginBottom: SPACING.sm,
   },
   infoItemsContainer: {
-    gap: 2,
+    gap: SPACING.xs / 2,
   },
   infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.gap.md,
   },
-  icon: {
-    fontSize: 16,
-    width: 20,
-    textAlign: 'center',
+  statusBadgeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.gap.sm,
   },
   infoText: {
-    fontSize: 13,
-    color: COLORS.gray,
-    lineHeight: 16,
+    ...TYPOGRAPHY.textStyles.cardInfo,
     flex: 1,
   },
   imageColumn: {
-    width: 120,
+    maxWidth: 100,
+    maxHeight: 150,
+    height: '100%',
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'stretch',
     alignSelf: 'stretch',
@@ -332,16 +388,21 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 8,
-    minHeight: 165,
+    minHeight: 60,
   },
   imageDaija: {
     width: 100,
     height: 100,
-    borderRadius: 50, // Circular for daije, like web version
+    borderRadius: 50, // Circular for daije, smaller size
   },
-  imagePlaceholder: {
+  imageOrganization: {
     width: 100,
     height: 100,
+    borderRadius: 8, // Square 1:1 aspect ratio for organizations
+  },
+  imagePlaceholder: {
+    width: 70,
+    height: 70,
     borderRadius: 8,
     backgroundColor: COLORS.lightGray,
     justifyContent: 'center',

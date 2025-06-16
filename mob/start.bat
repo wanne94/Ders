@@ -1,0 +1,3 @@
+@echo off
+echo Starting Expo with local node_modules...
+node_modules\.bin\expo start --clear

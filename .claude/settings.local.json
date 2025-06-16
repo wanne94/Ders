@@ -47,7 +47,8 @@
       "Bash(npx eas build:*)",
       "Bash(npm why:*)",
       "Bash(true)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }

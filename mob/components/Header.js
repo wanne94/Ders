@@ -30,7 +30,7 @@ const Header = ({ onMenuPress, title }) => {
     <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
       <TouchableOpacity style={styles.logoContainer}>
         <Image 
-          source={require('../assets/logo.jpg')}
+          source={{ uri: `${SERVER_URL}/uploads/logo.jpg` }}
           style={styles.logo}
           resizeMode="cover"
         />

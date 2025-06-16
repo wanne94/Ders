@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const ShareButton = ({ lecture, style = {}, textStyle = {} }) => {
   const shareUrl = `https://ders.ba/profile/lecture/${lecture._id}`;
-  const shareText = `${lecture.title}\n📅 ${new Date(lecture.date).toLocaleDateString('sr-RS')} u ${lecture.time}\n📍 ${lecture.address}, ${lecture.city}`;
+  const shareText = `${lecture.title}\nDatum: ${new Date(lecture.date).toLocaleDateString('sr-RS')} u ${lecture.time}\nAdresa: ${lecture.address}, ${lecture.city}`;
 
   const handleShare = async () => {
     try {

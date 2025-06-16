@@ -3,18 +3,32 @@ import { ENV } from '../config';
 
 // Create a fetch-based API client to replace axios
 class ApiClient {
-  constructor(baseURL, timeout = 10000) {
+  constructor(baseURL, timeout = 30000) {
     this.baseURL = baseURL;
+    this.backupURL = ENV.BACKUP_API_URL || null;
+    this.fallbackURL = ENV.FALLBACK_API_URL || null;
     this.timeout = timeout;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
     };
+    this.urlIndex = 0; // 0: primary, 1: backup, 2: fallback (local only in development)
   }
 
-  async request(url, options = {}) {
-    const fullUrl = url.startsWith('http') ? url : `${this.baseURL}${url}`;
+  getCurrentBaseURL() {
+    switch (this.urlIndex) {
+      case 1: return this.backupURL;
+      case 2: return this.fallbackURL;
+      default: return this.baseURL;
+    }
+  }
+
+  async request(url, options = {}, retries = 3) {
+    const baseUrl = this.getCurrentBaseURL();
+    const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
     
-    console.log('Making API request to:', fullUrl);
+    const urlType = this.urlIndex === 0 ? 'primary' : 
+                    this.urlIndex === 1 ? 'backup' : 'fallback';
+    console.log(`Making API request to: ${fullUrl} (${urlType})`);
     
     // Add default headers
     const headers = {
@@ -88,10 +102,32 @@ class ApiClient {
     } catch (error) {
       clearTimeout(timeoutId);
       
-      if (error.name === 'AbortError') {
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        console.warn(`Request timeout for ${fullUrl}, retries left: ${retries}`);
+        
+        if (retries > 0) {
+          // Wait 1 second before retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return this.request(url, options, retries - 1);
+        }
+        
         const timeoutError = new Error('Request timeout');
         timeoutError.code = 'TIMEOUT';
         throw timeoutError;
+      }
+      
+      // For network errors, try next URL if available
+      if (error.message.includes('Network request failed') || error.name === 'TypeError') {
+        if (this.urlIndex < 2 && retries > 0) {
+          this.urlIndex++;
+          const nextType = this.urlIndex === 1 ? 'backup' : 'fallback';
+          console.warn(`Switching to ${nextType} URL for ${url}`);
+          return this.request(url, options, retries - 1);
+        } else if (retries > 0) {
+          console.warn(`Network error for ${fullUrl}, retries left: ${retries}`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return this.request(url, options, retries - 1);
+        }
       }
       
       throw error;
@@ -134,6 +170,6 @@ class ApiClient {
   }
 }
 
-const apiClient = new ApiClient(ENV.API_URL, 10000);
+const apiClient = new ApiClient(ENV.API_URL, 10000); // 10 second timeout for local development
 
 export default apiClient; 

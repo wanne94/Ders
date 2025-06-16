@@ -8,14 +8,43 @@ import TwitterIcon from '@mui/icons-material/Twitter';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
-const ShareButton = ({ lecture }) => {
+const ShareButton = ({ lecture, profileData, type }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [copied, setCopied] = useState(false);
   const open = Boolean(anchorEl);
 
-  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/profile/lecture/${lecture._id}` : '';
-  const shareText = `${lecture.title}\n📅 ${new Date(lecture.date).toLocaleDateString('sr-RS')} u ${lecture.time}\n📍 ${lecture.address}, ${lecture.city}`;
-  const imageUrl = typeof window !== 'undefined' ? `${window.location.origin}${lecture.image}` : '';
+  // Use lecture prop for backward compatibility, or profileData for new implementation
+  const data = lecture || profileData;
+  const profileType = type || 'lecture';
+  
+  // Generate appropriate URL based on profile type
+  const getProfileUrl = () => {
+    if (typeof window === 'undefined') return '';
+    switch (profileType) {
+      case 'organization':
+        return `${window.location.origin}/profile/organization/${data._id}`;
+      case 'daija':
+        return `${window.location.origin}/profile/daija/${data._id}`;
+      default:
+        return `${window.location.origin}/profile/lecture/${data._id}`;
+    }
+  };
+
+  // Generate appropriate share text based on profile type
+  const getShareText = () => {
+    switch (profileType) {
+      case 'organization':
+        return `${data.name}${data.address || data.city ? `\n📍 ${[data.address, data.city].filter(Boolean).join(', ')}` : ''}`;
+      case 'daija':
+        return `${data.title || ''}. ${data.name || ''}`.trim();
+      default:
+        return `${data.title}\n📅 ${new Date(data.date).toLocaleDateString('sr-RS')} u ${data.time}\n📍 ${data.address}, ${data.city}`;
+    }
+  };
+
+  const shareUrl = getProfileUrl();
+  const shareText = getShareText();
+  const imageUrl = typeof window !== 'undefined' ? `${window.location.origin}${data.image}` : '';
 
   const shareOptions = [
     {
@@ -79,13 +108,13 @@ const ShareButton = ({ lecture }) => {
       try {
         // Pokušaj da uključiš sliku ako je Web Share API podržava
         const shareData = {
-          title: lecture.title,
+          title: profileType === 'organization' ? data.name : profileType === 'daija' ? `${data.title || ''}. ${data.name || ''}`.trim() : data.title,
           text: shareText,
           url: shareUrl
         };
 
         // Dodaj sliku ako browser podržava dijeljenje slika
-        if (navigator.canShare && imageUrl && lecture.image) {
+        if (navigator.canShare && imageUrl && data.image) {
           try {
             // Preuzmi sliku kao blob
             const response = await fetch(imageUrl);
@@ -172,7 +201,7 @@ const ShareButton = ({ lecture }) => {
       >
         <Box sx={{ px: 2, py: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-            Podijeli predavanje
+            {profileType === 'organization' ? 'Podijeli udruženje' : profileType === 'daija' ? 'Podijeli daiju' : 'Podijeli predavanje'}
           </Typography>
         </Box>
         

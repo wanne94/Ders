@@ -192,7 +192,7 @@ const LecturesSection = ({ onProfileOpen, allLectures = [] }) => {
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Dersovi</Text>
-        <Text style={styles.emptyText}>Trenutno nema dostupnih dersova.</Text>
+        <Text style={styles.emptyText}>Trenutno sova.</Text>
       </View>
     );
   }

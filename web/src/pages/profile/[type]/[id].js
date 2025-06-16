@@ -18,12 +18,21 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PersonIcon from '@mui/icons-material/Person';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import TelegramIcon from '@mui/icons-material/Telegram';
+import ChatIcon from '@mui/icons-material/Chat';
+import DescriptionIcon from '@mui/icons-material/Description';
+import BusinessIcon from '@mui/icons-material/Business';
+import DirectionsIcon from '@mui/icons-material/Directions';
 import PageLayout from '../../../components/PageLayout';
 import ShareButton from '../../../components/ShareButton';
 import AddressLink from '../../../components/AddressLink';
-import { predavanjaService, daijeService } from '@/services';
+import RelatedLectures from '../../../components/RelatedLectures';
+import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 import { formatDateWithDay } from '../../../utils/dataHelpers';
-import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage } from '../../../utils/imageUtils';
+import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '../../../utils/imageUtils';
+import { toTitleCase } from '../../../utils';
 
 const UnifiedProfile = () => {
   const router = useRouter();
@@ -44,6 +53,9 @@ const UnifiedProfile = () => {
       } else if (type === 'daija') {
         const daijaData = await daijeService.getDaijaById(id);
         setProfileData(daijaData);
+      } else if (type === 'organization') {
+        const organizationData = await udruzenjaService.getUdruzenjeById(id);
+        setProfileData(organizationData);
       } else {
         setError('Tip profila nije podržan');
       }
@@ -64,6 +76,8 @@ const UnifiedProfile = () => {
   const handleBackNavigation = () => {
     if (type === 'daija') {
       router.push('/daije');
+    } else if (type === 'organization') {
+      router.push('/organizations');
     } else {
       router.push('/lectures');
     }
@@ -91,7 +105,7 @@ const UnifiedProfile = () => {
             startIcon={<ArrowBackIcon />} 
             onClick={handleBackNavigation}
           >
-            {type === 'daija' ? 'Nazad na sve daije' : 'Nazad na sve predavanja'}
+            {type === 'daija' ? 'Nazad na sve daije' : type === 'organization' ? 'Nazad na sva udruženja' : 'Nazad na sve predavanja'}
           </Button>
         </Container>
       </PageLayout>
@@ -110,7 +124,7 @@ const UnifiedProfile = () => {
             startIcon={<ArrowBackIcon />} 
             onClick={handleBackNavigation}
           >
-            {type === 'daija' ? 'Nazad na sve daije' : 'Nazad na sva predavanja'}
+            {type === 'daija' ? 'Nazad na sve daije' : type === 'organization' ? 'Nazad na sva udruženja' : 'Nazad na sva predavanja'}
           </Button>
         </Container>
       </PageLayout>
@@ -128,7 +142,7 @@ const UnifiedProfile = () => {
             onClick={handleBackNavigation}
             sx={{ mb: 2 }}
           >
-            {type === 'daija' ? 'Nazad na sve daije' : 'Nazad na sva predavanja'}
+            {type === 'daija' ? 'Nazad na sve daije' : type === 'organization' ? 'Nazad na sva udruženja' : 'Nazad na sva predavanja'}
           </Button>
         </Box>
 
@@ -145,14 +159,14 @@ const UnifiedProfile = () => {
           }}
         >
           <Container maxWidth="lg">
-            <Grid container spacing={4} alignItems="center" sx={{ py: 6 }}>
+            <Grid container spacing={4} alignItems="flex-start" sx={{ py: { xs: 4, sm: 6 } }}>
               {/* Profile Image */}
-              <Grid item xs={12} md={5} sx={{ textAlign: 'center' }}>
+              <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
                 <Box
                   sx={{
                     position: 'relative',
                     width: '100%',
-                    maxWidth: 200,
+                    maxWidth: { xs: 150, sm: 200 },
                     mx: 'auto',
                     aspectRatio: type === 'daija' ? '1/1' : 'auto',
                     borderRadius: type === 'daija' ? '50%' : 4,
@@ -168,228 +182,389 @@ const UnifiedProfile = () => {
                 >
                   <Box
                     component="img"
-                    src={getImageUrl(profileData.image) || (type === 'daija' ? getDefaultDaijaImage() : getDefaultLectureImage())}
-                    alt={profileData.title}
+                    src={getImageUrl(profileData.image) || (type === 'daija' ? getDefaultDaijaImage() : type === 'organization' ? getDefaultOrganizationImage() : getDefaultLectureImage())}
+                    alt={profileData.title || profileData.name}
                     sx={{ 
                       width: '100%',
                       height: 'auto',
-                      minHeight: 250,
-                      maxHeight: 350,
+                      minHeight: { xs: 180, sm: 250 },
+                      maxHeight: { xs: 280, sm: 350 },
                       objectFit: 'cover',
                       display: 'block'
                     }}
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = type === 'daija' ? getDefaultDaijaImage() : getDefaultLectureImage();
+                      e.target.src = type === 'daija' ? getDefaultDaijaImage() : type === 'organization' ? getDefaultOrganizationImage() : getDefaultLectureImage();
                     }}
                   />
                 </Box>
               </Grid>
 
               {/* Profile Info */}
-              <Grid item xs={12} md={7}>
+              <Grid item xs={12} md={8}>
                 <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
                   <Typography 
                     variant="h2" 
                     component="h1" 
                     gutterBottom
                     sx={{ 
-                      fontWeight: 300,
+                      fontWeight: type === 'lecture' ? 'bold' : 300,
                       fontSize: { xs: '2rem', md: '3rem' },
                       letterSpacing: '-0.02em',
-                      mb: 2
+                      mb: 2,
+                      textTransform: type === 'lecture' ? 'uppercase' : 'none'
                     }}
                   >
                     {type === 'daija' 
                       ? `${profileData.title || ''}. ${profileData.name || ''}`.trim()
+                      : type === 'organization'
+                      ? profileData.name
                       : profileData.title
                     }
                   </Typography>
 
-                  {/* Lecture Info Chips */}
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-                    {profileData.date && (
-                      <Chip
-                        icon={<CalendarTodayIcon />}
-                        label={formatDateWithDay(profileData.date)}
-                        variant="outlined"
-                        sx={{ 
-                          color: 'white',
+                  {/* All Info Items with Share Button Style */}
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 3 }}>
+                    {/* Date and Time for lectures */}
+                    {type === 'lecture' && profileData.date && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
                           borderColor: 'rgba(255, 255, 255, 0.3)',
-                          '& .MuiChip-icon': { color: 'white' }
+                          border: '1px solid',
+                          color: 'white',
+                          borderRadius: 3,
+                          px: { xs: 2, sm: 2.5 },
+                          py: { xs: 1, sm: 1.2 },
+                          fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                          fontWeight: 500,
+                          backdropFilter: 'blur(10px)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
                         }}
-                      />
+                      >
+                        <CalendarTodayIcon sx={{ fontSize: 18 }} />
+                        <span>{formatDateWithDay(profileData.date)}</span>
+                      </Box>
                     )}
-                    {profileData.time && (
-                      <Chip
-                        icon={<AccessTimeIcon />}
-                        label={profileData.time}
-                        variant="outlined"
-                        sx={{ 
-                          color: 'white',
+                    {type === 'lecture' && profileData.time && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
                           borderColor: 'rgba(255, 255, 255, 0.3)',
-                          '& .MuiChip-icon': { color: 'white' }
+                          border: '1px solid',
+                          color: 'white',
+                          borderRadius: 3,
+                          px: { xs: 2, sm: 2.5 },
+                          py: { xs: 1, sm: 1.2 },
+                          fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                          fontWeight: 500,
+                          backdropFilter: 'blur(10px)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
                         }}
-                      />
+                      >
+                        <AccessTimeIcon sx={{ fontSize: 18 }} />
+                        <span>{profileData.time}</span>
+                      </Box>
+                    )}
+                    
+                    {/* Speaker and Organization for lectures */}
+                    {type === 'lecture' && profileData.speaker && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                          border: '1px solid',
+                          color: 'white',
+                          borderRadius: 3,
+                          px: { xs: 2, sm: 2.5 },
+                          py: { xs: 1, sm: 1.2 },
+                          fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                          fontWeight: 500,
+                          backdropFilter: 'blur(10px)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        }}
+                      >
+                        <PersonIcon sx={{ fontSize: 18 }} />
+                        <span>{profileData.speaker}</span>
+                      </Box>
+                    )}
+                    {type === 'lecture' && profileData.organization && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                          border: '1px solid',
+                          color: 'white',
+                          borderRadius: 3,
+                          px: { xs: 2, sm: 2.5 },
+                          py: { xs: 1, sm: 1.2 },
+                          fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                          fontWeight: 500,
+                          backdropFilter: 'blur(10px)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        }}
+                      >
+                        <BusinessIcon sx={{ fontSize: 18 }} />
+                        <span>{profileData.organization}</span>
+                      </Box>
+                    )}
+                    
+                    {/* Location for all types */}
+                    {(profileData.address || profileData.city) && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                          border: '1px solid',
+                          color: 'white',
+                          borderRadius: 3,
+                          px: { xs: 2, sm: 2.5 },
+                          py: { xs: 1, sm: 1.2 },
+                          fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                          fontWeight: 500,
+                          backdropFilter: 'blur(10px)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        }}
+                      >
+                        <LocationOnIcon sx={{ fontSize: 18 }} />
+                        <span>{[profileData.address, profileData.city].filter(Boolean).join(', ')}</span>
+                      </Box>
                     )}
                   </Box>
 
-                  {/* Share Button */}
-                  <Box sx={{ mt: 3 }}>
-                    <ShareButton lecture={profileData} />
+                  {/* Description Section */}
+                  {(profileData.description || profileData.biography) && (
+                    <Box
+                      sx={{
+                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                        border: '1px solid',
+                        color: 'white',
+                        borderRadius: 3,
+                        px: { xs: 2.5, sm: 3 },
+                        py: { xs: 2, sm: 2.5 },
+                        mb: 3,
+                        backdropFilter: 'blur(10px)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        maxWidth: '100%',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                        <DescriptionIcon sx={{ fontSize: 20 }} />
+                        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                          {type === 'organization' ? 'O udruženju' : type === 'daija' ? 'Biografija' : 'Opis predavanja'}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontSize: '0.95rem',
+                          lineHeight: 1.7,
+                          opacity: 0.95,
+                        }}
+                      >
+                        {profileData.description || profileData.biography}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {/* Social Media Links for Organizations */}
+                  {type === 'organization' && (profileData.facebook || profileData.instagram || profileData.telegram || profileData.viber) && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 3 }}>
+                      {profileData.facebook && (
+                        <Button
+                          variant="outlined"
+                          startIcon={<FacebookIcon />}
+                          href={profileData.facebook}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            color: 'white',
+                            borderRadius: 3,
+                            px: 2.5,
+                            py: 1.2,
+                            fontSize: '0.9rem',
+                            fontWeight: 500,
+                            textTransform: 'none',
+                            backdropFilter: 'blur(10px)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            '&:hover': {
+                              borderColor: 'rgba(255, 255, 255, 0.5)',
+                              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                            }
+                          }}
+                        >
+                          Facebook
+                        </Button>
+                      )}
+                      {profileData.instagram && (
+                        <Button
+                          variant="outlined"
+                          startIcon={<InstagramIcon />}
+                          href={profileData.instagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            color: 'white',
+                            borderRadius: 3,
+                            px: 2.5,
+                            py: 1.2,
+                            fontSize: '0.9rem',
+                            fontWeight: 500,
+                            textTransform: 'none',
+                            backdropFilter: 'blur(10px)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            '&:hover': {
+                              borderColor: 'rgba(255, 255, 255, 0.5)',
+                              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                            }
+                          }}
+                        >
+                          Instagram
+                        </Button>
+                      )}
+                      {profileData.telegram && (
+                        <Button
+                          variant="outlined"
+                          startIcon={<TelegramIcon />}
+                          href={profileData.telegram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            color: 'white',
+                            borderRadius: 3,
+                            px: 2.5,
+                            py: 1.2,
+                            fontSize: '0.9rem',
+                            fontWeight: 500,
+                            textTransform: 'none',
+                            backdropFilter: 'blur(10px)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            '&:hover': {
+                              borderColor: 'rgba(255, 255, 255, 0.5)',
+                              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                            }
+                          }}
+                        >
+                          Telegram
+                        </Button>
+                      )}
+                      {profileData.viber && (
+                        <Button
+                          variant="outlined"
+                          startIcon={<ChatIcon />}
+                          href={profileData.viber}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            color: 'white',
+                            borderRadius: 3,
+                            px: 2.5,
+                            py: 1.2,
+                            fontSize: '0.9rem',
+                            fontWeight: 500,
+                            textTransform: 'none',
+                            backdropFilter: 'blur(10px)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            '&:hover': {
+                              borderColor: 'rgba(255, 255, 255, 0.5)',
+                              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                            }
+                          }}
+                        >
+                          Viber
+                        </Button>
+                      )}
+                    </Box>
+                  )}
+
+                  {/* Action Buttons */}
+                  <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    {/* Location Button - For lectures and organizations with address */}
+                    {(type === 'lecture' || type === 'organization') && (profileData.address || profileData.city) && (
+                      <Button
+                        variant="outlined"
+                        startIcon={<DirectionsIcon />}
+                        onClick={() => {
+                          const address = [profileData.address, profileData.city].filter(Boolean).join(', ');
+                          const encodedAddress = encodeURIComponent(address);
+                          // Try to use Google Maps first, fallback to Apple Maps on iOS
+                          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                          
+                          if (isMobile) {
+                            if (isIOS) {
+                              // iOS - try Apple Maps first, fallback to Google Maps
+                              window.open(`maps://maps.google.com/maps?daddr=${encodedAddress}`, '_blank');
+                              // Fallback to Google Maps if Apple Maps doesn't work
+                              setTimeout(() => {
+                                window.open(`https://maps.google.com/maps?daddr=${encodedAddress}`, '_blank');
+                              }, 500);
+                            } else {
+                              // Android - use Google Maps
+                              window.open(`https://maps.google.com/maps?daddr=${encodedAddress}`, '_blank');
+                            }
+                          } else {
+                            // Desktop - open Google Maps in browser
+                            window.open(`https://maps.google.com/maps?daddr=${encodedAddress}`, '_blank');
+                          }
+                        }}
+                        sx={{
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                          color: 'white',
+                          borderRadius: 3,
+                          px: 3,
+                          py: 1.5,
+                          fontSize: '0.95rem',
+                          fontWeight: 500,
+                          textTransform: 'none',
+                          transition: 'all 0.2s ease',
+                          backdropFilter: 'blur(10px)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          '&:hover': {
+                            borderColor: 'rgba(255, 255, 255, 0.5)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                            transform: 'translateY(-1px)',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+                          }
+                        }}
+                      >
+                        Lokacija
+                      </Button>
+                    )}
+                    
+                    {/* Share Button */}
+                    <ShareButton profileData={profileData} type={type} />
                   </Box>
                 </Box>
               </Grid>
             </Grid>
           </Container>
         </Paper>
-
-        {/* Detailed Information Cards */}
-        <Grid container spacing={4}>
-          {/* Speaker & Organization Card */}
-          {(profileData.speaker || profileData.organization) && (
-            <Grid item xs={12} md={6}>
-              <Card 
-                elevation={0}
-                sx={{ 
-                  height: '100%',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: 3,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                    transform: 'translateY(-2px)'
-                  }
-                }}
-              >
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <Box
-                      sx={{
-                        backgroundColor: '#022C43',
-                        borderRadius: '50%',
-                        p: 1.5,
-                        mr: 2
-                      }}
-                    >
-                      <PersonIcon sx={{ color: 'white', fontSize: 24 }} />
-                    </Box>
-                    <Typography variant="h5" fontWeight="600" color="#022C43">
-                      Predavač i Organizator
-                    </Typography>
-                  </Box>
-                  <Box>
-                    {profileData.speaker && (
-                      <Typography 
-                        variant="body1" 
-                        sx={{ mb: 2, fontSize: '1.1rem', color: '#333' }}
-                      >
-                        <strong>Predavač:</strong> {profileData.speaker}
-                      </Typography>
-                    )}
-                    {profileData.organization && (
-                      <Typography 
-                        variant="body1" 
-                        sx={{ fontSize: '1.1rem', color: '#333' }}
-                      >
-                        <strong>Udruženje:</strong> {profileData.organization}
-                      </Typography>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-
-          {/* Location Card */}
-          {(profileData.address || profileData.city) && (
-            <Grid item xs={12} md={6}>
-              <Card 
-                elevation={0}
-                sx={{ 
-                  height: '100%',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: 3,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                    transform: 'translateY(-2px)'
-                  }
-                }}
-              >
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <Box
-                      sx={{
-                        backgroundColor: '#022C43',
-                        borderRadius: '50%',
-                        p: 1.5,
-                        mr: 2
-                      }}
-                    >
-                      <LocationOnIcon sx={{ color: 'white', fontSize: 24 }} />
-                    </Box>
-                    <Typography variant="h5" fontWeight="600" color="#022C43">
-                      Lokacija
-                    </Typography>
-                  </Box>
-                  {profileData.address && profileData.city ? (
-                    <AddressLink 
-                      address={profileData.address} 
-                      city={profileData.city}
-                      style={{ fontSize: '1.1rem' }}
-                    />
-                  ) : (
-                    <Typography variant="body1" sx={{ fontSize: '1.1rem', color: '#333' }}>
-                      {[profileData.address, profileData.city].filter(Boolean).join(', ')}
-                    </Typography>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-
-          {/* Description Card */}
-          {profileData.description && (
-            <Grid item xs={12}>
-              <Card 
-                elevation={0}
-                sx={{ 
-                  border: '1px solid #e0e0e0',
-                  borderRadius: 3,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)'
-                  }
-                }}
-              >
-                <CardContent sx={{ p: 4 }}>
-                  <Typography 
-                    variant="h5" 
-                    fontWeight="600" 
-                    color="#022C43"
-                    gutterBottom
-                    sx={{ mb: 3 }}
-                  >
-                    Opis predavanja
-                  </Typography>
-                  <Typography 
-                    variant="body1" 
-                    sx={{ 
-                      fontSize: '1.1rem',
-                      lineHeight: 1.8,
-                      color: '#555',
-                      textAlign: 'justify'
-                    }}
-                  >
-                    {profileData.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-        </Grid>
       </Container>
+
+      {/* Related Lectures Section */}
+      <RelatedLectures
+        currentLectureId={type === 'lecture' ? id : null}
+        type={type}
+        organizationId={type === 'organization' ? id : null}
+        daijaId={type === 'daija' ? id : null}
+        organizationName={type === 'organization' ? profileData?.name : null}
+        daijaName={type === 'daija' ? `${profileData?.title || ''} ${profileData?.name || ''}`.trim() : null}
+      />
     </PageLayout>
   );
 };

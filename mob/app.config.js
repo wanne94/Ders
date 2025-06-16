@@ -21,7 +21,6 @@ export default {
     },
     android: {
       package: "com.ders.app",
-      googleServicesFile: "./google-services.json", // ✅ Dodano za Firebase
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff"

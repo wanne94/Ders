@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { bs } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
 import { getImageUrl, getDefaultDaijaImage, getDefaultLectureImage, getDefaultOrganizationImage } from '../utils/imageUtils';
+import { toTitleCase } from '../utils';
 import UniverzalCard from './UniverzalCard';
 import ShareButton from './ShareButton';
 import predavanjaService from '../services/predavanjaService';
@@ -68,12 +69,9 @@ const UniversalProfile = ({ data, type, onBack }) => {
             lectures = await predavanjaService.getPredavanjaByOrganization(data._id);
             break;
           case 'lecture':
-            // For lectures, get other lectures by same daija or organization
+            // Get all lectures from homepage and exclude current one (same as web app)
             const allLectures = await predavanjaService.getAllPredavanja();
-            lectures = allLectures.filter(lecture => 
-              lecture._id !== data._id && 
-              (lecture.daija === data.daija || lecture.organizationId === data.organizationId)
-            );
+            lectures = allLectures.filter(lecture => lecture._id !== data._id);
             break;
         }
         
@@ -123,7 +121,7 @@ const UniversalProfile = ({ data, type, onBack }) => {
       case 'organization':
         return data.name || 'Nepoznata organizacija';
       case 'lecture':
-        return data.title || 'Nepoznat ders';
+        return data.title?.toUpperCase() || 'NEPOZNAT DERS';
       default:
         return 'Nepoznat profil';
     }
@@ -483,7 +481,10 @@ const UniversalProfile = ({ data, type, onBack }) => {
           </View>
 
           <View style={styles.profileInfo}>
-            <Text style={styles.profileTitle}>{getProfileTitle()}</Text>
+            <Text style={[
+              styles.profileTitle,
+              type === 'lecture' && styles.lectureProfileTitle
+            ]}>{getProfileTitle()}</Text>
             
             {type === 'daija' && data.title && (
               <Text style={styles.profileSubtitle}>{data.title}</Text>
@@ -575,7 +576,10 @@ const UniversalProfile = ({ data, type, onBack }) => {
           {/* Related Lectures */}
           {relatedLectures.length > 0 && (
             <View style={styles.relatedSection}>
-              <Text style={styles.relatedTitle}>Drugi najavljeni dersovi</Text>
+              <View style={styles.relatedHeader}>
+                <Text style={styles.relatedTitle}>Ostali dersovi</Text>
+                <Text style={styles.relatedCount}>({relatedLectures.length})</Text>
+              </View>
               <View style={styles.relatedList}>
                 {relatedLectures.map((lecture) => (
                   <UniverzalCard
@@ -590,12 +594,18 @@ const UniversalProfile = ({ data, type, onBack }) => {
 
           {/* No lectures message */}
           {relatedLectures.length === 0 && type !== 'lecture' && (
-            <View style={styles.emptyState}>
-              <Ionicons name="information-circle-outline" size={48} color={COLORS.textLight} />
-              <Text style={styles.emptyStateText}>
-                {type === 'daija' ? 'Daija još nema predavanja na platformi' :
-                 type === 'organization' ? 'Udruženje još nema predavanja na platformi' :
-                 'Nema povezanih predavanja'}
+            <View style={styles.emptyStateContainer}>
+              <View style={styles.emptyStateIcon}>
+                <Ionicons name="school-outline" size={32} color={COLORS.primary} />
+              </View>
+              <Text style={styles.emptyStateTitle}>
+                {type === 'daija' ? 'Nema predavanja' : 'Nema organizovanih predavanja'}
+              </Text>
+              <Text style={styles.emptyStateDescription}>
+                {type === 'daija' 
+                  ? 'Daija još uvijek nije imao najavljeno predavanje na platformi. Provjerite ponovo uskoro!' 
+                  : 'Ovo udruženje još uvijek nije najvilo predavanje. Provjerite ponovo uskoro!'
+                }
               </Text>
             </View>
           )}
@@ -666,9 +676,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   circularImage: {
-    borderRadius: 75,
+    borderRadius: 175, // Half of maxWidth (350/2) for perfect circle
     borderWidth: 4,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+    aspectRatio: 1, // Force 1:1 aspect ratio for daija
   },
   rectangularImage: {
     borderRadius: 12,
@@ -692,6 +703,9 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     textAlign: 'center',
     marginBottom: 8,
+  },
+  lectureProfileTitle: {
+    fontWeight: '900',
   },
   profileSubtitle: {
     fontSize: 18,
@@ -840,11 +854,21 @@ const styles = StyleSheet.create({
   relatedSection: {
     marginTop: 8,
   },
+  relatedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   relatedTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.text,
-    marginBottom: 16,
+    flex: 1,
+  },
+  relatedCount: {
+    fontSize: 16,
+    color: COLORS.textLight,
+    fontWeight: '500',
   },
   relatedList: {
     gap: 8,
@@ -860,6 +884,40 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 16,
     textAlign: 'center',
+  },
+  emptyStateContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 24,
+    marginTop: 16,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+  },
+  emptyStateIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: `${COLORS.primary}15`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptyStateDescription: {
+    fontSize: 14,
+    color: COLORS.textLight,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   errorText: {
     fontSize: 18,
