@@ -20,6 +20,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import axiosInstance from '../utils/axiosConfig';
 import { daijeService, udruzenjaService } from '@/services';
 import { getImageUrl } from '../utils/imageUtils';
+import { uploadImage } from '../utils/uploadService';
 
 // Generate time options with 15-minute intervals
 const generateTimeOptions = () => {
@@ -100,7 +101,7 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
       setUseCustomOrganization(!lecture.organizationId && !!lecture.organization);
 
       // Set image preview if editing - use getImageUrl to get proper server URL
-      if (lecture.image) {
+      if (lecture.image && lecture.image.trim() !== '') {
         setImagePreview(getImageUrl(lecture.image));
       }
     } else {
@@ -247,7 +248,8 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
       const selectedDate = new Date(formData.date);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      if (selectedDate < today) {
+      // Only restrict past dates when creating new lectures, not when editing existing ones
+      if (!isEditing && selectedDate < today) {
         errors.push('Datum predavanja ne može biti u prošlosti');
       }
     }
@@ -307,47 +309,33 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
         imageFileSize: formData.imageFile?.size
       });
 
-      // Upload new image if selected
+      // Upload new image if selected - using production server upload service
       if (formData.imageFile) {
-        console.log('📤 UPLOAD STARTING - File detected, preparing upload...');
-        const imageFormData = new FormData();
-        imageFormData.append('image', formData.imageFile);
-
-        console.log('🔄 Starting image upload...');
+        console.log('📤 UPLOAD STARTING - File detected, using production server upload...');
         console.log('📁 File details:', {
           name: formData.imageFile.name,
           size: formData.imageFile.size,
-          type: formData.imageFile.type,
-          formDataKeys: Array.from(imageFormData.keys()),
-          formDataHasFile: imageFormData.has('image')
+          type: formData.imageFile.type
         });
         
         try {
-          // Use axiosInstance which is already configured with the correct baseURL
-          const uploadResponse = await axiosInstance.post('/upload-image', imageFormData, {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          });
+          // Use new upload service that always goes to production server
+          const uploadResponse = await uploadImage(formData.imageFile);
 
-          console.log('✅ Upload response:', uploadResponse.data);
-          if (uploadResponse.data.success) {
+          console.log('✅ Upload response:', uploadResponse);
+          if (uploadResponse.success && uploadResponse.path) {
             // Store just the relative path, getImageUrl will handle the full URL
-            imagePath = uploadResponse.data.path;
-            console.log('🖼️ Image uploaded successfully:', imagePath);
+            imagePath = uploadResponse.path;
+            console.log('🖼️ Image uploaded successfully to production server:', imagePath);
             console.log('🔄 UPLOAD SUCCESS - New image path:', imagePath);
           } else {
-            throw new Error('Upload failed: ' + (uploadResponse.data.error || 'Unknown error'));
+            throw new Error('Upload failed: ' + (uploadResponse.error || 'Unknown error'));
           }
         } catch (uploadError) {
           console.error('❌ Upload error details:', {
-            message: uploadError.message,
-            status: uploadError.response?.status,
-            statusText: uploadError.response?.statusText,
-            data: uploadError.response?.data,
-            config: uploadError.config
+            message: uploadError.message
           });
-          throw new Error('Upload failed: ' + (uploadError.response?.data?.message || uploadError.message));
+          throw new Error('Upload failed: ' + uploadError.message);
         }
       } else {
         console.log('📷 NO UPLOAD - No image file selected, using existing path:', imagePath);
@@ -436,9 +424,12 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
                           style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: 4 }}
                         />
                       </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        Kliknite za promjenu slike
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 1 }}>
+                        <CloudUploadIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Kliknite za promjenu slike
+                        </Typography>
+                      </Box>
                     </>
                   ) : (
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -608,7 +599,7 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
                 value={formData.date ? new Date(formData.date) : null}
                 onChange={handleDateChange}
                 format="dd.MM.yyyy"
-                minDate={new Date()}
+                minDate={isEditing ? null : new Date()}
                 slotProps={{
                   textField: {
                     fullWidth: true,

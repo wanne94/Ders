@@ -74,7 +74,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   
   // Calendar and time picker states
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -187,7 +186,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     if (editMode && editData) {
       populateFormWithEditData();
     }
-  }, [editMode, editData]);
+  }, [editMode, editData, populateFormWithEditData]);
 
   const loadData = async () => {
     try {
@@ -277,9 +276,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   };
 
   // Calendar functions
-  const formatDateForDisplay = (date) => {
-    return format(date, 'dd.MM.yyyy');
-  };
 
   const handleDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
@@ -292,7 +288,21 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const renderCalendar = () => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
-    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    
+    // Get the first Monday of the calendar view (might be in previous month)
+    const startDate = new Date(monthStart);
+    const dayOfWeek = monthStart.getDay();
+    // Adjust to start from Monday (getDay() returns 0 for Sunday, 1 for Monday)
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startDate.setDate(monthStart.getDate() - daysToSubtract);
+    
+    // Get the last day to show (might be in next month)
+    const endDate = new Date(monthEnd);
+    const lastDayOfWeek = monthEnd.getDay();
+    const daysToAdd = lastDayOfWeek === 0 ? 0 : 7 - lastDayOfWeek;
+    endDate.setDate(monthEnd.getDate() + daysToAdd);
+    
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
     const today = startOfDay(new Date());
     
     // Bosnian month names
@@ -333,7 +343,8 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
             const isPastDate = isBefore(dayStart, today);
             const isCurrentMonth = isSameMonth(day, currentMonth);
             const isSelected = isSameDay(day, selectedDate);
-            const isDisabled = !isCurrentMonth || isPastDate;
+            // Only disable past dates when creating new lectures, not when editing
+            const isDisabled = !isCurrentMonth || (!editMode && isPastDate);
             
             return (
               <TouchableOpacity
@@ -416,11 +427,15 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     
     if (!isValidDate) return false;
     
-    // Check if the date is today or in the future
-    const today = startOfDay(new Date());
-    const selectedDate = startOfDay(date);
+    // Only check if the date is today or in the future when creating new lectures, not when editing
+    if (!editMode) {
+      const today = startOfDay(new Date());
+      const selectedDate = startOfDay(date);
+      return !isBefore(selectedDate, today);
+    }
     
-    return !isBefore(selectedDate, today);
+    // When editing, any valid date is acceptable
+    return true;
   };
 
   const validateForm = () => {
@@ -433,7 +448,10 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       return false;
     }
     if (!validateDate(formData.date)) {
-      Alert.alert('Greška', 'Unesite valjan datum (danas ili u budućnosti) u formatu DD.MM.YYYY');
+      const errorMessage = editMode ? 
+        'Unesite valjan datum u formatu DD.MM.YYYY' : 
+        'Unesite valjan datum (danas ili u budućnosti) u formatu DD.MM.YYYY';
+      Alert.alert('Greška', errorMessage);
       return false;
     }
     if (!formData.time) {
@@ -477,7 +495,8 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       // If we have a new image (local URI), upload it first
       if (imageUri && imageUri.startsWith('file://')) {
         try {
-          imagePath = await uploadImage(imageUri);
+          const uploadResult = await uploadImage(imageUri);
+          imagePath = uploadResult.path; // Extract just the path from the upload response
         } catch (error) {
           console.error('Error uploading image:', error);
           Alert.alert('Greška', 'Došlo je do greške prilikom uploada slike. Pokušajte ponovo.');
@@ -602,7 +621,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
 
       if (!result.canceled && result.assets[0]) {
         setImageUri(result.assets[0].uri);
-        handleInputChange('image', result.assets[0].uri);
+        // Don't set image in formData yet - it will be set after upload
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -927,7 +946,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   calendarDay: {
-    width: '15%',
+    width: '14.28%',
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
