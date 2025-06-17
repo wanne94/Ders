@@ -6,6 +6,7 @@ import {
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useState } from 'react';
 
 const COLORS = {
   primary: '#022C43',
@@ -19,6 +20,8 @@ const SERVER_URL = 'https://ders.ba';
 
 const Header = ({ onMenuPress, title }) => {
   const insets = useSafeAreaInsets();
+  const [logoSource, setLogoSource] = useState(require('../assets/images/logo.jpg'));
+  const [hasError, setHasError] = useState(false);
 
   const toggleMenu = () => {
     if (onMenuPress) {
@@ -26,13 +29,21 @@ const Header = ({ onMenuPress, title }) => {
     }
   };
 
+  const handleLogoError = () => {
+    if (!hasError) {
+      setHasError(true);
+      setLogoSource({ uri: `${SERVER_URL}/uploads/images/logo.jpg` });
+    }
+  };
+
   return (
     <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
       <TouchableOpacity style={styles.logoContainer}>
         <Image 
-          source={{ uri: `${SERVER_URL}/uploads/logo.jpg` }}
+          source={logoSource}
           style={styles.logo}
           resizeMode="cover"
+          onError={handleLogoError}
         />
       </TouchableOpacity>
       

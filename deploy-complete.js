@@ -81,6 +81,11 @@ function createSSHConnection() {
         if (process.env.SSH_PASSPHRASE && process.env.SSH_PASSPHRASE.trim() !== '') {
           connectionConfig.passphrase = process.env.SSH_PASSPHRASE;
         }
+      } else {
+        // Ako SSH ključ ne postoji, pokušaj sa password autentifikacijom
+        if (process.env.SSH_PASSPHRASE) {
+          connectionConfig.password = process.env.SSH_PASSPHRASE;
+        }
       }
     }
 
@@ -453,6 +458,64 @@ async function healthCheck() {
   }
 }
 
+// Postavljanje SSH ključa na server
+async function setupSSHKey() {
+  log('🔑 Postavljanje SSH ključa na server...', 'blue');
+  
+  // Učitaj javni ključ
+  const sshKeyPath = process.env.SSH_KEY_PATH || `${process.env.HOME}/.ssh/id_ed25519`;
+  const publicKeyPath = sshKeyPath + '.pub';
+  
+  if (!fs.existsSync(publicKeyPath)) {
+    log(`❌ Javni SSH ključ ne postoji: ${publicKeyPath}`, 'red');
+    return false;
+  }
+  
+  const publicKey = fs.readFileSync(publicKeyPath, 'utf8').trim();
+  
+  // Kreiraj konekciju sa password autentifikacijom
+  const conn = new Client();
+  
+  return new Promise((resolve, reject) => {
+    const connectionConfig = {
+      host: CONFIG.server.host,
+      username: CONFIG.server.username,
+      port: CONFIG.server.port,
+      password: process.env.SSH_PASSPHRASE
+    };
+    
+    conn.on('ready', async () => {
+      try {
+        log('🔑 Dodavanje SSH ključa u authorized_keys...', 'yellow');
+        
+        // Provjeri da li .ssh direktorijum postoji
+        await executeSSHCommand(conn, 'mkdir -p ~/.ssh && chmod 700 ~/.ssh');
+        
+        // Dodaj ključ u authorized_keys
+        await executeSSHCommand(conn, `echo "${publicKey}" >> ~/.ssh/authorized_keys`);
+        
+        // Postavi ispravne dozvole
+        await executeSSHCommand(conn, 'chmod 600 ~/.ssh/authorized_keys');
+        
+        log('✅ SSH ključ uspešno postavljen!', 'green');
+        conn.end();
+        resolve(true);
+      } catch (error) {
+        log(`❌ Greška pri postavljanju SSH ključa: ${error.message}`, 'red');
+        conn.end();
+        resolve(false);
+      }
+    });
+    
+    conn.on('error', (err) => {
+      log(`❌ SSH konekcija za postavljanje ključa neuspešna: ${err.message}`, 'red');
+      reject(false);
+    });
+    
+    conn.connect(connectionConfig);
+  });
+}
+
 // Validacija konfiguracije
 function validateConfig() {
   const required = [
@@ -479,6 +542,7 @@ function showHelp() {
   log('  deploy         - Deploy i web i server', 'cyan');
   log('  web            - Deploy samo web aplikaciju', 'cyan');
   log('  server         - Deploy samo server aplikaciju', 'cyan');
+  log('  setup-ssh      - Postavi SSH ključ na server', 'cyan');
   log('  health         - Provjeri status aplikacija', 'cyan');
   log('  help           - Prikaži ovu pomoć', 'cyan');
   log('\nPrimjeri:', 'yellow');
@@ -505,6 +569,10 @@ async function main() {
       case 'server':
         validateConfig();
         await deployServer();
+        break;
+      case 'setup-ssh':
+        validateConfig();
+        await setupSSHKey();
         break;
       case 'health':
         validateConfig();

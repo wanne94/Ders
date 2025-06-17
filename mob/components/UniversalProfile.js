@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { bs } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
 import { getImageUrl, getDefaultDaijaImage, getDefaultLectureImage, getDefaultOrganizationImage } from '../utils/imageUtils';
-import { toTitleCase } from '../utils';
+import { formatDaijaTitle } from '../utils';
 import UniverzalCard from './UniverzalCard';
 import ShareButton from './ShareButton';
 import predavanjaService from '../services/predavanjaService';
@@ -117,7 +117,7 @@ const UniversalProfile = ({ data, type, onBack }) => {
   const getProfileTitle = () => {
     switch (type) {
       case 'daija':
-        return data.name || 'Nepoznat daija';
+        return formatDaijaTitle(data.name, data.title) || 'Nepoznat daija';
       case 'organization':
         return data.name || 'Nepoznata organizacija';
       case 'lecture':
@@ -486,9 +486,6 @@ const UniversalProfile = ({ data, type, onBack }) => {
               type === 'lecture' && styles.lectureProfileTitle
             ]}>{getProfileTitle()}</Text>
             
-            {type === 'daija' && data.title && (
-              <Text style={styles.profileSubtitle}>{data.title}</Text>
-            )}
             
             {type === 'lecture' && data.speaker && (
               <>

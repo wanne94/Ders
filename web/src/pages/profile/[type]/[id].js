@@ -32,7 +32,7 @@ import RelatedLectures from '../../../components/RelatedLectures';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 import { formatDateWithDay } from '../../../utils/dataHelpers';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '../../../utils/imageUtils';
-import { toTitleCase } from '../../../utils';
+import { toTitleCase, formatDaijaTitle } from '../../../utils';
 
 const UnifiedProfile = () => {
   const router = useRouter();
@@ -216,7 +216,7 @@ const UnifiedProfile = () => {
                     }}
                   >
                     {type === 'daija' 
-                      ? `${profileData.title || ''}. ${profileData.name || ''}`.trim()
+                      ? formatDaijaTitle(profileData.name, profileData.title)
                       : type === 'organization'
                       ? profileData.name
                       : profileData.title

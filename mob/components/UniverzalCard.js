@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { bs } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
 import { getImageUrl, getDefaultDaijaImage, getDefaultLectureImage, getDefaultOrganizationImage } from '../utils/imageUtils';
-import { formatDaijaTitle, toTitleCase } from '../utils';
+import { formatDaijaTitle } from '../utils';
 import { useState } from 'react';
 // import { COLORS, TYPOGRAPHY, SPACING } from '../theme';
 
@@ -124,7 +124,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
           title: data.title?.toUpperCase() || '',
           isPastLecture,
           items: [
-            { icon: "Person", text: data.daija && typeof data.daija === "object" ? `${data.daija.title || ""} ${data.daija.name || ""}`.trim() || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
+            { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
             data.organization && { icon: 'Business', text: data.organization },
             data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
             data.time && { icon: 'Time', text: data.time },
@@ -169,7 +169,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
             title: data.title?.toUpperCase() || '',
             isPastLecture,
             items: [
-              { icon: "Person", text: data.daija && typeof data.daija === "object" ? `${data.daija.title || ""} ${data.daija.name || ""}`.trim() || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
+              { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
               data.organization && { icon: 'Business', text: data.organization },
               data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
               data.time && { icon: 'Time', text: data.time },

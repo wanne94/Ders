@@ -124,7 +124,7 @@ export const formatDaijaTitle = (name, title) => {
   
   const lowercaseTitle = title.toLowerCase();
   
-  if (title.toLowerCase() === 'prof') {
+  if (lowercaseTitle === 'prof') {
     return `${name}, ${lowercaseTitle}.`;
   }
   

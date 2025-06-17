@@ -106,7 +106,15 @@ export const getDefaultOrganizationImage = () => {
  */
 export const getLogoUrl = () => {
   // Return local asset path for offline capability
-  return require('../assets/logo.jpg');
+  return require('../assets/images/logo.jpg');
+};
+
+/**
+ * Get logo fallback URL from server
+ * @returns {string} - The server logo URL
+ */
+export const getLogoFallbackUrl = () => {
+  return `${ENV.IMAGE_SERVER_URL}/uploads/images/logo.jpg`;
 };
 
 /**
@@ -125,6 +133,7 @@ export default {
   getDefaultDaijaImage,
   getDefaultOrganizationImage,
   getLogoUrl,
+  getLogoFallbackUrl,
   getFaviconUrl,
   IMAGE_SERVER_URL: ENV.IMAGE_SERVER_URL,
   UPLOAD_SERVER_URL: ENV.UPLOAD_SERVER_URL

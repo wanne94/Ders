@@ -48,7 +48,13 @@
       "Bash(npm why:*)",
       "Bash(true)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:expo.dev)",
+      "Bash(EAS_NO_VCS=1 eas build --platform android --profile production)",
+      "Bash(npx expo export:*)",
+      "Bash(EAS_NO_VCS=1 eas build --platform android --profile production --clear-credentials)",
+      "Bash(mkdir:*)",
+      "Bash(keytool:*)"
     ],
     "deny": []
   }

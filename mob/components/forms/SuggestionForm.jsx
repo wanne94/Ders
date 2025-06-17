@@ -124,12 +124,12 @@ const SuggestionForm = ({ onBack, onSuccess }) => {
     setIsSubmitting(true);
 
     try {
-      const suggestionData = {
-        description: description.trim(),
-        referenceType: referenceType !== 'općenito' ? referenceType : null,
-        referenceId: referenceType !== 'općenito' ? referenceId : null,
-        image: image || null
-      };
+      // const suggestionData = {
+      //   description: description.trim(),
+      //   referenceType: referenceType !== 'općenito' ? referenceType : null,
+      //   referenceId: referenceType !== 'općenito' ? referenceId : null,
+      //   image: image || null
+      // };
 
       // Here you would make the API call
       // const response = await axiosInstance.post('/suggestions', payload);

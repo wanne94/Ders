@@ -770,3 +770,115 @@ info: Fetching all daije {"timestamp":"2025-06-16T18:57:00.630Z"}
 info: Found 14 approved daije {"timestamp":"2025-06-16T18:57:00.680Z"}
 info: Processed 14 daije with lecture counts {"timestamp":"2025-06-16T18:57:00.732Z"}
 127.0.0.1 - - [16/Jun/2025:18:57:00 +0000] "GET /api/daije HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+🚀 [PERFORMANCE] /api/lectures/public endpoint called at: 2025-06-16T19:22:41.410Z
+info: Fetching public lectures {"timestamp":"2025-06-16T19:22:41.410Z"}
+📊 [PERFORMANCE] Database state: connected (1)
+🔍 [PERFORMANCE] Starting super-optimized database query...
+✅ [PERFORMANCE] Used hint-forced query
+⚡ [PERFORMANCE] Super-optimized database query completed in: 106ms
+📊 [PERFORMANCE] Found 2 public lectures
+info: Found 2 public lectures {"timestamp":"2025-06-16T19:22:41.519Z"}
+🔄 [PERFORMANCE] Starting lightning-fast data transformation...
+⚡ [PERFORMANCE] Lightning-fast data transformation completed in: 0ms
+📅 [PERFORMANCE] Starting custom date-based sorting...
+📅 [PERFORMANCE] Custom sorting completed in: 1ms
+📊 [PERFORMANCE] Future lectures: 1, Past lectures: 1
+📈 [PERFORMANCE] Super-optimized endpoint timing breakdown:
+  - Database query: 106ms (96.4%)
+  - Data transformation: 0ms (0.0%)
+  - Custom sorting: 1ms (0.9%)
+  - Total endpoint time: 110ms
+🎯 [PERFORMANCE] Performance grade: GOOD (110ms)
+127.0.0.1 - - [16/Jun/2025:19:22:41 +0000] "GET /api/lectures/public HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+🚀 [PERFORMANCE] /api/lectures/public endpoint called at: 2025-06-16T19:22:41.522Z
+info: Fetching public lectures {"timestamp":"2025-06-16T19:22:41.523Z"}
+📊 [PERFORMANCE] Database state: connected (1)
+🔍 [PERFORMANCE] Starting super-optimized database query...
+info: Fetching all organizations {"timestamp":"2025-06-16T19:22:41.526Z"}
+info: Found 3 approved organizations {"timestamp":"2025-06-16T19:22:41.573Z"}
+✅ [PERFORMANCE] Used hint-forced query
+⚡ [PERFORMANCE] Super-optimized database query completed in: 94ms
+📊 [PERFORMANCE] Found 2 public lectures
+info: Found 2 public lectures {"timestamp":"2025-06-16T19:22:41.618Z"}
+🔄 [PERFORMANCE] Starting lightning-fast data transformation...
+⚡ [PERFORMANCE] Lightning-fast data transformation completed in: 0ms
+📅 [PERFORMANCE] Starting custom date-based sorting...
+📅 [PERFORMANCE] Custom sorting completed in: 0ms
+📊 [PERFORMANCE] Future lectures: 1, Past lectures: 1
+📈 [PERFORMANCE] Super-optimized endpoint timing breakdown:
+  - Database query: 94ms (96.9%)
+  - Data transformation: 0ms (0.0%)
+  - Custom sorting: 0ms (0.0%)
+  - Total endpoint time: 97ms
+🎯 [PERFORMANCE] Performance grade: VERY_GOOD (97ms)
+127.0.0.1 - - [16/Jun/2025:19:22:41 +0000] "GET /api/lectures/public HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+info: Processed 3 organizations with lecture counts {"timestamp":"2025-06-16T19:22:41.624Z"}
+127.0.0.1 - - [16/Jun/2025:19:22:41 +0000] "GET /api/organizations HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+info: Fetching all organizations {"timestamp":"2025-06-16T19:22:41.625Z"}
+info: Found 3 approved organizations {"timestamp":"2025-06-16T19:22:41.673Z"}
+info: Fetching all daije {"timestamp":"2025-06-16T19:22:41.694Z"}
+info: Processed 3 organizations with lecture counts {"timestamp":"2025-06-16T19:22:41.717Z"}
+127.0.0.1 - - [16/Jun/2025:19:22:41 +0000] "GET /api/organizations HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+info: Found 14 approved daije {"timestamp":"2025-06-16T19:22:41.742Z"}
+info: Processed 14 daije with lecture counts {"timestamp":"2025-06-16T19:22:41.798Z"}
+127.0.0.1 - - [16/Jun/2025:19:22:41 +0000] "GET /api/daije HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+info: Fetching all daije {"timestamp":"2025-06-16T19:22:41.800Z"}
+info: Found 14 approved daije {"timestamp":"2025-06-16T19:22:41.846Z"}
+info: Processed 14 daije with lecture counts {"timestamp":"2025-06-16T19:22:41.899Z"}
+127.0.0.1 - - [16/Jun/2025:19:22:41 +0000] "GET /api/daije HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+🚀 [PERFORMANCE] /api/lectures/public endpoint called at: 2025-06-16T22:54:06.547Z
+info: Fetching public lectures {"timestamp":"2025-06-16T22:54:06.550Z"}
+📊 [PERFORMANCE] Database state: connected (1)
+🔍 [PERFORMANCE] Starting super-optimized database query...
+✅ [PERFORMANCE] Used hint-forced query
+⚡ [PERFORMANCE] Super-optimized database query completed in: 123ms
+📊 [PERFORMANCE] Found 2 public lectures
+info: Found 2 public lectures {"timestamp":"2025-06-16T22:54:06.677Z"}
+🔄 [PERFORMANCE] Starting lightning-fast data transformation...
+⚡ [PERFORMANCE] Lightning-fast data transformation completed in: 0ms
+📅 [PERFORMANCE] Starting custom date-based sorting...
+📅 [PERFORMANCE] Custom sorting completed in: 0ms
+📊 [PERFORMANCE] Future lectures: 1, Past lectures: 1
+📈 [PERFORMANCE] Super-optimized endpoint timing breakdown:
+  - Database query: 123ms (93.2%)
+  - Data transformation: 0ms (0.0%)
+  - Custom sorting: 0ms (0.0%)
+  - Total endpoint time: 132ms
+🎯 [PERFORMANCE] Performance grade: GOOD (132ms)
+127.0.0.1 - - [16/Jun/2025:22:54:06 +0000] "GET /api/lectures/public HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+🚀 [PERFORMANCE] /api/lectures/public endpoint called at: 2025-06-16T22:54:06.684Z
+info: Fetching public lectures {"timestamp":"2025-06-16T22:54:06.684Z"}
+📊 [PERFORMANCE] Database state: connected (1)
+🔍 [PERFORMANCE] Starting super-optimized database query...
+info: Fetching all organizations {"timestamp":"2025-06-16T22:54:06.688Z"}
+info: Found 3 approved organizations {"timestamp":"2025-06-16T22:54:06.740Z"}
+✅ [PERFORMANCE] Used hint-forced query
+⚡ [PERFORMANCE] Super-optimized database query completed in: 97ms
+📊 [PERFORMANCE] Found 2 public lectures
+info: Found 2 public lectures {"timestamp":"2025-06-16T22:54:06.782Z"}
+🔄 [PERFORMANCE] Starting lightning-fast data transformation...
+⚡ [PERFORMANCE] Lightning-fast data transformation completed in: 1ms
+📅 [PERFORMANCE] Starting custom date-based sorting...
+📅 [PERFORMANCE] Custom sorting completed in: 0ms
+📊 [PERFORMANCE] Future lectures: 1, Past lectures: 1
+📈 [PERFORMANCE] Super-optimized endpoint timing breakdown:
+  - Database query: 97ms (98.0%)
+  - Data transformation: 1ms (1.0%)
+  - Custom sorting: 0ms (0.0%)
+  - Total endpoint time: 99ms
+🎯 [PERFORMANCE] Performance grade: VERY_GOOD (99ms)
+127.0.0.1 - - [16/Jun/2025:22:54:06 +0000] "GET /api/lectures/public HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+info: Processed 3 organizations with lecture counts {"timestamp":"2025-06-16T22:54:06.790Z"}
+127.0.0.1 - - [16/Jun/2025:22:54:06 +0000] "GET /api/organizations HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+info: Fetching all organizations {"timestamp":"2025-06-16T22:54:06.792Z"}
+info: Fetching all daije {"timestamp":"2025-06-16T22:54:06.833Z"}
+info: Found 3 approved organizations {"timestamp":"2025-06-16T22:54:06.835Z"}
+info: Found 14 approved daije {"timestamp":"2025-06-16T22:54:06.879Z"}
+info: Processed 3 organizations with lecture counts {"timestamp":"2025-06-16T22:54:06.885Z"}
+127.0.0.1 - - [16/Jun/2025:22:54:06 +0000] "GET /api/organizations HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+info: Processed 14 daije with lecture counts {"timestamp":"2025-06-16T22:54:06.944Z"}
+127.0.0.1 - - [16/Jun/2025:22:54:06 +0000] "GET /api/daije HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+info: Fetching all daije {"timestamp":"2025-06-16T22:54:06.945Z"}
+info: Found 14 approved daije {"timestamp":"2025-06-16T22:54:06.992Z"}
+info: Processed 14 daije with lecture counts {"timestamp":"2025-06-16T22:54:07.039Z"}
+127.0.0.1 - - [16/Jun/2025:22:54:07 +0000] "GET /api/daije HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"

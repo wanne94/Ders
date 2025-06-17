@@ -18,21 +18,21 @@ config.resolver.blockList = [
 config.resolver.assetExts.push('db', 'mp3', 'ttf', 'obj', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg');
 config.resolver.blacklistRE = /(__tests__|\.test\.|\.spec\.|\.stories\.|node_modules[\/\\]react[\/\\]dist[\/\\].*)/;
 
-// Dodaj polyfills za Node.js module koji nisu dostupni u React Native
-config.resolver.alias = {
-  crypto: 'crypto-browserify',
-  stream: 'stream-browserify',
-  http: 'stream-http',
-  https: 'https-browserify',
-  os: 'os-browserify/browser',
-  url: 'url',
-  zlib: 'browserify-zlib',
-  path: 'path-browserify',
-  vm: 'vm-browserify',
-  fs: false,
-  net: false,
-  tls: false,
-};
+// Zakomentiraj polyfills koji mogu biti problematični
+// config.resolver.alias = {
+//   crypto: 'crypto-browserify',
+//   stream: 'stream-browserify',
+//   http: 'stream-http',
+//   https: 'https-browserify',
+//   os: 'os-browserify/browser',
+//   url: 'url',
+//   zlib: 'browserify-zlib',
+//   path: 'path-browserify',
+//   vm: 'vm-browserify',
+//   fs: false,
+//   net: false,
+//   tls: false,
+// };
 
 // Dodaj resolver konfiguraciju za Node.js module
 config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];

@@ -24,19 +24,18 @@ import Menu from './components/Menu';
 import daijeService from './services/daijeService';
 import udruzenjaService from './services/udruzenjaService';
 import { ENV } from './config';
-import { sortAssociations } from './utils/sortingUtils';
+import { sortAssociations, sortAllDaijeWithActivePriority, sortEntitiesByUpcomingLecture } from './utils/sortingUtils';
 import AuthScreen from './screens/AuthScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import AddContentMenu from './components/AddContentMenu';
 import AddContentPopup from './components/AddContentPopup';
 import {
   isAuthenticated as checkIsAuthenticated,
   getUserData,
   logout
 } from './utils/authHelpers';
-import { sortAllDaijeWithActivePriority } from './utils/sortingUtils';
-import { sortEntitiesByUpcomingLecture } from './utils/sortingUtils';
 
-const { width, height } = Dimensions.get('window');
+Dimensions.get('window');
 
 // Colors matching the web app
 const COLORS = {
@@ -52,32 +51,7 @@ const COLORS = {
 };
 
 // Utility functions for date formatting and sorting
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
-  
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-  
-  return `${day}.${month}.${year}.`;
-};
 
-const formatDateWithDay = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
-
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-
-  const days = ['Nedjelja', 'Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota'];
-  const dayOfWeek = days[date.getDay()];
-
-  return `${day}.${month}.${year}. (${dayOfWeek})`;
-};
 
 // Old sorting function removed - now using centralized sorting from utils/sortingUtils.js
 
@@ -398,7 +372,7 @@ const UdruzenjaSection = ({ onProfileOpen, allLectures = [] }) => {
 };
 
 // Registration Benefits Component
-const RegistrationBenefits = ({ onAuthNavigate }) => {
+const RegistrationBenefits = ({ onAuthNavigate, isAuthenticated }) => {
   const benefits = [
     {
       title: 'Dodavanje sadržaja',
@@ -407,7 +381,7 @@ const RegistrationBenefits = ({ onAuthNavigate }) => {
       color: COLORS.primary
     },
     {
-      title: 'Obavještenja',
+      title: 'Obavještenja (Uskoro inshallah)',
       description: 'Najnovija predavanja',
       icon: 'notifications-outline',
       color: COLORS.primary
@@ -436,9 +410,15 @@ const RegistrationBenefits = ({ onAuthNavigate }) => {
         ))}
       </View>
 
-      <TouchableOpacity style={styles.registerButton} onPress={onAuthNavigate}>
-        <Text style={styles.registerButtonText}>Registrujte se</Text>
-      </TouchableOpacity>
+      {!isAuthenticated && (
+        <TouchableOpacity 
+          style={styles.registerButton} 
+          onPress={onAuthNavigate}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.registerButtonText}>Registrujte se</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -511,8 +491,9 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [profileType, setProfileType] = useState(null);
-  const [showAddPopup, setShowAddPopup] = useState(false);
-  const [addContentType, setAddContentType] = useState(null);
+  const [showAddMenu, setShowAddMenu] = useState(false);
+  const [showFormPopup, setShowFormPopup] = useState(false);
+  const [selectedFormType, setSelectedFormType] = useState(null);
   
   // Auth states
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -591,9 +572,10 @@ export default function App() {
         setActiveTab('auth');
         return;
       }
-      setShowAddPopup(true);
+      setShowAddMenu(prev => !prev);
     } else {
       setActiveTab(tabId);
+      setShowAddMenu(false); // Zatvori add menu kada se klikne na drugi tab
     }
   };
 
@@ -603,6 +585,10 @@ export default function App() {
 
   const handleMenuToggle = () => {
     setMenuOpen(prev => !prev);
+    // Zatvori add menu kada se otvori glavni menu
+    if (!menuOpen) {
+      setShowAddMenu(false);
+    }
   };
 
   const handleMenuNavigate = (path) => {
@@ -669,9 +655,12 @@ export default function App() {
     setRefreshKey(prev => prev + 1);
   };
 
-  const handleAddContentWithType = (type) => {
-    setAddContentType(type);
-    setShowAddPopup(true);
+  const handleAddContentOptionSelect = (optionId) => {
+    // Zatvori menu prvo
+    setShowAddMenu(false);
+    // Otvori odgovarajući form
+    setSelectedFormType(optionId);
+    setShowFormPopup(true);
   };
 
   const getPageTitle = () => {
@@ -700,7 +689,7 @@ export default function App() {
           <>
             <HeroSection key={`hero-${refreshKey}`} />
             <LecturesSection key={`lectures-${refreshKey}`} onProfileOpen={handleProfileOpen} allLectures={allLectures} />
-            <RegistrationBenefits key={`benefits-${refreshKey}`} onAuthNavigate={handleAuthNavigate} />
+            <RegistrationBenefits key={`benefits-${refreshKey}`} onAuthNavigate={handleAuthNavigate} isAuthenticated={isAuthenticated} />
             <DaijeSection key={`daije-${refreshKey}`} onProfileOpen={handleProfileOpen} allLectures={allLectures} />
             <UdruzenjaSection key={`udruzenja-${refreshKey}`} onProfileOpen={handleProfileOpen} allLectures={allLectures} />
             <QuickActions key={`actions-${refreshKey}`} onNavigate={setActiveTab} />
@@ -786,6 +775,7 @@ export default function App() {
         <BottomNavigation
           activeTab={activeTab}
           onTabPress={handleTabPress}
+          isAddMenuOpen={showAddMenu}
         />
 
         <Menu
@@ -796,19 +786,24 @@ export default function App() {
           user={user}
           onAuthNavigate={handleAuthNavigate}
           onLogout={handleLogout}
-          onAddContent={() => setShowAddPopup(true)}
-          onAddContentWithType={handleAddContentWithType}
+          onAddContent={() => setShowAddMenu(true)}
           onProfileNavigate={handleProfileNavigate}
         />
 
+        <AddContentMenu
+          visible={showAddMenu}
+          onOptionSelect={handleAddContentOptionSelect}
+          onClose={() => setShowAddMenu(false)}
+        />
+
         <AddContentPopup
-          visible={showAddPopup}
+          visible={showFormPopup}
           onClose={() => {
-            setShowAddPopup(false);
-            setAddContentType(null);
+            setShowFormPopup(false);
+            setSelectedFormType(null);
           }}
           onSuccess={handleContentAdded}
-          initialType={addContentType}
+          initialType={selectedFormType}
         />
       </View>
     </SafeAreaProvider>
@@ -943,9 +938,17 @@ const styles = StyleSheet.create({
   registerButton: {
     backgroundColor: COLORS.primary,
     paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 6,
+    paddingVertical: 16,
+    borderRadius: 8,
     alignItems: 'center',
+    marginTop: 16,
+    minHeight: 48,
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   registerButtonText: {
     fontSize: 15,

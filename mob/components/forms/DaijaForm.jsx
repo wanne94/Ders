@@ -58,7 +58,7 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
     if (editMode && editData) {
       populateFormWithEditData();
     }
-  }, [editMode, editData, populateFormWithEditData]);
+  }, [editMode, editData]);
 
   const populateFormWithEditData = () => {
     if (!editData) return;

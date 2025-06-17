@@ -1,10 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Animated,
-  Dimensions,
   TouchableOpacity
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -76,9 +75,9 @@ const Toast = ({ visible, message, type = 'success', duration = 3000, onHide }) 
 
       return () => clearTimeout(timer);
     }
-  }, [visible, duration, hideToast, opacityAnim, slideAnim]);
+  }, [visible, duration, opacityAnim, slideAnim, hideToast]);
 
-  const hideToast = () => {
+  const hideToast = useCallback(() => {
     Animated.parallel([
       Animated.timing(slideAnim, {
         toValue: -100,
@@ -93,7 +92,7 @@ const Toast = ({ visible, message, type = 'success', duration = 3000, onHide }) 
     ]).start(() => {
       if (onHide) onHide();
     });
-  };
+  }, [slideAnim, opacityAnim, onHide]);
 
   if (!visible) return null;
 

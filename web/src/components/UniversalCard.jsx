@@ -44,7 +44,7 @@ const UniversalCard = ({ data }) => {
           infoItems: [
             { icon: <PersonIcon />, text: 
               data.daija && typeof data.daija === 'object' 
-                ? `${data.daija.title || ''} ${data.daija.name || ''}`.trim() || 'Nepoznat daija'
+                ? formatDaijaTitle(data.daija.name, data.daija.title) || 'Nepoznat daija'
                 : data.speaker || 'Nepoznat daija' 
             },
             { icon: <BusinessIcon />, text: data.organization || 'Nepoznato udruženje' },

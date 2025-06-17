@@ -1,8 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-const { width } = Dimensions.get('window');
 
 const COLORS = {
   primary: '#022C43',
@@ -11,9 +9,10 @@ const COLORS = {
   white: '#ffffff',
   gray: '#666666',
   lightGray: '#f5f5f5',
+  success: '#4CAF50',
 };
 
-const BottomNavigation = ({ activeTab, onTabPress }) => {
+const BottomNavigation = ({ activeTab, onTabPress, isAddMenuOpen = false }) => {
   const tabs = [
     { id: 'home', label: 'Početna', icon: 'home-outline', activeIcon: 'home' },
     { id: 'lectures', label: 'Dersovi', icon: 'book-outline', activeIcon: 'book' },
@@ -33,8 +32,15 @@ const BottomNavigation = ({ activeTab, onTabPress }) => {
           style={styles.addButton}
           onPress={() => onTabPress(tab.id)}
         >
-          <View style={styles.addButtonInner}>
-            <Ionicons name={tab.icon} size={24} color={COLORS.white} />
+          <View style={[
+            styles.addButtonInner,
+            isAddMenuOpen && styles.addButtonActive
+          ]}>
+            <Ionicons 
+              name={isAddMenuOpen ? 'close' : tab.icon} 
+              size={24} 
+              color={COLORS.white} 
+            />
           </View>
         </TouchableOpacity>
       );
@@ -122,6 +128,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  addButtonActive: {
+    backgroundColor: COLORS.success,
   },
 });
 

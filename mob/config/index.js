@@ -1,9 +1,13 @@
 import { ENV as DEV_ENV } from './env.development';
 import { ENV as PROD_ENV } from './env.production';
 
-// Određujemo environment na osnovu Expo konstantiog
-// __DEV__ je true samo tokom development-a
-const isDevelopment = __DEV__;
+// Određujemo environment na sigurniji način
+// Provjeravamo različite načine detekcije development okruženja
+const isDevelopment = (
+  (typeof __DEV__ !== 'undefined' && __DEV__) ||
+  process.env.NODE_ENV === 'development' ||
+  process.env.EXPO_ENV === 'development'
+);
 
 // Eksportuj odgovarajuću konfiguraciju
 export const ENV = isDevelopment ? DEV_ENV : PROD_ENV;

@@ -173,9 +173,31 @@ const Footer = () => {
           <Typography variant="body2" sx={{ opacity: 0.7 }}>
             © {currentYear} DERS. Sva prava zadržana.
           </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.7 }}>
-            Napravljeno da koristi muslimanima.
-          </Typography>
+          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+            <Link
+              component="button"
+              variant="body2"
+              onClick={() => handleNavigation('/privacy-policy')}
+              sx={{
+                color: 'white',
+                opacity: 0.7,
+                textDecoration: 'none',
+                cursor: 'pointer',
+                border: 'none',
+                background: 'none',
+                padding: 0,
+                '&:hover': {
+                  opacity: 1,
+                  textDecoration: 'underline'
+                }
+              }}
+            >
+              Politika privatnosti
+            </Link>
+            <Typography variant="body2" sx={{ opacity: 0.7 }}>
+              Napravljeno da koristi muslimanima.
+            </Typography>
+          </Box>
         </Box>
       </Container>
     </Box>

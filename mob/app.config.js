@@ -1,47 +1,45 @@
 export default {
   expo: {
     name: "Ders",
-    slug: "ders-mobile-app",
+    slug: "ders-app",
     owner: "wanne",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/icon.png",
+    icon: "./assets/images/logo.jpg",
     userInterfaceStyle: "light",
     splash: {
-      image: "./assets/splash.png",
+      image: "./assets/images/splash.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff"
     },
-    updates: {
-      fallbackToCacheTimeout: 0
-    },
     assetBundlePatterns: ["**/*"],
     ios: {
-      supportsTablet: true
+      supportsTablet: true,
+      bundleIdentifier: "ba.ders.app"
     },
     android: {
-      package: "com.ders.app",
+      package: "ba.ders.app",
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
       }
     },
     web: {
-      favicon: "./assets/favicon.png"
+      favicon: "./assets/images/favicon.png"
     },
     plugins: [
-      [
-        "expo-notifications",
-        {
-                    color: "#ffffff"
-        }
-      ],
       "expo-build-properties"
     ],
     extra: {
       eas: {
-        projectId: "6088f37c-3438-4b9c-b54a-83165348772b"
+        projectId: "7d754f7a-231e-4fd1-8d48-22e2d5f1cb7e"
       }
+    },
+    updates: {
+      url: "https://u.expo.dev/7d754f7a-231e-4fd1-8d48-22e2d5f1cb7e"
+    },
+    runtimeVersion: {
+      policy: "appVersion"
     }
   }
 };
