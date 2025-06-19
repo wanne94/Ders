@@ -15,10 +15,10 @@ export default {
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "ba.ders.app"
+      bundleIdentifier: "com.daije.mobile"
     },
     android: {
-      package: "ba.ders.app",
+      package: "com.daije.mobile",
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
@@ -32,7 +32,7 @@ export default {
     ],
     extra: {
       eas: {
-        projectId: "7d754f7a-231e-4fd1-8d48-22e2d5f1cb7e"
+        "projectId": "097bf421-56af-45c5-80d6-8f33e3ecdf9e"
       }
     },
     updates: {

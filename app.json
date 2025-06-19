@@ -10,11 +10,11 @@
       "backgroundColor": "#ffffff"
     },
     "android": {
-      "package": "ba.ders.produkcija"
+      "package": "com.daije.mobile"
     },
     "extra": {
       "eas": {
-        "projectId": "57654b2f-a220-4cae-b91d-0857c7d2dbc1"
+        "projectId": "9766d471-b4d3-4612-8be9-855e96a8e9c6"
       }
     },
     "owner": "wanne"

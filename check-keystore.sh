@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "Checking for original keystore with SHA1: 91:21:E9:C5:05:A8:B4:F0:D0:A7:03:00:32:5A:C7:48:EE:3B:2A:01"
+echo ""
+echo "This keystore should be:"
+echo "1. The original keystore used to sign the app on Google Play"
+echo "2. Available in your EAS account if you previously built with EAS"
+echo "3. Or needs to be recovered from backups"
+echo ""
+echo "Options:"
+echo "- Check with the team who originally published the app"
+echo "- Look for keystore backups in secure storage"
+echo "- Check if EAS has the original keystore in Build Credentials"
+echo ""
+echo "Without this keystore, you cannot update the existing app on Google Play."

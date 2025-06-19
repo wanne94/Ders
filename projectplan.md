@@ -1,15 +1,25 @@
-# Plan za kreiranje novih Android kredencijala za produkciju
+# Plan za Android produkcijski build
 
 ## Trenutni cilj
-Kreirati nove Android kredencijale za produkciju pod nazivom "Ders-app-produkcija" i generisati PEM fajl za Google Play Console.
+Napraviti Android produkcijski build koristeći Expo EAS Build.
 
-## TODO stavke za kreiranje novih kredencijala
+## TODO stavke za Android produkcijski build
 
-- [x] Proveri trenutnu EAS credentials postavku
-- [x] Kreiraj nove Android kredencijale sa nazivom "Ders-app-produkcija"
-- [x] Generiši PEM fajl iz keystore za Google Play upload key
-- [x] Sačuvaj PEM fajl i pripremi instrukcije za Google Play Console
-- [x] Ažuriraj app.json sa novim Android package name (ba.ders.produkcija)
+- [x] Pregledaj trenutnu Expo i EAS konfiguraciju
+- [x] Provjeri Android keystore setup za produkciju
+- [x] Kreiraj credentials.json fajl za lokalne kredencijale
+- [ ] Pokreni EAS build komandu za Android produkciju
+- [ ] Provjeri da li je build uspješan
+
+## Prethodni plan - promjena package name (završeno)
+
+### TODO stavke za promjenu package name
+
+- [x] Analiziraj trenutnu package name konfiguraciju u projektu
+- [x] Promijeni package name u app.json i app.config.js na com.daije.mobile
+- [x] Ažuriraj eas.json ako je potrebno (nije bilo potrebno)
+- [x] Provjeri druge konfiguracijske fajlove koji mogu sadržati package name
+- [x] Ažuriraj projectplan.md sa novim planom i promjenama
 
 ## Kreirani fajlovi
 
@@ -21,25 +31,17 @@ Kreirati nove Android kredencijale za produkciju pod nazivom "Ders-app-produkcij
 
 - **SHA1 fingerprint**: E8:70:28:1F:50:76:FA:22:B4:D9:47:FF:DB:1E:21:76:90:78:FE:66
 - **Alias**: Ders-app-produkcija
-- **Package name**: ba.ders.produkcija
+- **Package name**: com.daije.mobile
 - **Store password**: DersApp2024Prod
 - **Key password**: DersApp2024Prod
 
-## Prethodni TODO (završeno)
+## Review promjene package name
 
-- [x] Proveri trenutne Expo konfiguracijske fajlove (app.json, eas.json)
-- [x] Ukloni Android-specifične kredencijale iz app.json
-- [x] Android build konfiguracija nije pronađena u eas.json (već je generička)
-- [x] Proveri i obriši sve Android keystore fajlove (nisu pronađeni)
-- [x] Ažuriraj projectplan.md sa završenim zadacima
-
-## Review
-
-Uspešno su uklonjeni svi Android kredencijali iz Expo produkcijske konfiguracije:
-- Uklonjena je `android` sekcija iz app.json koja je sadržala package name "ders.ba"
-- eas.json ne sadrži Android-specifične kredencijale, samo generičku build konfiguraciju
-- Nisu pronađeni nikakvi .keystore fajlovi u projektu
-- Expo projektni ID ostaje u konfiguraciji jer nije Android-specifičan
+Uspješno je promijenjen package name na "com.daije.mobile" u svim relevantnim fajlovima:
+- app.json: Android package promijenjen sa "ba.ders.produkcija" na "com.daije.mobile"
+- mob/app.config.js: Android package promijenjen sa "ba.ders.app" na "com.daije.mobile"
+- mob/app.config.js: iOS bundleIdentifier također promijenjen na "com.daije.mobile"
+- eas.json ne sadrži package name konfiguraciju
 
 ## Prethodni plan (arhivirano)
 

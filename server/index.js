@@ -1520,6 +1520,165 @@ app.post('/api/lectures', authenticateToken, async (req, res) => {
     logger.error('Error adding lecture:', error);
     res.status(400).json({ message: error.message });
   }
+  });
+
+// Add new lecture
+app.post('/api/lectures', authenticateToken, async (req, res) => {
+  try {
+    logger.info('Adding new lecture - Request body:', {
+      body: req.body,
+      user: req.user
+    });
+
+    const requiredFields = ['title', 'date', 'time', 'address', 'city'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    
+    if (missingFields.length > 0) {
+      logger.warn('Missing required fields:', missingFields);
+      return res.status(400).json({ 
+        message: 'Missing required fields', 
+        fields: missingFields 
+      });
+    }
+    
+    // Get approval settings
+    const approvalSettings = await Settings.findOne({ key: 'approvalSettings' });
+    const needsApproval = approvalSettings?.value?.lecture !== false; // Default to true if setting not found
+    
+    // Only allow admin/super_admin to explicitly set status, otherwise use approval settings
+    const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
+    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : (needsApproval ? 'pending' : 'approved');
+    
+    // Parse date from DD.MM.YYYY format if needed
+    let parsedDate = req.body.date;
+    if (typeof req.body.date === 'string' && req.body.date.includes('.')) {
+      const [day, month, year] = req.body.date.split('.');
+      parsedDate = new Date(year, month - 1, day);
+    } else if (typeof req.body.date === 'string') {
+      parsedDate = new Date(req.body.date);
+    }
+
+    let lectureData = {
+      title: req.body.title,
+      speaker: req.body.speaker || '',
+      daija: req.body.daijaId || null,
+      organization: req.body.organization,
+      organizationId: req.body.organizationId || null,
+      date: parsedDate,
+      time: req.body.time,
+      address: req.body.address,
+      city: req.body.city,
+      shortDescription: req.body.shortDescription || '',
+      description: req.body.description || '',
+      image: req.body.image,
+      status: finalStatus,
+      createdBy: req.user.id
+    };
+    
+    logger.info('Using approval settings:', { 
+      needsApproval,
+      setting: approvalSettings?.value?.lecture,
+      isAdminUser,
+      requestedStatus: req.body.status,
+      finalStatus: lectureData.status 
+    });
+    
+    logger.info('Creating lecture with data:', lectureData);
+    const lecture = new Lecture(lectureData);
+    
+    const savedLecture = await lecture.save();
+    logger.info('New lecture saved successfully:', {
+      id: savedLecture._id,
+      title: savedLecture.title,
+      date: savedLecture.date,
+      createdBy: savedLecture.createdBy
+    });
+    
+    // Transform response to include daijaId for frontend compatibility
+    const responseData = {
+      ...savedLecture.toObject(),
+      daijaId: savedLecture.daija || null
+    };
+    
+    res.status(201).json(responseData);
+  } catch (error) {
+    logger.error('Error adding lecture:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Add new lecture - PUBLIC endpoint (no authentication required)
+app.post('/api/lectures/public', async (req, res) => {
+  try {
+    logger.info('Adding new lecture via public endpoint - Request body:', {
+      body: req.body,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    const requiredFields = ['title', 'date', 'time', 'address', 'city'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    
+    if (missingFields.length > 0) {
+      logger.warn('Missing required fields:', missingFields);
+      return res.status(400).json({ 
+        message: 'Nedostaju obavezna polja', 
+        fields: missingFields 
+      });
+    }
+    
+    // Parse date from DD.MM.YYYY format if needed
+    let parsedDate = req.body.date;
+    if (typeof req.body.date === 'string' && req.body.date.includes('.')) {
+      const [day, month, year] = req.body.date.split('.');
+      parsedDate = new Date(year, month - 1, day);
+    } else if (typeof req.body.date === 'string') {
+      parsedDate = new Date(req.body.date);
+    }
+
+    // Public submissions always go to pending status for approval
+    let lectureData = {
+      title: req.body.title,
+      speaker: req.body.speaker || '',
+      daija: req.body.daijaId || null,
+      organization: req.body.organization,
+      organizationId: req.body.organizationId || null,
+      date: parsedDate,
+      time: req.body.time,
+      address: req.body.address,
+      city: req.body.city,
+      shortDescription: req.body.shortDescription || '',
+      description: req.body.description || '',
+      image: req.body.image || '/uploads/images/predavanjeslika.jpg', // Default image
+      status: 'pending', // Always pending for public submissions
+      createdBy: null // No user associated with public submissions
+    };
+    
+    logger.info('Creating public lecture with data:', lectureData);
+    const lecture = new Lecture(lectureData);
+    
+    const savedLecture = await lecture.save();
+    logger.info('New public lecture saved successfully:', {
+      id: savedLecture._id,
+      title: savedLecture.title,
+      date: savedLecture.date,
+      status: savedLecture.status
+    });
+    
+    // Transform response to include daijaId for frontend compatibility
+    const responseData = {
+      ...savedLecture.toObject(),
+      daijaId: savedLecture.daija || null
+    };
+    
+    res.status(201).json({
+      ...responseData,
+      message: 'Predavanje je uspešno poslato na odobravanje. Biće objavljeno nakon što ga administrator odobri.'
+    });
+  } catch (error) {
+    logger.error('Error adding public lecture:', error);
+    res.status(400).json({ message: error.message });
+  }
 });
 
 // Update lecture
@@ -3740,82 +3899,6 @@ app.get('/api/lectures/search', async (req, res) => {
   } catch (error) {
     logger.error('Error searching lectures:', error);
     res.status(500).json({ message: 'Greška pri pretraživanju predavanja' });
-  }
-});
-
-// Add new lecture
-app.post('/api/lectures', authenticateToken, async (req, res) => {
-  try {
-    logger.info('Adding new lecture - Request body:', {
-      body: req.body,
-      user: req.user
-    });
-
-    const requiredFields = ['title', 'date', 'time', 'address', 'city'];
-    const missingFields = requiredFields.filter(field => !req.body[field]);
-    
-    if (missingFields.length > 0) {
-      logger.warn('Missing required fields:', missingFields);
-      return res.status(400).json({ 
-        message: 'Missing required fields', 
-        fields: missingFields 
-      });
-    }
-    
-    // Get approval settings
-    const approvalSettings = await Settings.findOne({ key: 'approvalSettings' });
-    const needsApproval = approvalSettings?.value?.lecture !== false; // Default to true if setting not found
-    
-    // Only allow admin/super_admin to explicitly set status, otherwise use approval settings
-    const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
-    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : (needsApproval ? 'pending' : 'approved');
-    
-    let lectureData = {
-      title: req.body.title,
-      speaker: req.body.speaker || '',
-      daija: req.body.daijaId || null,
-      organization: req.body.organization,
-      organizationId: req.body.organizationId || null,
-      date: req.body.date,
-      time: req.body.time,
-      address: req.body.address,
-      city: req.body.city,
-      shortDescription: req.body.shortDescription || '',
-      description: req.body.description || '',
-      image: req.body.image,
-      status: finalStatus,
-      createdBy: req.user.id
-    };
-    
-    logger.info('Using approval settings:', { 
-      needsApproval,
-      setting: approvalSettings?.value?.lecture,
-      isAdminUser,
-      requestedStatus: req.body.status,
-      finalStatus: lectureData.status 
-    });
-    
-    logger.info('Creating lecture with data:', lectureData);
-    const lecture = new Lecture(lectureData);
-    
-    const savedLecture = await lecture.save();
-    logger.info('New lecture saved successfully:', {
-      id: savedLecture._id,
-      title: savedLecture.title,
-      date: savedLecture.date,
-      createdBy: savedLecture.createdBy
-    });
-    
-    // Transform response to include daijaId for frontend compatibility
-    const responseData = {
-      ...savedLecture.toObject(),
-      daijaId: savedLecture.daija || null
-    };
-    
-    res.status(201).json(responseData);
-  } catch (error) {
-    logger.error('Error adding lecture:', error);
-    res.status(400).json({ message: error.message });
   }
 });
 

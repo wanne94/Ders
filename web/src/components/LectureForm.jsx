@@ -355,12 +355,8 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
         // Update existing lecture
         response = await axiosInstance.put(`/lectures/${lecture._id}`, finalFormData);
       } else {
-        // Create new lecture with approval status based on settings
-        const lectureData = {
-          ...finalFormData,
-          status: approvalEnabled ? 'pending' : 'approved'
-        };
-        response = await axiosInstance.post('/lectures', lectureData);
+        // Create new lecture using public endpoint (no authentication required)
+        response = await axiosInstance.post('/lectures/public', finalFormData);
       }
       
       setSuccess(true);
