@@ -59,7 +59,10 @@
       "Bash(sudo apt install:*)",
       "Bash(claude doctor)",
       "Bash(./gradlew:*)",
-      "Bash(./check-keystore.sh:*)"
+      "Bash(./check-keystore.sh:*)",
+      "Bash(telnet:*)",
+      "Bash(nmap:*)",
+      "Bash(nc:*)"
     ],
     "deny": []
   }

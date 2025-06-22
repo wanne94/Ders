@@ -6,9 +6,7 @@ const dotenv = require('dotenv');
 // Determine which .env file to load based on NODE_ENV
 const envFile = process.env.NODE_ENV === 'development' 
   ? '.env.development' 
-  : process.env.NODE_ENV === 'production' 
-    ? '.env.production' 
-    : '.env.local';
+  : '.env.production';
 
 console.log(`🔧 Loading environment from: ${envFile}`);
 dotenv.config({ path: path.resolve(__dirname, envFile) });
