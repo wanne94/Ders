@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -53,14 +53,7 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
     { value: 'dr', label: 'Dr.' }
   ];
 
-  useEffect(() => {
-    // If in edit mode, populate form with existing data
-    if (editMode && editData) {
-      populateFormWithEditData();
-    }
-  }, [editMode, editData]);
-
-  const populateFormWithEditData = () => {
+  const populateFormWithEditData = useCallback(() => {
     if (!editData) return;
     
     setFormData({
@@ -80,7 +73,14 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
     if (editData.image) {
       setImageUri(getImageUrl(editData.image));
     }
-  };
+  }, [editData]);
+
+  useEffect(() => {
+    // If in edit mode, populate form with existing data
+    if (editMode && editData) {
+      populateFormWithEditData();
+    }
+  }, [editMode, editData, populateFormWithEditData]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));

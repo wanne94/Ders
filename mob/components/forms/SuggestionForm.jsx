@@ -33,7 +33,6 @@ const SuggestionForm = ({ onBack, onSuccess }) => {
   const [description, setDescription] = useState('');
   const [referenceType, setReferenceType] = useState('općenito');
   const [referenceId, setReferenceId] = useState('');
-  const [image, setImage] = useState('');
   const [imageUri, setImageUri] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -63,7 +62,6 @@ const SuggestionForm = ({ onBack, onSuccess }) => {
 
       if (!result.canceled && result.assets[0]) {
         setImageUri(result.assets[0].uri);
-        setImage(result.assets[0].uri);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -90,7 +88,6 @@ const SuggestionForm = ({ onBack, onSuccess }) => {
 
       if (!result.canceled && result.assets[0]) {
         setImageUri(result.assets[0].uri);
-        setImage(result.assets[0].uri);
       }
     } catch (error) {
       console.error('Error taking photo:', error);
@@ -112,7 +109,6 @@ const SuggestionForm = ({ onBack, onSuccess }) => {
 
   const removeImage = () => {
     setImageUri(null);
-    setImage('');
   };
 
   const handleSubmit = async () => {

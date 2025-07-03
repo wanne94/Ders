@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -49,14 +49,7 @@ const OrganizationForm = ({ onBack, onSuccess, editMode = false, editData = null
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
   const [imageUri, setImageUri] = useState(null);
 
-  useEffect(() => {
-    // If in edit mode, populate form with existing data
-    if (editMode && editData) {
-      populateFormWithEditData();
-    }
-  }, [editMode, editData]);
-
-  const populateFormWithEditData = () => {
+  const populateFormWithEditData = useCallback(() => {
     if (!editData) return;
     
     setFormData({
@@ -75,7 +68,14 @@ const OrganizationForm = ({ onBack, onSuccess, editMode = false, editData = null
     if (editData.image) {
       setImageUri(getImageUrl(editData.image));
     }
-  };
+  }, [editData]);
+
+  useEffect(() => {
+    // If in edit mode, populate form with existing data
+    if (editMode && editData) {
+      populateFormWithEditData();
+    }
+  }, [editMode, editData, populateFormWithEditData]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -179,15 +179,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     { label: '11:45', value: '11:45' }
   ];
 
-  useEffect(() => {
-    loadData();
-    
-    // If in edit mode, populate form with existing data
-    if (editMode && editData) {
-      populateFormWithEditData();
-    }
-  }, [editMode, editData]);
-
   const loadData = async () => {
     try {
       const [daijeResponse, organizationsResponse, allLecturesResponse] = await Promise.all([
@@ -216,7 +207,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     }
   };
 
-  const populateFormWithEditData = () => {
+  const populateFormWithEditData = useCallback(() => {
     if (!editData) return;
     
     setFormData({
@@ -269,7 +260,16 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         console.error('Error parsing date:', error);
       }
     }
-  };
+  }, [editData]);
+
+  useEffect(() => {
+    loadData();
+    
+    // If in edit mode, populate form with existing data
+    if (editMode && editData) {
+      populateFormWithEditData();
+    }
+  }, [editMode, editData, populateFormWithEditData]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -471,10 +471,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       return false;
     }
     return true;
-  };
-
-  const showToast = (message, type = 'success') => {
-    setToast({ visible: true, message, type });
   };
 
   const hideToast = () => {

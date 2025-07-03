@@ -3,7 +3,8 @@ export default {
     name: "Ders",
     slug: "ders-app",
     owner: "wanne",
-    version: "1.0.0",
+    scheme: "exp+ders-app",
+    version: "1.0.1",
     orientation: "portrait",
     icon: "./assets/images/logo.jpg",
     userInterfaceStyle: "light",
@@ -19,6 +20,7 @@ export default {
     },
     android: {
       package: "com.daije.mobile",
+      versionCode: 2,
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"

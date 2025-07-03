@@ -62,7 +62,13 @@
       "Bash(./check-keystore.sh:*)",
       "Bash(telnet:*)",
       "Bash(nmap:*)",
-      "Bash(nc:*)"
+      "Bash(nc:*)",
+      "Bash(npx expo-doctor:*)",
+      "Bash(adb:*)",
+      "Bash(ping:*)",
+      "Bash(kill:*)",
+      "Bash(iptables:*)",
+      "Bash(npx @expo/cli@latest:*)"
     ],
     "deny": []
   }
