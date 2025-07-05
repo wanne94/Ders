@@ -75,7 +75,9 @@
       "Bash(export ANDROID_HOME=$HOME/Android/Sdk)",
       "Bash(export PATH=$PATH:$ANDROID_HOME/platform-tools)",
       "Bash(export:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(git remote set-url:*)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   }
