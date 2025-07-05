@@ -112,3 +112,14 @@ mongodb-data/
 *.pid
 *.seed
 *.pid.lock
+# Large files
+*.zip
+mob.zip
+
+# Next.js
+deployment/web/.next/
+
+# Logs
+server/combined.log
+server/error.log
+*.log
