@@ -1,4 +1,4 @@
-import { useState, useMemo, memo, useEffect } from 'react';
+import { useState, useMemo, memo, useEffect, useCallback } from 'react';
 import { formatDaijaTitle } from '../utils';
 import {
     Box,
@@ -362,7 +362,7 @@ const DataTable = ({
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedItems, setSelectedItems] = useState([]);
 
-  const getDefaultSort = () => {
+  const getDefaultSort = useCallback(() => {
     switch (type) {
       case 'lecture':
       case 'lectures':
@@ -381,12 +381,12 @@ const DataTable = ({
       default:
         return { key: null, direction: 'asc' };
     }
-  };
+  }, [type]);
 
   useEffect(() => {
     const defaultSort = getDefaultSort();
     setSortConfig(defaultSort);
-  }, [type]);
+  }, [type, getDefaultSort]);
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -433,83 +433,84 @@ const DataTable = ({
   const isAllSelected = data.length > 0 && selectedItems.length === data.length;
   const isIndeterminate = selectedItems.length > 0 && selectedItems.length < data.length;
 
-  // Status icons with actions
-  const getStatusIcons = (item) => {
-    if (!onStatusChange) return null;
-    
-    const currentStatus = item.status || 'pending';
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {/* Current status indicator */}
-          <Chip
-            size="small"
-            label={
-              currentStatus === 'approved' ? 'Odobreno' :
-              currentStatus === 'pending' ? 'Na čekanju' :
-              currentStatus === 'rejected' ? 'Odbačeno' : 'Nepoznato'
-            }
-            color={
-              currentStatus === 'approved' ? 'success' :
-              currentStatus === 'pending' ? 'warning' :
-              currentStatus === 'rejected' ? 'error' : 'default'
-            }
-            sx={{ minWidth: 80 }}
-          />
-          
-          {/* Action buttons */}
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            {currentStatus !== 'approved' && (
-              <Tooltip title="Odobri">
-                <IconButton
-                  size="small"
-                  onClick={() => onStatusChange(item, 'approved')}
-                  sx={{ 
-                    color: 'success.main',
-                    '&:hover': { bgcolor: 'success.light', color: 'white' }
-                  }}
-                >
-                  <CheckCircleIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-            
-            {currentStatus !== 'rejected' && (
-              <Tooltip title="Odbaci">
-                <IconButton
-                  size="small"
-                  onClick={() => onStatusChange(item, 'rejected')}
-                  sx={{ 
-                    color: 'error.main',
-                    '&:hover': { bgcolor: 'error.light', color: 'white' }
-                  }}
-                >
-                  <CancelIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-            
-            {currentStatus !== 'pending' && (
-              <Tooltip title="Stavi na čekanje">
-                <IconButton
-                  size="small"
-                  onClick={() => onStatusChange(item, 'pending')}
-                  sx={{ 
-                    color: 'warning.main',
-                    '&:hover': { bgcolor: 'warning.light', color: 'white' }
-                  }}
-                >
-                  <PendingIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
-        </Box>
-      </Box>
-    );
-  };
 
   const getColumns = useMemo(() => {
+    // Status icons with actions
+    const getStatusIcons = (item) => {
+      if (!onStatusChange) return null;
+      
+      const currentStatus = item.status || 'pending';
+      return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* Current status indicator */}
+            <Chip
+              size="small"
+              label={
+                currentStatus === 'approved' ? 'Odobreno' :
+                currentStatus === 'pending' ? 'Na čekanju' :
+                currentStatus === 'rejected' ? 'Odbačeno' : 'Nepoznato'
+              }
+              color={
+                currentStatus === 'approved' ? 'success' :
+                currentStatus === 'pending' ? 'warning' :
+                currentStatus === 'rejected' ? 'error' : 'default'
+              }
+              sx={{ minWidth: 80 }}
+            />
+            
+            {/* Action buttons */}
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              {currentStatus !== 'approved' && (
+                <Tooltip title="Odobri">
+                  <IconButton
+                    size="small"
+                    onClick={() => onStatusChange(item, 'approved')}
+                    sx={{ 
+                      color: 'success.main',
+                      '&:hover': { bgcolor: 'success.light', color: 'white' }
+                    }}
+                  >
+                    <CheckCircleIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+              
+              {currentStatus !== 'rejected' && (
+                <Tooltip title="Odbaci">
+                  <IconButton
+                    size="small"
+                    onClick={() => onStatusChange(item, 'rejected')}
+                    sx={{ 
+                      color: 'error.main',
+                      '&:hover': { bgcolor: 'error.light', color: 'white' }
+                    }}
+                  >
+                    <CancelIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+              
+              {currentStatus !== 'pending' && (
+                <Tooltip title="Stavi na čekanje">
+                  <IconButton
+                    size="small"
+                    onClick={() => onStatusChange(item, 'pending')}
+                    sx={{ 
+                      color: 'warning.main',
+                      '&:hover': { bgcolor: 'warning.light', color: 'white' }
+                    }}
+                  >
+                    <PendingIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
+          </Box>
+        </Box>
+      );
+    };
+
     let columns = [];
     
     switch (type) {
@@ -707,7 +708,7 @@ const DataTable = ({
     }
 
     return columns;
-  }, [type, getStatusIcons, showStatus, showRejectionReason]);
+  }, [type, showStatus, showRejectionReason, onStatusChange]);
 
   if (!data || data.length === 0) {
     return (

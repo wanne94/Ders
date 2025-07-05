@@ -50,7 +50,7 @@ export const API_ENDPOINTS = {
   SETTINGS: '/api/settings'
 };
 
-export default {
+const constants = {
   USER_ROLES,
   SUGGESTION_STATUS,
   THEME_MODES,
@@ -58,4 +58,6 @@ export default {
   SORT_ORDERS,
   DEFAULT_PAGINATION,
   API_ENDPOINTS
-}; 
+};
+
+export default constants; 

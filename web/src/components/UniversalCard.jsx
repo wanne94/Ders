@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/router';
+import Image from 'next/image';
 import {
     Card,
     CardContent,
@@ -240,9 +241,11 @@ const UniversalCard = ({ data }) => {
       justifyContent: 'center'
     }}
   >
-    <img
+    <Image
       src={imageUrl}
       alt={displayData.title}
+      width={300}
+      height={200}
       onError={(e) => {
         e.target.onerror = null; // Prevent infinite loop
         // Use appropriate default image based on type

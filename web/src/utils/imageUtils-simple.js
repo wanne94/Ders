@@ -102,7 +102,7 @@ export const getFaviconUrl = () => {
   return `${IMAGE_SERVER_URL}${faviconPath}`;
 };
 
-export default {
+const imageUtils = {
   getImageUrl,
   getDefaultLectureImage,
   getDefaultDaijaImage,
@@ -110,3 +110,5 @@ export default {
   getLogoUrl,
   getFaviconUrl
 };
+
+export default imageUtils;

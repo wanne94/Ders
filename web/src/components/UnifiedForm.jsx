@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import {
     Dialog,
     DialogTitle,
@@ -41,7 +42,7 @@ const UnifiedForm = ({
   organizations = [] // for lecture form
 }) => {
   // Initialize form data based on type
-  const getInitialFormData = () => {
+  const getInitialFormData = useCallback(() => {
     switch (type) {
       case 'lecture':
         return {
@@ -84,7 +85,7 @@ const UnifiedForm = ({
       default:
         return {};
     }
-  };
+  }, [type]);
 
   const [formData, setFormData] = useState(getInitialFormData());
   const [imagePreview, setImagePreview] = useState(null);
@@ -188,7 +189,7 @@ const UnifiedForm = ({
       setUseCustomSpeaker(false);
       setUseCustomOrganization(false);
     }
-  }, [data, open, type]);
+  }, [data, open, type, getInitialFormData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -863,14 +864,17 @@ const UnifiedForm = ({
 
       {imagePreview && (
         <Box sx={{ textAlign: 'center', mb: 2 }}>
-          <img
+          <Image
             src={imagePreview}
             alt="Preview"
+            width={200}
+            height={200}
             style={{
               maxWidth: '200px',
               maxHeight: '200px',
               borderRadius: '8px',
-              border: '1px solid #ddd'
+              border: '1px solid #ddd',
+              objectFit: 'contain'
             }}
           />
         </Box>

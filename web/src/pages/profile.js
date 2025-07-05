@@ -75,7 +75,7 @@ const ProfilePage = () => {
     }
     
     loadUserProfile();
-  }, []);
+  }, [router]);
 
   const loadUserProfile = async () => {
     try {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import {
   Alert,
@@ -42,7 +42,7 @@ const UnifiedProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchProfileData = async () => {
+  const fetchProfileData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -65,13 +65,13 @@ const UnifiedProfile = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [type, id]);
 
   useEffect(() => {
     if (type && id) {
       fetchProfileData();
     }
-  }, [type, id]);
+  }, [type, id, fetchProfileData]);
 
   const handleBackNavigation = () => {
     if (type === 'daija') {

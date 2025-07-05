@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { 
   Card, 
   CardContent, 
@@ -252,9 +253,11 @@ const UniversalCard = ({
           justifyContent: 'center'
         }}
       >
-        <img
+        <Image
           src={imageUrl}
           alt={displayData.title}
+          width={300}
+          height={200}
           onError={handleImageError}
           onLoad={handleImageLoad}
           style={{ 

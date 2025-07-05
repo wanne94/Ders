@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
     Dialog,
     DialogTitle,
@@ -285,10 +286,12 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
                 {imagePreview ? (
                   <>
                     <Box sx={{ mt: 2 }}>
-                      <img
+                      <Image
                         src={imagePreview}
                         alt="Pregled"
-                        style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: 4 }}
+                        width={400}
+                        height={200}
+                        style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: 4, objectFit: 'contain' }}
                       />
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 1 }}>

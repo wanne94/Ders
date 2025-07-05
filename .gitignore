@@ -1,20 +1,32 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Dependencies
 /node_modules
+/server/node_modules/
+/web/node_modules/
+/mob/node_modules/
 /.pnp
 .pnp.js
+.pnpm-store/
 
-# testing
+# Testing
 /coverage
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
 
-# production
+# Production & Build
 /build
-
-# misc
-.DS_Store
+/dist
+/web/.next/
+/web/out/
+.expo/
+web-build/
+*.tsbuildinfo
 
 # Environment files
+.env
 .env.local
 .env.development.local
 .env.test.local
@@ -22,25 +34,81 @@
 *.env
 *.env.*
 
+# Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+combined.log
+error.log
+
+# OS files
+.DS_Store
+*.swp
+*.swo
+*~
+Thumbs.db
 
 # Editor config
 .vscode/
-
-# Next.js build folders
-/web/.next/
-/web/out/
-
-# Node modules
-/web/node_modules/
+.idea/
+*.sublime-workspace
+*.sublime-project
 
 # Upload folders - NEVER commit these to git
 /server/uploads/
 /server/public/uploads/
 /web/public/uploads/
+/web/public/upload/
+/public/upload/
+/public/uploads/
 
 # Temporary files
 *.tmp
 *.temp
+tmp/
+temp/
+.cache/
+.temp/
+
+# Security & Credentials
+*.pem
+*.key
+*.crt
+*.p12
+credentials.json
+google-service-account.json
+
+# Mobile specific
+*.jks
+*.keystore
+android/app/release/
+ios/build/
+*.ipa
+*.apk
+*.aab
+
+# Backups
+*.backup
+backup/
+backups/
+
+# Package files
+*.zip
+*.tar.gz
+*.rar
+
+# Database
+*.sqlite
+*.sqlite3
+mongodb-data/
+
+# Misc
+.eslintcache
+.stylelintcache
+*.pid
+*.seed
+*.pid.lock

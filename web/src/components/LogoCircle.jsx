@@ -1,8 +1,9 @@
 import React from 'react';
+import Image from 'next/image';
 import { getLogoUrl } from '../utils/imageUtils';
 
 const LogoCircle = () => (
-  <img
+  <Image
     src={getLogoUrl()}
     alt="DERS Logo"
     width={50}

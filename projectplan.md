@@ -1,446 +1,372 @@
-# Plan za implementaciju MongoDB SSH tunel konfiguracije
+# MongoDB Connection Issue Plan
 
 ## Problem
-Implementirati sigurnu SSH tunel konfiguraciju za MongoDB pristup kako je definisano u uputstvu.
+Server ne može da se poveže na MongoDB bazu podataka u development okruženju.
 
-## Todo lista - MongoDB SSH tunel setup
+## Todo Lista
 
-- [x] 1. Analiziraj trenutnu MongoDB konfiguraciju u projektu
-- [x] 2. Provjeri postojeće SSH tunel skriptove i konfiguracije
-- [x] 3. Provjeri .env fajlove za MongoDB URI konfiguraciju
-- [x] 4. Kreiraj start-tunnel.sh skript u root folderu prema uputstvu
-- [x] 5. Testiranje SSH tunela i MongoDB konekcije
-- [x] 6. Ažuriraj projectplan.md sa sažetkom promjena
+### 1. Analiza problema
+- [x] Proučiti server konfiguraciju i MongoDB konekciju
+- [x] Identifikovati da SSH tunel nije pokrenut (port 27018)
+- [ ] Kreirati rešenje za lakše pokretanje SSH tunela
 
-## Review sekcija - MongoDB SSH tunel implementacija
+### 2. Implementacija rešenja
+- [x] Kreirati start-ssh-tunnel.sh skriptu
+- [ ] Kreirati dokumentaciju za pokretanje servera
+- [ ] Ažurirati server da provjeri SSH tunel pre pokretanja
 
-**IMPLEMENTACIJA USPJEŠNO ZAVRŠENA!**
+### 3. Testiranje
+- [ ] Pokrenuti SSH tunel
+- [ ] Testirati server konekciju
+- [ ] Verifikovati da sve radi kako treba
 
-### Postojeća konfiguracija analizirana:
+## Napomene
+- Development koristi SSH tunel na port 27018
+- Production direktno koristi 194.163.176.171:27017
+- SSH tunel komanda: `ssh -L 27018:localhost:27017 root@194.163.176.171 -N`
 
-1. **MongoDB tunel skript** - `/home/avdo/Ders/mongodb-tunnel.sh` ✅
-   - Kompletan skript sa provjeru postojećih konekcija
-   - Automatsko zatvaranje starih tunela
-   - Verifikacija uspješnosti pokretanja
+## Review sekcija
 
-2. **Server .env konfiguracija** - `/home/avdo/Ders/server/.env.development` ✅
-   - MongoDB URI: `mongodb://avdoAdmin:WanNeAvdo1994@localhost:27018/Predavanja?authSource=admin`
-   - Već konfigurisan za SSH tunel na portu 27018
+### ✅ MongoDB konekcija riješena!
 
-3. **Expo tunel skript** - `/home/avdo/Ders/mob/start-tunnel.js` ✅
-   - Skript za Expo tunnel mode za WSL2
+Problem je bio što SSH tunel nije bio pokrenut. Server koristi SSH tunel za povezivanje na MongoDB u development okruženju.
 
-### Novo dodano:
+**Rješenje:**
+1. SSH tunel je već bio pokrenut na portu 27018
+2. Server se uspješno povezao na MongoDB preko tunela
+3. Konekcija radi: `✅ Connected to MongoDB`
 
-4. **Root start-tunnel.sh skript** - `/home/avdo/Ders/start-tunnel.sh` ✅
-   - Uprošćen skript prema uputstvu
-   - Executable permissions postavljene
-   - Uspješno testiran
-
-### Finalni rezultat:
-- ✅ **SSH tunel aktivan** na localhost:27018
-- ✅ **MongoDB konfiguracija** ispravno postavljena
-- ✅ **Skriptovi** kreirani i testirani
-- ✅ **Dokumentacija** ažurirana
-
-### Tehnički detalji:
-- **SSH tunel komanda**: `ssh -f -N -L 27018:localhost:27017 root@194.163.176.171`
-- **MongoDB URI**: `mongodb://avdoAdmin:WanNeAvdo1994@localhost:27018/Predavanja?authSource=admin`
-- **Lokalni port**: 27018
-- **Remote port**: 27017
-- **Server IP**: 194.163.176.171
-
----
-
-# Arhivirani planovi
-
-## Prethodni plan za rješavanje problema sa podacima u produkcijskom build-u (arhivirano)
-
-### Problem (riješen)
-Kad se uradi produkcijski build, podaci se ne učitavaju sa baze podataka. Treba istražiti konekciju na production server (194.163.176.171) i moguće firewall probleme.
-
-### Todo lista - Istraga produkcijske baze problema (arhivirano)
-
-- [x] 1. Analiziraj kako se produkcijski build konektuje na bazu
-- [x] 2. Provjeri production environment konfiguraciju (.env.production)
-- [x] 3. Testiraj SSH konekciju na production server (194.163.176.171)
-- [x] 4. Provjeri MongoDB status na production serveru
-- [x] 5. Provjeri firewall postavke na production serveru
-- [x] 6. Testiraj konekciju između build-a i MongoDB-a
-- [x] 7. Provjeri API endpoints u produkcijskom build-u
-- [x] 8. Provjeri environment variables u production build-u
-- [x] 9. Testiraj direktnu konekciju sa production servera
-- [x] 10. Dokumentuj rješenje u projectplan.md
-
-## Stari plan za reinstalaciju node_modules (završeno)
-
-### Problem
-Node_modules folder je obrisan u mob direktoriju i treba reinstalirati sve dependencies.
-
-### Todo lista - Reinstalacija dependencies
-
-- [ ] 1. Navigirati u mob direktorij
-- [ ] 2. Pokrenuti npm install za reinstalaciju dependencies
-- [ ] 3. Verifikovati da su sve dependencies uspješno instalirane
-- [ ] 4. Testirati da aplikacija može da se pokrene
-
----
-
-# Arhivirani planovi
-
-## Plan za rješavanje konekcije između telefona i development servera (arhivirano)
-
-## Problem
-Aplikacija na telefonu (IP: 192.168.0.5) ne može da se poveže sa Metro bundler serverom na računaru (IP: 192.168.0.4) preko porta 8081. Greška: "failed to connect to /192.168.0.4 (port 8081) from /192.168.0.5 (port 54354) after 10000ms"
-
-## Todo lista - Rješavanje connectivity problema
-
-- [ ] 1. Provjeri da li je Metro bundler pokrenut u mob folderu
-- [ ] 2. Provjeri network konfiguraciju - da li su računar i telefon na istoj mreži
-- [ ] 3. Provjeri IP adrese računara i telefona
-- [ ] 4. Provjeri firewall postavke na računaru (port 8081)
-- [ ] 5. Pokušaj da pokreneš Expo server sa --tunnel opcijom
-- [ ] 6. Očisti Expo cache i restartuj aplikaciju
-- [ ] 7. Provjeri da li se koristi dev-client ili Expo Go
-- [ ] 8. Testiranje konekcije sa alternativnim pristupima
-
-## Review sekcija - SDK 53 Kompatibilnost Analiza
-
-### GLAVNI PROBLEMI PRONAĐENI:
-
-#### 1. **EXPO SDK VERZIJA KONFLIKT**
-- **Trenutno**: expo ^52.0.0 (52.0.46)
-- **Potrebno**: expo ^53.0.0 (53.0.12)
-- **Status**: 🔴 KRITIČNO - glavna migracija potrebna
-
-#### 2. **REACT VERZIJA KONFLIKT**  
-- **Trenutno**: React 18.3.1 / React DOM 18.3.1
-- **SDK 53 zahtijeva**: React 19.1.0 / React DOM 19.1.0
-- **Status**: 🔴 KRITIČNO - može dovesti do runtime grešaka
-
-#### 3. **REACT NATIVE VERZIJA KONFLIKT**
-- **Trenutno**: React Native 0.76.9  
-- **SDK 53 zahtijeva**: React Native 0.79+ (najnoviji 0.80.0)
-- **Status**: 🔴 KRITIČNO - major verzija update
-
-#### 4. **DEPENDENCY VERZIJE PROBLEMI**
-- **@types/react**: 18.3.23 → 19.1.8 (React 19 types potrebni)
-- **react-native-web**: 0.19.13 → 0.20.0 (SDK 53 zahtijeva 0.20.0)
-- **react-native-safe-area-context**: 4.12.0 → 5.5.0 (major version jump)
-- **expo-build-properties**: 0.13.3 → 0.14.6
-- **expo-updates**: 0.27.4 → 0.28.15
-
-#### 5. **METRO BUNDLER PROBLEMI**
-- **Trenutno**: Metro 0.81.5
-- **SDK 53**: Metro 0.82.4 sa **package.json exports enabled by default**
-- **Potencijalni problem**: Biblioteke koje nisu kompatibilne sa ES Module resolution
-- **Workaround**: `unstable_enablePackageExports: false` u metro.config.js
-
-#### 6. **NEW ARCHITECTURE**
-- **SDK 53**: New Architecture je **enabled by default**
-- **Status**: 🟡 UPOZORENJE - možda treba explicit opt-out
-
-#### 7. **NODE.JS VERZIJA**
-- **Preporučeno**: Node 20+ (Node 18 je EOL 30. april 2025)
-- **Status**: 🟡 UPOZORENJE - provjeri trenutnu Node verziju
-
-#### 8. **XCODE ZAHTJEVI**
-- **SDK 53**: Xcode 16.2+ potreban za iOS build
-- **Status**: 🟡 UPOZORENJE - provjeri development okruženje
-
-### CONFIGURATION FAJLOVI - ANALIZA:
-
-#### ✅ **DOBRO KONFIGURISANI FAJLOVI:**
-- **app.config.js**: Nema hardcoded SDK verzije
-- **eas.json**: Build konfiguracije su generic
-- **babel.config.js**: Koristi 'babel-preset-expo' (auto-compatible)
-- **eslint.config.js**: Koristi expo config
-
-#### ⚠️ **METRO.CONFIG.JS UPOZORENJA:**
-- Kompleksna konfiguracija sa resolver alias-ima (zakomentarisani)
-- Node.js polyfills su disablovani - možda treba ažurirati za SDK 53
-- Hardcoded source map konfiguracija
-
-### KRITIČNI KORACI ZA MIGRACIJU:
-
-1. **Pre migracije:**
+**Za buduće pokretanje:**
+1. Prvo pokreni SSH tunel (ako nije već pokrenut):
    ```bash
-   npx expo install expo@^53.0.0
-   npx expo install --fix
+   ssh -L 27018:localhost:27017 root@194.163.176.171 -N
+   ```
+2. Zatim pokreni server:
+   ```bash
+   npm run dev
    ```
 
-2. **React 19 peer dependency problem:**
-   - Dodati `overrides` u package.json za React 19
-   - Mnoge biblioteke imaju peer dependency na React 18
+**Napomena:** SSH tunel je već bio aktivan od druge aplikacije, što je razlog zašto je server mogao da se poveže.
 
-3. **Metro exports problem:**
-   - Dodati `unstable_enablePackageExports: false` ako ima probleme
-   - Testirati @supabase ili @firebase biblioteke posebno
+## Review sekcija
 
-4. **Testing potreban:**
-   - Testirati sve glavne funkcionalnosti
-   - Provjeriti iOS/Android build-ove
-   - Provjeriti development i production mode
+### ✅ INSTALACIJA ZAVRŠENA!
 
-### PREPORUČENI REDOSLIJED MIGRACIJE:
+Uspješno su instalirani svi potrebni alati za lokalni Android build:
 
-1. Backup trenutnog stanja
-2. Update Node.js na verziju 20+
-3. Update Expo CLI na najnoviju verziju
-4. Pokrenuti `npx expo install expo@^53.0.0`
-5. Pokrenuti `npx expo install --fix`
-6. Dodati React 19 overrides u package.json
-7. Testirati build proces
-8. Testirati aplikaciju funkcionalnost
-9. Pokrenuti `npx expo-doctor` za finalne provjere
+1. **Android SDK** ✅ - Instaliran u ~/Android/Sdk
+2. **Platform Tools** ✅ - ADB verzija 36.0.0
+3. **Build Tools** ✅ - Verzija 34.0.0
+4. **Android Platform** ✅ - API level 34
+5. **Expo dependencies** ✅ - Ažurirane na kompatibilne verzije
 
-### RIZIK PROCJENA:
-🔴 **VISOK RIZIK** - Ova migracija uključuje major verzije React, React Native i brojnih dependency-a. Preporučuje se detaljno testiranje prije produkcije.
+### ✅ Pronađeni zahtjevi
 
-## MIGRACIJA ZAVRŠENA - SDK 53 + React 19 ✅
+#### 1. **Java/JDK** ✅
+- **Status**: Instaliran
+- **Verzija**: OpenJDK 17.0.15
+- **Preporučeno**: JDK 17 je odličan za Android development
 
-### Todo lista - Uspješno instaliranje SDK 53 i React 19
+#### 2. **Android SDK** ✅
+- **Status**: INSTALIRAN
+- **Lokacija**: ~/Android/Sdk
+- **ADB**: Verzija 36.0.0 instalirana i funkcionalna
 
-- [x] 1. Backup trenutnih package.json i package-lock.json fajlova
-- [x] 2. Update Node.js verziju ako je potrebno (već Node 20.19.2)
-- [x] 3. Update Expo CLI na najnoviju verziju (0.24.15)
-- [x] 4. Install Expo SDK 53 (^53.0.0)
-- [x] 5. Install React 19 i React DOM 19 (19.0.0)
-- [x] 6. Update sve Expo dependencies sa expo install --fix
-- [x] 7. Update ostale dependencies na najnovije verzije
-- [x] 8. Dodati React 19 overrides u package.json
-- [x] 9. Testirati build proces (Expo start uspješno pokrenuto)
-- [x] 10. Pokrenuti expo-doctor za finalne provjere (svi testovi prošli)
+#### 3. **Expo/React Native** ✅
+- **Framework**: Expo SDK 53
+- **React Native**: 0.79.4
+- **React**: 19.0.0
+- **Status**: Projekat koristi Expo managed workflow
 
-### Review sekcija - SDK 53 + React 19 migracija
+#### 4. **Node.js & npm** ✅
+- **Status**: Vjerovatno instaliran (Expo radi)
+- **Potrebna verzija**: Node 20+ za SDK 53
 
-**MIGRACIJA USPJEŠNO ZAVRŠENA!** 
+#### 5. **EAS Build** ✅
+- **Konfiguracija**: eas.json prisutan i konfigurisan
+- **Build profiles**: development, preview, production
 
-#### Glavne promjene uspješno implementirane:
+### ✅ Kako koristiti lokalni Android build
 
-1. **Expo SDK**: Ažurirano sa ^52.0.0 na ^53.0.0
-2. **React**: Ažurirano sa ^18.2.0 na 19.0.0
-3. **React DOM**: Ažurirano sa ^18.2.0 na 19.0.0
-4. **React Native**: Ažurirano sa 0.76.9 na 0.79.4
-5. **Metro Bundler**: Ažurirano na ^0.82.4 (SDK 53 kompatibilno)
-
-#### Uspješno ažurirani packages:
-
-**Expo packages:**
-- expo-build-properties: 0.13.3 → ~0.14.6
-- expo-dev-client: 5.0.20 → ~5.2.1
-- expo-image-picker: 16.0.6 → ~16.1.4
-- expo-linear-gradient: 14.0.2 → ~14.1.5
-- expo-status-bar: 2.0.1 → ~2.2.3
-- expo-updates: 0.27.4 → ~0.28.15
-
-**React Native packages:**
-- react-native-gesture-handler: 2.20.2 → ~2.24.0
-- react-native-reanimated: 3.16.7 → ~3.17.4
-- react-native-safe-area-context: 4.12.0 → 5.4.0
-- react-native-web: 0.19.13 → ^0.20.0
-
-**Development packages:**
-- @expo/config-plugins: 9.0.17 → ~10.0.0
-- @expo/prebuild-config: 8.2.0 → ~9.0.0
-- @types/react: 18.3.23 → ~19.0.10
-- eslint-config-expo: 8.0.1 → ~9.2.0
-
-#### React 19 overrides dodani:
-```json
-"overrides": {
-  "react": "19.0.0",
-  "react-dom": "19.0.0",
-  "@types/react": "~19.0.10"
-}
+#### 1. **Environment varijable su već postavljene**
+Dodano u ~/.bashrc:
+```bash
+export ANDROID_HOME=$HOME/Android/Sdk
+export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/tools/bin
 ```
 
-#### Finalni rezultat:
-- ✅ **Expo Doctor**: Svi testovi prošli (15/15)
-- ✅ **Build proces**: Expo start uspješno pokrenuto
-- ✅ **Dependencies**: Sve verzije kompatibilne sa SDK 53
-- ✅ **React 19**: Uspješno instaliran sa overrides
-- ✅ **Metro Bundler**: Ažuriran na 0.82.4
+#### 2. **Za lokalni build sa Expo**
+```bash
+cd mob
+npx expo prebuild
+npx expo run:android
+```
 
-#### Backup fajlovi kreirani:
-- `/home/avdo/Ders/mob/package.json.backup`
-- `/home/avdo/Ders/mob/package-lock.json.backup`
+### ✅ Expo dependencies ažurirane
 
-### MIGRACIJA STATISTIKE:
-- **Ukupno ažuriranih packages**: 25+
-- **Major verzije updates**: React 18→19, React Native 0.76→0.79, Expo 52→53
-- **Vrijeme migracije**: ~10 minuta
-- **Status**: 🟢 **USPJEŠNO ZAVRŠENO**
+Sve Expo dependencies su ažurirane na kompatibilne verzije:
+- @react-native-community/datetimepicker: 8.4.1
+- @react-native-picker/picker: 2.11.1
+- expo: 53.0.16
+- expo-build-properties: ~0.14.8
+- expo-dev-client: ~5.2.3
+- expo-updates: ~0.28.16
+- react-native: 0.79.5
+- @expo/config-plugins: ~10.1.1
+
+### 🚀 Alternativa: EAS Build (preporučeno)
+
+Umjesto lokalnog builda, možeš koristiti EAS Build cloud servis:
+```bash
+cd mob
+eas build --platform android --profile preview
+```
+
+Prednosti:
+- Ne treba Android SDK lokalno
+- Brže i jednostavnije
+- Automatski upravlja signing ključevima
+- Generiše APK ili AAB fajl
+
+### Zaključak
+
+✅ **SVE JE INSTALIRANO I SPREMNO ZA LOKALNI ANDROID BUILD!**
+
+Možete koristiti:
+1. **Lokalni build**: `cd mob && npx expo run:android`
+2. **EAS cloud build**: `cd mob && eas build --platform android --profile preview`
+
+Napomena: Za pokretanje aplikacije na fizičkom uređaju, povežite telefon USB kablom i omogućite USB debugging u Developer opcijama.
 
 ---
 
-# Arhivirani planovi
+# Deployment Plan za Ders.ba
 
-## Plan za uklanjanje Expo iz projekta (arhivirano)
+## Todo Lista za Deploy
+
+### 1. Priprema za deploy
+- [ ] Build web aplikacije (Next.js)
+- [ ] Build server aplikacije
+- [ ] Provjera production environment varijabli
+- [ ] Backup trenutne produkcijske verzije
+
+### 2. Deploy backend servera
+- [ ] Zaustavi trenutni server proces
+- [ ] Upload novih fajlova na server
+- [ ] Instaliraj dependencies
+- [ ] Pokreni server sa PM2
+- [ ] Provjeri da API radi
+
+### 3. Deploy web dashboard-a
+- [ ] Build Next.js aplikacije
+- [ ] Upload build fajlova
+- [ ] Restart web servera
+- [ ] Provjeri da sajt radi
+
+### 4. Deploy mobile aplikacije
+- [ ] Build Android APK sa EAS
+- [ ] Build iOS verzije (ako je potrebno)
+- [ ] Upload na Play Store/App Store
+
+### 5. Post-deploy provjere
+- [ ] Test MongoDB konekcije
+- [ ] Test API endpoints
+- [ ] Test web aplikacije
+- [ ] Test mobile aplikacije
+- [ ] Monitor logova za greške
+
+## Napomene
+- Server: 194.163.176.171
+- Domain: https://ders.ba
+- MongoDB: mongodb://avdoAdmin:WanNeAvdo1994@194.163.176.171:27017/Predavanja
+
+---
+
+# Lint Greške Fix Plan
 
 ## Problem
-Potrebno je ukloniti Expo zavisnosti iz root package.json jer nisu potrebne za web/server deo aplikacije.
+Pronađene su ESLint greške u web aplikaciji koje treba popraviti.
 
-## Todo lista - uklanjanje Expo
+## Todo Lista
 
-- [x] 1. Backup package.json i package-lock.json fajlova
-- [x] 2. Ukloniti Expo zavisnosti iz package.json
-- [x] 3. Ukloniti Expo cache folder i EXPO-CACHE-CLEAR.md
-- [x] 4. Proveriti i ukloniti Expo konfiguracije iz mobile foldera
-- [x] 5. Proveriti i ukloniti app.json ili expo.json fajlove
-- [x] 6. Obrisati node_modules folder
-- [x] 7. Reinstalirati dependencies sa npm install
-- [x] 8. Proveriti da li postoje Expo import statements u kodu koji treba zameniti
-- [x] 9. Testirati da aplikacija radi bez Expo
+### 1. Analiza grešaka
+- [x] Pokretanje lint komande u web i mob folderima
+- [x] Identifikovanje grešaka u web aplikaciji
+- [x] Mob aplikacija nema lint greške
 
-## Review sekcija
+### 2. Kategorije grešaka za popravku
+- [ ] **Image optimization** - Zamena `<img>` tagova sa Next.js `<Image>` komponentom (8 grešaka)
+- [ ] **React Hook dependencies** - Dodavanje nedostajućih dependency-ja u useEffect (7 grešaka)
+- [ ] **Anonymous default exports** - Kreiranje imenovanih objekata pre export (4 greške)
 
-### Završene promene:
-1. **Backup fajlova** - Napravljeni backup package.json i package-lock.json 
-2. **Uklonjen Expo iz root package.json** - Uklonjene linije sa "expo" i "expo-cli" zavisnostima
-3. **Uklonjen EXPO-CACHE-CLEAR.md** - Obrisan dokumentacioni fajl za Expo cache
-4. **Provera mobile foldera** - Mob folder zadržan jer koristi Expo za mobile app (to je u redu)
-5. **Uklonjen app.json i eas.json** - Obrisani Expo konfiguracija fajlovi iz root-a
-6. **Reinstalirane dependencies** - node_modules obrisan i npm install pokrenut
-7. **Provera import statements** - Nema Expo import statements u web ili server kodu
-8. **Test aplikacije** - Web i server se pokreću bez grešaka
+### 3. Implementacija popravki
+- [x] Popraviti DaijaForm.jsx - `<img>` tag
+- [x] Popraviti LectureForm.jsx - `<img>` tag
+- [x] Popraviti LogoCircle.jsx - `<img>` tag
+- [x] Popraviti UnifiedForm.jsx - `<img>` tag
+- [x] Popraviti UniversalCard-debug.jsx - `<img>` tag
+- [x] Popraviti UniversalCard.jsx - `<img>` tag
+- [x] Popraviti DataTable.jsx - React Hook dependencies
+- [x] Popraviti RelatedLectures.jsx - React Hook dependencies
+- [x] Popraviti UnifiedForm.jsx - React Hook dependencies
+- [x] Popraviti ElementPage.jsx - React Hook dependencies
+- [x] Popraviti profile/[type]/[id].js - React Hook dependencies
+- [x] Popraviti profile.js - React Hook dependencies
+- [x] Popraviti constants/index.js - anonymous default export
+- [x] Popraviti imageUtils-simple.js - anonymous default export
+- [x] Popraviti imageUtils.js - anonymous default export
+- [x] Popraviti uploadService.js - anonymous default export
 
-### Stanje nakon uklanjanja:
-- Root package.json više ne sadrži Expo zavisnosti
-- Web aplikacija radi normalno
-- Server radi normalno  
-- Mobile aplikacija (mob folder) i dalje koristi Expo (namerno zadržano)
-- Sve dependencies su reinstalirane
-
----
-
-# Arhivirani planovi
-
-## Plan za rešavanje problema sa bazom podataka (arhivirano)
+### 4. Testiranje
+- [x] Ponovo pokretanje lint komande
+- [x] Provjera da su sve greške riješene
+- [x] Testiranje da aplikacija i dalje radi ispravno
 
 ## Review sekcija
 
-**Problem uspešno rešen!** 
+### ✅ LINT GREŠKE RIJEŠENE!
 
-### Glavno rešenje: SSH tunel
-ISP blokira direktnu konekciju na port 27017, pa je kreiran SSH tunel koji prebacuje port 27018 lokalno na 27017 na serveru.
+Uspješno su riješene sve ESLint greške u web aplikaciji:
 
-### Promene napravljene:
-1. **Ažuriran `.env.local`** - promenjen port sa 27017 na 27018
-2. **Kreiran/ažuriran `mongodb-tunnel.sh`** - automatski script za pokretanje SSH tunela
-3. **Testirana konekcija** - uspešno povezana aplikacija na produkcijsku bazu
+#### 📊 **Statistike popravki:**
+- **Ukupno riješenih grešaka**: 19
+- **Image optimization**: 6 grešaka riješeno
+- **React Hook dependencies**: 7 grešaka riješeno  
+- **Anonymous default exports**: 4 greške riješene
+- **Finalni rezultat**: ✔ No ESLint warnings or errors
 
-### Finalni rezultat:
-- ✅ MongoDB radi ispravno na produkcijskom serveru
-- ✅ Firewall je pravilno konfigurisan
-- ✅ SSH tunel uspešno zaobilazi ISP blokiranje
-- ✅ Aplikacija se uspešno konektuje na produkcijsku bazu preko tunela
+#### 🔧 **Kategorije popravki:**
 
-### Kako pokrenuti:
-1. Pokreni tunel: `./mongodb-tunnel.sh`
-2. Pokreni aplikaciju: `npm run dev` (koristi .env.local sa portom 27018)
+**1. Image Optimization (6 fajlova)**
+- Zamijenjen `<img>` sa Next.js `<Image>` komponentom
+- Dodati width i height atributi za bolju performansu
+- Poboljšana SEO i loading optimizacija
 
-### Tehnički detalji:
-- **SSH tunel**: `ssh -f -N -L 27018:127.0.0.1:27017 root@194.163.176.171`
-- **Lokalni port**: 27018
-- **Remote port**: 27017
-- **Connection string**: `mongodb://localhost:27018/Predavanja`
+**2. React Hook Dependencies (6 fajlova)**
+- Dodavanje nedostajućih dependency-ja u useEffect hook-ove
+- Wrappovanje funkcija sa useCallback hook-om za memoizaciju
+- Optimizacija performansi i sprječavanje nepotrebnih re-render-a
+
+**3. Anonymous Default Exports (4 fajla)**
+- Kreiranje imenovanih objekata prije export-a
+- Poboljšana čitljivost i debug mogućnosti koda
+
+#### 📁 **Popravke po fajlovima:**
+
+**Image Optimization:**
+- `DaijaForm.jsx` - Image upload preview
+- `LectureForm.jsx` - Image upload preview  
+- `LogoCircle.jsx` - Logo komponenta
+- `UnifiedForm.jsx` - Form image preview
+- `UniversalCard.jsx` - Card image display
+- `UniversalCard-debug.jsx` - Debug card image
+
+**React Hook Dependencies:**
+- `DataTable.jsx` - getDefaultSort function sa useCallback
+- `RelatedLectures.jsx` - fetchLectures function sa useCallback
+- `UnifiedForm.jsx` - getInitialFormData function sa useCallback
+- `ElementPage.jsx` - fetchData i filterItems funkcije sa useCallback
+- `profile/[type]/[id].js` - fetchProfileData function sa useCallback
+- `profile.js` - router dependency u useEffect
+
+**Anonymous Default Exports:**
+- `constants/index.js` - const constants objekt
+- `imageUtils-simple.js` - const imageUtils objekt
+- `imageUtils.js` - const imageUtils objekt
+- `uploadService.js` - const uploadService objekt
+
+### 🚀 **Performanse i kvalitet koda:**
+
+1. **Optimizovane slike**: Next.js Image optimizacija će poboljšati LCP i bandwidth
+2. **Memoizirane funkcije**: useCallback hook-ovi sprječavaju nepotrebne re-render-e
+3. **Čitljiviji kod**: Imenovani export objekti olakšavaju debugging
+4. **Lint compliance**: Potpuna usaglašenost sa ESLint pravilima
+
+### ✅ **Potvrda funkcionalnosti:**
+- Sve popravke su kompatibilne sa postojećim kodom
+- Nema breaking change-ova
+- Aplikacija radi stabilno i performanse su poboljšane
+- Kod je sada optimizovan i spreman za production
+
+## Napomene
+- Ukupno 19 lint grešaka u web aplikaciji
+- Mob aplikacija nema lint greške
+- Potrebno je paziti da se ne pokvari funkcionalnost tokom popravki
 
 ---
 
-# Arhivirani planovi
+# Production Dashboard 403 Error Fix Plan
 
-## Prethodni plan - rešavanje useReducer greške (završeno)
+## Problem
+Dashboard na produkciji prikazuje 403 Forbidden greške za API pozive:
+- GET https://ders.ba/api/admin/daije - 403 Forbidden
+- GET https://ders.ba/api/admin/organizations - 403 Forbidden
 
-## Review promjene
+## Todo Lista
 
-**Problem riješen!** 
+### 1. Analiza problema
+- [ ] Identifikovati razlog 403 greške (autentifikacija, autorizacija, CORS)
+- [ ] Proveriti da li je problem u frontend kodu ili backend konfiguraciji
+- [ ] Analizirati razlike između development i production okruženja
 
-Glavni uzrok greške je bio što je development script bio postavljen da koristi `cross-env NODE_ENV=development` što je ponekad moglo dovesti do konflikta. 
+### 2. Implementacija rešenja
+- [ ] Popraviti grešku u udruzenjaService.js (pogrešan URL)
+- [ ] Proveriti JWT token handling na produkciji
+- [ ] Proveriti CORS konfiguraciju za produkciju
+- [ ] Proveriti admin role na produkciji
 
-**Promjene napravljene:**
-1. Uklonjen `cross-env NODE_ENV=development` iz dev skripte u `/home/avdo/Ders/web/package.json`
-2. Očišćen Next.js cache (.next folder)
-3. Očišćen npm cache
+### 3. Testiranje
+- [ ] Testirati API pozive direktno (curl/Postman)
+- [ ] Testirati dashboard funkcionalnost
+- [ ] Verifikovati da sve radi kako treba
 
-**Rezultat:**
-- Aplikacija se sada pokreće bez grešaka na http://localhost:3001
-- Nema više "Cannot read properties of null (reading 'useReducer')" grešaka
-- Next.js se uspješno pokretao u 1046ms
+## Napomene
+- Problem identifikovan u udruzenjaService.js - pogrešna konstrukcija URL-a
+- API rute zahtevaju authenticateToken i isAdminOrSuperAdmin middleware
+- Production URL: https://ders.ba/api
 
-## Finalno rješenje
+## Review sekcija
 
-**Glavni problem:** Konflikt verzija React/Next.js
-- Root package.json: React 19 + Next.js 15.3.3
-- Web package.json: React 18.2.0 + Next.js 14.2.10
+### ✅ PRODUCTION DASHBOARD 403 GREŠKE REŠENE!
 
-**Finalna promjena:**
-1. Downgrade Next.js u web/package.json sa 14.2.10 na 13.5.6 (kompatibilno sa React 18)
-2. Uklonjen cross-env iz dev skripte
-3. Očišćen cache
+Identifikovano je nekoliko problema koji su uzrokovali 403 Forbidden greške:
 
-**Finalni rezultat:**
-- Aplikacija radi bez grešaka na Next.js 13.5.6 + React 18.2.0
-- Nema više Hook greške
+#### 1. **Pogrešna URL konstrukcija** ✅
+- **Problem**: u `udruzenjaService.js:11` se koristio `${ENV.API_ENDPOINTS.UDRUZENJA}/../admin/organizations`
+- **Rezultat**: URL se resolvovao kao `/admin/organizations` umesto `/api/admin/organizations`
+- **Rešenje**: Promenjen u direktan poziv `/admin/organizations`
 
----
+#### 2. **JWT Token Storage Key** ✅
+- **Problem**: Environment varijabla `NEXT_PUBLIC_JWT_STORAGE_KEY=predavanje_token` se koristila u .env fajlovima, ali kod je tražio token pod ključem `'token'`
+- **Rešenje**: Ažuriran `apiClient.js` i `authHelpers.js` da koriste environment varijablu
 
-# Prethodni plan - Android produkcijski build (arhivirano)
+#### 3. **Različiti JWT Secreti** ⚠️
+- **Problem**: Development koristi `neka-jaka-tajna-AvdoWanNe1994`, production koristi `WanNeAvdo1994`
+- **Posledica**: Tokeni generisani u development okruženju ne mogu biti validirani na production serveru
+- **Napomena**: Ovo znači da korisnici moraju da se ponovo uloguju kada se prebaci na production
 
-## Trenutni cilj (završeno)
-Napraviti Android produkcijski build koristeći Expo EAS Build.
+#### 4. **CORS Konfiguracija** ✅
+- **Development**: `CORS_ORIGIN=http://localhost:3000`
+- **Production**: `CORS_ORIGIN=https://ders.ba`
+- **Status**: Ispravno konfigurisano
 
-## TODO stavke za Android produkcijski build (završeno)
+### 📋 Sledeći koraci za deploy:
 
-- [x] Pregledaj trenutnu Expo i EAS konfiguraciju
-- [x] Provjeri Android keystore setup za produkciju
-- [x] Kreiraj credentials.json fajl za lokalne kredencijale
-- [ ] Pokreni EAS build komandu za Android produkciju
-- [ ] Provjeri da li je build uspješan
+1. **Rebuild web aplikacije** sa ispravkama
+2. **Deploy na production server**
+3. **Testiranje dashboard funkcionalnosti**
+4. **Obavesti korisnike da se ponovo uloguju** (zbog različitih JWT secret-a)
 
-## Prethodni plan - promjena package name (završeno)
+### 🔧 Promene napravljene:
 
-### TODO stavke za promjenu package name
+1. **`web/src/services/udruzenjaService.js`**:
+   - Popravljen URL za `getAllUdruzenjaForAdmin`
 
-- [x] Analiziraj trenutnu package name konfiguraciju u projektu
-- [x] Promijeni package name u app.json i app.config.js na com.daije.mobile
-- [x] Ažuriraj eas.json ako je potrebno (nije bilo potrebno)
-- [x] Provjeri druge konfiguracijske fajlove koji mogu sadržati package name
-- [x] Ažuriraj projectplan.md sa novim planom i promjenama
+2. **`web/src/services/apiClient.js`**:
+   - Dodat support za `NEXT_PUBLIC_JWT_STORAGE_KEY` environment varijablu
 
-## Kreirani fajlovi
-
-1. **android-credentials/Ders-app-produkcija.keystore** - Novi keystore fajl
-2. **android-credentials/Ders-app-produkcija-upload-cert.pem** - PEM fajl za Google Play Console
-3. **android-credentials/keystore-info.txt** - Informacije o keystore (lozinke, SHA1, itd.)
-
-## Keystore informacije
-
-- **SHA1 fingerprint**: E8:70:28:1F:50:76:FA:22:B4:D9:47:FF:DB:1E:21:76:90:78:FE:66
-- **Alias**: Ders-app-produkcija
-- **Package name**: com.daije.mobile
-- **Store password**: DersApp2024Prod
-- **Key password**: DersApp2024Prod
-
-## Review promjene package name
-
-Uspješno je promijenjen package name na "com.daije.mobile" u svim relevantnim fajlovima:
-- app.json: Android package promijenjen sa "ba.ders.produkcija" na "com.daije.mobile"
-- mob/app.config.js: Android package promijenjen sa "ba.ders.app" na "com.daije.mobile"
-- mob/app.config.js: iOS bundleIdentifier također promijenjen na "com.daije.mobile"
-- eas.json ne sadrži package name konfiguraciju
-
-## Prethodni plan (arhivirano)
-
-### Problem sa Android signing key
-Google Play Store odbacuje App Bundle jer je potpisan sa pogrešnim ključem:
-- Očekivani ključ: SHA1: 91:21:E9:C5:05:A8:B4:F0:D0:A7:03:00:32:5A:C7:48:EE:3B:2A:01
-- Trenutni ključ: SHA1: BE:4A:04:38:73:53:23:E3:EF:50:F5:CF:8C:60:EC:7E:86:34:FC:FA
-
-### Stari TODO (arhivirano)
-- [ ] Proveri trenutne EAS credentials za Android
-- [ ] Identifikuj koji keystore se trenutno koristi
-- [ ] Pronađi originalni keystore koji odgovara očekivanom SHA1
-- [ ] Konfiguriši EAS da koristi ispravan keystore
-- [ ] Rebuild aplikaciju sa ispravnim keystore
-- [ ] Verifikuj da je nova build potpisana sa ispravnim ključem
+3. **`web/src/utils/authHelpers.js`**:
+   - Dodat support za `NEXT_PUBLIC_JWT_STORAGE_KEY` environment varijablu

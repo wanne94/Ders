@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -41,7 +41,7 @@ const RelatedLectures = ({
     }
   };
 
-  const fetchLectures = async () => {
+  const fetchLectures = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -121,11 +121,11 @@ const RelatedLectures = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [type, currentLectureId, organizationId, daijaId, organizationName, daijaName, page, lecturesPerPage]);
 
   useEffect(() => {
     fetchLectures();
-  }, [type, currentLectureId, organizationId, daijaId, page]);
+  }, [type, currentLectureId, organizationId, daijaId, page, fetchLectures]);
 
   const handlePageChange = (event, value) => {
     setPage(value);

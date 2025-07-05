@@ -137,8 +137,10 @@ export const uploadImageWithAxios = async (file, token = null) => {
   }
 };
 
-export default {
+const uploadService = {
   uploadImage,
   uploadImageWithAxios,
   UPLOAD_SERVER_URL
 };
+
+export default uploadService;

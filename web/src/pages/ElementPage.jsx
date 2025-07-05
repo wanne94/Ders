@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import {
   Typography,
@@ -63,7 +63,7 @@ const ElementPage = ({ type }) => {
   const config = getConfig();
 
   // Fetch data
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -98,10 +98,10 @@ const ElementPage = ({ type }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [type, config]);
 
   // Filter items based on type and search
-  const filterItems = () => {
+  const filterItems = useCallback(() => {
     let filtered = [...items];
 
     // Filter by type first
@@ -163,18 +163,18 @@ const ElementPage = ({ type }) => {
 
     setFilteredItems(filtered);
     setPage(1); // Reset to first page when filtering
-  };
+  }, [items, debouncedSearchTerm, type]);
 
   // Effects
   useEffect(() => {
     if (config) {
       fetchData();
     }
-  }, [type]);
+  }, [type, config, fetchData]);
 
   useEffect(() => {
     filterItems();
-  }, [items, debouncedSearchTerm]);
+  }, [items, debouncedSearchTerm, filterItems]);
 
   // Pagination
   const indexOfLastItem = page * itemsPerPage;

@@ -2,7 +2,7 @@
 
 // Storage keys
 export const STORAGE_KEYS = {
-  TOKEN: 'token',
+  TOKEN: process.env.NEXT_PUBLIC_JWT_STORAGE_KEY || 'token',
   USER: 'user',
   REMEMBERED_EMAIL: 'rememberedEmail',
   REMEMBERED_PASSWORD: 'rememberedPassword'

@@ -68,7 +68,14 @@
       "Bash(ping:*)",
       "Bash(kill:*)",
       "Bash(iptables:*)",
-      "Bash(npx @expo/cli@latest:*)"
+      "Bash(npx @expo/cli@latest:*)",
+      "Bash(git push:*)",
+      "Bash(echo $ANDROID_HOME)",
+      "Bash(wget:*)",
+      "Bash(export ANDROID_HOME=$HOME/Android/Sdk)",
+      "Bash(export PATH=$PATH:$ANDROID_HOME/platform-tools)",
+      "Bash(export:*)",
+      "Bash(npm run lint)"
     ],
     "deny": []
   }
