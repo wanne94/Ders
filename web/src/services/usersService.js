@@ -48,6 +48,13 @@ const usersService = {
     return response;
   },
 
+  deleteOwnProfile: async (currentPassword) => {
+    const response = await apiClient.delete(`${ENV.API_ENDPOINTS.USERS}/profile/delete`, {
+      data: { currentPassword }
+    });
+    return response;
+  },
+
 };
 
 export default usersService; 

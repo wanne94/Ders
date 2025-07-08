@@ -1,7 +1,7 @@
-# Plan za implementaciju brisanja profila u mobilnoj aplikaciji
+# Plan za implementaciju brisanja profila u web aplikaciji
 
 ## Problem
-Korisnik traži funkcionalnost za brisanje korisničkog profila u mobilnoj aplikaciji. Treba analizirati postojeću arhitekturu i implementirati sigurno brisanje profila sa potvrdom lozinke.
+Korisnik traži funkcionalnost za brisanje korisničkog profila u web aplikaciji. Mobilna aplikacija već ima kompletnu implementaciju brisanja profila, ali web dio nema ovu funkcionalnost. Treba implementirati istu funkcionalnost i u web dijelu.
 
 ## Analiza trenutne arhitekture
 
@@ -32,40 +32,102 @@ Korisnik traži funkcionalnost za brisanje korisničkog profila u mobilnoj aplik
 - Token-based autentifikacija preko AsyncStorage
 - Detaljno error handling sa korisničkim porukama na srpskom
 
-## Plan implementacije
+## Plan implementacije web dijela
+
+### Analiza trenutnog stanja:
+- **Mobilna aplikacija**: Kompletno implementirana funkcionalnost brisanja profila
+- **Web aplikacija**: Nedostaje funkcionalnost brisanja profila
+- **Server API**: Nedostaje `/users/profile/delete` endpoint koji mobilna aplikacija poziva
 
 ### Todo lista:
 
-- [ ] **1. Dodaj novi API endpoint za brisanje vlastitog profila**
-  - Dodaj `deleteOwnProfile(currentPassword)` metodu u `usersService.js`
-  - Implementiraj poziv na `/users/profile/delete` endpoint sa trenutnom lozinkom
+- [ ] **1. Implementiraj server API endpoint za brisanje profila**
+  - Dodaj DELETE `/users/profile/delete` route u server/routes/users.js
+  - Implementiraj potvrdu trenutne lozinke
+  - Sigurno brisanje korisnika iz baze podataka
   
-- [ ] **2. Stvori DeleteProfileDialog komponentu**
-  - Modal sa upozorenjem o trajnom brisanju
+- [ ] **2. Dodaj metodu u web usersService**
+  - Dodaj `deleteOwnProfile(currentPassword)` metodu u web/src/services/usersService.js
+  - Implementiraj poziv na `/users/profile/delete` endpoint
+  
+- [ ] **3. Stvori DeleteProfileDialog komponentu za web**
+  - Modal sa upozorenjem o trajnom brisanju (kao u mobilnoj aplikaciji)
   - Input field za potvrdu trenutne lozinke
   - Dva koraka potvrde: prvo upozorenje, zatim unos lozinke
   - Jasne poruke upozorenja na srpskom jeziku
   
-- [ ] **3. Integriraj brisanje profila u ProfileScreen**
-  - Dodaj "Obriši profil" dugme u Account Settings sekciju
+- [ ] **4. Integriraj brisanje profila u web profile stranicu**
+  - Dodaj "Dangerous Zone" sekciju u web/pages/profile.js
+  - Dodaj "Obriši profil" dugme
   - Implementiraj `handleDeleteProfile` funkciju
   - Dodaj state management za dialog i loading stanja
   
-- [ ] **4. Implementiraj logout logiku nakon brisanja**
+- [ ] **5. Implementiraj logout logiku nakon brisanja**
   - Automatski logout nakon uspješnog brisanja
-  - Očisti sav lokalni storage (token, user data, remembered credentials)
-  - Navigacija na početni ekran sa porukom o uspješnom brisanju
+  - Očisti sve relevantne cookies/localStorage
+  - Preusmjeravanje na početnu stranicu sa porukom o uspješnom brisanju
   
-- [ ] **5. Dodaj error handling**
+- [ ] **6. Dodaj error handling**
   - Rukovanje neispravnih lozinki
-  - Mrežni problemi i server greške
+  - Mrežni problemi i server greške  
   - User-friendly poruke greške na srpskom
   
-- [x] **6. Testiranje i QA**
-  - Testiraj kompletan flow brisanja profila
-  - Provjeri da se svi podaci očiste nakon brisanja
+- [x] **7. Testiranje i QA**
+  - Testiraj kompletan flow brisanja profila na web-u
+  - Provjeri kompatibilnost sa mobilnom aplikacijom
   - Testiraj error scenarije
   - Provjeri UX i accessibility
+
+## Review sekcija - Web implementacija
+
+### Implementirana funkcionalnost brisanja profila u web aplikaciji
+
+**Izvršene promjene:**
+
+1. **Ažuriran `server/routes/users.js`:**
+   - Dodana DELETE `/users/profile/delete` route
+   - Implementirana potvrda trenutne lozinke za sigurnost
+   - Korišćenje `findByIdAndDelete` za sigurno brisanje korisnika iz baze
+   - Error handling sa korisničkim porukama na srpskom
+
+2. **Ažuriran `web/src/services/usersService.js`:**
+   - Dodana `deleteOwnProfile(currentPassword)` metoda
+   - Implementiran API poziv na DELETE `/users/profile/delete` endpoint
+   - Korišćenje `data` parametra za proslijećivanje currentPassword u DELETE requestu
+
+3. **Kreirana `web/src/components/DeleteProfileDialog.jsx`:**
+   - Dvostepeni proces potvrde brisanja profila (kao u mobilnoj aplikaciji)
+   - Prvi korak: Upozorenje o trajnosti brisanja sa listom posledica
+   - Drugi korak: Unos trenutne lozinke za finalizaciju
+   - Loading state tokom brisanja
+   - CSS-in-JS styling konzistentan sa web aplikacijom
+   - Toggle visibility za password field
+
+4. **Ažuriran `web/pages/profile.js`:**
+   - Dodana "Opasna zona" sekcija sa crvenim borderom
+   - Dodano dugme "Obriši profil" sa warning ikonom
+   - Implementirana `handleDeleteProfile` funkcija
+   - Dodani novi state-ovi za dialog management
+   - Integracija sa DeleteProfileDialog komponentom
+   - Automatska navigacija na početnu stranicu nakon uspješnog brisanja
+   - Korišćenje `clearAllData()` za potpuno brisanje svih lokalnih podataka
+
+**Sigurnosni i UX aspekti:**
+- Dvostepena potvrda sprječava slučajno brisanje profila
+- Obavezna potvrda trenutne lozinke za finalizaciju
+- Jasna upozorenja o trajnosti akcije brisanja
+- Loading indikatori tokom API poziva
+- Error handling sa porukama na srpskom jeziku
+- Kompletno čišćenje svih lokalnih podataka nakon brisanja
+- Automatic logout i navigacija na početnu stranicu
+
+**Funkcionalnost:**
+Web aplikacija sada ima istu funkcionalnost brisanja profila kao mobilna aplikacija. Korisnik može pristupiti opciji brisanja profila iz "Moj Profil" stranice, gdje će proći kroz siguran dvostepeni proces potvrde. Nakon uspješnog brisanja, aplikacija će obrisati sve lokalne podatke i vratiti korisnika na početnu stranicu.
+
+**Kompatibilnost:**
+- Server API endpoint je kompatibilan sa mobilnom aplikacijom
+- Ista sigurnosna logika kao u mobilnoj aplikaciji
+- Konzistentan UX flow između web i mobilne verzije
 
 ## Review sekcija
 

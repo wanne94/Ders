@@ -215,6 +215,45 @@ router.post('/change-password', authMiddleware, async (req, res) => {
   }
 });
 
+// DELETE /api/users/profile/delete - Delete own profile
+router.delete('/profile/delete', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword } = req.body;
+
+    if (!currentPassword) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Trenutna lozinka je obavezna za brisanje profila.' 
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Korisnik nije pronađen.' });
+    }
+
+    // Verify current password
+    const bcrypt = require('bcryptjs');
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Trenutna lozinka nije ispravna.' 
+      });
+    }
+
+    // Delete the user
+    await User.findByIdAndDelete(req.user.id);
+
+    res.json({
+      success: true,
+      message: 'Profil je uspješno obrisan.'
+    });
+  } catch (error) {
+    console.error('❌ Greška pri brisanju profila:', error);
+    res.status(500).json({ success: false, message: 'Greška na serveru.' });
+  }
+});
 
 // GET /api/users/:id/public - Get public user profile by ID
 router.get('/:id/public', async (req, res) => {
