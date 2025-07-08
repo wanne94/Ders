@@ -170,6 +170,6 @@ class ApiClient {
   }
 }
 
-const apiClient = new ApiClient(ENV.API_URL, 10000); // 10 second timeout for local development
+const apiClient = new ApiClient(ENV.API_URL, 30000); // 30 second timeout for local development
 
 export default apiClient; 

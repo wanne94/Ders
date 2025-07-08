@@ -40,8 +40,6 @@ export default {
     updates: {
       url: "https://u.expo.dev/7d754f7a-231e-4fd1-8d48-22e2d5f1cb7e"
     },
-    runtimeVersion: {
-      policy: "appVersion"
-    }
+    runtimeVersion: "1.0.3"
   }
 };

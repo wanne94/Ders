@@ -103,4 +103,16 @@ export const usersService = {
     }
   },
 
+  async deleteOwnProfile(currentPassword) {
+    try {
+      const response = await apiClient.delete('/users/profile/delete', {
+        data: { currentPassword }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting profile:', error);
+      throw error;
+    }
+  },
+
 }; 

@@ -21,10 +21,11 @@ import UniversalPage from './screens/UniversalPage';
 import DashboardScreen from './screens/DashboardScreen';
 import Header from './components/Header';
 import Menu from './components/Menu';
+import apiClient from './services/apiClient';
 import daijeService from './services/daijeService';
 import udruzenjaService from './services/udruzenjaService';
 import { ENV } from './config';
-import { sortAssociations, sortAllDaijeWithActivePriority, sortEntitiesByUpcomingLecture } from './utils/sortingUtils';
+import { sortAssociations, sortAllDaijeWithActivePriority, sortEntitiesByUpcomingLecture, sortLecturesByStatus } from './utils/sortingUtils';
 import AuthScreen from './screens/AuthScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import AddContentMenu from './components/AddContentMenu';
@@ -55,59 +56,31 @@ const COLORS = {
 
 // Old sorting function removed - now using centralized sorting from utils/sortingUtils.js
 
-// Helper function to create fetch with timeout
-const fetchWithTimeout = (url, timeout = 5000) => {
-  return Promise.race([
-    fetch(url),
-    new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Request timeout')), timeout)
-    )
-  ]);
-};
-
-// API function to fetch lectures with fallback support (local only in development)
+// API function to fetch lectures using apiClient with proper URL switching
 const fetchLectures = async () => {
-  const urls = [
-    `${ENV.API_URL}/lectures/dashboard/public`,
-    `${ENV.BACKUP_API_URL}/lectures/dashboard/public`,
-    `${ENV.FALLBACK_API_URL}/lectures/dashboard/public`
-  ];
-  
-  for (const url of urls) {
-    try {
-      console.log('🔍 Trying to fetch lectures from:', url);
-      
-      const response = await fetchWithTimeout(url, 10000); // 10 second timeout for local development
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response ok:', response.ok);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('📊 Lectures response:', data);
-      console.log('📊 Is array?', Array.isArray(data));
-      console.log('📊 Length:', data?.length);
-      
-      if (Array.isArray(data)) {
-        console.log('📋 First few lectures:', data.slice(0, 3).map(l => ({ 
-          id: l._id, 
-          title: l.title, 
-          status: l.status,
-          date: l.date 
-        })));
-      }
-      
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.error(`❌ Error fetching from ${url}:`, error.message);
-      // Continue to next URL
+  try {
+    console.log('🔍 Fetching lectures...');
+    const response = await apiClient.get('/lectures/dashboard/public');
+    const data = response.data;
+    
+    console.log('📊 Lectures response:', data);
+    console.log('📊 Is array?', Array.isArray(data));
+    console.log('📊 Length:', data?.length);
+    
+    if (Array.isArray(data)) {
+      console.log('📋 First few lectures:', data.slice(0, 3).map(l => ({ 
+        id: l._id, 
+        title: l.title, 
+        status: l.status,
+        date: l.date 
+      })));
     }
+    
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('❌ Error fetching lectures:', error.message);
+    return [];
   }
-  
-  console.error('❌ All fetch attempts failed');
-  return [];
 };
 
 // API function to fetch daije
@@ -152,8 +125,8 @@ const LecturesSection = ({ onProfileOpen, allLectures = [] }) => {
         const data = await fetchLectures();
         // Filter only approved lectures, matching web app behavior
         const approvedLectures = (Array.isArray(data) ? data : []).filter(lecture => lecture.status === 'approved');
-        // Apply centralized sorting - upcoming lectures first, then by proximity
-        const sortedData = sortEntitiesByUpcomingLecture(approvedLectures, allLectures);
+        // Apply centralized sorting - danas, uskoro, proslo
+        const sortedData = sortLecturesByStatus(approvedLectures);
         setLectures(sortedData.slice(0, 10)); // Limit to 10 lectures for homepage
       } catch (err) {
         console.error('Error loading lectures:', err);
@@ -682,6 +655,11 @@ export default function App() {
     }
   };
 
+  const shouldShowBottomNavigation = () => {
+    const hiddenTabs = ['userProfile', 'dashboard'];
+    return !hiddenTabs.includes(activeTab);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
@@ -753,7 +731,10 @@ export default function App() {
         {activeTab === 'home' ? (
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: shouldShowBottomNavigation() ? 100 : 20 }
+            ]}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -772,11 +753,13 @@ export default function App() {
           renderContent()
         )}
 
-        <BottomNavigation
-          activeTab={activeTab}
-          onTabPress={handleTabPress}
-          isAddMenuOpen={showAddMenu}
-        />
+        {shouldShowBottomNavigation() && (
+          <BottomNavigation
+            activeTab={activeTab}
+            onTabPress={handleTabPress}
+            isAddMenuOpen={showAddMenu}
+          />
+        )}
 
         <Menu
           isOpen={menuOpen}
@@ -820,7 +803,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 100, // Safe area for bottom navigation (80px height + 20px extra space)
   },
   section: {
     padding: 20,

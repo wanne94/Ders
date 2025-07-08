@@ -143,7 +143,7 @@ const RelatedLectures = ({
 
   return (
     <Box id="related-lectures" sx={{ py: { xs: 4, md: 6 }, backgroundColor: '#f8f9fa' }}>
-      <Container maxWidth="lg">
+      <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
         {/* Section Title */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
           <Typography 
@@ -188,11 +188,15 @@ const RelatedLectures = ({
         {/* Lectures Grid */}
         {!isLoading && !error && lectures.length > 0 && (
           <>
-            <LecturesGrid>
+            <LecturesGrid sx={{ 
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 350px))',
+              gap: 3,
+              justifyContent: 'center',
+              width: '100%'
+            }}>
               {lectures.map((lecture) => (
-                <Box key={lecture._id} sx={{ height: '300px' }}>
-                  <UniversalCard data={lecture} />
-                </Box>
+                <UniversalCard key={lecture._id} data={lecture} />
               ))}
             </LecturesGrid>
 

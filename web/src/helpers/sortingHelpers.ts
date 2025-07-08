@@ -1,5 +1,63 @@
 // Sorting helper functions for lectures, daije, and organizations
 
+// Sort lectures by status priority: Danas -> Uskoro -> Prošlo
+export const sortLecturesByStatus = (lectures: any[]): any[] => {
+  if (!Array.isArray(lectures)) return [];
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to beginning of day
+  
+  return lectures.sort((a: any, b: any) => {
+    if (!a.date || !b.date) return 0;
+    
+    // Helper function to get lecture status
+    const getLectureStatus = (lecture: any) => {
+      const lectureDate = new Date(lecture.date);
+      lectureDate.setHours(0, 0, 0, 0);
+      
+      if (lectureDate.getTime() === today.getTime()) {
+        return 'danas'; // Today
+      } else if (lectureDate > today) {
+        return 'uskoro'; // Future
+      } else {
+        return 'proslo'; // Past
+      }
+    };
+    
+    const statusA = getLectureStatus(a);
+    const statusB = getLectureStatus(b);
+    
+    // Define priority order: danas = 1, uskoro = 2, proslo = 3
+    const statusPriority = { danas: 1, uskoro: 2, proslo: 3 };
+    
+    const priorityA = statusPriority[statusA];
+    const priorityB = statusPriority[statusB];
+    
+    // If different statuses, sort by priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    
+    // Same status - sort by date
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    
+    if (statusA === 'uskoro') {
+      // Future lectures: earliest first
+      return dateA.getTime() - dateB.getTime();
+    } else if (statusA === 'proslo') {
+      // Past lectures: most recent first
+      return dateB.getTime() - dateA.getTime();
+    } else {
+      // Today's lectures: maintain original order or sort by time if available
+      if (a.time && b.time) {
+        return a.time.localeCompare(b.time);
+      }
+      return 0;
+    }
+  });
+};
+
 // Sort lectures by proximity to current time (date + time)
 export const sortLecturesByTimeProximity = (lectures: any[]): any[] => {
   if (!Array.isArray(lectures)) return [];

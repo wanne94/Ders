@@ -1,5 +1,5 @@
 import { Container, Typography, Box, Paper } from '@mui/material';
-import PageLayout from '../components/PageLayout';
+import PageLayout from '@/components/PageLayout';
 import Head from 'next/head';
 
 const PrivacyPolicy = () => {

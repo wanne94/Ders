@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import {
@@ -21,8 +21,9 @@ import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrga
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
 import { formatDaijaTitle } from '../utils';
 
-const UniversalCard = ({ data }) => {
+const UniversalCard = React.memo(({ data }) => {
   const router = useRouter();
+  const [imageError, setImageError] = useState(false);
 
   if (!data) {
     return null;
@@ -33,8 +34,28 @@ const UniversalCard = ({ data }) => {
     
     switch (entityType) {
       case 'predavanje':
-        // Check if lecture is in the past
-        const isPastLecture = data.date ? new Date(data.date) < new Date() : false;
+        // Determine lecture status based on date
+        const getLectureStatus = () => {
+          if (!data.date) return 'unknown';
+          
+          const lectureDate = new Date(data.date);
+          const today = new Date();
+          
+          // Set time to beginning of day for comparison
+          lectureDate.setHours(0, 0, 0, 0);
+          today.setHours(0, 0, 0, 0);
+          
+          if (lectureDate.getTime() === today.getTime()) {
+            return 'danas'; // Today
+          } else if (lectureDate > today) {
+            return 'uskoro'; // Future
+          } else {
+            return 'proslo'; // Past
+          }
+        };
+        
+        const lectureStatus = getLectureStatus();
+        const isPastLecture = lectureStatus === 'proslo';
         
         return {
           type: 'lecture',
@@ -42,11 +63,12 @@ const UniversalCard = ({ data }) => {
           image: data.image || getDefaultLectureImage(),
           imageStyle: { borderRadius: '8px' },
           isPastLecture,
+          lectureStatus,
           infoItems: [
             { icon: <PersonIcon />, text: 
               data.daija && typeof data.daija === 'object' 
-                ? formatDaijaTitle(data.daija.name, data.daija.title) || 'Nepoznat daija'
-                : data.speaker || 'Nepoznat daija' 
+                ? formatDaijaTitle(data.daija.name, data.daija.title) || 'Daija nije unesen'
+                : data.speaker || 'Daija nije unesen' 
             },
             { icon: <BusinessIcon />, text: data.organization || 'Nepoznato udruženje' },
             data.date && { icon: <CalendarTodayIcon />, text: formatDateWithDay(data.date) },
@@ -109,7 +131,11 @@ const UniversalCard = ({ data }) => {
     return null;
   }
 
-  const imageUrl = getImageUrl(displayData.image);
+  const imageUrl = imageError ? 
+    (displayData.type === 'lecture' ? getDefaultLectureImage() :
+     displayData.type === 'daija' ? getDefaultDaijaImage() :
+     getDefaultOrganizationImage()) : 
+    getImageUrl(displayData.image);
 
   return (
     <Card 
@@ -128,17 +154,27 @@ const UniversalCard = ({ data }) => {
       }}
     >
       {/* Status badge for lectures */}
-      {displayData.type === 'lecture' && displayData.isPastLecture !== undefined && (
+      {displayData.type === 'lecture' && displayData.lectureStatus && (
         <Chip
-          label={displayData.isPastLecture ? '🔴 Prošlo' : '🟢 Uskoro'}
+          label={
+            displayData.lectureStatus === 'danas' ? '🟢 Danas' :
+            displayData.lectureStatus === 'uskoro' ? '🟡 Uskoro' : 
+            '🔴 Prošlo'
+          }
           size="small"
           sx={{
             position: 'absolute',
             top: 8,
             right: 8,
             zIndex: 1,
-            backgroundColor: displayData.isPastLecture ? '#ffebee' : '#e8f5e9',
-            color: displayData.isPastLecture ? '#c62828' : '#2e7d32',
+            backgroundColor: 
+              displayData.lectureStatus === 'danas' ? '#e8f5e8' :
+              displayData.lectureStatus === 'uskoro' ? '#fff8e1' :
+              '#ffebee',
+            color: 
+              displayData.lectureStatus === 'danas' ? '#2e7d32' :
+              displayData.lectureStatus === 'uskoro' ? '#f57f17' :
+              '#c62828',
             fontWeight: 'bold',
             fontSize: '0.75rem'
           }}
@@ -246,17 +282,9 @@ const UniversalCard = ({ data }) => {
       alt={displayData.title}
       width={300}
       height={200}
-      onError={(e) => {
-        e.target.onerror = null; // Prevent infinite loop
-        // Use appropriate default image based on type
-        if (displayData.type === 'lecture') {
-          e.target.src = getDefaultLectureImage();
-        } else if (displayData.type === 'daija') {
-          e.target.src = getDefaultDaijaImage();
-        } else if (displayData.type === 'organization') {
-          e.target.src = getDefaultOrganizationImage();
-        }
-      }}
+      onError={useCallback(() => {
+        setImageError(true);
+      }, [])}
       style={{ 
         width: '100%',
         height: '100%',
@@ -271,6 +299,8 @@ const UniversalCard = ({ data }) => {
       </CardActionArea>
     </Card>
   );
-};
+});
+
+UniversalCard.displayName = 'UniversalCard';
 
 export default UniversalCard;

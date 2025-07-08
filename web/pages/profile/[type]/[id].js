@@ -12,6 +12,8 @@ import {
   Typography,
   Paper,
   Chip,
+  Modal,
+  IconButton,
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -25,14 +27,15 @@ import ChatIcon from '@mui/icons-material/Chat';
 import DescriptionIcon from '@mui/icons-material/Description';
 import BusinessIcon from '@mui/icons-material/Business';
 import DirectionsIcon from '@mui/icons-material/Directions';
-import PageLayout from '../../../components/PageLayout';
-import ShareButton from '../../../components/ShareButton';
-import AddressLink from '../../../components/AddressLink';
-import RelatedLectures from '../../../components/RelatedLectures';
+import CloseIcon from '@mui/icons-material/Close';
+import PageLayout from '@/components/PageLayout';
+import ShareButton from '@/components/ShareButton';
+import AddressLink from '@/components/AddressLink';
+import RelatedLecturesSimple from '@/components/RelatedLecturesSimple';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
-import { formatDateWithDay } from '../../../utils/dataHelpers';
-import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '../../../utils/imageUtils';
-import { toTitleCase, formatDaijaTitle } from '../../../utils';
+import { formatDateWithDay } from '@/utils/dataHelpers';
+import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
+import { toTitleCase, formatDaijaTitle } from '@/utils';
 
 const UnifiedProfile = () => {
   const router = useRouter();
@@ -41,6 +44,7 @@ const UnifiedProfile = () => {
   const [profileData, setProfileData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [openImageModal, setOpenImageModal] = useState(false);
 
   const fetchProfileData = useCallback(async () => {
     try {
@@ -163,6 +167,7 @@ const UnifiedProfile = () => {
               {/* Profile Image */}
               <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
                 <Box
+                  onClick={() => setOpenImageModal(true)}
                   sx={{
                     position: 'relative',
                     width: '100%',
@@ -174,6 +179,7 @@ const UnifiedProfile = () => {
                     border: '6px solid rgba(255, 255, 255, 0.2)',
                     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                     transition: 'all 0.3s ease',
+                    cursor: 'pointer',
                     '&:hover': {
                       transform: 'scale(1.02)',
                       boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'
@@ -556,15 +562,56 @@ const UnifiedProfile = () => {
         </Paper>
       </Container>
 
-      {/* Related Lectures Section */}
-      <RelatedLectures
-        currentLectureId={type === 'lecture' ? id : null}
-        type={type}
-        organizationId={type === 'organization' ? id : null}
-        daijaId={type === 'daija' ? id : null}
-        organizationName={type === 'organization' ? profileData?.name : null}
-        daijaName={type === 'daija' ? `${profileData?.title || ''} ${profileData?.name || ''}`.trim() : null}
-      />
+      {/* Related Lectures Section - Only for lectures */}
+      {type === 'lecture' && (
+        <RelatedLecturesSimple currentLectureId={id} />
+      )}
+
+      {/* Full Screen Image Modal */}
+      <Modal
+        open={openImageModal}
+        onClose={() => setOpenImageModal(false)}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(0, 0, 0, 0.9)'
+        }}
+      >
+        <Box sx={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}>
+          <IconButton
+            onClick={() => setOpenImageModal(false)}
+            sx={{
+              position: 'absolute',
+              top: -40,
+              right: -40,
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <Box
+            component="img"
+            src={getImageUrl(profileData?.image) || (type === 'daija' ? getDefaultDaijaImage() : type === 'organization' ? getDefaultOrganizationImage() : getDefaultLectureImage())}
+            alt={profileData?.title || profileData?.name}
+            sx={{
+              maxWidth: '100%',
+              maxHeight: '90vh',
+              objectFit: 'contain',
+              borderRadius: 2,
+              boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)'
+            }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = type === 'daija' ? getDefaultDaijaImage() : type === 'organization' ? getDefaultOrganizationImage() : getDefaultLectureImage();
+            }}
+          />
+        </Box>
+      </Modal>
     </PageLayout>
   );
 };

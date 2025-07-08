@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, ScrollView, ActivityIndicator, Text, SafeAreaView } from 'react-native';
 import UniverzalCard from '../components/UniverzalCard';
 import Menu from '../components/Menu';
+import apiClient from '../services/apiClient';
 import udruzenjaService from '../services/udruzenjaService';
 import predavanjaService from '../services/predavanjaService';
 import daijeService from '../services/daijeService';
 import { formatDateWithDay } from '../utils/dateUtils';
-import { applySorting } from '../utils/sortingUtils';
+import { applySorting, sortLecturesByStatus } from '../utils/sortingUtils';
 import { ENV } from '../config';
 
 const COLORS = {
@@ -95,7 +96,9 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
       const rawData = Array.isArray(result) ? result : [];
       
       // Apply centralized sorting
-      const sortedData = applySorting(rawData, type, allLectures);
+      const sortedData = type === 'lectures' 
+        ? sortLecturesByStatus(rawData)
+        : applySorting(rawData, type, allLectures);
       setData(sortedData);
     } catch (error) {
       Alert.alert('Greška', 'Došlo je do greške prilikom učitavanja podataka');
@@ -244,40 +247,16 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
 };
 
 // API functions using the real services
-// Helper function to create fetch with timeout
-const fetchWithTimeout = (url, timeout = 5000) => {
-  return Promise.race([
-    fetch(url),
-    new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Request timeout')), timeout)
-    )
-  ]);
-};
-
 const fetchLectures = async () => {
-  const urls = [
-    `${ENV.API_URL}/lectures/dashboard/public`,
-    `${ENV.BACKUP_API_URL}/lectures/dashboard/public`,
-    `${ENV.FALLBACK_API_URL}/lectures/dashboard/public`
-  ];
-  
-  for (const url of urls) {
-    try {
-      console.log('UniversalPage: Trying to fetch lectures from:', url);
-      const response = await fetchWithTimeout(url, 10000); // 10 second timeout for local development
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.error(`UniversalPage: Error fetching from ${url}:`, error.message);
-      // Continue to next URL
-    }
+  try {
+    console.log('UniversalPage: Fetching lectures...');
+    const response = await apiClient.get('/lectures/dashboard/public');
+    const data = response.data;
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('UniversalPage: Error fetching lectures:', error.message);
+    return [];
   }
-  
-  console.error('UniversalPage: All fetch attempts failed');
-  return [];
 };
 
 const fetchDaije = async () => {

@@ -116,13 +116,34 @@ const UniverzalCard = ({ data, onPress, style }) => {
     
     switch (entityType) {
       case 'predavanje':
-        // Check if lecture is in the past
-        const isPastLecture = data.date ? new Date(data.date) < new Date() : false;
+        // Determine lecture status based on date
+        const getLectureStatus = () => {
+          if (!data.date) return 'unknown';
+          
+          const lectureDate = new Date(data.date);
+          const today = new Date();
+          
+          // Set time to beginning of day for comparison
+          lectureDate.setHours(0, 0, 0, 0);
+          today.setHours(0, 0, 0, 0);
+          
+          if (lectureDate.getTime() === today.getTime()) {
+            return 'danas'; // Today
+          } else if (lectureDate > today) {
+            return 'uskoro'; // Future
+          } else {
+            return 'proslo'; // Past
+          }
+        };
+        
+        const lectureStatus = getLectureStatus();
+        const isPastLecture = lectureStatus === 'proslo';
         
         return {
           type: 'lecture',
           title: data.title?.toUpperCase() || '',
           isPastLecture,
+          lectureStatus,
           items: [
             { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
             data.organization && { icon: 'Business', text: data.organization },
@@ -161,13 +182,34 @@ const UniverzalCard = ({ data, onPress, style }) => {
       default:
         // Fallback for unknown types or when type field is not available
         if (data.title && (data.speaker || data.daija)) {
-          // Check if lecture is in the past
-          const isPastLecture = data.date ? new Date(data.date) < new Date() : false;
+          // Determine lecture status based on date
+          const getLectureStatus = () => {
+            if (!data.date) return 'unknown';
+            
+            const lectureDate = new Date(data.date);
+            const today = new Date();
+            
+            // Set time to beginning of day for comparison
+            lectureDate.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+            
+            if (lectureDate.getTime() === today.getTime()) {
+              return 'danas'; // Today
+            } else if (lectureDate > today) {
+              return 'uskoro'; // Future
+            } else {
+              return 'proslo'; // Past
+            }
+          };
+          
+          const lectureStatus = getLectureStatus();
+          const isPastLecture = lectureStatus === 'proslo';
           
           return {
             type: 'lecture',
             title: data.title?.toUpperCase() || '',
             isPastLecture,
+            lectureStatus,
             items: [
               { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
               data.organization && { icon: 'Business', text: data.organization },
@@ -229,19 +271,31 @@ const UniverzalCard = ({ data, onPress, style }) => {
       activeOpacity={0.7}
     >
       {/* Status badge for lectures */}
-      {displayData.type === 'lecture' && displayData.isPastLecture !== undefined && (
+      {displayData.type === 'lecture' && displayData.lectureStatus && (
         <View style={styles.statusBadge}>
           <View style={styles.statusBadgeContent}>
             <Ionicons 
-              name={displayData.isPastLecture ? "checkmark-circle" : "time"} 
+              name={
+                displayData.lectureStatus === 'danas' ? "calendar" :
+                displayData.lectureStatus === 'uskoro' ? "time" : 
+                "checkmark-circle"
+              } 
               size={12} 
-              color={displayData.isPastLecture ? '#c62828' : '#2e7d32'} 
+              color={
+                displayData.lectureStatus === 'danas' ? '#2e7d32' :
+                displayData.lectureStatus === 'uskoro' ? '#f57f17' :
+                '#c62828'
+              } 
             />
             <Text style={[
               styles.statusBadgeText, 
-              displayData.isPastLecture ? styles.statusBadgePast : styles.statusBadgeFuture
+              displayData.lectureStatus === 'danas' ? styles.statusBadgeToday :
+              displayData.lectureStatus === 'uskoro' ? styles.statusBadgeFuture :
+              styles.statusBadgePast
             ]}>
-              {displayData.isPastLecture ? 'Prošlo' : 'Uskoro'}
+              {displayData.lectureStatus === 'danas' ? 'Danas' :
+               displayData.lectureStatus === 'uskoro' ? 'Uskoro' : 
+               'Prošlo'}
             </Text>
           </View>
         </View>
@@ -434,8 +488,11 @@ const styles = StyleSheet.create({
   statusBadgePast: {
     color: '#c62828',
   },
-  statusBadgeFuture: {
+  statusBadgeToday: {
     color: '#2e7d32',
+  },
+  statusBadgeFuture: {
+    color: '#f57f17',
   },
 });
 

@@ -77,7 +77,9 @@
       "Bash(export:*)",
       "Bash(npm run lint)",
       "Bash(git remote set-url:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(sudo ufw:*)"
     ],
     "deny": []
   }

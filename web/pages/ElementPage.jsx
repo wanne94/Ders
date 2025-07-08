@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import {
   Typography,
@@ -12,33 +12,40 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
-import PageLayout from '../components/PageLayout';
-import UniversalCard from '../components/UniversalCard';
-import LectureForm from '../components/LectureForm';
-import DaijaForm from '../components/DaijaForm';
-import OrganizationForm from '../components/OrganizationForm';
-import { safeApiCall, normalizeToArray } from '../utils/dataHelpers';
-import { useDebounce } from '../utils/useDebounce';
+import PageLayout from '@/components/PageLayout';
+import UniversalCard from '@/components/UniversalCard';
+import LectureForm from '@/components/LectureForm';
+import DaijaForm from '@/components/DaijaForm';
+import OrganizationForm from '@/components/OrganizationForm';
+import { safeApiCall, normalizeToArray } from '@/utils/dataHelpers';
+import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
+import { useDebounce } from '@/utils/useDebounce';
 import { DaijeGrid, LecturesGrid, OrganizationsGrid } from '@/components/GridLayout';
-import predavanjaService from '../services/predavanjaService';
-import daijeService from '../services/daijeService';
-import udruzenjaService from '../services/udruzenjaService';
+import predavanjaService from '@/services/predavanjaService';
+import daijeService from '@/services/daijeService';
+import udruzenjaService from '@/services/udruzenjaService';
 
 const ElementPage = ({ type }) => {
   const router = useRouter();
-  const [items, setItems] = useState([]);
-  const [filteredItems, setFilteredItems] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(1);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  
+  // Combined state for better performance
+  const [state, setState] = useState({
+    items: [],
+    isLoading: true,
+    error: null,
+    searchTerm: '',
+    page: 1,
+    isFormOpen: false
+  });
+  
   const itemsPerPage = 20;
+  const debouncedSearchTerm = useDebounce(state.searchTerm, 300);
+  
+  // Destructure for easier access
+  const { items, isLoading, error, searchTerm, page, isFormOpen } = state;
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
-
-  // Configuration based on type
-  const getConfig = () => {
+  // Memoized configuration based on type
+  const config = useMemo(() => {
     switch (type) {
       case 'lectures':
         return {
@@ -58,15 +65,12 @@ const ElementPage = ({ type }) => {
       default:
         return null;
     }
-  };
-
-  const config = getConfig();
+  }, [type]);
 
   // Fetch data
   const fetchData = useCallback(async () => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
 
       let response;
       switch (type) {
@@ -91,17 +95,17 @@ const ElementPage = ({ type }) => {
         type: config.expectedType
       }));
       
-      setItems(dataWithType);
+      setState(prev => ({ ...prev, items: dataWithType }));
     } catch (error) {
       console.error(`Error fetching ${type}:`, error);
-      setError(`Greška pri dohvaćanju ${config.title.toLowerCase()}`);
+      setState(prev => ({ ...prev, error: `Greška pri dohvaćanju ${config.title.toLowerCase()}` }));
     } finally {
-      setIsLoading(false);
+      setState(prev => ({ ...prev, isLoading: false }));
     }
-  }, [type, config]);
+  }, [type, config?.title, config?.expectedType]);
 
-  // Filter items based on type and search
-  const filterItems = useCallback(() => {
+  // Memoized filtered items
+  const filteredItems = useMemo(() => {
     let filtered = [...items];
 
     // Filter by type first
@@ -161,9 +165,18 @@ const ElementPage = ({ type }) => {
       });
     }
 
-    setFilteredItems(filtered);
-    setPage(1); // Reset to first page when filtering
+    // Apply sorting for lectures
+    if (type === 'lectures') {
+      filtered = sortLecturesByStatus(filtered);
+    }
+
+    return filtered;
   }, [items, debouncedSearchTerm, type]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setState(prev => ({ ...prev, page: 1 }));
+  }, [debouncedSearchTerm]);
 
   // Effects
   useEffect(() => {
@@ -172,37 +185,37 @@ const ElementPage = ({ type }) => {
     }
   }, [type, config, fetchData]);
 
-  useEffect(() => {
-    filterItems();
-  }, [items, debouncedSearchTerm, filterItems]);
+  // Memoized pagination
+  const { currentItems, totalPages } = useMemo(() => {
+    const indexOfLastItem = page * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return {
+      currentItems: filteredItems.slice(indexOfFirstItem, indexOfLastItem),
+      totalPages: Math.ceil(filteredItems.length / itemsPerPage)
+    };
+  }, [filteredItems, page, itemsPerPage]);
 
-  // Pagination
-  const indexOfLastItem = page * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-
-  const handlePageChange = (event, value) => {
-    setPage(value);
+  const handlePageChange = useCallback((event, value) => {
+    setState(prev => ({ ...prev, page: value }));
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
+  const handleSearchChange = useCallback((event) => {
+    setState(prev => ({ ...prev, searchTerm: event.target.value }));
+  }, []);
 
-  const handleAddClick = () => {
-    setIsFormOpen(true);
-  };
+  const handleAddClick = useCallback(() => {
+    setState(prev => ({ ...prev, isFormOpen: true }));
+  }, []);
 
-  const handleFormClose = () => {
-    setIsFormOpen(false);
-  };
+  const handleFormClose = useCallback(() => {
+    setState(prev => ({ ...prev, isFormOpen: false }));
+  }, []);
 
-  const handleFormSuccess = () => {
-    setIsFormOpen(false);
+  const handleFormSuccess = useCallback(() => {
+    setState(prev => ({ ...prev, isFormOpen: false }));
     fetchData();
-  };
+  }, [fetchData]);
 
   // Get the appropriate form component based on type
   const getFormComponent = () => {

@@ -147,4 +147,15 @@ export const isSuperAdmin = async () => {
     console.error('Error checking super admin status:', error);
     return false;
   }
+};
+
+// Clear all authentication data (for account deletion)
+export const clearAllAuthData = async () => {
+  try {
+    await removeToken();
+    await removeUserData();
+    await clearRememberedCredentials();
+  } catch (error) {
+    console.error('Error clearing all auth data:', error);
+  }
 }; 

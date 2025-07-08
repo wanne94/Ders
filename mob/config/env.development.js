@@ -1,18 +1,18 @@
-// Odredi IP adresu na osnovu platforme
+// Konfiguracija za Expo Go development
 const getLocalIP = () => {
-  // Za development, koristi stvarnu IP adresu Windows mašine
-  // Server se pokreće iz PowerShell-a na ovoj IP adresi
-  return 'http://192.168.0.4:5003'; // Windows IP adresa
+  // Za Expo Go, koristi IP adresu tvog računara na lokalnoj mreži
+  // Promeni ovu IP adresu na svoju lokalnu IP adresu (ipconfig/ifconfig)
+  return 'http://192.168.0.20:5003';
 };
 
 const getBackupURL = () => {
-  // Backup opcija - localhost za slučaj da IP ne radi
-  return 'http://localhost:5003'; // Localhost fallback
+  // Backup opcija - može se koristiti alternativna IP adresa
+  return 'http://192.168.0.20:5003';
 };
 
 const getFallbackLocalURL = () => {
-  // Fallback opcija uklonjena za development
-  return null;
+  // Fallback opcija
+  return 'http://192.168.0.20:5003';
 };
 
 export const ENV = {

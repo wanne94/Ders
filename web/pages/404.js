@@ -12,7 +12,7 @@ import {
     Search as SearchIcon,
     ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
-import PageLayout from '../components/PageLayout';
+import PageLayout from '@/components/PageLayout';
 
 export default function Custom404() {
   const router = useRouter();

@@ -15,7 +15,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { usersService } from '../services/usersService';
 import { formatDateWithDay } from '../utils/dateUtils';
-import { getUserData, getToken } from '../utils/authHelpers';
+import { getUserData, getToken, clearAllAuthData } from '../utils/authHelpers';
+import DeleteProfileDialog from '../components/DeleteProfileDialog';
 
 const COLORS = {
   primary: '#022C43',
@@ -28,6 +29,7 @@ const COLORS = {
   success: '#66BB6A',
   error: '#ef5350',
   textSecondary: '#999999',
+  danger: '#dc3545',
 };
 
 const ProfileScreen = ({ navigation }) => {
@@ -39,6 +41,8 @@ const ProfileScreen = ({ navigation }) => {
   // Dialog states
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [deleteProfileDialogOpen, setDeleteProfileDialogOpen] = useState(false);
+  const [deleteProfileLoading, setDeleteProfileLoading] = useState(false);
   
   // Form states
   const [emailForm, setEmailForm] = useState({ email: '', currentPassword: '' });
@@ -261,6 +265,40 @@ const ProfileScreen = ({ navigation }) => {
     setNotificationPreferencesChanged(false);
   };
 
+  const handleDeleteProfile = async (currentPassword) => {
+    try {
+      setDeleteProfileLoading(true);
+      setError('');
+      
+      const response = await usersService.deleteOwnProfile(currentPassword);
+      
+      if (response.success) {
+        // Clear all local data
+        await clearAllAuthData();
+        
+        // Navigate to auth screen with success message
+        navigation.reset({
+          index: 0,
+          routes: [{ 
+            name: 'auth', 
+            params: { 
+              message: 'Vaš profil je uspješno obrisan.' 
+            } 
+          }],
+        });
+      } else {
+        setError(response.message || 'Greška pri brisanju profila.');
+        setDeleteProfileDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Error deleting profile:', error);
+      setError('Greška pri brisanju profila. Molimo pokušajte ponovo.');
+      setDeleteProfileDialogOpen(false);
+    } finally {
+      setDeleteProfileLoading(false);
+    }
+  };
+
   const getRoleColor = (role) => {
     switch (role) {
       case 'super_admin': return COLORS.error;
@@ -421,6 +459,28 @@ const ProfileScreen = ({ navigation }) => {
             </View>
           )}
         </View>
+
+        {/* Delete Profile Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="warning-outline" size={20} color={COLORS.danger} />
+            <Text style={[styles.cardTitle, { color: COLORS.danger }]}>Opasna zona</Text>
+          </View>
+          <View style={styles.divider} />
+          
+          <Text style={styles.dangerDescription}>
+            Brisanje profila je trajna akcija koja ne može biti poništena. 
+            Svi vaši podaci će biti nepovratno obrisani.
+          </Text>
+          
+          <TouchableOpacity 
+            style={styles.deleteButton}
+            onPress={() => setDeleteProfileDialogOpen(true)}
+          >
+            <Ionicons name="trash-outline" size={16} color={COLORS.danger} />
+            <Text style={styles.deleteButtonText}>Obriši profil</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Email Change Dialog */}
@@ -557,6 +617,14 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Delete Profile Dialog */}
+      <DeleteProfileDialog
+        visible={deleteProfileDialogOpen}
+        onClose={() => setDeleteProfileDialogOpen(false)}
+        onConfirm={handleDeleteProfile}
+        loading={deleteProfileLoading}
+      />
     </ScrollView>
   );
 };
@@ -813,6 +881,28 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  dangerDescription: {
+    fontSize: 14,
+    color: COLORS.gray,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: COLORS.danger,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+    gap: 8,
+  },
+  deleteButtonText: {
+    color: COLORS.danger,
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 

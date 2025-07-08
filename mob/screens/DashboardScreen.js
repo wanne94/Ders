@@ -21,7 +21,7 @@ import daijeService from '../services/daijeService';
 import udruzenjaService from '../services/udruzenjaService';
 import { usersService } from '../services/usersService';
 import suggestionsService from '../services/suggestionsService';
-import { applySorting } from '../utils/sortingUtils';
+import { applySorting, sortLecturesByStatus } from '../utils/sortingUtils';
 import { getApiUrl } from '../config';
 import { getToken } from '../utils/authHelpers';
 import AddContentPopup from '../components/AddContentPopup';
@@ -422,7 +422,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         const pendingOrgs = (data.organizations || []).filter(o => o.status === 'pending').map(o => ({ ...o, type: 'organization' }));
         
         // Apply sorting to each category separately, then combine
-        const sortedPendingLectures = applySorting(pendingLectures, 'lectures', data.lectures || []);
+        const sortedPendingLectures = sortLecturesByStatus(pendingLectures);
         const sortedPendingDaije = applySorting(pendingDaije, 'daije', data.lectures || []);
         const sortedPendingOrgs = applySorting(pendingOrgs, 'organizations', data.lectures || []);
         
@@ -436,7 +436,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         const rejectedOrgs = (data.organizations || []).filter(o => o.status === 'rejected').map(o => ({ ...o, type: 'organization' }));
         
         // Apply sorting to each category separately, then combine
-        const sortedRejectedLectures = applySorting(rejectedLectures, 'lectures', data.lectures || []);
+        const sortedRejectedLectures = sortLecturesByStatus(rejectedLectures);
         const sortedRejectedDaije = applySorting(rejectedDaije, 'daije', data.lectures || []);
         const sortedRejectedOrgs = applySorting(rejectedOrgs, 'organizations', data.lectures || []);
         
@@ -453,7 +453,11 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
 
     // Apply centralized sorting for single-type sections
     if (type !== 'mixed' && type !== 'user' && type !== 'suggestion') {
-      items = applySorting(items, type, data.lectures || []);
+      if (type === 'lectures') {
+        items = sortLecturesByStatus(items);
+      } else {
+        items = applySorting(items, type, data.lectures || []);
+      }
     }
 
     return { items: filterData(items, searchQuery), type };

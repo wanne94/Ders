@@ -19,7 +19,7 @@ import { formatDaijaTitle } from '../utils';
 import UniverzalCard from './UniverzalCard';
 import ShareButton from './ShareButton';
 import predavanjaService from '../services/predavanjaService';
-import { sortLecturesByTime } from '../utils/sortingUtils';
+import { sortLecturesByStatus } from '../utils/sortingUtils';
 const { Linking } = require('react-native');
 
 const { width } = Dimensions.get('window');
@@ -77,7 +77,7 @@ const UniversalProfile = ({ data, type, onBack }) => {
         
         const approvedLectures = Array.isArray(lectures) ? lectures.filter(l => l.status === 'approved') : [];
         // Apply centralized sorting to related lectures
-        const sortedLectures = sortLecturesByTime(approvedLectures);
+        const sortedLectures = sortLecturesByStatus(approvedLectures);
         setRelatedLectures(sortedLectures);
       } catch (error) {
         console.error('Error fetching related lectures:', error);
@@ -117,7 +117,7 @@ const UniversalProfile = ({ data, type, onBack }) => {
   const getProfileTitle = () => {
     switch (type) {
       case 'daija':
-        return formatDaijaTitle(data.name, data.title) || 'Nepoznat daija';
+        return formatDaijaTitle(data.name, data.title) || 'Daija nije odabran';
       case 'organization':
         return data.name || 'Nepoznata organizacija';
       case 'lecture':
