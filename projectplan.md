@@ -1,82 +1,144 @@
-# Plan za implementaciju brisanja profila u web aplikaciji
+# Plan za poboljšanje statusa predavanja u mob aplikaciji
 
 ## Problem
-Korisnik traži funkcionalnost za brisanje korisničkog profila u web aplikaciji. Mobilna aplikacija već ima kompletnu implementaciju brisanja profila, ali web dio nema ovu funkcionalnost. Treba implementirati istu funkcionalnost i u web dijelu.
+Korisnik traži poboljšanje prikaza statusa predavanja u mobilnoj aplikaciji. Trenutno se status prikazuje u gornjem desnom uglu kartice, ali treba da bude vidljiviji i jasniji.
 
-## Analiza trenutne arhitekture
+## Zahtjevi
+Za svako predavanje prikazuje se:
+- naslov predavanja
+- status:
+  - 🟡 Uskoro — ako predavanje još nije počelo
+  - 🟢 U toku — ako je trenutno aktivno
+  - 🔴 Prošlo — ako je završeno
 
-### Struktura mobilne aplikacije:
-1. **ProfileScreen** (`/mob/screens/ProfileScreen.js`) - glavni "Moj Profil" ekran
-2. **AuthScreen** (`/mob/screens/AuthScreen.js`) - ekran za prijavu/registraciju
-3. **Servisi:**
-   - `authService.js` - API pozivi za autentifikaciju
-   - `usersService.js` - API pozivi za upravljanje korisnicima
-   - `apiClient.js` - osnovna HTTP klijent konfiguracija
-4. **Auth helpers** (`/mob/utils/authHelpers.js`) - lokalno čuvanje tokena i korisničkih podataka
-5. **Navigacija:** Osnovni tab navigation sa BottomNavigation komponentom
+Status se automatski određuje na osnovu startTime, gdje se trajanje predavanja pretpostavlja da je 1 sat.
+Računanje statusa se vrši na strani korisnika (client-side), bez API poziva.
+Boja i tekst statusa se prikazuju odmah i tačno, svaki put kada se ekran otvori.
 
-### Trenutni ProfileScreen sadržava:
-- Osnovne informacije (email, username, rol, datum kreiranja)
-- Promjena email-a sa potvrdom trenutne lozinke
-- Promjena lozinke
-- Notification preferences postavke
-- Kompletnu autentifikaciju logiku sa token upravljanjem
+## Analiza trenutne implementacije
 
-### Postojeći API endpoints u usersService:
-- `updateProfile(data)` - PUT `/users/profile`
-- `changePassword(data)` - POST `/users/change-password`
-- `deleteUser(id)` - DELETE `/users/${id}` (admin funkcija)
+### Postojeća logika u UniverzalCard.js:
+- Status se računa koristeći datume (danas/uskoro/proslo)
+- Prikazuje se kao badge u gornjem desnom uglu
+- Koristi ikone i boje, ali nema emoći
+- Trenutno sortiranje: danas → uskoro → proslo
 
-### Sigurnosni mehanizmi:
-- Sve promjene zahtijevaju potvrdu trenutne lozinke
-- Token-based autentifikacija preko AsyncStorage
-- Detaljno error handling sa korisničkim porukama na srpskom
+### Novo željeno ponašanje:
+- Status treba da uključuje vrijeme (sat trajanja)
+- Emoci umjesto ikona: 🟡 🟢 🔴
+- Status "U toku" (trenutno aktivno) umjesto samo "danas"
 
-## Plan implementacije web dijela
-
-### Analiza trenutnog stanja:
-- **Mobilna aplikacija**: Kompletno implementirana funkcionalnost brisanja profila
-- **Web aplikacija**: Nedostaje funkcionalnost brisanja profila
-- **Server API**: Nedostaje `/users/profile/delete` endpoint koji mobilna aplikacija poziva
+## Plan implementacije
 
 ### Todo lista:
 
-- [ ] **1. Implementiraj server API endpoint za brisanje profila**
-  - Dodaj DELETE `/users/profile/delete` route u server/routes/users.js
-  - Implementiraj potvrdu trenutne lozinke
-  - Sigurno brisanje korisnika iz baze podataka
+- [ ] **1. Ažuriranje logike računanja statusa**
+  - Modificirati funkciju `getLectureStatus` u `UniverzalCard.js`
+  - Dodati računanje vremena za status "U toku"
+  - Pretpostavka: predavanje traje 1 sat od startTime
   
-- [ ] **2. Dodaj metodu u web usersService**
-  - Dodaj `deleteOwnProfile(currentPassword)` metodu u web/src/services/usersService.js
-  - Implementiraj poziv na `/users/profile/delete` endpoint
+- [ ] **2. Dodavanje novih emojija**
+  - Zamijeniti ikone sa emojima: 🟡 🟢 🔴
+  - Ažurirati status tekstove: "Uskoro", "U toku", "Prošlo"
+  - Ažurirati boje da odgovaraju emojima
   
-- [ ] **3. Stvori DeleteProfileDialog komponentu za web**
-  - Modal sa upozorenjem o trajnom brisanju (kao u mobilnoj aplikaciji)
-  - Input field za potvrdu trenutne lozinke
-  - Dva koraka potvrde: prvo upozorenje, zatim unos lozinke
-  - Jasne poruke upozorenja na srpskom jeziku
+- [ ] **3. Poboljšanje prikaza status badge-a**
+  - Povećati veličinu badge-a za bolju vidljivost
+  - Dodati emoji kao prefix teksta
+  - Poboljšati kontrast i čitljivost
   
-- [ ] **4. Integriraj brisanje profila u web profile stranicu**
-  - Dodaj "Dangerous Zone" sekciju u web/pages/profile.js
-  - Dodaj "Obriši profil" dugme
-  - Implementiraj `handleDeleteProfile` funkciju
-  - Dodaj state management za dialog i loading stanja
+- [ ] **4. Ažuriranje sortiranja predavanja**
+  - Modificirati `sortLecturesByStatus` u `sortingUtils.js`
+  - Novi redoslijed: U toku → Uskoro → Prošlo
+  - Ažurirati prioritete sortiranja
   
-- [ ] **5. Implementiraj logout logiku nakon brisanja**
-  - Automatski logout nakon uspješnog brisanja
-  - Očisti sve relevantne cookies/localStorage
-  - Preusmjeravanje na početnu stranicu sa porukom o uspješnom brisanju
-  
-- [ ] **6. Dodaj error handling**
-  - Rukovanje neispravnih lozinki
-  - Mrežni problemi i server greške  
-  - User-friendly poruke greške na srpskom
-  
-- [x] **7. Testiranje i QA**
-  - Testiraj kompletan flow brisanja profila na web-u
-  - Provjeri kompatibilnost sa mobilnom aplikacijom
-  - Testiraj error scenarije
-  - Provjeri UX i accessibility
+- [x] **5. Testiranje nove logike**
+  - Testirati različite vremenske scenarije
+  - Provjeri da li se status ažurira u realnom vremenu
+  - Testirati granične slučajeve (početak/kraj predavanja)
+
+## Review sekcija
+
+### Implementirano poboljšanje statusa predavanja u mobilnoj aplikaciji
+
+**Izvršene promjene:**
+
+1. **Ažuriran `mob/components/UniverzalCard.js`:**
+   - Modificirana funkcija `getLectureStatus` da računa status na osnovu trenutnog vremena i vremena predavanja
+   - Dodato računanje vremena završetka predavanja (pretpostavka: 1 sat trajanja)
+   - Novi status "utoku" za aktivna predavanja (umjesto "danas")
+   - Zamijenene ikone sa emojima: 🟡 Uskoro, 🟢 U toku, 🔴 Prošlo
+   - Poboljšan badge dizajn sa većim padding-om, shadow-om i font size-om
+   - Dodano novo styling za emoji i statusBadgeActive
+
+2. **Ažuriran `mob/utils/sortingUtils.js`:**
+   - Modificirana funkcija `sortLecturesByStatus` da koristi novo računanje statusa
+   - Ažurirani prioriteti sortiranja: U toku (1) → Uskoro (2) → Prošlo (3)
+   - Dodana logika za sortiranje aktivnih predavanja po vremenu
+   - Ažuriran komentar da odražava novo sortiranje
+
+**Funkcionalnost:**
+- Status se sada računa precizno na osnovu datuma i vremena predavanja
+- Predavanja koja su trenutno aktivna (u toku) prikazuju se sa 🟢 "U toku"
+- Buduća predavanja prikazuju se sa 🟡 "Uskoro"  
+- Završena predavanja prikazuju se sa 🔴 "Prošlo"
+- Sortiranje: aktivna predavanja na vrhu, zatim buduća, pa završena
+
+**Logika statusa:**
+- **U toku**: trenutno vrijeme je između vremena početka i kraja predavanja (trajanje 1 sat)
+- **Uskoro**: predavanje još nije počelo
+- **Prošlo**: predavanje je završeno
+
+**UI poboljšanja:**
+- Veći badge sa boljom vidljivošću
+- Emoji umjesto ikona za intuitivniji prikaz
+- Poboljšan shadow i kontrast za bolje čitanje
+
+## Review sekcija - Web implementacija
+
+### Implementirano poboljšanje statusa predavanja u web aplikaciji
+
+**Izvršene promjene:**
+
+1. **Ažuriran `web/src/components/UniversalCard.jsx`:**
+   - Modificirana funkcija `getLectureStatus` da računa status na osnovu trenutnog vremena i vremena predavanja
+   - Dodato računanje vremena završetka predavanja (pretpostavka: 1 sat trajanja)
+   - Novi status "utoku" za aktivna predavanja (umjesto "danas")
+   - Zamijenene status tekstove: 🟡 Uskoro, 🟢 U toku, 🔴 Prošlo
+   - Poboljšan badge dizajn sa većim padding-om i font size-om
+
+2. **Ažuriran `web/src/helpers/sortingHelpers.ts`:**
+   - Modificirana funkcija `sortLecturesByStatus` da koristi novo računanje statusa
+   - Ažurirani prioriteti sortiranja: U toku (1) → Uskoro (2) → Prošlo (3)
+   - Dodana logika za sortiranje aktivnih predavanja po vremenu
+   - Ažuriran komentar da odražava novo sortiranje
+   - Dodano TypeScript tipiranje za statusPriority
+
+3. **Ažuriran `web/src/components/RelatedLecturesSimple.jsx`:**
+   - Uklonjena duplicirana inline sorting logika
+   - Dodano korišćenje `sortLecturesByStatus` helper funkcije
+   - Poboljšana consistency sa ostatkom aplikacije
+
+**Funkcionalnost:**
+- Status se sada računa precizno na osnovu datuma i vremena predavanja
+- Predavanja koja su trenutno aktivna (u toku) prikazuju se sa 🟢 "U toku"
+- Buduća predavanja prikazuju se sa 🟡 "Uskoro"  
+- Završena predavanja prikazuju se sa 🔴 "Prošlo"
+- Sortiranje: aktivna predavanja na vrhu, zatim buduća, pa završena
+
+**Logika statusa:**
+- **U toku**: trenutno vrijeme je između vremena početka i kraja predavanja (trajanje 1 sat)
+- **Uskoro**: predavanje još nije počelo
+- **Prošlo**: predavanje je završeno
+
+**UI poboljšanja:**
+- Veći badge sa boljim padding-om (6px 12px)
+- Povećan font size na 0.8rem za bolju čitljivost
+- Emoji umjesto ikona za intuitivniji prikaz
+- Dodani custom styles za MUI Chip komponentu
+
+**Kompatibilnost:**
+Web aplikacija sada ima istu funkcionalnost kao mobilna aplikacija - predavanja se prikazuju sa tačnim statusom na osnovu trenutnog vremena i sortiraju se prema prioritetu: U toku → Uskoro → Prošlo.
 
 ## Review sekcija - Web implementacija
 

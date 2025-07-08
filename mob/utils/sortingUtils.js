@@ -8,7 +8,7 @@
  */
 
 /**
- * Sort lectures by status priority: Danas -> Uskoro -> Prošlo
+ * Sort lectures by status priority: U toku -> Uskoro -> Prošlo
  */
 export const sortLecturesByStatus = (lectures) => {
   if (!Array.isArray(lectures)) return [];
@@ -21,12 +21,27 @@ export const sortLecturesByStatus = (lectures) => {
     
     // Helper function to get lecture status
     const getLectureStatus = (lecture) => {
-      const lectureDate = new Date(lecture.date);
-      lectureDate.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const lectureDateTime = new Date(lecture.date);
       
-      if (lectureDate.getTime() === today.getTime()) {
-        return 'danas'; // Today
-      } else if (lectureDate > today) {
+      // Set lecture time (default to 12:00 if not specified)
+      if (lecture.time) {
+        const [hours, minutes] = lecture.time.split(':').map(Number);
+        if (!isNaN(hours) && !isNaN(minutes)) {
+          lectureDateTime.setHours(hours, minutes, 0, 0);
+        } else {
+          lectureDateTime.setHours(12, 0, 0, 0);
+        }
+      } else {
+        lectureDateTime.setHours(12, 0, 0, 0);
+      }
+      
+      // Calculate lecture end time (assuming 1 hour duration)
+      const lectureEndTime = new Date(lectureDateTime.getTime() + 60 * 60 * 1000);
+      
+      if (now >= lectureDateTime && now <= lectureEndTime) {
+        return 'utoku'; // Currently active
+      } else if (lectureDateTime > now) {
         return 'uskoro'; // Future
       } else {
         return 'proslo'; // Past
@@ -36,8 +51,8 @@ export const sortLecturesByStatus = (lectures) => {
     const statusA = getLectureStatus(a);
     const statusB = getLectureStatus(b);
     
-    // Define priority order: danas = 1, uskoro = 2, proslo = 3
-    const statusPriority = { danas: 1, uskoro: 2, proslo: 3 };
+    // Define priority order: utoku = 1, uskoro = 2, proslo = 3
+    const statusPriority = { utoku: 1, uskoro: 2, proslo: 3 };
     
     const priorityA = statusPriority[statusA];
     const priorityB = statusPriority[statusB];
@@ -57,11 +72,13 @@ export const sortLecturesByStatus = (lectures) => {
     } else if (statusA === 'proslo') {
       // Past lectures: most recent first
       return dateB.getTime() - dateA.getTime();
-    } else {
-      // Today's lectures: maintain original order or sort by time if available
+    } else if (statusA === 'utoku') {
+      // Active lectures: sort by time if available
       if (a.time && b.time) {
         return a.time.localeCompare(b.time);
       }
+      return 0;
+    } else {
       return 0;
     }
   });

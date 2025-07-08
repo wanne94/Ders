@@ -11,6 +11,7 @@ import {
 import { LecturesGrid } from './GridLayout';
 import UniversalCard from './UniversalCard';
 import { predavanjaService } from '@/services';
+import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
 
 const RelatedLecturesSimple = ({ currentLectureId }) => {
   const router = useRouter();
@@ -19,25 +20,12 @@ const RelatedLecturesSimple = ({ currentLectureId }) => {
   const [error, setError] = useState(null);
 
   const sortLectures = useCallback((lectures) => {
-    return lectures
+    const filtered = lectures
       .filter(lecture => lecture._id !== currentLectureId) // Isključi trenutno predavanje
-      .filter(lecture => lecture.status === 'approved') // Samo odobreni dersovi
-      .sort((a, b) => {
-        const aFuture = new Date(a.date) > new Date();
-        const bFuture = new Date(b.date) > new Date();
-        
-        // Budući dersovi ("Uskoro") na vrh
-        if (aFuture && !bFuture) return -1;
-        if (!aFuture && bFuture) return 1;
-        
-        // Unutar kategorije, sortiraj po datumu
-        if (aFuture && bFuture) {
-          return new Date(a.date) - new Date(b.date); // Uskoro dersovi: najraniji prvi
-        } else {
-          return new Date(b.date) - new Date(a.date); // Prošli dersovi: najnoviji prvi
-        }
-      })
-      .slice(0, 12); // Prikaži maksimalno 12 dersova
+      .filter(lecture => lecture.status === 'approved'); // Samo odobreni dersovi
+    
+    const sorted = sortLecturesByStatus(filtered);
+    return sorted.slice(0, 12); // Prikaži maksimalno 12 dersova
   }, [currentLectureId]);
 
   const fetchLectures = useCallback(async () => {

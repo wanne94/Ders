@@ -34,20 +34,31 @@ const UniversalCard = React.memo(({ data }) => {
     
     switch (entityType) {
       case 'predavanje':
-        // Determine lecture status based on date
+        // Determine lecture status based on date and time
         const getLectureStatus = () => {
           if (!data.date) return 'unknown';
           
-          const lectureDate = new Date(data.date);
-          const today = new Date();
+          const now = new Date();
+          const lectureDateTime = new Date(data.date);
           
-          // Set time to beginning of day for comparison
-          lectureDate.setHours(0, 0, 0, 0);
-          today.setHours(0, 0, 0, 0);
+          // Set lecture time (default to 12:00 if not specified)
+          if (data.time) {
+            const [hours, minutes] = data.time.split(':').map(Number);
+            if (!isNaN(hours) && !isNaN(minutes)) {
+              lectureDateTime.setHours(hours, minutes, 0, 0);
+            } else {
+              lectureDateTime.setHours(12, 0, 0, 0);
+            }
+          } else {
+            lectureDateTime.setHours(12, 0, 0, 0);
+          }
           
-          if (lectureDate.getTime() === today.getTime()) {
-            return 'danas'; // Today
-          } else if (lectureDate > today) {
+          // Calculate lecture end time (assuming 1 hour duration)
+          const lectureEndTime = new Date(lectureDateTime.getTime() + 60 * 60 * 1000);
+          
+          if (now >= lectureDateTime && now <= lectureEndTime) {
+            return 'utoku'; // Currently active
+          } else if (lectureDateTime > now) {
             return 'uskoro'; // Future
           } else {
             return 'proslo'; // Past
@@ -157,7 +168,7 @@ const UniversalCard = React.memo(({ data }) => {
       {displayData.type === 'lecture' && displayData.lectureStatus && (
         <Chip
           label={
-            displayData.lectureStatus === 'danas' ? '🟢 Danas' :
+            displayData.lectureStatus === 'utoku' ? '🟢 U toku' :
             displayData.lectureStatus === 'uskoro' ? '🟡 Uskoro' : 
             '🔴 Prošlo'
           }
@@ -168,15 +179,20 @@ const UniversalCard = React.memo(({ data }) => {
             right: 8,
             zIndex: 1,
             backgroundColor: 
-              displayData.lectureStatus === 'danas' ? '#e8f5e8' :
+              displayData.lectureStatus === 'utoku' ? '#e8f5e8' :
               displayData.lectureStatus === 'uskoro' ? '#fff8e1' :
               '#ffebee',
             color: 
-              displayData.lectureStatus === 'danas' ? '#2e7d32' :
+              displayData.lectureStatus === 'utoku' ? '#2e7d32' :
               displayData.lectureStatus === 'uskoro' ? '#f57f17' :
               '#c62828',
             fontWeight: 'bold',
-            fontSize: '0.75rem'
+            fontSize: '0.8rem',
+            padding: '6px 12px',
+            '& .MuiChip-label': {
+              paddingLeft: '8px',
+              paddingRight: '8px'
+            }
           }}
         />
       )}
