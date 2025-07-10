@@ -4,7 +4,7 @@ export default {
     slug: "ders-app",
     owner: "wanne",
     scheme: "exp+ders-app",
-    version: "1.0.3",
+    version: "1.0.4",
     orientation: "portrait",
     icon: "./assets/images/logo.jpg",
     userInterfaceStyle: "light",
@@ -53,7 +53,7 @@ export default {
     },
     android: {
       package: "com.daije.mobile",
-      versionCode: 5,
+      versionCode: 6,
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff",
@@ -80,6 +80,6 @@ export default {
     updates: {
       url: "https://u.expo.dev/7d754f7a-231e-4fd1-8d48-22e2d5f1cb7e",
     },
-    runtimeVersion: "1.0.3"
+    runtimeVersion: "1.0.4"
   }
 };

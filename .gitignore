@@ -16,24 +16,6 @@ test-results/
 playwright-report/
 playwright/.cache/
 
-# Production & Build
-/build
-/dist
-/web/.next/
-/web/out/
-.expo/
-web-build/
-*.tsbuildinfo
-
-# Environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-*.env
-*.env.*
-
 # Logs
 logs/
 *.log

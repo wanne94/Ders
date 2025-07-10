@@ -1,948 +1,483 @@
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   ScrollView,
+  Image,
   TouchableOpacity,
-  Dimensions,
   Alert,
+  ActivityIndicator,
+  Linking,
   Modal,
-  Platform,
+  Dimensions,
 } from 'react-native';
-import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { bs } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
-import { getImageUrl, getDefaultDaijaImage, getDefaultLectureImage, getDefaultOrganizationImage } from '../utils/imageUtils';
-import { formatDaijaTitle } from '../utils';
-import UniverzalCard from './UniverzalCard';
+import { predavanjaService, daijeService, udruzenjaService } from '../services';
+import { getImageUrl } from '../utils/imageUtils';
+import { formatDateWithDay } from '../utils/dateUtils';
 import ShareButton from './ShareButton';
-import predavanjaService from '../services/predavanjaService';
-import { sortLecturesByStatus } from '../utils/sortingUtils';
-const { Linking } = require('react-native');
 
-const { width } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-// Colors matching the app theme
-const COLORS = {
-  primary: '#022C43',
-  primaryLight: '#055A87',
-  secondary: '#dc004e',
-  white: '#ffffff',
-  gray: '#666666',
-  lightGray: '#f5f5f5',
-  success: '#4CAF50',
-  warning: '#FF9800',
-  info: '#2196F3',
-  purple: '#9C27B0',
-  background: '#fafafa',
-  text: '#333333',
-  textLight: '#888888',
-};
+const UniversalProfile = ({ route, navigation }) => {
+  const { type, id } = route.params;
+  
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [imageModalVisible, setImageModalVisible] = useState(false);
 
-const UniversalProfile = ({ data, type, onBack }) => {
-  const [relatedLectures, setRelatedLectures] = useState([]);
-  const [imageError, setImageError] = useState(false);
-  const [showImageModal, setShowImageModal] = useState(false);
+  useEffect(() => {
+    fetchProfile();
+  }, [type, id]);
 
-  // Format date with day name
-  const formatDateWithDay = (dateString) => {
-    if (!dateString) return null;
-    const date = new Date(dateString);
-    return `${format(date, 'd.M.yyyy.')} (${format(date, 'EEEE', { locale: bs }).charAt(0).toUpperCase() + format(date, 'EEEE', { locale: bs }).slice(1)})`;
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      let data;
+      if (type === 'lecture') {
+        data = await predavanjaService.getPredavanjeById(id);
+      } else if (type === 'daija') {
+        data = await daijeService.getDaijaById(id);
+      } else if (type === 'organization') {
+        data = await udruzenjaService.getUdruzenjeById(id);
+      } else {
+        throw new Error('Nepoznat tip profila');
+      }
+
+      setProfile(data);
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError(err.response?.data?.message || 'Greška pri učitavanju profila');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Fetch related lectures based on profile type
-  useEffect(() => {
-    const fetchRelatedLectures = async () => {
-      if (!data || !data._id) return;
-      
-      try {
-        let lectures = [];
-        
-        switch (type) {
-          case 'daija':
-            lectures = await predavanjaService.getPredavanjaByDaija(data._id);
-            break;
-          case 'organization':
-            lectures = await predavanjaService.getPredavanjaByOrganization(data._id);
-            break;
-          case 'lecture':
-            // Get all lectures from homepage and exclude current one (same as web app)
-            const allLectures = await predavanjaService.getAllPredavanja();
-            lectures = allLectures.filter(lecture => lecture._id !== data._id);
-            break;
-        }
-        
-        const approvedLectures = Array.isArray(lectures) ? lectures.filter(l => l.status === 'approved') : [];
-        // Apply centralized sorting to related lectures
-        const sortedLectures = sortLecturesByStatus(approvedLectures);
-        setRelatedLectures(sortedLectures);
-      } catch (error) {
-        console.error('Error fetching related lectures:', error);
-        setRelatedLectures([]);
-      } finally {
-        // removed unused isLoading state
-      }
-    };
+  const getTitle = () => {
+    if (type === 'daija') {
+      return profile.title ? `${profile.name} - ${profile.title}` : profile.name;
+    }
+    if (type === 'organization') {
+      return profile.name;
+    }
+    return profile.title;
+  };
 
-    fetchRelatedLectures();
-  }, [data, type]);
 
-  if (!data) {
+  const openLocation = () => {
+    const address = [profile.address, profile.city].filter(Boolean).join(', ');
+    const encoded = encodeURIComponent(address);
+    const url = `https://maps.google.com/maps?daddr=${encoded}`;
+    Linking.openURL(url);
+  };
+
+  const openSocialLink = (url) => {
+    Linking.openURL(url);
+  };
+
+  const goBack = () => {
+    navigation.goBack();
+  };
+
+  if (loading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Profil nije pronađen</Text>
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#022C43" />
+        <Text style={styles.loadingText}>Učitavanje...</Text>
       </View>
     );
   }
 
-  const getProfileImage = () => {
-    if (imageError || !data.image) {
-      switch (type) {
-        case 'daija':
-          return getDefaultDaijaImage();
-        case 'organization':
-          return getDefaultOrganizationImage();
-        case 'lecture':
-          return getDefaultLectureImage();
-        default:
-          return getDefaultLectureImage();
-      }
-    }
-    return getImageUrl(data.image);
-  };
-
-  const getProfileTitle = () => {
-    switch (type) {
-      case 'daija':
-        return formatDaijaTitle(data.name, data.title) || 'Daija nije odabran';
-      case 'organization':
-        return data.name || 'Nepoznata organizacija';
-      case 'lecture':
-        return data.title?.toUpperCase() || 'NEPOZNAT DERS';
-      default:
-        return 'Nepoznat profil';
-    }
-  };
-
-  // Function to extract username/id from social media URLs
-  const extractSocialMediaIdentifier = (url, platform) => {
-    if (!url) return null;
-    
-    // Remove protocol and common prefixes
-    let cleanUrl = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
-    
-    switch (platform.toLowerCase()) {
-      case 'facebook':
-        // Extract from facebook.com/username or facebook.com/pages/name/id
-        if (cleanUrl.includes('facebook.com/')) {
-          const parts = cleanUrl.split('facebook.com/')[1];
-          return parts.split('/')[0];
-        }
-        break;
-      case 'instagram':
-        // Extract from instagram.com/username
-        if (cleanUrl.includes('instagram.com/')) {
-          const username = cleanUrl.split('instagram.com/')[1].split('/')[0];
-          return username.replace('@', '');
-        }
-        break;
-      case 'twitter':
-        // Extract from twitter.com/username or x.com/username
-        if (cleanUrl.includes('twitter.com/') || cleanUrl.includes('x.com/')) {
-          const parts = cleanUrl.includes('twitter.com/') ? 
-            cleanUrl.split('twitter.com/')[1] : 
-            cleanUrl.split('x.com/')[1];
-          return parts.split('/')[0].replace('@', '');
-        }
-        break;
-      case 'youtube':
-        // Extract from youtube.com/channel/id or youtube.com/user/username or youtube.com/@username
-        if (cleanUrl.includes('youtube.com/')) {
-          const parts = cleanUrl.split('youtube.com/')[1];
-          if (parts.startsWith('channel/')) {
-            return parts.split('channel/')[1].split('/')[0];
-          } else if (parts.startsWith('user/')) {
-            return parts.split('user/')[1].split('/')[0];
-          } else if (parts.startsWith('@')) {
-            return parts.split('@')[1].split('/')[0];
-          }
-        }
-        break;
-      case 'linkedin':
-        // Extract from linkedin.com/in/username or linkedin.com/company/name
-        if (cleanUrl.includes('linkedin.com/')) {
-          const parts = cleanUrl.split('linkedin.com/')[1];
-          if (parts.startsWith('in/')) {
-            return parts.split('in/')[1].split('/')[0];
-          } else if (parts.startsWith('company/')) {
-            return parts.split('company/')[1].split('/')[0];
-          }
-        }
-        break;
-      case 'telegram':
-        // Extract from t.me/username or telegram.me/username
-        if (cleanUrl.includes('t.me/') || cleanUrl.includes('telegram.me/')) {
-          const parts = cleanUrl.includes('t.me/') ? 
-            cleanUrl.split('t.me/')[1] : 
-            cleanUrl.split('telegram.me/')[1];
-          return parts.split('/')[0].replace('@', '');
-        }
-        break;
-    }
-    
-    return null;
-  };
-
-  // Function to handle opening social media links
-  const handleSocialMediaPress = async (url, platform) => {
-    try {
-      let appUrl = null;
-      let webUrl = url;
-      
-      // Ensure web URL has proper protocol
-      if (!webUrl.startsWith('http://') && !webUrl.startsWith('https://')) {
-        webUrl = `https://${webUrl}`;
-      }
-
-      // Extract identifier for app-specific URLs
-      const identifier = extractSocialMediaIdentifier(url, platform);
-
-      // Generate app-specific URLs
-      switch (platform.toLowerCase()) {
-        case 'facebook':
-          if (identifier) {
-            appUrl = `fb://profile/${identifier}`;
-          }
-          break;
-        case 'instagram':
-          if (identifier) {
-            appUrl = `instagram://user?username=${identifier}`;
-          }
-          break;
-        case 'twitter':
-          if (identifier) {
-            appUrl = `twitter://user?screen_name=${identifier}`;
-          }
-          break;
-        case 'youtube':
-          if (identifier) {
-            appUrl = `youtube://channel/${identifier}`;
-          }
-          break;
-        case 'linkedin':
-          if (identifier) {
-            appUrl = `linkedin://profile/${identifier}`;
-          }
-          break;
-        case 'telegram':
-          if (identifier) {
-            appUrl = `tg://resolve?domain=${identifier}`;
-          }
-          break;
-        case 'whatsapp':
-          // For WhatsApp, assume the URL contains phone number
-          if (identifier) {
-            appUrl = `whatsapp://send?phone=${identifier}`;
-          }
-          break;
-        case 'tiktok':
-          if (identifier) {
-            appUrl = `tiktok://user?username=${identifier}`;
-          }
-          break;
-      }
-
-      // Try to open in app first, then fallback to web
-      if (appUrl) {
-        const canOpenApp = await Linking.canOpenURL(appUrl);
-        if (canOpenApp) {
-          await Linking.openURL(appUrl);
-          return;
-        }
-      }
-
-      // Fallback to web URL
-      const canOpenWeb = await Linking.canOpenURL(webUrl);
-      if (canOpenWeb) {
-        await Linking.openURL(webUrl);
-      } else {
-        Alert.alert('Greška', `Ne mogu otvoriti ${platform} link.`);
-      }
-    } catch (error) {
-      console.error('Error opening URL:', error);
-      Alert.alert('Greška', `Ne mogu otvoriti ${platform} link.`);
-    }
-  };
-
-  const renderInfoSection = (title, icon, content, color = COLORS.primary) => {
-    if (!content) return null;
-
+  if (error) {
     return (
-      <View style={styles.infoSection}>
-        <View style={styles.sectionHeader}>
-          <View style={[styles.sectionIcon, { backgroundColor: color + '15' }]}>
-            <Ionicons name={icon} size={20} color={color} />
-          </View>
-          <Text style={styles.sectionTitle}>{title}</Text>
-        </View>
-        <View style={styles.sectionContent}>
-          {content}
-        </View>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.backButton} onPress={goBack}>
+          <Ionicons name="arrow-back" size={20} color="white" />
+          <Text style={styles.backButtonText}>Nazad</Text>
+        </TouchableOpacity>
       </View>
     );
-  };
+  }
 
-  const renderAllInformation = () => {
-    const informationItems = [];
-    
-    // Contact information
-    if (data.email) informationItems.push({ icon: 'mail-outline', text: data.email, type: 'email' });
-    if (data.phone) informationItems.push({ icon: 'call-outline', text: data.phone, type: 'phone' });
-    if (data.address) informationItems.push({ icon: 'location-outline', text: data.address, type: 'address' });
-    if (data.city) informationItems.push({ icon: 'business-outline', text: data.city, type: 'city' });
-    
-    // Lecture specific information
-    if (type === 'lecture') {
-      if (data.speaker) informationItems.push({ icon: 'person-outline', text: `Predavač: ${data.speaker}`, type: 'speaker' });
-      if (data.organization) informationItems.push({ icon: 'business-outline', text: `Udruženje: ${data.organization}`, type: 'organization' });
-      if (data.date) informationItems.push({ icon: 'calendar-outline', text: `Datum: ${formatDateWithDay(data.date)}`, type: 'date' });
-      if (data.time) informationItems.push({ icon: 'time-outline', text: `Vrijeme: ${data.time}`, type: 'time' });
-    }
-
-    if (informationItems.length === 0) return null;
-
-    const content = (
-      <View style={styles.contactList}>
-        {informationItems.map((item, index) => (
-          <View key={index} style={styles.contactItem}>
-            <Ionicons name={item.icon} size={18} color={COLORS.textLight} />
-            <Text style={styles.contactText}>{item.text}</Text>
-          </View>
-        ))}
-      </View>
-    );
-
-    return renderInfoSection('Informacije', 'information-circle-outline', content, COLORS.info);
-  };
-
-  const renderBiographyDescription = () => {
-    if (!data.biography && !data.description) return null;
-
-    let sectionTitle = 'Opis';
-    let sectionIcon = 'document-text-outline';
-    
-    if (type === 'daija') {
-      sectionTitle = 'Biografija';
-      sectionIcon = 'person-circle-outline';
-    } else if (type === 'organization') {
-      sectionTitle = 'Kratki opis';
-      sectionIcon = 'information-outline';
-    }
-
-    const content = (
-      <Text style={styles.biographyText}>
-        {data.biography || data.description}
-      </Text>
-    );
-
-    return renderInfoSection(sectionTitle, sectionIcon, content, COLORS.gray);
-  };
-
-  const renderSocialMedia = () => {
-    const socialItems = [];
-    
-    // Check all possible social media platforms and add them if they exist and are not empty
-    if (data.linkedin && data.linkedin.trim()) {
-      socialItems.push({ icon: 'logo-linkedin', text: 'LinkedIn', url: data.linkedin });
-    }
-    if (data.facebook && data.facebook.trim()) {
-      socialItems.push({ icon: 'logo-facebook', text: 'Facebook', url: data.facebook });
-    }
-    if (data.twitter && data.twitter.trim()) {
-      socialItems.push({ icon: 'logo-twitter', text: 'Twitter', url: data.twitter });
-    }
-    if (data.instagram && data.instagram.trim()) {
-      socialItems.push({ icon: 'logo-instagram', text: 'Instagram', url: data.instagram });
-    }
-    if (data.youtube && data.youtube.trim()) {
-      socialItems.push({ icon: 'logo-youtube', text: 'YouTube', url: data.youtube });
-    }
-    if (data.tiktok && data.tiktok.trim()) {
-      socialItems.push({ icon: 'logo-tiktok', text: 'TikTok', url: data.tiktok });
-    }
-    if (data.telegram && data.telegram.trim()) {
-      socialItems.push({ icon: 'paper-plane-outline', text: 'Telegram', url: data.telegram });
-    }
-    if (data.whatsapp && data.whatsapp.trim()) {
-      socialItems.push({ icon: 'logo-whatsapp', text: 'WhatsApp', url: data.whatsapp });
-    }
-    if (data.website && data.website.trim()) {
-      socialItems.push({ icon: 'globe-outline', text: 'Website', url: data.website });
-    }
-    if (data.blog && data.blog.trim()) {
-      socialItems.push({ icon: 'document-text-outline', text: 'Blog', url: data.blog });
-    }
-
-    // Don't render anything if no social media links are provided
-    if (socialItems.length === 0) return null;
-
+  if (!profile) {
     return (
-      <View style={styles.socialContainer}>
-        <Text style={styles.socialTitle}>Društvene mreže</Text>
-        <View style={styles.socialGrid}>
-          {socialItems.map((item, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={styles.socialButton}
-              onPress={() => handleSocialMediaPress(item.url, item.text)}
-              activeOpacity={0.7}
-            >
-              <Ionicons name={item.icon} size={20} color={COLORS.white} />
-              <Text style={styles.socialButtonText}>{item.text}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Profil nije pronađen</Text>
+        <TouchableOpacity style={styles.backButton} onPress={goBack}>
+          <Ionicons name="arrow-back" size={20} color="white" />
+          <Text style={styles.backButtonText}>Nazad</Text>
+        </TouchableOpacity>
       </View>
     );
-  };
-
-  const renderEducationExperience = () => {
-    if (type !== 'daija') return null;
-
-    const sections = [];
-
-    if (data.education && data.education.length > 0) {
-      const educationContent = (
-        <View style={styles.listContainer}>
-          {data.education.map((item, index) => (
-            <View key={`education-${index}`} style={styles.listItem}>
-              <View style={styles.listBullet} />
-              <Text style={styles.listText}>{item}</Text>
-            </View>
-          ))}
-        </View>
-      );
-      sections.push(
-        <View key="education-section">
-          {renderInfoSection('Obrazovanje', 'school-outline', educationContent, COLORS.primary)}
-        </View>
-      );
-    }
-
-    if (data.experience && data.experience.length > 0) {
-      const experienceContent = (
-        <View style={styles.listContainer}>
-          {data.experience.map((item, index) => (
-            <View key={`experience-${index}`} style={styles.listItem}>
-              <View style={styles.listBullet} />
-              <Text style={styles.listText}>{item}</Text>
-            </View>
-          ))}
-        </View>
-      );
-      sections.push(
-        <View key="experience-section">
-          {renderInfoSection('Iskustvo', 'briefcase-outline', experienceContent, COLORS.secondary)}
-        </View>
-      );
-    }
-
-    return sections;
-  };
+  }
 
   return (
-    <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header with back button */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
-          </TouchableOpacity>
+    <ScrollView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={goBack}>
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Hero Section */}
+      <View style={styles.heroSection}>
+        <TouchableOpacity 
+          style={[
+            styles.imageContainer,
+            type === 'daija' && styles.circularImage
+          ]}
+          onPress={() => setImageModalVisible(true)}
+        >
+          <Image
+            source={
+              profile.image 
+                ? { uri: getImageUrl(profile.image) }
+                : { uri: 'https://via.placeholder.com/150?text=No+Image' }
+            }
+            style={[
+              styles.profileImage,
+              type === 'daija' && styles.circularImage
+            ]}
+            onError={() => {
+              // Handle image error - could set a state to use default image
+            }}
+          />
+        </TouchableOpacity>
+
+        <Text style={[
+          styles.title,
+          type === 'lecture' && styles.lectureTitle
+        ]}>
+          {getTitle()}
+        </Text>
+
+        {/* Meta Information */}
+        <View style={styles.metaContainer}>
+          {type === 'lecture' && profile.date && (
+            <View style={styles.metaItem}>
+              <Ionicons name="calendar" size={16} color="white" />
+              <Text style={styles.metaText}>{formatDateWithDay(profile.date)}</Text>
+            </View>
+          )}
+
+          {type === 'lecture' && profile.time && (
+            <View style={styles.metaItem}>
+              <Ionicons name="time" size={16} color="white" />
+              <Text style={styles.metaText}>{profile.time}</Text>
+            </View>
+          )}
+
+          {type === 'lecture' && profile.speaker && (
+            <View style={styles.metaItem}>
+              <Ionicons name="person" size={16} color="white" />
+              <Text style={styles.metaText}>{profile.speaker}</Text>
+            </View>
+          )}
+
+          {type === 'lecture' && profile.organization && (
+            <View style={styles.metaItem}>
+              <Ionicons name="business" size={16} color="white" />
+              <Text style={styles.metaText}>{profile.organization}</Text>
+            </View>
+          )}
+
+          {(profile.address || profile.city) && (
+            <View style={styles.metaItem}>
+              <Ionicons name="location" size={16} color="white" />
+              <Text style={styles.metaText}>
+                {[profile.address, profile.city].filter(Boolean).join(', ')}
+              </Text>
+            </View>
+          )}
         </View>
 
-        {/* Profile Hero Section */}
-        <View style={styles.heroSection}>
-          <View style={styles.imageContainer}>
-            <TouchableOpacity onPress={() => setShowImageModal(true)}>
-              <Image
-                source={{ uri: getProfileImage() }}
-                style={[
-                  styles.profileImage,
-                  type === 'daija' ? styles.circularImage : 
-                  type === 'lecture' ? styles.lectureImage : styles.rectangularImage
-                ]}
-                resizeMode={type === 'lecture' ? 'contain' : 'cover'}
-                onError={() => setImageError(true)}
-              />
+        {/* Description */}
+        {(profile.description || profile.biography) && (
+          <View style={styles.descriptionContainer}>
+            <View style={styles.descriptionHeader}>
+              <Ionicons name="document-text" size={20} color="white" />
+              <Text style={styles.descriptionTitle}>
+                {type === 'organization' ? 'O udruženju' : type === 'daija' ? 'Biografija' : 'Opis predavanja'}
+              </Text>
+            </View>
+            <Text style={styles.descriptionText}>
+              {profile.description || profile.biography}
+            </Text>
+          </View>
+        )}
+
+        {/* Social Media Links */}
+        {type === 'organization' && (profile.facebook || profile.instagram || profile.telegram || profile.viber) && (
+          <View style={styles.socialContainer}>
+            {profile.facebook && (
+              <TouchableOpacity 
+                style={styles.socialButton}
+                onPress={() => openSocialLink(profile.facebook)}
+              >
+                <Ionicons name="logo-facebook" size={20} color="white" />
+                <Text style={styles.socialText}>Facebook</Text>
+              </TouchableOpacity>
+            )}
+            {profile.instagram && (
+              <TouchableOpacity 
+                style={styles.socialButton}
+                onPress={() => openSocialLink(profile.instagram)}
+              >
+                <Ionicons name="logo-instagram" size={20} color="white" />
+                <Text style={styles.socialText}>Instagram</Text>
+              </TouchableOpacity>
+            )}
+            {profile.telegram && (
+              <TouchableOpacity 
+                style={styles.socialButton}
+                onPress={() => openSocialLink(profile.telegram)}
+              >
+                <Ionicons name="send" size={20} color="white" />
+                <Text style={styles.socialText}>Telegram</Text>
+              </TouchableOpacity>
+            )}
+            {profile.viber && (
+              <TouchableOpacity 
+                style={styles.socialButton}
+                onPress={() => openSocialLink(profile.viber)}
+              >
+                <Ionicons name="chatbubble" size={20} color="white" />
+                <Text style={styles.socialText}>Viber</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Action Buttons */}
+        <View style={styles.actionContainer}>
+          {(type === 'lecture' || type === 'organization') && (profile.address || profile.city) && (
+            <TouchableOpacity style={styles.actionButton} onPress={openLocation}>
+              <Ionicons name="navigate" size={20} color="white" />
+              <Text style={styles.actionText}>Lokacija</Text>
             </TouchableOpacity>
-          </View>
-
-          <View style={styles.profileInfo}>
-            <Text style={[
-              styles.profileTitle,
-              type === 'lecture' && styles.lectureProfileTitle
-            ]}>{getProfileTitle()}</Text>
-            
-            
-            {type === 'lecture' && data.speaker && (
-              <>
-                <Text style={styles.profileSubtitle}>{data.speaker}</Text>
-                {data.daijaTitle && (
-                  <Text style={styles.profileDaijaTitle}>{data.daijaTitle}</Text>
-                )}
-              </>
-            )}
-            
-            {data.shortDescription && (
-              <Text style={styles.profileDescription}>{data.shortDescription}</Text>
-            )}
-          </View>
-
-          {/* Action Buttons for Lectures */}
-          {type === 'lecture' && (
-            <View style={styles.actionButtonsContainer}>
-              <ShareButton 
-                lecture={data} 
-                style={styles.actionButton}
-                textStyle={styles.actionButtonText}
-              />
-              {(data.address || data.city) && (
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.locationButton]}
-                  onPress={() => {
-                    const fullAddress = [data.address, data.city].filter(Boolean).join(", ");
-                    const encodedAddress = encodeURIComponent(fullAddress);
-                    
-                    let mapsUrl;
-                    if (Platform.OS === 'ios') {
-                      mapsUrl = `maps://maps.apple.com/?q=${encodedAddress}&dirflg=d`;
-                    } else {
-                      mapsUrl = `google.navigation:q=${encodedAddress}`;
-                    }
-                    
-                    Linking.canOpenURL(mapsUrl).then(supported => {
-                      if (supported) {
-                        Linking.openURL(mapsUrl);
-                      } else {
-                        // Fallback to web maps
-                        const webUrl = `https://maps.google.com/maps?q=${encodedAddress}`;
-                        Linking.openURL(webUrl).catch(() => {
-                          Alert.alert(
-                            'Greška',
-                            'Nije moguće otvoriti mapu. Molimo pokušajte ponovo.',
-                            [{ text: 'U redu', style: 'default' }],
-                            { cancelable: true }
-                          );
-                        });
-                      }
-                    }).catch(() => {
-                      Alert.alert(
-                        'Greška',
-                        'Nije moguće otvoriti mapu. Molimo pokušajte ponovo.',
-                        [{ text: 'U redu', style: 'default' }],
-                        { cancelable: true }
-                      );
-                    });
-                  }}
-                  activeOpacity={0.75}
-                >
-                  <Ionicons name="location-outline" size={18} color="#374151" />
-                  <Text style={styles.actionButtonText}>Lokacija</Text>
-                </TouchableOpacity>
-              )}
-            </View>
           )}
-
-          {renderSocialMedia()}
+          
+          <ShareButton profileData={profile} type={type} />
         </View>
+      </View>
 
-        {/* Content Sections */}
-        <View style={styles.contentContainer}>
-          {/* Education & Experience for Daija */}
-          {renderEducationExperience()}
-
-          {/* All Information (Contact + Lecture details) */}
-          {renderAllInformation()}
-
-          {/* Biography/Description */}
-          {renderBiographyDescription()}
-
-          {/* Related Lectures */}
-          {relatedLectures.length > 0 && (
-            <View style={styles.relatedSection}>
-              <View style={styles.relatedHeader}>
-                <Text style={styles.relatedTitle}>Ostali dersovi</Text>
-                <Text style={styles.relatedCount}>({relatedLectures.length})</Text>
-              </View>
-              <View style={styles.relatedList}>
-                {relatedLectures.map((lecture) => (
-                  <UniverzalCard
-                    key={lecture._id}
-                    data={{ ...lecture, type: 'predavanje' }}
-                    onPress={() => Alert.alert('Predavanje', lecture.title)}
-                  />
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* No lectures message */}
-          {relatedLectures.length === 0 && type !== 'lecture' && (
-            <View style={styles.emptyStateContainer}>
-              <View style={styles.emptyStateIcon}>
-                <Ionicons name="school-outline" size={32} color={COLORS.primary} />
-              </View>
-              <Text style={styles.emptyStateTitle}>
-                {type === 'daija' ? 'Nema predavanja' : 'Nema organizovanih predavanja'}
-              </Text>
-              <Text style={styles.emptyStateDescription}>
-                {type === 'daija' 
-                  ? 'Daija još uvijek nije imao najavljeno predavanje na platformi. Provjerite ponovo uskoro!' 
-                  : 'Ovo udruženje još uvijek nije najvilo predavanje. Provjerite ponovo uskoro!'
-                }
-              </Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-      
-      {/* Full Screen Image Modal */}
+      {/* Image Modal */}
       <Modal
-        visible={showImageModal}
+        visible={imageModalVisible}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setShowImageModal(false)}
+        onRequestClose={() => setImageModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <TouchableOpacity 
-            style={styles.modalOverlay} 
-            onPress={() => setShowImageModal(false)}
+            style={styles.modalCloseButton}
+            onPress={() => setImageModalVisible(false)}
           >
-            <View style={styles.modalContent}>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => setShowImageModal(false)}
-              >
-                <Ionicons name="close" size={30} color={COLORS.white} />
-              </TouchableOpacity>
-              <Image
-                source={{ uri: getProfileImage() }}
-                style={styles.fullScreenImage}
-                resizeMode="contain"
-              />
-            </View>
+            <Ionicons name="close" size={30} color="white" />
           </TouchableOpacity>
+          <Image
+            source={
+              profile.image 
+                ? { uri: getImageUrl(profile.image) }
+                : { uri: 'https://via.placeholder.com/150?text=No+Image' }
+            }
+            style={styles.modalImage}
+            resizeMode="contain"
+          />
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#f5f5f5',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#d32f2f',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 0,
-  },
-  backButton: {
-    padding: 15,
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 10,
   },
   heroSection: {
-    paddingTop: 0,
-    paddingBottom: 30,
-    paddingHorizontal: 20,
+    background: 'linear-gradient(135deg, #022C43 0%, #055A87 100%)',
+    backgroundColor: '#022C43',
+    padding: 20,
+    paddingTop: 80,
     alignItems: 'center',
   },
   imageContainer: {
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   profileImage: {
-    width: '100%',
-    maxWidth: 350,
-    aspectRatio: 1 / 1,
-    borderRadius: 12,
+    width: 200,
+    height: 200,
+    borderRadius: 10,
     borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    alignSelf: 'center',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   circularImage: {
-    borderRadius: 175, // Half of maxWidth (350/2) for perfect circle
-    borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    aspectRatio: 1, // Force 1:1 aspect ratio for daija
+    borderRadius: 100,
   },
-  rectangularImage: {
-    borderRadius: 12,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  lectureImage: {
-    width: '100%',
-    maxWidth: 350,
-    height: 400,
-    borderRadius: 12,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  profileInfo: {
-    alignItems: 'center',
-  },
-  profileTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: COLORS.text,
+  title: {
+    fontSize: 24,
+    fontWeight: '300',
+    color: 'white',
     textAlign: 'center',
-    marginBottom: 8,
-  },
-  lectureProfileTitle: {
-    fontWeight: '900',
-  },
-  profileSubtitle: {
-    fontSize: 18,
-    color: COLORS.textLight,
-    fontStyle: 'italic',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  profileDescription: {
-    fontSize: 16,
-    color: COLORS.textLight,
-    textAlign: 'center',
-    lineHeight: 22,
-    maxWidth: width - 60,
-  },
-  profileDaijaTitle: {
-    fontSize: 16,
-    color: COLORS.textLight,
-    fontStyle: 'italic',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginTop: 16,
-    flexWrap: 'wrap',
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    marginBottom: 20,
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
-    borderWidth: 0.5,
-    borderColor: 'rgba(0, 0, 0, 0.06)',
   },
-  actionButtonText: {
-    color: '#374151',
-    fontSize: 15,
+  lectureTitle: {
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  metaContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginBottom: 20,
+    gap: 10,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  metaText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 5,
+  },
+  descriptionContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    width: '100%',
+  },
+  descriptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  descriptionTitle: {
+    color: 'white',
+    fontSize: 16,
     fontWeight: '600',
-    letterSpacing: 0.2,
+    marginLeft: 8,
   },
-  locationButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  descriptionText: {
+    color: 'white',
+    fontSize: 14,
+    lineHeight: 20,
+    opacity: 0.95,
   },
   socialContainer: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  socialTitle: {
-    fontSize: 16,
-    color: COLORS.text,
-    marginBottom: 12,
-    fontWeight: '600',
-  },
-  socialGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
+    marginBottom: 20,
     gap: 10,
   },
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 15,
+    paddingHorizontal: 15,
     paddingVertical: 10,
-    borderRadius: 25,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  socialButtonText: {
-    color: COLORS.white,
+  socialText: {
+    color: 'white',
     fontSize: 14,
     fontWeight: '500',
+    marginLeft: 8,
   },
-  contentContainer: {
-    padding: 16,
-    gap: 16,
-    paddingBottom: 100,
+  actionContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 15,
   },
-  infoSection: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-  },
-  sectionHeader: {
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  sectionIcon: {
-    width: 40,
-    height: 40,
+  actionText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#022C43',
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  sectionContent: {
-    gap: 8,
-  },
-  contactList: {
-    gap: 8,
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingHorizontal: 15,
     paddingVertical: 8,
-    gap: 12,
   },
-  contactText: {
+  backButtonText: {
+    color: 'white',
     fontSize: 16,
-    color: COLORS.text,
-    flex: 1,
-  },
-  biographyText: {
-    fontSize: 16,
-    color: COLORS.text,
-    lineHeight: 24,
-    textAlign: 'justify',
-  },
-  relatedSection: {
-    marginTop: 8,
-  },
-  relatedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  relatedTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    flex: 1,
-  },
-  relatedCount: {
-    fontSize: 16,
-    color: COLORS.textLight,
     fontWeight: '500',
-  },
-  relatedList: {
-    gap: 8,
-  },
-  emptyState: {
-    backgroundColor: COLORS.info,
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  emptyStateText: {
-    color: COLORS.white,
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  emptyStateContainer: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 24,
-    marginTop: 16,
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-  },
-  emptyStateIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: `${COLORS.primary}15`,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  emptyStateTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  emptyStateDescription: {
-    fontSize: 14,
-    color: COLORS.textLight,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  errorText: {
-    fontSize: 18,
-    color: COLORS.text,
-    textAlign: 'center',
-    marginTop: 50,
-  },
-  listContainer: {
-    gap: 8,
-  },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: 4,
-  },
-  listBullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.primary,
-    marginTop: 8,
-    marginRight: 12,
-  },
-  listText: {
-    fontSize: 16,
-    color: COLORS.text,
-    lineHeight: 24,
-    flex: 1,
+    marginLeft: 5,
   },
   modalContainer: {
     flex: 1,
@@ -950,31 +485,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalOverlay: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '90%',
-    height: '70%',
-    position: 'relative',
-  },
-  closeButton: {
+  modalCloseButton: {
     position: 'absolute',
-    top: -50,
-    right: 10,
-    zIndex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 20,
-    padding: 5,
+    padding: 10,
   },
-  fullScreenImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
+  modalImage: {
+    width: screenWidth * 0.9,
+    height: screenHeight * 0.8,
   },
 });
 

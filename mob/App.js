@@ -44,7 +44,7 @@ const COLORS = {
   primaryLight: '#055A87',
   secondary: '#dc004e',
   white: '#ffffff',
-  gray: '#666666',
+  gray: '#333333',
   lightGray: '#f5f5f5',
   success: '#4CAF50',
   warning: '#FF9800',

@@ -293,7 +293,7 @@ const ElementPage = ({ type }) => {
             py: 1
           }}
         >
-          Dodaj novo
+          Dodaj
         </Button>
       </Box>
 

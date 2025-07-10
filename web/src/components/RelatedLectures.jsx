@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -11,6 +11,7 @@ import { LecturesGrid } from './GridLayout';
 import UniversalCard from './UniversalCard';
 import { predavanjaService } from '@/services';
 import { safeApiCall, normalizeToArray } from '../utils/dataHelpers';
+
 
 const RelatedLectures = ({ 
   currentLectureId, 
@@ -33,11 +34,11 @@ const RelatedLectures = ({
       case 'lecture':
         return 'Ostali dersovi';
       case 'organization':
-        return `Organizovani dersovi${organizationName ? ` - ${organizationName}` : ''}`;
+        return 'Najavljeni dersovi';
       case 'daija':
-        return `Organizovani dersovi${daijaName ? ` - ${daijaName}` : ''}`;
+        return 'Najavljeni dersovi';
       default:
-        return 'Povezani dersovi';
+        return 'Najavljeni dersovi';
     }
   };
 
@@ -86,10 +87,11 @@ const RelatedLectures = ({
               // Fallback: get all lectures and filter by daija
               response = await safeApiCall(() => predavanjaService.getAllPredavanja(), []);
               const allLecturesData = normalizeToArray(response);
-              allLectures = allLecturesData.filter(lecture => 
-                (lecture.daija && (lecture.daija._id === daijaId || lecture.daija === daijaId)) ||
-                (daijaName && lecture.speaker && lecture.speaker.includes(daijaName))
-              );
+              allLectures = allLecturesData.filter(lecture => {
+                const matchById = lecture.daija && (lecture.daija._id === daijaId || lecture.daija === daijaId || lecture.daijaId === daijaId);
+                const matchByName = daijaName && lecture.speaker && lecture.speaker.includes(daijaName);
+                return matchById || matchByName;
+              });
             }
           }
           break;
@@ -136,40 +138,49 @@ const RelatedLectures = ({
     }
   };
 
-  // Don't render if no lectures or if it's a lecture type with no other lectures
-  if (!isLoading && lectures.length === 0) {
+  // Don't render if no lectures (except for daija profiles which should always show)
+  if (!isLoading && lectures.length === 0 && type !== 'daija') {
     return null;
   }
 
   return (
-    <Box id="related-lectures" sx={{ py: { xs: 4, md: 6 }, backgroundColor: '#f8f9fa' }}>
-      <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
-        {/* Section Title */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
-          <Typography 
-            variant="h4" 
-            component="h2" 
-            sx={{ 
-              fontWeight: 600,
-              color: '#022C43',
-              textAlign: { xs: 'center', md: 'left' }
-            }}
-          >
-            {getTitle()}
-          </Typography>
-          {!isLoading && totalPages > 1 && (
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: '#666',
-                fontWeight: 500,
-                display: { xs: 'none', sm: 'block' }
-              }}
-            >
-              Stranica {page} od {totalPages}
-            </Typography>
-          )}
+    <Box id="related-lectures">
+      {/* Show section with background and title for all types */}
+      {(
+        <Box sx={{ py: { xs: 4, md: 6 }, backgroundColor: '#f8f9fa' }}>
+          <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
+              <Typography 
+                variant="h4" 
+                component="h2" 
+                sx={{ 
+                  fontWeight: 600,
+                  color: '#022C43',
+                  textAlign: { xs: 'center', md: 'left' }
+                }}
+              >
+                {getTitle()}
+              </Typography>
+              {!isLoading && totalPages > 1 && (
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: '#666',
+                    fontWeight: 500,
+                    display: { xs: 'none', sm: 'block' }
+                  }}
+                >
+                  Stranica {page} od {totalPages}
+                </Typography>
+              )}
+            </Box>
+          </Container>
         </Box>
+      )}
+      
+      {/* Content container */}
+      <Box sx={{ backgroundColor: '#f8f9fa' }}>
+        <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
 
         {/* Loading State */}
         {isLoading && (
@@ -188,13 +199,7 @@ const RelatedLectures = ({
         {/* Lectures Grid */}
         {!isLoading && !error && lectures.length > 0 && (
           <>
-            <LecturesGrid sx={{ 
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 350px))',
-              gap: 3,
-              justifyContent: 'center',
-              width: '100%'
-            }}>
+            <LecturesGrid>
               {lectures.map((lecture) => (
                 <UniversalCard key={lecture._id} data={lecture} />
               ))}
@@ -234,18 +239,23 @@ const RelatedLectures = ({
             <Typography variant="h6" color="text.secondary" gutterBottom>
               {type === 'lecture' 
                 ? 'Nema drugih dostupnih predavanja' 
+                : type === 'daija'
+                ? 'Nema najavljenih predavanja'
                 : 'Nema organizovanih predavanja'
               }
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {type === 'lecture' 
                 ? 'Trenutno je ovo jedino dostupno predavanje.' 
-                : 'Ova organizacija/daija još uvijek nije organizovala predavanja.'
+                : type === 'daija'
+                ? 'Ovaj daija trenutno nema najavljena predavanja.'
+                : 'Ova organizacija još uvijek nije organizovala predavanja.'
               }
             </Typography>
           </Box>
         )}
-      </Container>
+        </Container>
+      </Box>
     </Box>
   );
 };

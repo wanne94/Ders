@@ -219,20 +219,31 @@ router.get('/:id', async (req, res) => {
 // Get lectures by daija ID
 router.get('/daija/:daijaId', async (req, res) => {
   try {
+    console.log('🔍 [DEBUG] Getting lectures for daija:', req.params.daijaId);
+    
     const lectures = await Lecture.find({ 
       daija: req.params.daijaId,
       status: 'approved'  // Only show approved lectures to public
     })
-      .populate('createdBy', 'firstName lastName email');
+      .populate('createdBy', 'firstName lastName email')
+      .populate('organizationId', 'name')
+      .populate('daija', 'name title image');
+    
+    console.log('🔍 [DEBUG] Found lectures:', lectures.length);
     
     // Transform lectures to include daijaId for frontend compatibility
     const transformedLectures = lectures.map(lecture => ({
       ...lecture.toObject(),
-      daijaId: lecture.daija || null
+      daijaId: lecture.daija?._id || lecture.daija || null,
+      speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
+        ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
+        : lecture.speaker || 'Nepoznat predavač'
     }));
     
+    console.log('🔍 [DEBUG] Transformed lectures:', transformedLectures.length);
     res.json(transformedLectures);
   } catch (error) {
+    console.error('❌ [DEBUG] Error getting daija lectures:', error);
     res.status(500).json({ message: error.message });
   }
 });

@@ -25,6 +25,10 @@ const UniversalCard = React.memo(({ data }) => {
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
 
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+  }, []);
+
   if (!data) {
     return null;
   }
@@ -298,9 +302,7 @@ const UniversalCard = React.memo(({ data }) => {
       alt={displayData.title}
       width={300}
       height={200}
-      onError={useCallback(() => {
-        setImageError(true);
-      }, [])}
+      onError={handleImageError}
       style={{ 
         width: '100%',
         height: '100%',

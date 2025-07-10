@@ -1,6 +1,6 @@
 Standardni Workflow
 
-1.Prvo razmisli o problemu, pročitaj codebase za relevantne fajlove, i obavezno napiši plan u projectplan.md koji se nalazi u root folderu
+1.Prvo razmisli o problemu, pročitaj codebase za relevantne fajlove, i obavezno napravi poseban fajl koji se tiče zadatka u Tasks folderu u root folderu.
 2.Plan treba da ima listu todo stavki koje možeš da označavaš kao završene 
 3.Pre nego što počneš da radiš, provjeri sa mnom da li se slažem i ja ću odobriti plan.
 4.Zatim, počni da radiš na todo stavkama, označavajući ih kao završene dok napreduješ kada ih kompletiraš jednu po jednu označavaj kada je završiš kako bi pratio progres.
