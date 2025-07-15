@@ -72,6 +72,9 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
   const [imageUri, setImageUri] = useState(null);
   
+  // Separate state for picker selected values to ensure proper updates
+  const [selectedDaijaId, setSelectedDaijaId] = useState('');
+  
   // Calendar and time picker states
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -230,9 +233,12 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       setImageUri(getImageUrl(editData.image));
     }
 
-    // Set custom speaker/organization flags
+    // Set custom speaker/organization flags and picker values
     if (editData.speaker && !editData.daijaId) {
       setUseCustomSpeaker(true);
+      setSelectedDaijaId('custom');
+    } else if (editData.daijaId) {
+      setSelectedDaijaId(editData.daijaId);
     }
     if (editData.organization && !editData.organizationId) {
       setUseCustomOrganization(true);
@@ -373,40 +379,60 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   };
 
   const handleDaijaSelect = (daijaId) => {
+    setSelectedDaijaId(daijaId); // Update picker state
+    
     if (daijaId === 'custom') {
       setUseCustomSpeaker(true);
-      handleInputChange('daijaId', '');
-      handleInputChange('speaker', '');
+      setFormData(prev => ({ 
+        ...prev, 
+        daijaId: '',
+        speaker: ''
+      }));
     } else if (daijaId === '') {
       setUseCustomSpeaker(false);
-      handleInputChange('daijaId', '');
-      handleInputChange('speaker', '');
+      setFormData(prev => ({ 
+        ...prev, 
+        daijaId: '',
+        speaker: ''
+      }));
     } else {
       setUseCustomSpeaker(false);
       const selectedDaija = daije.find(d => d._id === daijaId);
-      handleInputChange('daijaId', daijaId);
-      handleInputChange('speaker', selectedDaija ? `${selectedDaija.title} ${selectedDaija.name}` : '');
+      setFormData(prev => ({ 
+        ...prev, 
+        daijaId: daijaId,
+        speaker: selectedDaija ? `${selectedDaija.title} ${selectedDaija.name}` : ''
+      }));
     }
   };
 
   const handleOrganizationSelect = (orgId) => {
     if (orgId === 'custom') {
       setUseCustomOrganization(true);
-      handleInputChange('organizationId', '');
-      handleInputChange('organization', '');
-      handleInputChange('city', '');
-      handleInputChange('address', '');
+      setFormData(prev => ({ 
+        ...prev, 
+        organizationId: '',
+        organization: '',
+        city: prev.city || '',
+        address: prev.address || ''
+      }));
     } else if (orgId === '') {
       setUseCustomOrganization(false);
-      handleInputChange('organizationId', '');
-      handleInputChange('organization', '');
+      setFormData(prev => ({ 
+        ...prev, 
+        organizationId: '',
+        organization: ''
+      }));
     } else {
       setUseCustomOrganization(false);
       const selectedOrg = organizations.find(o => o._id === orgId);
-      handleInputChange('organizationId', orgId);
-      handleInputChange('organization', selectedOrg ? selectedOrg.name : '');
-      handleInputChange('city', selectedOrg ? selectedOrg.city || '' : '');
-      handleInputChange('address', selectedOrg ? selectedOrg.address || '' : '');
+      setFormData(prev => ({ 
+        ...prev, 
+        organizationId: orgId,
+        organization: selectedOrg ? selectedOrg.name : '',
+        city: selectedOrg ? selectedOrg.city || prev.city : prev.city,
+        address: selectedOrg ? selectedOrg.address || prev.address : prev.address
+      }));
     }
   };
 
@@ -546,6 +572,8 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         });
         setImageUri(null);
         setSelectedDate(new Date());
+        setSelectedDaijaId('');
+        setUseCustomSpeaker(false);
       }
       
     } catch (error) {
@@ -573,30 +601,31 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     </View>
   );
 
-  const renderDropdown = (label, selectedValue, onValueChange, items, required = false) => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.inputLabel}>
-        {label} {required && <Text style={styles.required}>*</Text>}
-      </Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          selectedValue={selectedValue}
-          onValueChange={onValueChange}
-          style={styles.picker}
-          mode="dropdown"
-          itemStyle={styles.pickerItem}
-        >
-          {items.map((item, index) => (
-            <Picker.Item
-              key={item.value}
-              label={item.label}
-              value={item.value}
-            />
-          ))}
-        </Picker>
+  const renderDropdown = (label, selectedValue, onValueChange, items, required = false) => {
+    return (
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>
+          {label} {required && <Text style={styles.required}>*</Text>}
+        </Text>
+        <View style={styles.pickerWrapper}>
+          <Picker
+            selectedValue={selectedValue}
+            onValueChange={onValueChange}
+            style={styles.picker}
+            mode="dropdown"
+          >
+            {items.map((item, index) => (
+              <Picker.Item
+                key={item.value || `item-${index}`}
+                label={item.label}
+                value={item.value}
+              />
+            ))}
+          </Picker>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const pickImage = async () => {
     try {
@@ -701,7 +730,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         {/* Speaker Dropdown */}
         {renderDropdown(
           'Daija',
-          useCustomSpeaker ? 'custom' : formData.daijaId,
+          selectedDaijaId,
           handleDaijaSelect,
           [
             { label: 'Odaberite daiju', value: '' },
@@ -824,10 +853,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 120, // Extra space for keyboard and submit button
+    paddingBottom: 16, // Standard padding
   },
   bottomPadding: {
-    height: 100, // Space for sticky button
+    height: 80, // Space for submit button (approx 60px) + some extra margin
   },
   inputContainer: {
     marginBottom: 16,

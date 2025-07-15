@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 120,
+    paddingBottom: 80, // Space for submit button + bottom navigation
   },
   inputContainer: {
     marginBottom: 20,

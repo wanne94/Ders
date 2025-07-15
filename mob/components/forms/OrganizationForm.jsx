@@ -371,10 +371,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 120, // Extra space for keyboard and submit button
+    paddingBottom: 16, // Standard padding
   },
   bottomPadding: {
-    height: 80, // Space for sticky button
+    height: 80, // Space for submit button (approx 60px) + some extra margin
   },
   sectionContainer: {
     marginTop: 16,
