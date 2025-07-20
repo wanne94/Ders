@@ -8,7 +8,7 @@ export default function Document() {
       <Head>
         <link rel="icon" type="image/png" sizes="192x192" href="/uploads/android-chrome-192x192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/uploads/android-chrome-192x192.png" />
-        <link rel="shortcut icon" href="/uploads/images/favicon.png" />
+        <link rel="shortcut icon" href="/uploads/favicon.png" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" sizes="192x192" href="/uploads/android-chrome-192x192.png" />
       </Head>

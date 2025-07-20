@@ -2,16 +2,28 @@ import React from 'react';
 import { TouchableOpacity, Text, Share, Linking, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const ShareButton = ({ lecture, style = {}, textStyle = {} }) => {
-  const shareUrl = `https://ders.ba/profile/lecture/${lecture._id}`;
-  const shareText = `${lecture.title}\nDatum: ${new Date(lecture.date).toLocaleDateString('sr-RS')} u ${lecture.time}\nAdresa: ${lecture.address}, ${lecture.city}`;
+const ShareButton = ({ profileData, type, style = {}, textStyle = {} }) => {
+  if (!profileData) return null;
+  
+  const id = profileData._id || profileData.id;
+  const shareUrl = `https://ders.ba/profile/${type}/${id}`;
+  
+  let shareText = '';
+  
+  if (type === 'lecture') {
+    shareText = `${profileData.title}\nDatum: ${new Date(profileData.date).toLocaleDateString('sr-RS')} u ${profileData.time}\nAdresa: ${profileData.address}, ${profileData.city}`;
+  } else if (type === 'daija') {
+    shareText = `${profileData.name}${profileData.title ? ' - ' + profileData.title : ''}\n${profileData.biography || ''}`;
+  } else if (type === 'organization') {
+    shareText = `${profileData.name}\n${profileData.description || ''}\nAdresa: ${profileData.address}, ${profileData.city}`;
+  }
 
   const handleShare = async () => {
     try {
       const result = await Share.share({
         message: `${shareText}\n\n${shareUrl}`,
         url: shareUrl,
-        title: lecture.title
+        title: type === 'lecture' ? profileData.title : profileData.name
       });
       
       if (result.action === Share.sharedAction) {

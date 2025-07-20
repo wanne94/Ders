@@ -114,7 +114,7 @@ const fetchUdruzenja = async () => {
 };
 
 // Lectures Section Component
-const LecturesSection = ({ onProfileOpen, allLectures = [] }) => {
+const LecturesSection = ({ onProfileOpen, allLectures = [], onNavigateToLectures }) => {
   const [lectures, setLectures] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -125,7 +125,7 @@ const LecturesSection = ({ onProfileOpen, allLectures = [] }) => {
         const data = await fetchLectures();
         // Filter only approved lectures, matching web app behavior
         const approvedLectures = (Array.isArray(data) ? data : []).filter(lecture => lecture.status === 'approved');
-        // Apply centralized sorting - danas, uskoro, proslo
+        // Apply centralized sorting by date
         const sortedData = sortLecturesByStatus(approvedLectures);
         setLectures(sortedData.slice(0, 10)); // Limit to 10 lectures for homepage
       } catch (err) {
@@ -178,12 +178,19 @@ const LecturesSection = ({ onProfileOpen, allLectures = [] }) => {
           ) : null
         ))}
       </View>
+      
+      <TouchableOpacity 
+        style={styles.viewAllButton}
+        onPress={onNavigateToLectures}
+      >
+        <Text style={styles.viewAllButtonText}>Pogledaj sve dersove</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
 // Daije Section Component
-const DaijeSection = ({ onProfileOpen, allLectures = [] }) => {
+const DaijeSection = ({ onProfileOpen, allLectures = [], onNavigateToDaije }) => {
   const [daije, setDaije] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -255,7 +262,7 @@ const DaijeSection = ({ onProfileOpen, allLectures = [] }) => {
       
       <TouchableOpacity 
         style={styles.viewAllButton}
-        onPress={() => Alert.alert('Sve daije', 'Ova funkcionalnost će biti dostupna uskoro.')}
+        onPress={onNavigateToDaije}
       >
         <Text style={styles.viewAllButtonText}>Pogledaj sve daije</Text>
       </TouchableOpacity>
@@ -264,7 +271,7 @@ const DaijeSection = ({ onProfileOpen, allLectures = [] }) => {
 };
 
 // Udruzenja Section Component
-const UdruzenjaSection = ({ onProfileOpen, allLectures = [] }) => {
+const UdruzenjaSection = ({ onProfileOpen, allLectures = [], onNavigateToOrganizations }) => {
   const [udruzenja, setUdruzenja] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -336,7 +343,7 @@ const UdruzenjaSection = ({ onProfileOpen, allLectures = [] }) => {
       
       <TouchableOpacity 
         style={styles.viewAllButton}
-        onPress={() => Alert.alert('Sva udruženja', 'Ova funkcionalnost će biti dostupna uskoro.')}
+        onPress={onNavigateToOrganizations}
       >
         <Text style={styles.viewAllButtonText}>Pogledaj sva udruženja</Text>
       </TouchableOpacity>
@@ -397,16 +404,6 @@ const RegistrationBenefits = ({ onAuthNavigate, isAuthenticated }) => {
 };
 
 // Hero Section Component
-const HeroSection = () => {
-  return (
-    <View style={styles.heroSection}>
-      <Text style={styles.heroTitle}>DERS</Text>
-      <Text style={styles.heroSubtitle}>
-        Digitalna platforma za promociju islamskih predavanja
-      </Text>
-    </View>
-  );
-};
 
 
 
@@ -665,11 +662,10 @@ export default function App() {
       case 'home':
         return (
           <>
-            <HeroSection key={`hero-${refreshKey}`} />
-            <LecturesSection key={`lectures-${refreshKey}`} onProfileOpen={handleProfileOpen} allLectures={allLectures} />
+            <LecturesSection key={`lectures-${refreshKey}`} onProfileOpen={handleProfileOpen} allLectures={allLectures} onNavigateToLectures={() => setActiveTab('lectures')} />
             <RegistrationBenefits key={`benefits-${refreshKey}`} onAuthNavigate={handleAuthNavigate} isAuthenticated={isAuthenticated} />
-            <DaijeSection key={`daije-${refreshKey}`} onProfileOpen={handleProfileOpen} allLectures={allLectures} />
-            <UdruzenjaSection key={`udruzenja-${refreshKey}`} onProfileOpen={handleProfileOpen} allLectures={allLectures} />
+            <DaijeSection key={`daije-${refreshKey}`} onProfileOpen={handleProfileOpen} allLectures={allLectures} onNavigateToDaije={() => setActiveTab('speakers')} />
+            <UdruzenjaSection key={`udruzenja-${refreshKey}`} onProfileOpen={handleProfileOpen} allLectures={allLectures} onNavigateToOrganizations={() => setActiveTab('organizations')} />
             <QuickActions key={`actions-${refreshKey}`} onNavigate={setActiveTab} />
           </>
         );
@@ -684,7 +680,8 @@ export default function App() {
           <UniversalProfile 
             data={profileData} 
             type={profileType} 
-            onBack={handleProfileBack} 
+            onBack={handleProfileBack}
+            onProfileOpen={handleProfileOpen}
           />
         );
       case 'dashboard':
@@ -715,7 +712,7 @@ export default function App() {
         return <ProfileScreen navigation={{ navigate: (screen) => setActiveTab(screen) }} />;
 
       default:
-        return <HeroSection />;
+        return <LecturesSection onProfileOpen={handleProfileOpen} allLectures={allLectures} onNavigateToLectures={() => setActiveTab('lectures')} />;
     }
   };
 
@@ -857,30 +854,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.primary,
     fontWeight: '600',
-  },
-  heroSection: {
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    backgroundColor: COLORS.primary,
-    width: '100%',
-  },
-  heroTitle: {
-    fontSize: 42,
-    fontWeight: '900',
-    color: COLORS.white,
-    textAlign: 'center',
-    marginBottom: 12,
-    letterSpacing: 2,
-  },
-  heroSubtitle: {
-    fontSize: 16,
-    color: COLORS.white,
-    textAlign: 'center',
-    opacity: 0.85,
-    lineHeight: 24,
-    maxWidth: '85%',
-    fontWeight: '300',
   },
   // Registration Benefits Styles
   registrationContainer: {

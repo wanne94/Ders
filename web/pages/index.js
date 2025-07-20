@@ -223,12 +223,12 @@ const BenefitsSection = () => {
     },
     {
       icon: NotificationsIcon,
-      title: 'Primanje notifikacija (uskoro, inšallah)',
+      title: 'Primanje notifikacija',
       description: 'Dobijaš obavijesti kada se organizuju nova predavanja, novosti i slično.'
     },
     {
       icon: PersonAddIcon,
-      title: 'Praćenje daija i udruženja (uskoro, inšallah)',
+      title: 'Praćenje daija i udruženja',
       description: 'Moći ćeš zapratiti daije i udruženja, te primati notifikacije kada oni budu organizovali nova predavanja.'
     },
     {

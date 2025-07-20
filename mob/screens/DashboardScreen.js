@@ -26,6 +26,7 @@ import { getApiUrl } from '../config';
 import { getToken } from '../utils/authHelpers';
 import AddContentPopup from '../components/AddContentPopup';
 import { getImageUrl } from '../utils/imageUtils';
+import { appEvents, AUTH_EVENTS } from '../utils/eventEmitter';
 
 const { width, height } = Dimensions.get('window');
 
@@ -179,7 +180,19 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      Alert.alert('Greška', 'Došlo je do greške prilikom učitavanja podataka');
+      
+      // Check if it's an authentication error
+      if (error.response?.status === 403 || error.response?.status === 401) {
+        // The apiClient will handle token refresh automatically
+        // If we still get here, it means refresh failed
+        Alert.alert(
+          'Greška autentifikacije',
+          'Molimo prijavite se ponovo.',
+          [{ text: 'OK', onPress: onBack }]
+        );
+      } else {
+        Alert.alert('Greška', 'Došlo je do greške prilikom učitavanja podataka');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -204,6 +217,32 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Listen for auth events
+  useEffect(() => {
+    const unsubscribe = appEvents.on(AUTH_EVENTS.LOGIN_REQUIRED, () => {
+      Alert.alert(
+        'Sesija istekla',
+        'Vaša sesija je istekla. Molimo prijavite se ponovo.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Call onBack to return to previous screen (usually login)
+              if (onBack) {
+                onBack();
+              }
+            }
+          }
+        ],
+        { cancelable: false }
+      );
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [onBack]);
 
   // Save approval settings to server
   const saveApprovalSettings = async (newSettings) => {

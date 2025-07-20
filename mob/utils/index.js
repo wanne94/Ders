@@ -8,13 +8,19 @@ export const toTitleCase = (str) => {
 
 // Daija title formatting utility
 export const formatDaijaTitle = (name, title) => {
-  if (!name || !title) return name || '';
+  if (!name) return '';
+  if (!title || title.trim() === '') return name;
   
-  const lowercaseTitle = title.toLowerCase();
+  const lowercaseTitle = title.toLowerCase().trim();
   
-  if (lowercaseTitle === 'prof') {
-    return `${name}, ${lowercaseTitle}.`;
+  // Special case for "prof." - goes after the name
+  if (lowercaseTitle === 'prof' || lowercaseTitle === 'prof.') {
+    return `${name} prof.`;
   }
   
-  return `${lowercaseTitle}. ${name}`;
+  // All other titles go before the name
+  // Ensure title ends with a dot
+  const formattedTitle = lowercaseTitle.endsWith('.') ? lowercaseTitle : `${lowercaseTitle}.`;
+  
+  return `${formattedTitle} ${name}`;
 };

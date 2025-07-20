@@ -41,6 +41,11 @@ const lectureSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  duration: {
+    type: Number,
+    required: false,
+    default: 60 // Duration in minutes, default 1 hour
+  },
   shortDescription: {
     type: String,
     required: false

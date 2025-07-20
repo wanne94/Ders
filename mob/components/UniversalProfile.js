@@ -6,7 +6,6 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Linking,
   Modal,
@@ -16,50 +15,149 @@ import { Ionicons } from '@expo/vector-icons';
 import { predavanjaService, daijeService, udruzenjaService } from '../services';
 import { getImageUrl } from '../utils/imageUtils';
 import { formatDateWithDay } from '../utils/dateUtils';
+import { formatDaijaTitle } from '../utils';
 import ShareButton from './ShareButton';
+import UniverzalCard from './UniverzalCard';
+import { sortLecturesByTime } from '../utils/sortingUtils';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-const UniversalProfile = ({ route, navigation }) => {
-  const { type, id } = route.params;
+const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
+  const id = data?._id || data?.id;
   
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [relatedLectures, setRelatedLectures] = useState([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
+  const [profileLectures, setProfileLectures] = useState([]);
+  const [loadingProfileLectures, setLoadingProfileLectures] = useState(false);
 
   useEffect(() => {
-    fetchProfile();
-  }, [type, id]);
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      let data;
-      if (type === 'lecture') {
-        data = await predavanjaService.getPredavanjeById(id);
-      } else if (type === 'daija') {
-        data = await daijeService.getDaijaById(id);
-      } else if (type === 'organization') {
-        data = await udruzenjaService.getUdruzenjeById(id);
-      } else {
-        throw new Error('Nepoznat tip profila');
-      }
-
+    // If data is passed directly, use it
+    if (data) {
       setProfile(data);
-    } catch (err) {
-      console.error('Error fetching profile:', err);
-      setError(err.response?.data?.message || 'Greška pri učitavanju profila');
-    } finally {
+      setLoading(false);
+      return;
+    }
+
+    // Otherwise fetch it by id
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        let fetchedData;
+        if (type === 'lecture') {
+          fetchedData = await predavanjaService.getPredavanjeById(id);
+        } else if (type === 'daija') {
+          fetchedData = await daijeService.getDaijaById(id);
+        } else if (type === 'organization') {
+          fetchedData = await udruzenjaService.getUdruzenjeById(id);
+        } else {
+          throw new Error('Nepoznat tip profila');
+        }
+
+        setProfile(fetchedData);
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        setError(err.response?.data?.message || 'Greška pri učitavanju profila');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProfile();
+    } else {
+      setError('Nema podataka za prikaz');
       setLoading(false);
     }
-  };
+  }, [type, id, data]);
+
+  // Fetch related lectures when viewing a lecture profile
+  useEffect(() => {
+    const fetchRelatedLectures = async () => {
+      if (type !== 'lecture' || !profile) return;
+      
+      try {
+        setLoadingRelated(true);
+        
+        // Fetch all lectures
+        const response = await predavanjaService.getAllPredavanja();
+        const allLectures = Array.isArray(response) ? response : (response.lectures || response.data || []);
+        
+        // Filter out the current lecture and only keep approved lectures
+        const otherLectures = allLectures
+          .filter(lecture => lecture._id !== profile._id && lecture.status === 'approved')
+          .map(lecture => ({
+            ...lecture,
+            type: 'predavanje'
+          }));
+        
+        // Sort lectures by time (upcoming first, then recent past)
+        const sortedLectures = sortLecturesByTime(otherLectures);
+        
+        // Take only first 5 lectures
+        setRelatedLectures(sortedLectures.slice(0, 5));
+      } catch (err) {
+        console.error('Error fetching related lectures:', err);
+      } finally {
+        setLoadingRelated(false);
+      }
+    };
+    
+    if (profile && type === 'lecture') {
+      fetchRelatedLectures();
+    }
+  }, [profile, type]);
+
+  // Fetch lectures for daija or organization profiles
+  useEffect(() => {
+    const fetchProfileLectures = async () => {
+      if (!profile || type === 'lecture') return;
+      
+      try {
+        setLoadingProfileLectures(true);
+        
+        let lectures = [];
+        if (type === 'daija' && profile._id) {
+          lectures = await predavanjaService.getPredavanjaByDaija(profile._id);
+        } else if (type === 'organization' && profile._id) {
+          lectures = await predavanjaService.getPredavanjaByOrganization(profile._id);
+        }
+        
+        // Ensure lectures is an array
+        const lecturesArray = Array.isArray(lectures) ? lectures : 
+                            (lectures.lectures || lectures.data || []);
+        
+        // Add type to each lecture
+        const lecturesWithType = lecturesArray.map(lecture => ({
+          ...lecture,
+          type: 'predavanje'
+        }));
+        
+        // Sort lectures by time (upcoming first, then recent past)
+        const sortedLectures = sortLecturesByTime(lecturesWithType);
+        
+        // Take only first 10 lectures
+        setProfileLectures(sortedLectures.slice(0, 10));
+      } catch (err) {
+        console.error('Error fetching profile lectures:', err);
+      } finally {
+        setLoadingProfileLectures(false);
+      }
+    };
+    
+    if (profile && (type === 'daija' || type === 'organization')) {
+      fetchProfileLectures();
+    }
+  }, [profile, type]);
 
   const getTitle = () => {
     if (type === 'daija') {
-      return profile.title ? `${profile.name} - ${profile.title}` : profile.name;
+      return formatDaijaTitle(profile.name, profile.title);
     }
     if (type === 'organization') {
       return profile.name;
@@ -80,7 +178,9 @@ const UniversalProfile = ({ route, navigation }) => {
   };
 
   const goBack = () => {
-    navigation.goBack();
+    if (onBack) {
+      onBack();
+    }
   };
 
   if (loading) {
@@ -118,15 +218,12 @@ const UniversalProfile = ({ route, navigation }) => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Hero Section */}
+      <View style={styles.heroSection}>
+        {/* Back Button */}
         <TouchableOpacity style={styles.backButton} onPress={goBack}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-      </View>
-
-      {/* Hero Section */}
-      <View style={styles.heroSection}>
         <TouchableOpacity 
           style={[
             styles.imageContainer,
@@ -267,6 +364,32 @@ const UniversalProfile = ({ route, navigation }) => {
         </View>
       </View>
 
+      {/* Lectures Section - For daija and organization profiles */}
+      {(type === 'daija' || type === 'organization') && profileLectures.length > 0 && (
+        <View style={styles.relatedSection}>
+          <Text style={styles.relatedTitle}>Predavanja</Text>
+          {loadingProfileLectures ? (
+            <ActivityIndicator size="small" color="#022C43" style={styles.relatedLoader} />
+          ) : (
+            <View style={styles.relatedList}>
+              {profileLectures.map((lecture) => (
+                <UniverzalCard
+                  key={lecture._id}
+                  data={lecture}
+                  onPress={() => {
+                    // Navigate to the lecture profile
+                    if (onProfileOpen) {
+                      onProfileOpen(lecture, 'lecture');
+                    }
+                  }}
+                  style={styles.relatedCard}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+      )}
+
       {/* Image Modal */}
       <Modal
         visible={imageModalVisible}
@@ -292,6 +415,32 @@ const UniversalProfile = ({ route, navigation }) => {
           />
         </View>
       </Modal>
+
+      {/* Related Lectures Section - Only for lecture profiles */}
+      {type === 'lecture' && relatedLectures.length > 0 && (
+        <View style={styles.relatedSection}>
+          <Text style={styles.relatedTitle}>Ostala predavanja</Text>
+          {loadingRelated ? (
+            <ActivityIndicator size="small" color="#022C43" style={styles.relatedLoader} />
+          ) : (
+            <View style={styles.relatedList}>
+              {relatedLectures.map((lecture) => (
+                <UniverzalCard
+                  key={lecture._id}
+                  data={lecture}
+                  onPress={() => {
+                    // Navigate to the lecture profile
+                    if (onProfileOpen) {
+                      onProfileOpen(lecture, 'lecture');
+                    }
+                  }}
+                  style={styles.relatedCard}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 };
@@ -325,17 +474,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
-  header: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 10,
-  },
   heroSection: {
     background: 'linear-gradient(135deg, #022C43 0%, #055A87 100%)',
     backgroundColor: '#022C43',
     padding: 20,
-    paddingTop: 80,
+    paddingTop: 20,
     alignItems: 'center',
   },
   imageContainer: {
@@ -350,8 +493,8 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   profileImage: {
-    width: 200,
-    height: 200,
+    width: 300,
+    height: 300,
     borderRadius: 10,
     borderWidth: 4,
     borderColor: 'rgba(255, 255, 255, 0.2)',
@@ -466,12 +609,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#022C43',
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+    padding: 8,
   },
   backButtonText: {
     color: 'white',
@@ -497,6 +641,28 @@ const styles = StyleSheet.create({
   modalImage: {
     width: screenWidth * 0.9,
     height: screenHeight * 0.8,
+  },
+  relatedSection: {
+    backgroundColor: '#f5f5f5',
+    padding: 20,
+    paddingTop: 30,
+    paddingBottom: 100, // Extra padding for bottom navigation
+  },
+  relatedTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#022C43',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  relatedLoader: {
+    marginTop: 20,
+  },
+  relatedList: {
+    gap: 15,
+  },
+  relatedCard: {
+    marginBottom: 15,
   },
 });
 

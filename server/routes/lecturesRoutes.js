@@ -4,6 +4,7 @@ const router = express.Router();
 const Lecture = require('../models/Lecture');
 const { authMiddleware: authenticateToken } = require('../utils/jwt');
 const { isAdminOrSuperAdmin } = require('../middleware/auth');
+const { calculateLecturesStatus } = require('../utils/lectureStatus');
 
 // 🔧 Debug: Test if both functions are loaded correctly
 console.log('🔍 [DEBUG] authenticateToken:', typeof authenticateToken, authenticateToken);
@@ -184,6 +185,172 @@ router.get('/public', async (req, res) => {
         duration: errorDuration + 'ms',
         error: error.message,
         optimized: 'super-optimized'
+      }
+    });
+  }
+});
+
+// Get public lectures with calculated status information
+router.get('/public/with-status', async (req, res) => {
+  const startTime = Date.now();
+  console.log('🚀 [STATUS] /lectures/public/with-status endpoint called at:', new Date().toISOString());
+  
+  try {
+    // Debug: Database connection state
+    const dbState = mongoose.connection.readyState;
+    const dbStates = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+    console.log(`📊 [STATUS] Database state: ${dbStates[dbState]} (${dbState})`);
+    
+    if (dbState !== 1) {
+      console.error('❌ [STATUS] Database not connected! State:', dbStates[dbState]);
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
+    // Query start timing
+    const queryStartTime = Date.now();
+    console.log('🔍 [STATUS] Starting optimized database query with status calculation...');
+    
+    // Get approved lectures with all necessary fields including duration
+    const lectures = await Lecture.find({ 
+      status: 'approved'
+    })
+      .select('title speaker daija organization organizationId address city date time duration shortDescription description image status createdAt')
+      .populate({
+        path: 'organizationId',
+        select: 'name',
+        strictPopulate: false
+      })
+      .populate({
+        path: 'daija',
+        select: 'name title image',
+        strictPopulate: false
+      })
+      .lean()
+      .exec();
+
+    const queryEndTime = Date.now();
+    const queryDuration = queryEndTime - queryStartTime;
+    console.log(`⚡ [STATUS] Database query completed in: ${queryDuration}ms`);
+    console.log(`📊 [STATUS] Found ${lectures.length} lectures`);
+    
+    // Transform lectures with speaker info
+    const transformStartTime = Date.now();
+    console.log('🔄 [STATUS] Starting data transformation...');
+    
+    const transformedLectures = lectures.map(lecture => ({
+      ...lecture,
+      daijaId: lecture.daija ? lecture.daija._id : null,
+      speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
+        ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
+        : lecture.speaker || 'Nepoznat predavač'
+    }));
+
+    const transformEndTime = Date.now();
+    const transformDuration = transformEndTime - transformStartTime;
+    console.log(`⚡ [STATUS] Data transformation completed in: ${transformDuration}ms`);
+    
+    // Calculate status for all lectures
+    const statusStartTime = Date.now();
+    console.log('⏱️ [STATUS] Starting status calculation...');
+    
+    const lecturesWithStatus = calculateLecturesStatus(transformedLectures);
+    
+    const statusEndTime = Date.now();
+    const statusDuration = statusEndTime - statusStartTime;
+    console.log(`⚡ [STATUS] Status calculation completed in: ${statusDuration}ms`);
+    
+    // Sort by status priority: active -> upcoming -> past
+    const sortStartTime = Date.now();
+    console.log('📅 [STATUS] Starting status-based sorting...');
+    
+    const activeLectures = [];
+    const upcomingLectures = [];
+    const pastLectures = [];
+    
+    // Separate lectures by status
+    lecturesWithStatus.forEach(lecture => {
+      switch (lecture.statusInfo.status) {
+        case 'active':
+          activeLectures.push(lecture);
+          break;
+        case 'upcoming':
+          upcomingLectures.push(lecture);
+          break;
+        case 'past':
+          pastLectures.push(lecture);
+          break;
+        default:
+          pastLectures.push(lecture);
+      }
+    });
+    
+    // Sort active by time remaining (shortest first)
+    activeLectures.sort((a, b) => (a.statusInfo.timeToEnd || 0) - (b.statusInfo.timeToEnd || 0));
+    
+    // Sort upcoming by start time (earliest first)
+    upcomingLectures.sort((a, b) => (a.statusInfo.timeToStart || 0) - (b.statusInfo.timeToStart || 0));
+    
+    // Sort past by end time (most recent first)
+    pastLectures.sort((a, b) => (a.statusInfo.timeSinceEnd || 0) - (b.statusInfo.timeSinceEnd || 0));
+    
+    // Combine: active -> upcoming -> past
+    const sortedLecturesWithStatus = [...activeLectures, ...upcomingLectures, ...pastLectures];
+    
+    const sortEndTime = Date.now();
+    const sortDuration = sortEndTime - sortStartTime;
+    console.log(`📅 [STATUS] Status-based sorting completed in: ${sortDuration}ms`);
+    console.log(`📊 [STATUS] Active: ${activeLectures.length}, Upcoming: ${upcomingLectures.length}, Past: ${pastLectures.length}`);
+    
+    // Total timing
+    const totalEndTime = Date.now();
+    const totalDuration = totalEndTime - startTime;
+    
+    console.log('📈 [STATUS] Status-enhanced endpoint timing breakdown:');
+    console.log(`  - Database query: ${queryDuration}ms (${((queryDuration/totalDuration)*100).toFixed(1)}%)`);
+    console.log(`  - Data transformation: ${transformDuration}ms (${((transformDuration/totalDuration)*100).toFixed(1)}%)`);
+    console.log(`  - Status calculation: ${statusDuration}ms (${((statusDuration/totalDuration)*100).toFixed(1)}%)`);
+    console.log(`  - Status-based sorting: ${sortDuration}ms (${((sortDuration/totalDuration)*100).toFixed(1)}%)`);
+    console.log(`  - Total endpoint time: ${totalDuration}ms`);
+    
+    // Performance grade
+    const performanceGrade = totalDuration < 100 ? 'EXCELLENT' : 
+                           totalDuration < 200 ? 'VERY_GOOD' :
+                           totalDuration < 400 ? 'GOOD' : 
+                           totalDuration < 600 ? 'MODERATE' : 'SLOW';
+    
+    console.log(`🎯 [STATUS] Performance grade: ${performanceGrade} (${totalDuration}ms)`);
+    
+    // Add performance and status headers
+    res.set({
+      'X-Query-Time': `${queryDuration}ms`,
+      'X-Transform-Time': `${transformDuration}ms`,
+      'X-Status-Time': `${statusDuration}ms`,
+      'X-Sort-Time': `${sortDuration}ms`,
+      'X-Total-Time': `${totalDuration}ms`,
+      'X-Lecture-Count': lectures.length,
+      'X-Active-Count': activeLectures.length,
+      'X-Upcoming-Count': upcomingLectures.length,
+      'X-Past-Count': pastLectures.length,
+      'X-Performance-Grade': performanceGrade,
+      'X-Feature': 'status-enhanced',
+      'X-Optimized': 'status-calculation-included'
+    });
+
+    res.json(sortedLecturesWithStatus);
+  } catch (error) {
+    const errorTime = Date.now();
+    const errorDuration = errorTime - startTime;
+    
+    console.error('❌ [STATUS] Error in status-enhanced /lectures/public/with-status after:', errorDuration + 'ms');
+    console.error('❌ [STATUS] Error details:', error.message);
+    console.error('❌ [STATUS] Error stack:', error.stack);
+    
+    res.status(500).json({ 
+      message: 'Greška pri dohvaćanju predavanja sa statusom',
+      debug: {
+        duration: errorDuration + 'ms',
+        error: error.message,
+        feature: 'status-enhanced'
       }
     });
   }

@@ -28,6 +28,7 @@ import {
 import predavanjaService from '../../services/predavanjaService';
 import daijeService from '../../services/daijeService';
 import udruzenjaService from '../../services/udruzenjaService';
+import { formatDaijaTitle } from '../../utils';
 import { sortLecturers, sortAssociations } from '../../utils/sortingUtils';
 import Toast from '../Toast';
 import * as ImagePicker from 'expo-image-picker';
@@ -401,7 +402,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       setFormData(prev => ({ 
         ...prev, 
         daijaId: daijaId,
-        speaker: selectedDaija ? `${selectedDaija.title} ${selectedDaija.name}` : ''
+        speaker: selectedDaija ? formatDaijaTitle(selectedDaija.name, selectedDaija.title) : ''
       }));
     }
   };
@@ -735,7 +736,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           [
             { label: 'Odaberite daiju', value: '' },
             ...daije.map(daija => ({
-              label: `${daija.title} ${daija.name}`,
+              label: formatDaijaTitle(daija.name, daija.title),
               value: daija._id
             })),
             { label: '➕ Unesi ručno ime daije', value: 'custom' }

@@ -4,7 +4,8 @@ import { bs } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
 import { getImageUrl, getDefaultDaijaImage, getDefaultLectureImage, getDefaultOrganizationImage } from '../utils/imageUtils';
 import { formatDaijaTitle } from '../utils';
-import { useState } from 'react';
+import { calculateLectureStatus, getStatusBadgeColors } from '../utils/lectureStatusHelpers';
+import { useState, useEffect } from 'react';
 // import { COLORS, TYPOGRAPHY, SPACING } from '../theme';
 
 const { width } = Dimensions.get('window');
@@ -83,7 +84,29 @@ const Icons = {
 
 const UniverzalCard = ({ data, onPress, style }) => {
   const [imageError, setImageError] = useState(false);
+  const [statusInfo, setStatusInfo] = useState(null);
   
+  // Calculate status for lectures
+  useEffect(() => {
+    if (data && (data.type?.toLowerCase() === 'predavanje' || (data.title && (data.speaker || data.daija)))) {
+      const calculatedStatus = data.statusInfo || calculateLectureStatus(data);
+      setStatusInfo(calculatedStatus);
+      
+      // Set up interval for real-time updates for active and upcoming lectures
+      let interval;
+      if (calculatedStatus.status === 'active' || calculatedStatus.status === 'upcoming') {
+        interval = setInterval(() => {
+          const newStatus = calculateLectureStatus(data);
+          setStatusInfo(newStatus);
+        }, calculatedStatus.status === 'active' ? 10000 : 60000); // 10s for active, 1min for upcoming
+      }
+      
+      return () => {
+        if (interval) clearInterval(interval);
+      };
+    }
+  }, [data]);
+
   // Handle null or undefined data
   if (!data) {
     return null;
@@ -116,45 +139,10 @@ const UniverzalCard = ({ data, onPress, style }) => {
     
     switch (entityType) {
       case 'predavanje':
-        // Determine lecture status based on date and time
-        const getLectureStatus = () => {
-          if (!data.date) return 'unknown';
-          
-          const now = new Date();
-          const lectureDateTime = new Date(data.date);
-          
-          // Set lecture time (default to 12:00 if not specified)
-          if (data.time) {
-            const [hours, minutes] = data.time.split(':').map(Number);
-            if (!isNaN(hours) && !isNaN(minutes)) {
-              lectureDateTime.setHours(hours, minutes, 0, 0);
-            } else {
-              lectureDateTime.setHours(12, 0, 0, 0);
-            }
-          } else {
-            lectureDateTime.setHours(12, 0, 0, 0);
-          }
-          
-          // Calculate lecture end time (assuming 1 hour duration)
-          const lectureEndTime = new Date(lectureDateTime.getTime() + 60 * 60 * 1000);
-          
-          if (now >= lectureDateTime && now <= lectureEndTime) {
-            return 'utoku'; // Currently active
-          } else if (lectureDateTime > now) {
-            return 'uskoro'; // Future
-          } else {
-            return 'proslo'; // Past
-          }
-        };
-        
-        const lectureStatus = getLectureStatus();
-        const isPastLecture = lectureStatus === 'proslo';
-        
         return {
           type: 'lecture',
           title: data.title?.toUpperCase() || '',
-          isPastLecture,
-          lectureStatus,
+          statusInfo,
           items: [
             { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
             data.organization && { icon: 'Business', text: data.organization },
@@ -193,45 +181,10 @@ const UniverzalCard = ({ data, onPress, style }) => {
       default:
         // Fallback for unknown types or when type field is not available
         if (data.title && (data.speaker || data.daija)) {
-          // Determine lecture status based on date and time
-          const getLectureStatus = () => {
-            if (!data.date) return 'unknown';
-            
-            const now = new Date();
-            const lectureDateTime = new Date(data.date);
-            
-            // Set lecture time (default to 12:00 if not specified)
-            if (data.time) {
-              const [hours, minutes] = data.time.split(':').map(Number);
-              if (!isNaN(hours) && !isNaN(minutes)) {
-                lectureDateTime.setHours(hours, minutes, 0, 0);
-              } else {
-                lectureDateTime.setHours(12, 0, 0, 0);
-              }
-            } else {
-              lectureDateTime.setHours(12, 0, 0, 0);
-            }
-            
-            // Calculate lecture end time (assuming 1 hour duration)
-            const lectureEndTime = new Date(lectureDateTime.getTime() + 60 * 60 * 1000);
-            
-            if (now >= lectureDateTime && now <= lectureEndTime) {
-              return 'utoku'; // Currently active
-            } else if (lectureDateTime > now) {
-              return 'uskoro'; // Future
-            } else {
-              return 'proslo'; // Past
-            }
-          };
-          
-          const lectureStatus = getLectureStatus();
-          const isPastLecture = lectureStatus === 'proslo';
-          
           return {
             type: 'lecture',
             title: data.title?.toUpperCase() || '',
-            isPastLecture,
-            lectureStatus,
+            statusInfo,
             items: [
               { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
               data.organization && { icon: 'Business', text: data.organization },
@@ -292,26 +245,28 @@ const UniverzalCard = ({ data, onPress, style }) => {
       onPress={onPress}
       activeOpacity={0.7}
     >
-      {/* Status badge for lectures */}
-      {displayData.type === 'lecture' && displayData.lectureStatus && (
-        <View style={styles.statusBadge}>
-          <View style={styles.statusBadgeContent}>
-            <Text style={styles.statusEmoji}>
-              {displayData.lectureStatus === 'utoku' ? '🟢' :
-               displayData.lectureStatus === 'uskoro' ? '🟡' :
-               '🔴'}
-            </Text>
-            <Text style={[
-              styles.statusBadgeText, 
-              displayData.lectureStatus === 'utoku' ? styles.statusBadgeActive :
-              displayData.lectureStatus === 'uskoro' ? styles.statusBadgeFuture :
-              styles.statusBadgePast
-            ]}>
-              {displayData.lectureStatus === 'utoku' ? 'U toku' :
-               displayData.lectureStatus === 'uskoro' ? 'Uskoro' : 
-               'Prošlo'}
-            </Text>
-          </View>
+      {/* Status Badge for lectures */}
+      {displayData.type === 'lecture' && displayData.statusInfo && (
+        <View style={[
+          styles.statusBadge,
+          { 
+            backgroundColor: getStatusBadgeColors(displayData.statusInfo.badgeColor).backgroundColor,
+            borderColor: getStatusBadgeColors(displayData.statusInfo.badgeColor).borderColor
+          }
+        ]}>
+          <Text style={[
+            styles.statusBadgeText,
+            { color: getStatusBadgeColors(displayData.statusInfo.badgeColor).textColor }
+          ]}>
+            {displayData.statusInfo.badgeText}
+          </Text>
+        </View>
+      )}
+      
+      {/* Live Indicator for active lectures */}
+      {displayData.type === 'lecture' && displayData.statusInfo?.status === 'active' && (
+        <View style={styles.liveIndicator}>
+          <Text style={styles.liveIndicatorText}>🔴 UŽIVO</Text>
         </View>
       )}
       
@@ -434,11 +389,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.gap.md,
   },
-  statusBadgeContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.gap.sm,
-  },
   infoText: {
     ...TYPOGRAPHY.textStyles.cardInfo,
     flex: 1,
@@ -484,33 +434,36 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    maxWidth: 120,
     zIndex: 1,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 2.84,
-  },
-  statusEmoji: {
-    fontSize: 14,
-    marginRight: 4,
   },
   statusBadgeText: {
-    fontSize: 13,
+    fontSize: 10,
     fontWeight: 'bold',
+    textAlign: 'center',
+    lineHeight: 12,
   },
-  statusBadgePast: {
-    color: '#c62828',
+  liveIndicator: {
+    position: 'absolute',
+    top: 40,
+    right: 8,
+    backgroundColor: '#ff1744',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    zIndex: 1,
   },
-  statusBadgeActive: {
-    color: '#2e7d32',
-  },
-  statusBadgeFuture: {
-    color: '#f57f17',
+  liveIndicatorText: {
+    color: 'white',
+    fontSize: 9,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
 });
 

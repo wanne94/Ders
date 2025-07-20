@@ -17,7 +17,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import BusinessIcon from '@mui/icons-material/Business';
 import SchoolIcon from '@mui/icons-material/School';
 import ClassIcon from '@mui/icons-material/Class';
-import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrganizationSlug } from '../utils/dataHelpers';
+import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrganizationSlug, calculateLectureStatus } from '../utils/dataHelpers';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
 import { formatDaijaTitle } from '../utils';
 
@@ -38,39 +38,9 @@ const UniversalCard = React.memo(({ data }) => {
     
     switch (entityType) {
       case 'predavanje':
-        // Determine lecture status based on date and time
-        const getLectureStatus = () => {
-          if (!data.date) return 'unknown';
-          
-          const now = new Date();
-          const lectureDateTime = new Date(data.date);
-          
-          // Set lecture time (default to 12:00 if not specified)
-          if (data.time) {
-            const [hours, minutes] = data.time.split(':').map(Number);
-            if (!isNaN(hours) && !isNaN(minutes)) {
-              lectureDateTime.setHours(hours, minutes, 0, 0);
-            } else {
-              lectureDateTime.setHours(12, 0, 0, 0);
-            }
-          } else {
-            lectureDateTime.setHours(12, 0, 0, 0);
-          }
-          
-          // Calculate lecture end time (assuming 1 hour duration)
-          const lectureEndTime = new Date(lectureDateTime.getTime() + 60 * 60 * 1000);
-          
-          if (now >= lectureDateTime && now <= lectureEndTime) {
-            return 'utoku'; // Currently active
-          } else if (lectureDateTime > now) {
-            return 'uskoro'; // Future
-          } else {
-            return 'proslo'; // Past
-          }
-        };
-        
-        const lectureStatus = getLectureStatus();
-        const isPastLecture = lectureStatus === 'proslo';
+        // Use new status calculation utility
+        const statusInfo = data.statusInfo || calculateLectureStatus(data);
+        const isPastLecture = statusInfo.status === 'past';
         
         return {
           type: 'lecture',
@@ -78,7 +48,7 @@ const UniversalCard = React.memo(({ data }) => {
           image: data.image || getDefaultLectureImage(),
           imageStyle: { borderRadius: '8px' },
           isPastLecture,
-          lectureStatus,
+          statusInfo,
           infoItems: [
             { icon: <PersonIcon />, text: 
               data.daija && typeof data.daija === 'object' 
@@ -168,14 +138,10 @@ const UniversalCard = React.memo(({ data }) => {
         }
       }}
     >
-      {/* Status badge for lectures */}
-      {displayData.type === 'lecture' && displayData.lectureStatus && (
+      {/* Enhanced Status badge for lectures */}
+      {displayData.type === 'lecture' && displayData.statusInfo && (
         <Chip
-          label={
-            displayData.lectureStatus === 'utoku' ? '🟢 U toku' :
-            displayData.lectureStatus === 'uskoro' ? '🟡 Uskoro' : 
-            '🔴 Prošlo'
-          }
+          label={displayData.statusInfo.badgeText || 'N/A'}
           size="small"
           sx={{
             position: 'absolute',
@@ -183,19 +149,31 @@ const UniversalCard = React.memo(({ data }) => {
             right: 8,
             zIndex: 1,
             backgroundColor: 
-              displayData.lectureStatus === 'utoku' ? '#e8f5e8' :
-              displayData.lectureStatus === 'uskoro' ? '#fff8e1' :
-              '#ffebee',
+              displayData.statusInfo.badgeColor === 'green' ? '#e8f5e8' :
+              displayData.statusInfo.badgeColor === 'yellow' ? '#fff8e1' :
+              displayData.statusInfo.badgeColor === 'red' ? '#ffebee' :
+              '#f5f5f5',
             color: 
-              displayData.lectureStatus === 'utoku' ? '#2e7d32' :
-              displayData.lectureStatus === 'uskoro' ? '#f57f17' :
-              '#c62828',
+              displayData.statusInfo.badgeColor === 'green' ? '#2e7d32' :
+              displayData.statusInfo.badgeColor === 'yellow' ? '#f57f17' :
+              displayData.statusInfo.badgeColor === 'red' ? '#c62828' :
+              '#666666',
             fontWeight: 'bold',
-            fontSize: '0.8rem',
-            padding: '6px 12px',
+            fontSize: '0.75rem',
+            maxWidth: '180px',
+            height: 'auto',
+            whiteSpace: 'normal',
+            '@media (max-width: 480px)': {
+              maxWidth: '140px',
+              fontSize: '0.7rem'
+            },
             '& .MuiChip-label': {
-              paddingLeft: '8px',
-              paddingRight: '8px'
+              paddingLeft: '6px',
+              paddingRight: '6px',
+              paddingTop: '4px',
+              paddingBottom: '4px',
+              lineHeight: '1.2',
+              textAlign: 'center'
             }
           }}
         />

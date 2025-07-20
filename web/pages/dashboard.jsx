@@ -147,15 +147,33 @@ const Dashboard = () => {
   const fetchData = useCallback(async () => {
     setUi(prev => ({ ...prev, isLoading: true, error: null }));
     try {
-      const [usersRes, lecturesRes, daijeRes, orgsRes, suggestionsRes, archivedSuggestionsRes, suggestionsCountRes] = await Promise.all([
-        usersService.getAllUsers(),
-        predavanjaService.getAllPredavanjaForAdmin(),
-        daijeService.getAllDaijeForAdmin(),
-        udruzenjaService.getAllUdruzenjaForAdmin(),
-        suggestionsService.getAllSuggestions(),
-        suggestionsService.getArchivedSuggestions(),
-        suggestionsService.getSuggestionsCount()
-      ]);
+      // Only call admin endpoints if user is admin
+      const promises = [];
+      
+      if (isAdmin) {
+        promises.push(
+          usersService.getAllUsers(),
+          predavanjaService.getAllPredavanjaForAdmin(),
+          daijeService.getAllDaijeForAdmin(),
+          udruzenjaService.getAllUdruzenjaForAdmin(),
+          suggestionsService.getAllSuggestions(),
+          suggestionsService.getArchivedSuggestions(),
+          suggestionsService.getSuggestionsCount()
+        );
+      } else {
+        // For non-admin users, use public endpoints or return empty data
+        promises.push(
+          Promise.resolve([]), // users
+          predavanjaService.getAllPredavanja(), // public lectures
+          daijeService.getAllDaije(), // public daije
+          udruzenjaService.getAllUdruzenja(), // public organizations
+          Promise.resolve([]), // suggestions
+          Promise.resolve([]), // archived suggestions
+          Promise.resolve({ total: 0, pending: 0, approved: 0, rejected: 0 }) // suggestions count
+        );
+      }
+      
+      const [usersRes, lecturesRes, daijeRes, orgsRes, suggestionsRes, archivedSuggestionsRes, suggestionsCountRes] = await Promise.all(promises);
 
       const suggestionsData = Array.isArray(suggestionsRes) ? suggestionsRes : [];
       const archivedSuggestionsData = Array.isArray(archivedSuggestionsRes) ? archivedSuggestionsRes : [];
@@ -187,7 +205,7 @@ const Dashboard = () => {
     } catch (error) {
       setUi(prev => ({ ...prev, isLoading: false, error: 'Greška pri dohvaćanju podataka.' }));
     }
-  }, []);
+  }, [isAdmin]);
 
   // Uklonjen duplikat useEffect - koristimo samo onaj ispod sa fetchDataCalledRef
   const [selectedItem, setSelectedItem] = useState(null);
@@ -296,10 +314,10 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (fetchDataCalledRef.current) return;
+    if (!currentUser || fetchDataCalledRef.current) return;
     fetchDataCalledRef.current = true;
     fetchData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentUser, fetchData]);
 
   // Event listener za osvežavanje kada se kreira nova suggestion
   useEffect(() => {
@@ -767,6 +785,17 @@ const Dashboard = () => {
           <Button variant="contained" onClick={fetchData} sx={{ mt: 2 }}>
             Pokušaj ponovo
           </Button>
+        </Box>
+      );
+    }
+
+    // Show message for non-admin users
+    if (!isAdmin) {
+      return (
+        <Box sx={{ p: 3 }}>
+          <Alert severity="warning">
+            Nemate dozvole za pristup dashboard-u. Potrebne su administratorske dozvole.
+          </Alert>
         </Box>
       );
     }

@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ENV } from '../config';
+import { appEvents, AUTH_EVENTS } from '../utils/eventEmitter';
 
 // Create a fetch-based API client to replace axios
 class ApiClient {
@@ -43,8 +44,12 @@ class ApiClient {
     if (!isAuthRoute) {
       try {
         const token = await AsyncStorage.getItem('auth_token');
+        console.log('Token from AsyncStorage:', token ? 'EXISTS' : 'NOT FOUND');
         if (token) {
           headers.Authorization = `Bearer ${token}`;
+          console.log('Authorization header set:', headers.Authorization.substring(0, 20) + '...');
+        } else {
+          console.warn('No auth token found in AsyncStorage for URL:', url);
         }
       } catch (error) {
         console.error('Error getting token from AsyncStorage:', error);
@@ -93,6 +98,42 @@ class ApiClient {
           url: fullUrl,
           data: responseData.data
         });
+        
+        // Check for authentication errors
+        if (response.status === 401 && responseData.data?.message === 'Nema tokena ili pogrešan format') {
+          console.log('No token or invalid format, user needs to login');
+          await AsyncStorage.removeItem('auth_token');
+          appEvents.emit(AUTH_EVENTS.LOGIN_REQUIRED);
+        }
+        // Check for expired token error
+        else if (response.status === 403 && responseData.data?.message === 'Token je istekao') {
+          console.log('Token expired, attempting to refresh...');
+          
+          // Only attempt refresh once to avoid infinite loop
+          if (!options._isRetryAfterRefresh) {
+            try {
+              // Import authService dynamically to avoid circular dependency
+              const { authService } = await import('./authService');
+              const refreshResponse = await authService.refreshToken();
+              
+              if (refreshResponse.token) {
+                // Save new token
+                await AsyncStorage.setItem('auth_token', refreshResponse.token);
+                console.log('Token refreshed successfully');
+                
+                // Retry original request with new token
+                return this.request(url, { ...options, _isRetryAfterRefresh: true }, retries);
+              }
+            } catch (refreshError) {
+              console.error('Failed to refresh token:', refreshError);
+              // Clear invalid token and redirect to login
+              await AsyncStorage.removeItem('auth_token');
+              // Emit event to redirect to login screen
+              appEvents.emit(AUTH_EVENTS.LOGIN_REQUIRED);
+            }
+          }
+        }
+        
         const error = new Error(`HTTP Error: ${response.status}`);
         error.response = responseData;
         throw error;
