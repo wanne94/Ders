@@ -10,8 +10,10 @@ import {
   Linking,
   Modal,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Calendar from 'expo-calendar';
 import { predavanjaService, daijeService, udruzenjaService } from '../services';
 import { getImageUrl } from '../utils/imageUtils';
 import { formatDateWithDay } from '../utils/dateUtils';
@@ -29,6 +31,8 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
   const [relatedLectures, setRelatedLectures] = useState([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [profileLectures, setProfileLectures] = useState([]);
@@ -177,6 +181,79 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
     Linking.openURL(url);
   };
 
+  const addToCalendar = async () => {
+    try {
+      const { status } = await Calendar.requestCalendarPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Dozvola potrebna', 'Potrebna je dozvola za pristup kalendaru.');
+        return;
+      }
+
+      const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+      const defaultCalendar = calendars.find(cal => cal.source.name === 'Default') || calendars[0];
+
+      if (!defaultCalendar) {
+        Alert.alert('Greška', 'Nije pronađen kalendar.');
+        return;
+      }
+
+      // Parse date and time
+      const eventDate = new Date(profile.date);
+      if (profile.time) {
+        const [hours, minutes] = profile.time.split(':');
+        eventDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      }
+      
+      // End time (1 hour later by default)
+      const endDate = new Date(eventDate);
+      endDate.setHours(endDate.getHours() + 1);
+
+      const eventDetails = {
+        title: profile.title,
+        startDate: eventDate,
+        endDate: endDate,
+        location: [profile.address, profile.city].filter(Boolean).join(', '),
+        notes: `Predavač: ${profile.speaker}\n${profile.description || ''}`,
+        calendarId: defaultCalendar.id,
+      };
+
+      await Calendar.createEventAsync(defaultCalendar.id, eventDetails);
+      
+      Alert.alert('Uspjeh', 'Događaj je dodat u kalendar!');
+    } catch (error) {
+      console.error('Error adding to calendar:', error);
+      Alert.alert('Greška', 'Nije moguće dodati događaj u kalendar.');
+    }
+  };
+
+  const onDateTimePress = () => {
+    Alert.alert(
+      'Dodaj u kalendar',
+      `Želite li da dodate "${profile.title}" u svoj kalendar?`,
+      [
+        { text: 'Ne', style: 'cancel' },
+        { text: 'Da', onPress: addToCalendar }
+      ]
+    );
+  };
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    setImageLoading(false);
+    setImageError(true);
+  };
+
+  const getImageSource = () => {
+    if (imageError || !profile.image) {
+      return { uri: 'https://via.placeholder.com/400x300/022C43/ffffff?text=Plakat+nije+dostupan' };
+    }
+    return { uri: getImageUrl(profile.image) };
+  };
+
   const goBack = () => {
     if (onBack) {
       onBack();
@@ -227,23 +304,33 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
         <TouchableOpacity 
           style={[
             styles.imageContainer,
-            type === 'daija' && styles.circularImage
+            type === 'daija' && styles.circularImage,
+            type === 'lecture' && styles.fullWidthImageContainer
           ]}
           onPress={() => setImageModalVisible(true)}
         >
+          {imageLoading && type === 'lecture' && (
+            <View style={[styles.imageLoader, styles.fullWidthImage]}>
+              <ActivityIndicator size="large" color="#ffffff" />
+              <Text style={styles.imageLoadingText}>Učitavanje plakata...</Text>
+            </View>
+          )}
           <Image
-            source={
+            source={type === 'lecture' ? getImageSource() : (
               profile.image 
                 ? { uri: getImageUrl(profile.image) }
                 : { uri: 'https://via.placeholder.com/150?text=No+Image' }
-            }
+            )}
             style={[
               styles.profileImage,
-              type === 'daija' && styles.circularImage
+              type === 'daija' && styles.circularImage,
+              type === 'lecture' && styles.fullWidthImage,
+              imageLoading && type === 'lecture' && { opacity: 0 }
             ]}
-            onError={() => {
-              // Handle image error - could set a state to use default image
-            }}
+            onLoad={type === 'lecture' ? handleImageLoad : undefined}
+            onError={type === 'lecture' ? handleImageError : undefined}
+            onLoadStart={() => type === 'lecture' && setImageLoading(true)}
+            cache="force-cache"
           />
         </TouchableOpacity>
 
@@ -257,17 +344,17 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
         {/* Meta Information */}
         <View style={styles.metaContainer}>
           {type === 'lecture' && profile.date && (
-            <View style={styles.metaItem}>
+            <TouchableOpacity style={styles.metaItem} onPress={onDateTimePress}>
               <Ionicons name="calendar" size={16} color="white" />
               <Text style={styles.metaText}>{formatDateWithDay(profile.date)}</Text>
-            </View>
+            </TouchableOpacity>
           )}
 
           {type === 'lecture' && profile.time && (
-            <View style={styles.metaItem}>
+            <TouchableOpacity style={styles.metaItem} onPress={onDateTimePress}>
               <Ionicons name="time" size={16} color="white" />
               <Text style={styles.metaText}>{profile.time}</Text>
-            </View>
+            </TouchableOpacity>
           )}
 
           {type === 'lecture' && profile.speaker && (
@@ -405,13 +492,14 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
             <Ionicons name="close" size={30} color="white" />
           </TouchableOpacity>
           <Image
-            source={
+            source={type === 'lecture' ? getImageSource() : (
               profile.image 
                 ? { uri: getImageUrl(profile.image) }
                 : { uri: 'https://via.placeholder.com/150?text=No+Image' }
-            }
+            )}
             style={styles.modalImage}
             resizeMode="contain"
+            cache="force-cache"
           />
         </View>
       </Modal>
@@ -477,8 +565,8 @@ const styles = StyleSheet.create({
   heroSection: {
     background: 'linear-gradient(135deg, #022C43 0%, #055A87 100%)',
     backgroundColor: '#022C43',
-    padding: 20,
-    paddingTop: 20,
+    padding: screenWidth > 600 ? 30 : 20,
+    paddingTop: screenWidth > 600 ? 30 : 20,
     alignItems: 'center',
   },
   imageContainer: {
@@ -502,13 +590,24 @@ const styles = StyleSheet.create({
   circularImage: {
     borderRadius: 100,
   },
+  fullWidthImageContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  fullWidthImage: {
+    width: '100%',
+    height: screenWidth > 600 ? 500 : Math.max(screenWidth * 0.6, 300),
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
   title: {
-    fontSize: 24,
+    fontSize: screenWidth > 600 ? 28 : 22,
     fontWeight: '300',
     color: 'white',
     textAlign: 'center',
     marginBottom: 20,
-    paddingHorizontal: 20,
+    paddingHorizontal: screenWidth > 600 ? 40 : 20,
   },
   lectureTitle: {
     fontWeight: 'bold',
@@ -519,32 +618,36 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     marginBottom: 20,
-    gap: 10,
+    gap: screenWidth > 600 ? 15 : 10,
+    paddingHorizontal: screenWidth > 600 ? 20 : 0,
   },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 15,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: screenWidth > 600 ? 16 : 12,
+    paddingVertical: screenWidth > 600 ? 10 : 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+    minWidth: screenWidth > 600 ? 140 : 'auto',
   },
   metaText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: screenWidth > 600 ? 16 : 14,
     fontWeight: '500',
-    marginLeft: 5,
+    marginLeft: screenWidth > 600 ? 8 : 5,
   },
   descriptionContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 15,
-    padding: 15,
+    padding: screenWidth > 600 ? 20 : 15,
     marginBottom: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
     width: '100%',
+    maxWidth: screenWidth > 600 ? 600 : '100%',
+    alignSelf: 'center',
   },
   descriptionHeader: {
     flexDirection: 'row',
@@ -559,8 +662,8 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     color: 'white',
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: screenWidth > 600 ? 16 : 14,
+    lineHeight: screenWidth > 600 ? 24 : 20,
     opacity: 0.95,
   },
   socialContainer: {
@@ -644,15 +747,18 @@ const styles = StyleSheet.create({
   },
   relatedSection: {
     backgroundColor: '#f5f5f5',
-    padding: 20,
-    paddingTop: 30,
+    padding: screenWidth > 600 ? 30 : 20,
+    paddingTop: screenWidth > 600 ? 40 : 30,
     paddingBottom: 100, // Extra padding for bottom navigation
+    maxWidth: screenWidth > 600 ? 800 : '100%',
+    alignSelf: 'center',
+    width: '100%',
   },
   relatedTitle: {
-    fontSize: 20,
+    fontSize: screenWidth > 600 ? 24 : 20,
     fontWeight: 'bold',
     color: '#022C43',
-    marginBottom: 20,
+    marginBottom: screenWidth > 600 ? 25 : 20,
     textAlign: 'center',
   },
   relatedLoader: {
@@ -663,6 +769,24 @@ const styles = StyleSheet.create({
   },
   relatedCard: {
     marginBottom: 15,
+  },
+  imageLoader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(2, 44, 67, 0.8)',
+    borderRadius: 15,
+    zIndex: 1,
+  },
+  imageLoadingText: {
+    color: 'white',
+    fontSize: 14,
+    marginTop: 10,
+    textAlign: 'center',
   },
 });
 

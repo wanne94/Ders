@@ -131,5 +131,22 @@ export const formatDaijaTitle = (name, title) => {
   return `${lowercaseTitle}. ${name}`;
 };
 
+// Device detection utilities
+export const deviceUtils = {
+  isAndroid: () => {
+    if (typeof window === 'undefined') return false;
+    return navigator.userAgent.toLowerCase().includes('android');
+  },
+  
+  isMobile: () => {
+    if (typeof window === 'undefined') return false;
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  },
+  
+  isAndroidMobile: () => {
+    return deviceUtils.isAndroid() && deviceUtils.isMobile();
+  }
+};
+
 // Export image utilities
 export * from './imageUtils'; 

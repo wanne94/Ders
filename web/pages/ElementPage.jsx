@@ -14,6 +14,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import PageLayout from '@/components/PageLayout';
 import UniversalCard from '@/components/UniversalCard';
+import SkeletonGrid from '@/components/SkeletonGrid';
 import LectureForm from '@/components/LectureForm';
 import DaijaForm from '@/components/DaijaForm';
 import OrganizationForm from '@/components/OrganizationForm';
@@ -299,9 +300,10 @@ const ElementPage = ({ type }) => {
 
       {/* Content */}
       {isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
-        </Box>
+        <SkeletonGrid 
+          count={12} 
+          type={type === 'lectures' ? 'lecture' : type === 'daije' ? 'daija' : 'organization'} 
+        />
       ) : error ? (
         <Alert severity="error">{error}</Alert>
       ) : !currentItems.length ? (

@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}"
+self.__REACT_LOADABLE_MANIFEST="{\"../src/utils/uploadService.js -> axios\":{\"id\":\"../src/utils/uploadService.js -> axios\",\"files\":[\"static/chunks/node_modules_axios_index_js.js\"]}}"

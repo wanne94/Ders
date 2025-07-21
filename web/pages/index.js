@@ -29,7 +29,11 @@ import {
 import PageLayout from '@/components/PageLayout';
 import { OrganizationsGrid, DaijeGrid, LecturesGrid } from '@/components/GridLayout';
 import UniversalCard from '@/components/UniversalCard';
+import SkeletonGrid from '@/components/SkeletonGrid';
+import AndroidAppModal from '@/components/AndroidAppModal';
+import DownloadAppSection from '@/components/DownloadAppSection';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
+import { deviceUtils, storage } from '@/utils';
 
 
 
@@ -146,7 +150,7 @@ const QuickActions = () => {
 };
 
 // TenLectures Component
-const TenLectures = ({ lectures }) => {
+const TenLectures = ({ lectures, isLoading }) => {
   const router = useRouter();
   
   // Privremeno koristimo jednostavno sortiranje umesto složene funkcije
@@ -166,7 +170,9 @@ const TenLectures = ({ lectures }) => {
         Posljednje najavljeni dersovi
       </Typography>
 
-      {proximityLectures.length === 0 ? (
+      {isLoading ? (
+        <SkeletonGrid count={6} type="lecture" />
+      ) : proximityLectures.length === 0 ? (
         <Typography variant="body1" color="text.secondary">
           Trenutno nema dostupnih dersova.
         </Typography>
@@ -427,7 +433,7 @@ const BenefitsSection = () => {
 };
 
 // ActiveOrganizations Component
-const ActiveOrganizations = ({ organizations, lectures }) => {
+const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
   const router = useRouter();
   const [displayOrganizations, setDisplayOrganizations] = useState([]);
 
@@ -457,7 +463,9 @@ const ActiveOrganizations = ({ organizations, lectures }) => {
         Upoznaj 10 nasumično odabranih udruženja.
       </Typography>
 
-      {approvedOrganizations.length === 0 ? (
+      {isLoading ? (
+        <SkeletonGrid count={6} type="organization" />
+      ) : approvedOrganizations.length === 0 ? (
         <Typography variant="body1" color="text.secondary">
           Trenutno nema dostupnih udruženja.
         </Typography>
@@ -594,7 +602,7 @@ const SocialMediaSection = () => {
 };
 
 // ActiveDaije Component
-const ActiveDaije = ({ daije, lectures }) => {
+const ActiveDaije = ({ daije, lectures, isLoading }) => {
   const router = useRouter();
   const [displayDaije, setDisplayDaije] = useState([]);
 
@@ -628,7 +636,9 @@ const ActiveDaije = ({ daije, lectures }) => {
       Upoznaj 10 nasumično odabranih daija.
       </Typography>
 
-      {approvedDaije.length === 0 ? (
+      {isLoading ? (
+        <SkeletonGrid count={6} type="daija" />
+      ) : approvedDaije.length === 0 ? (
         <Typography variant="body1" color="text.secondary" >
           Trenutno nema dostupnih daija.
         </Typography>
@@ -681,6 +691,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
+  const [showAndroidModal, setShowAndroidModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -729,6 +740,22 @@ export default function Home() {
     fetchData();
   }, []);
 
+  // Check for Android mobile devices and show modal
+  useEffect(() => {
+    const checkAndroidModal = () => {
+      const modalShown = storage.get('androidAppModalShown');
+      
+      if (!modalShown && deviceUtils.isAndroidMobile()) {
+        // Small delay to allow page to load
+        setTimeout(() => {
+          setShowAndroidModal(true);
+        }, 1500);
+      }
+    };
+
+    checkAndroidModal();
+  }, []);
+
   useEffect(() => {
     // Provjeri da li treba prikazati poruku o uspješnoj registraciji
     if (typeof window !== 'undefined') {
@@ -738,6 +765,12 @@ export default function Home() {
       }
     }
   }, []);
+
+  // Function to handle Android modal close
+  const handleAndroidModalClose = () => {
+    storage.set('androidAppModalShown', 'true');
+    setShowAndroidModal(false);
+  };
 
   // Inside the component, filter data before using it with safety checks
   const approvedOrganizations = (organizations || []).filter(item => item.status === 'approved');
@@ -775,7 +808,7 @@ export default function Home() {
 
       {/* 10 Lectures */}
       <Box sx={{ width: '100%', mb: 4 }}>
-        <TenLectures lectures={lectures} />
+        <TenLectures lectures={lectures} isLoading={isLoading} />
       </Box>
 
       {/* Benefits Section */}
@@ -783,7 +816,7 @@ export default function Home() {
 
       {/* Active Daije */}
       <Box sx={{ width: '100%', mb: 4 }}>
-        <ActiveDaije daije={daije} lectures={lectures} />
+        <ActiveDaije daije={daije} lectures={lectures} isLoading={isLoading} />
       </Box>
 
       {/* Social Media Section */}
@@ -793,7 +826,12 @@ export default function Home() {
 
       {/* Active Organizations */}
       <Box sx={{ width: '100%', mb: 4 }}>
-        <ActiveOrganizations organizations={organizations} lectures={lectures} />
+        <ActiveOrganizations organizations={organizations} lectures={lectures} isLoading={isLoading} />
+      </Box>
+
+      {/* Download App Section */}
+      <Box sx={{ width: '100%', mb: 4 }}>
+        <DownloadAppSection />
       </Box>
 
       {/* Quick Actions */}
@@ -801,7 +839,11 @@ export default function Home() {
         <QuickActions />
       </Box>
 
-
+      {/* Android App Modal */}
+      <AndroidAppModal 
+        open={showAndroidModal}
+        onClose={handleAndroidModalClose}
+      />
      
     </PageLayout>
   );

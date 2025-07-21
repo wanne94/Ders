@@ -13,9 +13,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SystemBars } from 'react-native-edge-to-edge';
 import { Picker } from '@react-native-picker/picker';
 
 import { authService } from '../services/authService';
@@ -677,7 +677,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#001a2e" />
+      <SystemBars style="light" hidden={false} />
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

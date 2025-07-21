@@ -5,7 +5,7 @@ export default {
     owner: "wanne",
     scheme: "exp+ders-app",
     version: "1.0.5",
-    orientation: "portrait",
+    orientation: "default",
     icon: "./assets/images/logo.jpg",
     userInterfaceStyle: "light",
     splash: {
@@ -56,6 +56,7 @@ export default {
           },
         },
       ],
+      "react-native-edge-to-edge"
     ],
     extra: {
       eas: {

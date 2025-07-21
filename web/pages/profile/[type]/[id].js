@@ -29,6 +29,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import PageLayout from '@/components/PageLayout';
 import ShareButton from '@/components/ShareButton';
 import UniversalCard from '@/components/UniversalCard';
+import SkeletonProfile from '@/components/SkeletonProfile';
+import SkeletonGrid from '@/components/SkeletonGrid';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 import { formatDateWithDay } from '@/utils/dataHelpers';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
@@ -215,9 +217,7 @@ const ProfilePage = () => {
   if (loading) {
     return (
       <PageLayout>
-        <Container maxWidth="lg" sx={{ py: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <CircularProgress size={60} />
-        </Container>
+        <SkeletonProfile type={type} />
       </PageLayout>
     );
   }
@@ -673,9 +673,7 @@ const ProfilePage = () => {
 
           {/* Loading State */}
           {relatedLoading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-              <CircularProgress size={60} />
-            </Box>
+            <SkeletonGrid count={8} type="lecture" />
           )}
 
           {/* Error State */}

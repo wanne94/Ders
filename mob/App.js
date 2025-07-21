@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -14,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SystemBars } from 'react-native-edge-to-edge';
 import UniverzalCard from './components/UniverzalCard';
 import UniversalProfile from './components/UniversalProfile';
 import BottomNavigation from './components/BottomNavigation';
@@ -718,7 +718,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} translucent />
+      <SystemBars style="light" hidden={false} />
       <View style={styles.container}>
         <Header 
           onMenuPress={handleMenuToggle}
