@@ -92,8 +92,8 @@ android {
         applicationId 'com.daije.mobile'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "1.0.5"
+        versionCode 9
+        versionName "1.0.6"
     }
     signingConfigs {
         debug {
@@ -101,6 +101,12 @@ android {
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'
+        }
+        release {
+            storeFile file('../../android-credentials/Ders-app-produkcija.keystore')
+            storePassword 'DersApp2024Prod'
+            keyAlias 'Ders-app-produkcija'
+            keyPassword 'DersApp2024Prod'
         }
     }
     buildTypes {
@@ -110,7 +116,7 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
@@ -173,5 +179,44 @@ dependencies {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
+    }
+}
+
+// Task za kopiranje AAB i APK fajlova u builds folder
+task copyBuildOutputs {
+    doLast {
+        def buildsDir = file("../builds")
+        if (!buildsDir.exists()) {
+            buildsDir.mkdirs()
+        }
+        
+        // Kopiranje AAB fajla
+        def aabFile = file("build/outputs/bundle/release/app-release.aab")
+        if (aabFile.exists()) {
+            copy {
+                from aabFile
+                into buildsDir
+                rename { "app-release-${android.defaultConfig.versionName}-${android.defaultConfig.versionCode}.aab" }
+            }
+            println "✅ AAB kopiran u: ${buildsDir}/app-release-${android.defaultConfig.versionName}-${android.defaultConfig.versionCode}.aab"
+        }
+        
+        // Kopiranje APK fajla
+        def apkFile = file("build/outputs/apk/release/app-release.apk")
+        if (apkFile.exists()) {
+            copy {
+                from apkFile
+                into buildsDir
+                rename { "app-release-${android.defaultConfig.versionName}-${android.defaultConfig.versionCode}.apk" }
+            }
+            println "✅ APK kopiran u: ${buildsDir}/app-release-${android.defaultConfig.versionName}-${android.defaultConfig.versionCode}.apk"
+        }
+    }
+}
+
+// Automatski pokreni kopiranje nakon bundleRelease i assembleRelease
+tasks.whenTaskAdded { task ->
+    if (task.name == 'bundleRelease' || task.name == 'assembleRelease') {
+        task.finalizedBy copyBuildOutputs
     }
 }

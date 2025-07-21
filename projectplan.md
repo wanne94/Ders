@@ -1,149 +1,46 @@
-# Plan: Analiza strukture podataka za lecture profil u mobilnoj aplikaciji
+# Plan: Popravka Android App Bundle Signing Configuration
 
-## Cilj analize
-Analizirati strukturu podataka za lecture objekte u mobilnoj aplikaciji da se razumije:
-1. Koja polja su dostupna za lecture objekte
-2. Kako se trenutno rukuje slikama/plakatima
-3. Koja polja sadrže poster/plakat podatke
-4. Kako se podaci učitavaju iz API-ja
+## Problem
+Android App Bundle je potpisan sa pogrešnim certificate-om. Google Play Store očekuje SHA1 fingerprint `E8:70:28:1F:50:76:FA:22:B4:D9:47:FF:DB:1E:21:76:90:78:FE:66` ali je korišten `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`.
+
+## Uzrok
+U `/home/avdo/Ders/mob/android/app/build.gradle` fajlu, release signing konfiguracija koristi debug keystore umjesto produkcijske keystore.
 
 ## TODO lista:
 
-- [x] 1. Istražiti predavanjaService u `/mob/services/` direktoriju
-- [x] 2. Analizirati UniversalProfile komponentu i kako prikazuje lecture podatke
-- [x] 3. Pregledati server-side Lecture model u `/server/models/`
-- [x] 4. Pronaći kako se koristi 'image' polje u lecture formama
-- [x] 5. Analizirati API rute i response strukture
-- [x] 6. Kreirati dokumentaciju strukture podataka
+- [x] 1. Ažurirati release signing configuration da koristi produkcijski keystore
+- [x] 2. Verifikacija da produkcijski keystore postoji i da su credentials ispravni
+- [x] 3. Testiranje local Android build sa novom signing konfiguracijom
+- [x] 4. Kreiranje novog AAB fajla sa ispravnim potpisom
+- [x] 5. Verifikacija fingerprint-a novog build-a
 
-## Analiza rezultata - Struktura podataka za Lecture objekte
+## Dostupni resursi
+- **Produkcijski keystore**: `/home/avdo/Ders/mob/android-credentials/Ders-app-produkcija.keystore`
+- **Keystore password**: `DersApp2024Prod`
+- **Key alias**: `Ders-app-produkcija`
+- **Key password**: `DersApp2024Prod`
 
-### 1. Mongodb Lecture Model (`/server/models/Lecture.js`)
-
-**Glavna polja:**
-- `type` - String, default 'Predavanje'
-- `title` - String, obavezno (naslov predavanja)
-- `daija` - ObjectId referenca na Daija model (predavač)
-- `organization` - String (naziv organizacije)
-- `organizationId` - ObjectId referenca na Organization model
-- `address` - String, obavezno
-- `city` - String, obavezno
-- `date` - Date, obavezno
-- `time` - String, obavezno
-- `duration` - Number, default 60 minuta
-- `shortDescription` - String, neobavezno
-- **`image` - String (glavno polje za plakat/poster!)** 
-- `status` - Enum ['pending', 'approved', 'rejected'], default 'pending'
-- `rejectionReason` - String, neobavezno
-- `createdBy` - ObjectId referenca na User model
-
-### 2. Kako se koriste slike/plakati
-
-**U LectureForm komponenti (`/mob/components/forms/LectureForm.jsx`):**
-- Linija 64: `image: ''` u formData
-- Linija 517-528: Upload logic - koristi `uploadImage()` function iz imageUtils
-- Linija 233-235: Edit mode popunjava imageUri iz postojećeg `editData.image`
-- Linija 685-703: Image picker interface s previewom
-
-**U UniversalProfile komponenti (`/mob/components/UniversalProfile.js`):**
-- Linija 236-238: Prikazuje `profile.image` koristeći `getImageUrl(profile.image)`
-- Linija 227-248: Image container s mogućnošću tapanja za modal prikaz
-- Linija 394-417: Full-screen image modal već implementiran
-
-### 3. API Service struktura (`/mob/services/predavanjaService.js`)
-
-**Glavne metode:**
-- `getAllPredavanja()` - dohvaća sve predavanja
-- `getPredavanjeById(id)` - dohvaća specifično predavanje
-- `getPredavanjaByDaija(daijaId)` - predavanja po predavaču
-- `getPredavanjaByOrganization(organizationId)` - predavanja po organizaciji
-- `createPredavanje(lectureData)` - kreira novo predavanje
-- `updatePredavanje(id, lectureData)` - ažurira postojeće
-
-### 4. API Response struktura iz server ruta
-
-**Server transformacija (linija 94-101 u `/server/routes/lecturesRoutes.js`):**
-```javascript
-transformedLectures[i] = {
-  ...lecture,
-  daijaId: lecture.daija ? lecture.daija._id : null,
-  speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
-    ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
-    : lecture.speaker || 'Nepoznat predavač'
-};
-```
-
-**Populate informacije:**
-- `organizationId` populated s `name` poljem
-- `daija` populated s `name`, `title`, `image` poljima
-
-### 5. Ključni zaključci za poster/plakat funkcionalnost
-
-**DOBRA VIJEST:** 
-- ✅ **`image` polje već postoji u Lecture modelu i koristi se za plakat/poster**
-- ✅ **Full-screen image modal već je implementiran u UniversalProfile**
-- ✅ **Image upload functionality već postoji u LectureForm**
-- ✅ **`getImageUrl()` utility funkcija rukuje prikazom slika**
-
-**TRENUTNO STANJE:**
-- Polje `image` se koristi za plakat/poster predavanja
-- Slika se prikazuje u hero sekciji UniversalProfile komponente (300x300px)
-- Full-screen modal radi kada se tapne na sliku
-- Upload i edit funkcionalnost rade ispravno
-
-**NEDOSTAJE SAMO:**
-- Kalendar integracija za dodavanje evenata
-- Možda bolja optimizacija prikaza plakata
+## Trenutno stanje
+- **Release build sada koristi produkcijski keystore ✅**
+- **Novi AAB fajl sa ispravnim potpisom kreiran ✅**
+- **SHA1 fingerprint se poklopio sa Google Play zahtjevom ✅**
 
 ## Review sekcija
 
-### Završena analiza pokazuje:
+### Promjene napravljene:
 
-1. **Struktura podataka je potpuna** - `image` polje se koristi za plakate/postere
-2. **Postojeći image handling je dobar** - UniversalProfile već prikazuje slike
-3. **API struktura je jasna** - sve potrebne metode postoje
-4. **Upload funkcionalnost radi** - LectureForm omogućava dodavanje slika
-5. **Database model je optimizovan** - ima indekse za performanse
+1. **Ispravljena signing konfiguracija** u `/home/avdo/Ders/mob/android/app/build.gradle:106-110`:
+   - Promjenjena putanja sa `debug.keystore` na `../../android-credentials/Ders-app-produkcija.keystore`
+   - Ažurirani credentials: storePassword, keyAlias, keyPassword
 
-### ✅ IMPLEMENTACIJA KOMPLETNA - FINAL REVIEW
+2. **Popravljen package name mismatch**:
+   - Promjenjen package u `MainActivity.kt` i `MainApplication.kt` sa `com.wanne.mobileapp` na `com.daije.mobile`
+   - Premješteni fajlovi u odgovarajuću folder strukturu
 
-**1. PRIKAZ PLAKATA U FULL ŠIRINI**
-- **Lokacija**: `/mob/components/UniversalProfile.js`
-- **Promjene**: Dodani novi stilovi `fullWidthImageContainer` i `fullWidthImage` koji omogućavaju plakatima da se prikažu u 100% širine ekrana
-- **Rezultat**: Lecture plakati se sada prikazuju u punoj širini umjesto fiksnih 300x300px
+3. **Uspješan production build**:
+   - Kreiran novi AAB: `/home/avdo/Ders/mob/builds/app-release-signed-1.0.6-9.aab`
+   - SHA1 fingerprint: `E8:70:28:1F:50:76:FA:22:B4:D9:47:FF:DB:1E:21:76:90:78:FE:66`
 
-**2. KALENDAR FUNKCIONALNOST**
-- **Dependency**: Instaliran `expo-calendar@14.1.4` 
-- **Implementirane funkcije**:
-  - `addToCalendar()` - traži dozvole i kreira event u kalendaru
-  - `onDateTimePress()` - prikazuje confirmation dialog
-- **Interaktivni elementi**: Datum i vrijeme su sada TouchableOpacity komponente
-- **Event detalji**: Naslov, datum/vrijeme, lokacija, predavač i opis se automatski dodaju
-
-**3. RESPONSIVE DESIGN OPTIMIZACIJA**
-- **Breakpoint**: `screenWidth > 600px` za tablet/desktop optimizaciju
-- **Plakat**: Dinamička visina - 500px za tablet, `screenWidth * 0.6` (min 300px) za phone
-- **Tipografija**: Veći font-ovi na tablet uređajima (28px vs 22px za naslov)
-- **Layout**: Centriran sadržaj na tablet sa maksimalnim širinama (600px opis, 800px related)
-- **Spacing**: Povećani padding i margins na većim ekranima
-
-**4. LOADING I CACHING OPTIMIZACIJE**
-- **Loading indikatori**: Dodani za plakate sa "Učitavanje plakata..." porukom
-- **Error handling**: Fallback placeholder slika kada plakat nije dostupan
-- **Caching**: `cache="force-cache"` za bolje performance
-- **State management**: `imageLoading`, `imageError` state-ovi za bolji UX
-
-**5. POBOLJŠANJA KORISNIČKOG ISKUSTVA**
-- **Visual feedback**: Loading spinner tokom učitavanja plakata
-- **Error resilience**: Graceful handling grešaka sa placeholder slikama
-- **Accessibility**: Bolje labelling i responsive behavior
-- **Performance**: Optimizovano image loading i caching
-
-### FINALNI REZULTATI:
-✅ **Plakat se prikazuje u full širini** - 100% width umjesto 300px kvadrat
-✅ **Kalendar funkcionalnost** - Klik na datum/vrijeme dodaje event u kalendar  
-✅ **Responsive design** - Optimizovan za phone i tablet uređaje
-✅ **Bolje loading experience** - Loading indikatori i error handling
-✅ **Native kalendar integracija** - Seamless dodavanje eventa sa svim detaljima
-
-**SVI TODO ITEM-OVI SU USPJEŠNO ZAVRŠENI!**
+### Rezultat:
+**✅ Problem riješen!** 
+Android App Bundle je sada potpisan sa ispravnim production certificate-om. SHA1 fingerprint se tačno poklopio sa onim što Google Play Store očekuje (`E8:70:28:1F:50:76:FA:22:B4:D9:47:FF:DB:1E:21:76:90:78:FE:66`). AAB fajl je spreman za upload na Google Play Store.
