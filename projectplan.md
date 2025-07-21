@@ -1,46 +1,72 @@
-# Plan: Popravka Android App Bundle Signing Configuration
+# Plan za brisanje testnih i privremenih fajlova
 
-## Problem
-Android App Bundle je potpisan sa pogrešnim certificate-om. Google Play Store očekuje SHA1 fingerprint `E8:70:28:1F:50:76:FA:22:B4:D9:47:FF:DB:1E:21:76:90:78:FE:66` ali je korišten `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`.
+## Identifikovani fajlovi za brisanje:
 
-## Uzrok
-U `/home/avdo/Ders/mob/android/app/build.gradle` fajlu, release signing konfiguracija koristi debug keystore umjesto produkcijske keystore.
+### Root direktorij:
+- `debug-lectures.js` - debug script za lectures
+- `diagnose-images.js` - dijagnostički script za slike  
+- `index-fixed.js` - privremeni "fixed" fajl
+- `restore-simple-images.js` - script za restore slika
+
+### Mob direktorij:
+- `check-expo-network.js` - test za network konekciju
+- `app.config.js.backup` - backup fajl
+- `projectplan.md` (duplikat - zadržat ću root verziju)
+
+### Server direktorij:
+- `check-db.js` - test za DB konekciju
+- `check-env.js` - test env varijabli
+- `check-lectures-data.js` - test za lectures data
+- `combined.log` - log fajl
+- `error.log` - error log fajl
+
+### Web direktorij:
+- `TESTING.md` - test dokumentacija
+- `jest.config.js`, `jest.setup.js` - test konfiguracija
+- `playwright.config.js` - test konfiguracija
+- `components/UnifiedFormExample.jsx` - example komponenta
+- `components/UnifiedForm.md` - dokumentacija komponente
+- `utils/lectureStatusTests.js` - test fajl
 
 ## TODO lista:
-
-- [x] 1. Ažurirati release signing configuration da koristi produkcijski keystore
-- [x] 2. Verifikacija da produkcijski keystore postoji i da su credentials ispravni
-- [x] 3. Testiranje local Android build sa novom signing konfiguracijom
-- [x] 4. Kreiranje novog AAB fajla sa ispravnim potpisom
-- [x] 5. Verifikacija fingerprint-a novog build-a
-
-## Dostupni resursi
-- **Produkcijski keystore**: `/home/avdo/Ders/mob/android-credentials/Ders-app-produkcija.keystore`
-- **Keystore password**: `DersApp2024Prod`
-- **Key alias**: `Ders-app-produkcija`
-- **Key password**: `DersApp2024Prod`
-
-## Trenutno stanje
-- **Release build sada koristi produkcijski keystore ✅**
-- **Novi AAB fajl sa ispravnim potpisom kreiran ✅**
-- **SHA1 fingerprint se poklopio sa Google Play zahtjevom ✅**
+- [x] 1. Identifikuj sve testne i privremene fajlove u projektu
+- [x] 2. Analiziraj sadržaj fajlova da potvrdiš da su testni/privremeni  
+- [x] 3. Obriši identifikovane testne i privremene fajlove
+- [x] 4. Provjeri da li aplikacija još uvijek radi nakon brisanja
 
 ## Review sekcija
 
-### Promjene napravljene:
+### Obrisani fajlovi:
 
-1. **Ispravljena signing konfiguracija** u `/home/avdo/Ders/mob/android/app/build.gradle:106-110`:
-   - Promjenjena putanja sa `debug.keystore` na `../../android-credentials/Ders-app-produkcija.keystore`
-   - Ažurirani credentials: storePassword, keyAlias, keyPassword
+#### Root direktorij:
+- ✅ `debug-lectures.js` - debug script za testiranje MongoDB queries
+- ✅ `diagnose-images.js` - dijagnostički script za slike i nginx
+- ✅ `index-fixed.js` - privremeni "fixed" fajl sa ActiveDaije komponentom
+- ✅ `restore-simple-images.js` - script za zamjenu CDN sa simple uploads
 
-2. **Popravljen package name mismatch**:
-   - Promjenjen package u `MainActivity.kt` i `MainApplication.kt` sa `com.wanne.mobileapp` na `com.daije.mobile`
-   - Premješteni fajlovi u odgovarajuću folder strukturu
+#### Mob direktorij:
+- ✅ `check-expo-network.js` - test za network konekciju
+- ✅ `app.config.js.backup` - backup fajl
+- ✅ `projectplan.md` - duplikat project plan fajla
 
-3. **Uspješan production build**:
-   - Kreiran novi AAB: `/home/avdo/Ders/mob/builds/app-release-signed-1.0.6-9.aab`
-   - SHA1 fingerprint: `E8:70:28:1F:50:76:FA:22:B4:D9:47:FF:DB:1E:21:76:90:78:FE:66`
+#### Server direktorij:
+- ✅ `check-db.js` - test za DB konekciju
+- ✅ `check-env.js` - test env varijabli
+- ✅ `check-lectures-data.js` - test za lectures data
+- ✅ `combined.log` - log fajl
+- ✅ `error.log` - error log fajl
 
-### Rezultat:
-**✅ Problem riješen!** 
-Android App Bundle je sada potpisan sa ispravnim production certificate-om. SHA1 fingerprint se tačno poklopio sa onim što Google Play Store očekuje (`E8:70:28:1F:50:76:FA:22:B4:D9:47:FF:DB:1E:21:76:90:78:FE:66`). AAB fajl je spreman za upload na Google Play Store.
+#### Web direktorij:
+- ✅ `TESTING.md` - test dokumentacija
+- ✅ `jest.config.js`, `jest.setup.js` - Jest test konfiguracija
+- ✅ `playwright.config.js` - Playwright test konfiguracija
+- ✅ `components/UnifiedFormExample.jsx` - example komponenta
+- ✅ `components/UnifiedForm.md` - dokumentacija komponente
+- ✅ `utils/lectureStatusTests.js` - test fajl za lecture status
+
+### Rezultat testiranja:
+- ✅ **Server se pokreće bez greške**
+- ✅ **Web aplikacija se uspješno build-uje**
+- ⚠️ **1 warning u build-u** - React Hook useEffect dependency (nije kritično)
+
+**Svi privremeni i testni fajlovi su uspješno obrisani. Aplikacija radi normalno.**

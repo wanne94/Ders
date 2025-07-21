@@ -1,8 +1,8 @@
 {
   "../src/utils/uploadService.js -> axios": {
-    "id": "../src/utils/uploadService.js -> axios",
+    "id": 29204,
     "files": [
-      "static/chunks/node_modules_axios_index_js.js"
+      "static/chunks/204.0bb672adbe089e35.js"
     ]
   }
 }
