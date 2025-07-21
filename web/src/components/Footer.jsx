@@ -7,6 +7,7 @@ import {
   IconButton,
   Divider
 } from '@mui/material';
+import ContentContainer from './ContentContainer';
 import {
   Home as HomeIcon,
   Event as EventIcon,
@@ -46,7 +47,7 @@ const Footer = () => {
         mt: 6
       }}
     >
-      <Container maxWidth="lg">
+      <ContentContainer>
         <Grid container spacing={4}>
           {/* Logo i opis */}
           <Grid item xs={12} md={4}>
@@ -199,7 +200,7 @@ const Footer = () => {
             </Typography>
           </Box>
         </Box>
-      </Container>
+      </ContentContainer>
     </Box>
   );
 };

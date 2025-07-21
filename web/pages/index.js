@@ -27,6 +27,7 @@ import {
   Instagram as InstagramIcon
 } from '@mui/icons-material';
 import PageLayout from '@/components/PageLayout';
+import ContentContainer from '@/components/ContentContainer';
 import { OrganizationsGrid, DaijeGrid, LecturesGrid } from '@/components/GridLayout';
 import UniversalCard from '@/components/UniversalCard';
 import SkeletonGrid from '@/components/SkeletonGrid';
@@ -42,12 +43,10 @@ const HeroSection = () => {
   return (
     <Box 
       sx={{ 
-        width: '100%',
+        width: '100vw',
         position: 'relative',
         left: '50%',
-        right: '50%',
         marginLeft: '-50vw',
-        marginRight: '-50vw',
         pt: 5, 
         pb: 5, 
         background: 'linear-gradient(135deg, #022C43 0%, #055A87 100%)',
@@ -55,13 +54,15 @@ const HeroSection = () => {
         textAlign: 'center'
       }}
     >
-      <Typography variant="h2" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-        DERS
-      </Typography>
-      <Divider color="white" sx={{ width: '20%', margin: '1rem auto', opacity: 0.5 }} />
-      <Typography variant="h5" sx={{ mb: 3, opacity: 0.9, fontSize: '1.5rem' }}>
-      Digitalna platforma za promociju islamskih predavanja
-      </Typography>
+      <ContentContainer>
+        <Typography variant="h2" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
+          DERS
+        </Typography>
+        <Divider color="white" sx={{ width: '20%', margin: '1rem auto', opacity: 0.5 }} />
+        <Typography variant="h5" sx={{ mb: 3, opacity: 0.9, fontSize: '1.5rem' }}>
+        Digitalna platforma za promociju islamskih predavanja
+        </Typography>
+      </ContentContainer>
     </Box>
   );
 };
@@ -97,10 +98,11 @@ const QuickActions = () => {
   ];
 
   return (
-    <Box sx={{ textAlign: 'center', mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h2" sx={{ mb: 2 }}>
-        Navigacija
-      </Typography>
+    <ContentContainer>
+      <Box sx={{ textAlign: 'center', mt: 4, mb: 4 }}>
+        <Typography variant="h4" component="h2" sx={{ mb: 2 }}>
+          Navigacija
+        </Typography>
       <Grid container spacing={3} justifyContent="center" sx={{ mb: 1 }}>
         {quickActions.map((action, index) => (
           <Grid item xs={12} sm={6} md={3.5} key={index}>
@@ -145,7 +147,8 @@ const QuickActions = () => {
           </Grid>
         ))}
       </Grid>
-    </Box>
+      </Box>
+    </ContentContainer>
   );
 };
 
@@ -162,13 +165,14 @@ const TenLectures = ({ lectures, isLoading }) => {
   };
 
   return (
-    <Box sx={{ mt: 1, textAlign: 'center' }}>
-      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
-        Dersovi
-      </Typography>
-      <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
-        Posljednje najavljeni dersovi
-      </Typography>
+    <ContentContainer>
+      <Box sx={{ mt: 1, textAlign: 'center' }}>
+        <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
+          Dersovi
+        </Typography>
+        <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
+          Posljednjih 10 najavljenih dersova
+        </Typography>
 
       {isLoading ? (
         <SkeletonGrid count={6} type="lecture" />
@@ -208,7 +212,8 @@ const TenLectures = ({ lectures, isLoading }) => {
           </Box>
         </>
       )}
-    </Box>
+      </Box>
+    </ContentContainer>
   );
 };
 
@@ -260,24 +265,20 @@ const BenefitsSection = () => {
   return (
     <Box 
       sx={{ 
-        width: '100%',
-        position: 'relative',
-       
-        marginLeft: '-50vw',
-        marginRight: '-50vw',
+        width: 'calc(100vw)',
         py: 8,
         background: 'linear-gradient(135deg, #022C43 0%, #055A87 100%)',
         color: 'white',
         mt: 6,
-        overflow: 'hidden',
-       
-        my: 1
+        mb: 1,
+        mx: 'calc(-50vw + 50%)',
+        position: 'relative'
       }}
     >
-      <Container 
-        maxWidth="lg"
-        sx={{
-          px: { xs: 2, sm: 3, md: 4 },
+      <ContentContainer 
+        sx={{ 
+          maxWidth: '1900px !important',
+          width: '100%',
           mx: 'auto'
         }}
       >
@@ -306,7 +307,16 @@ const BenefitsSection = () => {
           </Typography>
         </Box>
 
-        <Grid container spacing={4} sx={{ mb: 6 }}>
+        <Grid 
+          container 
+          spacing={3} 
+          sx={{ 
+            mb: 6,
+            maxWidth: '100%',
+            width: '100%',
+            overflow: 'hidden'
+          }}
+        >
           {benefits.map((benefit, index) => (
             <Grid item xs={12} md={6} key={index}>
               <Box
@@ -427,7 +437,7 @@ const BenefitsSection = () => {
             </Button>
           </Box>
         </Box>
-      </Container>
+      </ContentContainer>
     </Box>
   );
 };
@@ -441,7 +451,7 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
     if (organizations && lectures) {
       // Privremeno koristimo jednostavno sortiranje umesto složene funkcije
       const approvedOrgs = (organizations || []).filter(org => org.status === 'approved');
-      const sortedOrganizations = approvedOrgs.slice(0, 10); // Limit to 10 organizations
+      const sortedOrganizations = approvedOrgs.slice(0, 8); // Limit to 8 organizations
 
       setDisplayOrganizations(sortedOrganizations || []);
     }
@@ -455,13 +465,14 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
   const approvedOrganizations = (displayOrganizations || []).filter(item => item.status === 'approved');
 
   return (
-    <Box sx={{ mt: 0, textAlign: 'center' }}>
-      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
-        Udruženja
-      </Typography>
-      <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
-        Upoznaj 10 nasumično odabranih udruženja.
-      </Typography>
+    <ContentContainer>
+      <Box sx={{ mt: 0, textAlign: 'center' }}>
+        <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
+          Udruženja
+        </Typography>
+        <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
+          Upoznaj 8 nasumično odabranih udruženja.
+        </Typography>
 
       {isLoading ? (
         <SkeletonGrid count={6} type="organization" />
@@ -502,14 +513,16 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
           </Box>
         </>
       )}
-    </Box>
+      </Box>
+    </ContentContainer>
   );
 };
 
 // Social Media Section Component
 const SocialMediaSection = () => {
   return (
-    <Box sx={{ mt: 2, mb: 2, textAlign: 'center' }}>
+    <ContentContainer>
+      <Box sx={{ mt: 2, mb: 2, textAlign: 'center' }}>
       <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 2 }}>
         Pratite nas na društvenim mrežama
       </Typography>
@@ -597,7 +610,8 @@ const SocialMediaSection = () => {
           </Typography>
         </Box>
       </Box>
-    </Box>
+      </Box>
+    </ContentContainer>
   );
 };
 
@@ -615,7 +629,7 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
       const shuffled = [...approvedDaije].sort(() => Math.random() - 0.5);
       
       // Uzimamo prvih 10
-      const randomDaije = shuffled.slice(0, 10);
+      const randomDaije = shuffled.slice(0, 8);
       setDisplayDaije(randomDaije || []);
     }
   }, [daije, lectures]);
@@ -628,13 +642,14 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
   const approvedDaije = displayDaije;
 
   return (
-    <Box sx={{ mt: 1, textAlign: 'center' }}>
-      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
-        Daije
-      </Typography>
-      <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
-      Upoznaj 10 nasumično odabranih daija.
-      </Typography>
+    <ContentContainer>
+      <Box sx={{ mt: 1, textAlign: 'center' }}>
+        <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
+          Daije
+        </Typography>
+        <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
+        Upoznaj 8 nasumično odabranih daija.
+        </Typography>
 
       {isLoading ? (
         <SkeletonGrid count={6} type="daija" />
@@ -674,7 +689,8 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
           </Box>
         </>
       )}
-    </Box>
+      </Box>
+    </ContentContainer>
   );
 };
 

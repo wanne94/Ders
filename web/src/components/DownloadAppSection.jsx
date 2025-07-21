@@ -21,7 +21,7 @@ const DownloadAppSection = () => {
       }}
     >
       <Container 
-        maxWidth="lg"
+        maxWidth="xxl"
         sx={{
           px: { xs: 2, sm: 3, md: 4 },
           mx: 'auto'

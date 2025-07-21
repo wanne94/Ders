@@ -276,7 +276,8 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
                 sx={{
                   fontSize: '18px',
                   fontWeight: displayData.type === 'lecture' ? 'bold' : 600,
-                  mb: 1,
+                  mb: 0.5,
+                  lineHeight: 1.2,
                   overflow: 'hidden',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,

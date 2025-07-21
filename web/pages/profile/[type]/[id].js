@@ -27,6 +27,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import DirectionsIcon from '@mui/icons-material/Directions';
 import CloseIcon from '@mui/icons-material/Close';
 import PageLayout from '@/components/PageLayout';
+import ContentContainer from '@/components/ContentContainer';
 import ShareButton from '@/components/ShareButton';
 import UniversalCard from '@/components/UniversalCard';
 import SkeletonProfile from '@/components/SkeletonProfile';
@@ -52,7 +53,7 @@ const ProfilePage = () => {
   const [relatedError, setRelatedError] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const lecturesPerPage = 12;
+  const lecturesPerPage = 10;
 
   useEffect(() => {
     if (!type || !id) return;
@@ -225,7 +226,7 @@ const ProfilePage = () => {
   if (error) {
     return (
       <PageLayout>
-        <Container maxWidth="lg" sx={{ py: 4 }}>
+        <ContentContainer sx={{ py: 4 }}>
           <Alert severity="error" sx={{ mb: 4 }}>
             {error}
           </Alert>
@@ -236,7 +237,7 @@ const ProfilePage = () => {
           >
             {getBackText()}
           </Button>
-        </Container>
+        </ContentContainer>
       </PageLayout>
     );
   }
@@ -244,7 +245,7 @@ const ProfilePage = () => {
   if (!profile) {
     return (
       <PageLayout>
-        <Container maxWidth="lg" sx={{ py: 4 }}>
+        <ContentContainer sx={{ py: 4 }}>
           <Alert severity="warning" sx={{ mb: 4 }}>
             Profil nije pronađen
           </Alert>
@@ -255,14 +256,14 @@ const ProfilePage = () => {
           >
             {getBackText()}
           </Button>
-        </Container>
+        </ContentContainer>
       </PageLayout>
     );
   }
 
   return (
     <PageLayout>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <ContentContainer sx={{ py: 4 }}>
         {/* Back Button */}
         <Box sx={{ mb: 3 }}>
           <Button
@@ -287,7 +288,7 @@ const ProfilePage = () => {
             position: 'relative'
           }}
         >
-          <Container maxWidth="lg">
+          <ContentContainer>
             <Grid container spacing={4} alignItems="flex-start" sx={{ py: { xs: 4, sm: 6 } }}>
               {/* Profile Image */}
               <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
@@ -637,13 +638,13 @@ const ProfilePage = () => {
                 </Box>
               </Grid>
             </Grid>
-          </Container>
+          </ContentContainer>
         </Paper>
-      </Container>
+      </ContentContainer>
 
       {/* Related Lectures Section */}
       <Box id="related-lectures" sx={{ py: { xs: 4, md: 6 }, backgroundColor: '#f8f9fa' }}>
-        <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
+        <ContentContainer>
           {/* Section Title */}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
             <Typography 
@@ -754,7 +755,7 @@ const ProfilePage = () => {
               </Typography>
             </Box>
           )}
-        </Container>
+        </ContentContainer>
       </Box>
 
       {/* Image Modal */}

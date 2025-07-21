@@ -51,7 +51,7 @@ export const calculateLectureStatus = (lecture) => {
       status: 'upcoming',
       timeInfo,
       badgeText: `Uskoro • ${timeInfo}`,
-      badgeColor: 'yellow',
+      badgeColor: 'green',
       timeToStart,
       lectureStartTime,
       lectureEndTime
@@ -74,8 +74,8 @@ export const calculateLectureStatus = (lecture) => {
     return {
       status: 'past',
       timeInfo,
-      badgeText: 'Prošlo',
-      badgeColor: 'red',
+      badgeText: `Prošlo • ${timeInfo}`,
+      badgeColor: 'gray',
       timeSinceEnd: Math.abs(timeToEnd),
       lectureStartTime,
       lectureEndTime
@@ -95,14 +95,14 @@ export const formatTimeUntilStart = (milliseconds) => {
   
   if (days > 0) {
     if (days === 1) {
-      return hours > 0 ? `1 dan ${hours}h` : '1 dan';
+      return '1 dan';
     }
-    return hours > 0 ? `${days} dana ${hours}h` : `${days} dana`;
+    return `${days} dana`;
   } else if (hours > 0) {
     if (hours === 1) {
-      return minutes > 0 ? `1h ${minutes}min` : '1h';
+      return '1h';
     }
-    return minutes > 0 ? `${hours}h ${minutes}min` : `${hours}h`;
+    return `${hours}h`;
   } else if (minutes > 0) {
     return `${minutes}min`;
   } else {
@@ -139,17 +139,14 @@ export const formatTimeSinceEnd = (milliseconds) => {
   
   if (days > 0) {
     if (days === 1) {
-      return 'završeno jučer';
-    } else if (days < 7) {
-      return `završeno prije ${days} dana`;
-    } else {
-      return 'završeno';
+      return 'prije 1 dan';
     }
+    return `prije ${days} dana`;
   } else if (hours > 0) {
     if (hours === 1) {
-      return 'završeno prije 1h';
+      return 'prije 1h';
     }
-    return `završeno prije ${hours}h`;
+    return `prije ${hours}h`;
   } else {
     return 'završeno';
   }
@@ -179,6 +176,12 @@ export const getStatusBadgeColors = (badgeColor) => {
         backgroundColor: '#ffebee',
         borderColor: '#f44336',
         textColor: '#b71c1c'
+      };
+    case 'gray':
+      return {
+        backgroundColor: '#f5f5f5',
+        borderColor: '#bdbdbd',
+        textColor: '#424242'
       };
     default:
       return {

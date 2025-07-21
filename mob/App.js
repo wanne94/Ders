@@ -127,7 +127,7 @@ const LecturesSection = ({ onProfileOpen, allLectures = [], onNavigateToLectures
         const approvedLectures = (Array.isArray(data) ? data : []).filter(lecture => lecture.status === 'approved');
         // Apply centralized sorting by date
         const sortedData = sortLecturesByStatus(approvedLectures);
-        setLectures(sortedData.slice(0, 10)); // Limit to 10 lectures for homepage
+        setLectures(sortedData.slice(0, 8)); // Limit to 8 lectures for homepage
       } catch (err) {
         console.error('Error loading lectures:', err);
         setLectures([]);
@@ -161,7 +161,7 @@ const LecturesSection = ({ onProfileOpen, allLectures = [], onNavigateToLectures
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Dersovi</Text>
       <Text style={styles.sectionSubtitle}>
-        Posljednje najavljeni dersovi
+        Posljednja 8 najavljenih dersova
       </Text>
       <View style={styles.cardsContainer}>
         {lectures?.map((lecture, index) => (
@@ -201,7 +201,7 @@ const DaijeSection = ({ onProfileOpen, allLectures = [], onNavigateToDaije }) =>
         const data = await fetchDaije();
         // Sort all approved daije with random arrangement, prioritizing those with active lectures
         const sortedData = sortAllDaijeWithActivePriority(Array.isArray(data) ? data : [], allLectures);
-        setDaije(sortedData.slice(0, 10)); // Limit to 10 daije for homepage
+        setDaije(sortedData.slice(0, 8)); // Limit to 8 daije for homepage
       } catch (err) {
         console.error('Error loading daije:', err);
         setDaije([]);
@@ -243,7 +243,7 @@ const DaijeSection = ({ onProfileOpen, allLectures = [], onNavigateToDaije }) =>
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Daije</Text>
       <Text style={styles.sectionSubtitle}>
-        Upoznaj 10 nasumično odabranih daija.
+        Upoznaj 8 nasumično odabranih daija.
       </Text>
       <View style={styles.cardsContainer}>
         {daije.map((daija, index) => (
@@ -282,7 +282,7 @@ const UdruzenjaSection = ({ onProfileOpen, allLectures = [], onNavigateToOrganiz
         const data = await fetchUdruzenja();
         // Apply centralized sorting - associations with upcoming lectures first
         const sortedData = sortAssociations(Array.isArray(data) ? data : [], allLectures);
-        setUdruzenja(sortedData.slice(0, 10)); // Limit to 10 organizations for homepage
+        setUdruzenja(sortedData.slice(0, 8)); // Limit to 8 organizations for homepage
       } catch (err) {
         console.error('Error loading udruzenja:', err);
         setUdruzenja([]);
@@ -324,7 +324,7 @@ const UdruzenjaSection = ({ onProfileOpen, allLectures = [], onNavigateToOrganiz
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Udruženja</Text>
       <Text style={styles.sectionSubtitle}>
-        Odobrena udruženja - prioritet imaju ona sa aktivnim predavanjima
+        Prikazuje se 8 odobrenih udruženja - prioritet imaju ona sa aktivnim predavanjima
       </Text>
       <View style={styles.cardsContainer}>
         {udruzenja.map((udruzenje, index) => (

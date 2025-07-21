@@ -8,11 +8,11 @@ import {
   Button
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ContentContainer from './ContentContainer';
 
 const SkeletonProfile = React.memo(({ type = 'lecture' }) => {
   return (
-    <Container 
-      maxWidth="lg" 
+    <ContentContainer 
       sx={{ 
         py: 4,
         animation: 'fadeIn 0.5s ease-in',
@@ -50,7 +50,7 @@ const SkeletonProfile = React.memo(({ type = 'lecture' }) => {
           position: 'relative'
         }}
       >
-        <Container maxWidth="lg">
+        <ContentContainer>
           <Grid container spacing={4} alignItems="flex-start" sx={{ py: { xs: 4, sm: 6 } }}>
             {/* Profile Image Skeleton */}
             <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
@@ -166,12 +166,12 @@ const SkeletonProfile = React.memo(({ type = 'lecture' }) => {
               </Box>
             </Grid>
           </Grid>
-        </Container>
+        </ContentContainer>
       </Paper>
 
       {/* Related Lectures Section Skeleton */}
       <Box sx={{ py: { xs: 4, md: 6 }, backgroundColor: '#f8f9fa' }}>
-        <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
+        <ContentContainer>
           {/* Section Title Skeleton */}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
             <Skeleton variant="text" width={200} sx={{ fontSize: '2rem' }} />
@@ -209,9 +209,9 @@ const SkeletonProfile = React.memo(({ type = 'lecture' }) => {
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
             <Skeleton variant="rectangular" width={200} height={40} sx={{ borderRadius: 2 }} />
           </Box>
-        </Container>
+        </ContentContainer>
       </Box>
-    </Container>
+    </ContentContainer>
   );
 });
 

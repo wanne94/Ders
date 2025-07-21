@@ -1946,6 +1946,37 @@ app.get('/api/daije/:id', async (req, res) => {
   }
 });
 
+// Search daije (public access) - Optimized with MongoDB text search
+app.get('/api/daije/search', async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({ message: 'Search query is required' });
+    }
+    
+    logger.info('Searching daije with query:', query);
+    
+    // Use MongoDB text search for better performance with text indexes
+    const daije = await Daija.find({ 
+      status: 'approved',
+      $text: { $search: query.trim() }
+    }, {
+      score: { $meta: 'textScore' }
+    })
+      .select('name title dateOfBirth biography shortDescription education image status createdAt')
+      .sort({ score: { $meta: 'textScore' }, name: 1 })
+      .lean()
+      .exec();
+    
+    logger.info(`Found ${daije.length} daije matching search query: "${query}"`);
+    
+    res.json(daije);
+  } catch (error) {
+    logger.error('Error searching daije:', error);
+    res.status(500).json({ message: 'Greška pri pretraživanju daija' });
+  }
+});
+
 // Add new daija
 app.post('/api/daije', authenticateToken, async (req, res) => {
   try {
@@ -2181,6 +2212,37 @@ app.get('/api/organizations/:id', async (req, res) => {
       return res.status(400).json({ message: 'Nevaljan ID organizacije' });
     }
     res.status(500).json({ message: 'Greška pri dohvaćanju organizacije' });
+  }
+});
+
+// Search organizations (public access) - Optimized with MongoDB text search
+app.get('/api/organizations/search', async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({ message: 'Search query is required' });
+    }
+    
+    logger.info('Searching organizations with query:', query);
+    
+    // Use MongoDB text search for better performance with text indexes
+    const organizations = await Organization.find({ 
+      status: 'approved',
+      $text: { $search: query.trim() }
+    }, {
+      score: { $meta: 'textScore' }
+    })
+      .select('name description address city facebook instagram youtube website image type status createdAt')
+      .sort({ score: { $meta: 'textScore' }, name: 1 })
+      .lean()
+      .exec();
+    
+    logger.info(`Found ${organizations.length} organizations matching search query: "${query}"`);
+    
+    res.json(organizations);
+  } catch (error) {
+    logger.error('Error searching organizations:', error);
+    res.status(500).json({ message: 'Greška pri pretraživanju organizacija' });
   }
 });
 
@@ -3855,7 +3917,7 @@ app.delete('/api/users/:id', authenticateToken, isSuperAdmin, async (req, res) =
   }
 });
 
-// Search lectures (public access)
+// Search lectures (public access) - Optimized with MongoDB text search
 app.get('/api/lectures/search', async (req, res) => {
   try {
     const query = req.query.q;
@@ -3865,23 +3927,16 @@ app.get('/api/lectures/search', async (req, res) => {
     
     logger.info('Searching lectures with query:', query);
     
-    const searchRegex = new RegExp(query.trim(), 'i');
-    
+    // Use MongoDB text search for better performance with text indexes
     const lectures = await Lecture.find({ 
       status: 'approved',
-      $or: [
-        { title: searchRegex },
-        { speaker: searchRegex },
-        { organization: searchRegex },
-        { city: searchRegex },
-        { address: searchRegex },
-        { description: searchRegex },
-        { shortDescription: searchRegex }
-      ]
+      $text: { $search: query.trim() }
+    }, {
+      score: { $meta: 'textScore' }
     })
       .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
       .populate('organization', 'name')
-      .sort({ date: 1 })
+      .sort({ score: { $meta: 'textScore' }, date: 1 })
       .lean()
       .exec();
     

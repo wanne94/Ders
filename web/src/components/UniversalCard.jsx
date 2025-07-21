@@ -152,11 +152,13 @@ const UniversalCard = React.memo(({ data }) => {
               displayData.statusInfo.badgeColor === 'green' ? '#e8f5e8' :
               displayData.statusInfo.badgeColor === 'yellow' ? '#fff8e1' :
               displayData.statusInfo.badgeColor === 'red' ? '#ffebee' :
+              displayData.statusInfo.badgeColor === 'gray' ? '#f5f5f5' :
               '#f5f5f5',
             color: 
               displayData.statusInfo.badgeColor === 'green' ? '#2e7d32' :
               displayData.statusInfo.badgeColor === 'yellow' ? '#f57f17' :
               displayData.statusInfo.badgeColor === 'red' ? '#c62828' :
+              displayData.statusInfo.badgeColor === 'gray' ? '#666666' :
               '#666666',
             fontWeight: 'bold',
             fontSize: '0.75rem',
@@ -208,7 +210,8 @@ const UniversalCard = React.memo(({ data }) => {
                   fontSize: '18px',
                   
                   fontWeight: displayData.type === 'lecture' ? 'bold' : 600,
-                  mb: 1,
+                  mb: 0.5,
+                  lineHeight: 1.2,
                   overflow: 'hidden',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
