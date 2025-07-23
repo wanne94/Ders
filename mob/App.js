@@ -35,6 +35,7 @@ import {
   getUserData,
   logout
 } from './utils/authHelpers';
+import firebaseService from './config/firebase';
 
 Dimensions.get('window');
 
@@ -123,8 +124,10 @@ const LecturesSection = ({ onProfileOpen, allLectures = [], onNavigateToLectures
       try {
         setIsLoading(true);
         const data = await fetchLectures();
-        // Filter only approved lectures, matching web app behavior
-        const approvedLectures = (Array.isArray(data) ? data : []).filter(lecture => lecture.status === 'approved');
+        // Filter only approved and non-cancelled lectures, matching web app behavior
+        const approvedLectures = (Array.isArray(data) ? data : []).filter(lecture => 
+          lecture.status === 'approved' && !lecture.cancelled
+        );
         // Apply centralized sorting by date
         const sortedData = sortLecturesByStatus(approvedLectures);
         setLectures(sortedData.slice(0, 8)); // Limit to 8 lectures for homepage
@@ -507,9 +510,16 @@ export default function App() {
         if (authenticated) {
           const userData = await getUserData();
           setUser(userData);
+          // Set user for Firebase analytics and crashlytics
+          firebaseService.setUserId(userData.id || userData._id);
+          firebaseService.setUserProperties({
+            user_type: userData.role || 'user',
+            registration_date: userData.createdAt || new Date().toISOString()
+          });
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
+        firebaseService.logError(error, { context: 'app_auth_check' });
         setIsAuthenticated(false);
         setUser(null);
       } finally {
@@ -517,7 +527,21 @@ export default function App() {
       }
     };
 
-    checkAuth();
+    // Initialize Firebase and check auth
+    const initializeApp = async () => {
+      try {
+        // Firebase trackanje pokretanja aplikacije
+        firebaseService.logEvent('app_open');
+        firebaseService.logScreenView('Home', 'HomeScreen');
+        
+        await checkAuth();
+      } catch (error) {
+        console.error('App initialization error:', error);
+        firebaseService.logError(error, { context: 'app_initialization' });
+      }
+    };
+
+    initializeApp();
   }, []);
 
   // Load all lectures for sorting purposes
@@ -525,7 +549,9 @@ export default function App() {
     const loadAllLectures = async () => {
       try {
         const data = await fetchLectures();
-        setAllLectures(Array.isArray(data) ? data : []);
+        // Filter out cancelled lectures for sorting purposes
+        const validLectures = (Array.isArray(data) ? data : []).filter(lecture => !lecture.cancelled);
+        setAllLectures(validLectures);
       } catch (error) {
         console.error('Error loading all lectures for sorting:', error);
         setAllLectures([]);
@@ -536,13 +562,19 @@ export default function App() {
   }, [refreshKey]);
 
   const handleTabPress = (tabId) => {
+    // Firebase tracking za tab navigation
+    firebaseService.trackUserAction('tab_press', { tab_id: tabId });
+    firebaseService.logScreenView(tabId, `${tabId}Screen`);
+    
     if (tabId === 'add') {
       if (!isAuthenticated) {
         Alert.alert('Greška', 'Morate biti ulogovani za dodavanje sadržaja');
+        firebaseService.trackUserAction('auth_required', { context: 'add_content' });
         setActiveTab('auth');
         return;
       }
       setShowAddMenu(prev => !prev);
+      firebaseService.trackUserAction('add_menu_toggle', { open: !showAddMenu });
     } else {
       setActiveTab(tabId);
       setShowAddMenu(false); // Zatvori add menu kada se klikne na drugi tab
@@ -579,6 +611,12 @@ export default function App() {
 
   const handleProfileNavigate = () => {
     setActiveTab('userProfile');
+  };
+
+  const handleLogoPress = () => {
+    setActiveTab('home');
+    setMenuOpen(false);
+    setShowAddMenu(false);
   };
 
   // Auth handlers
@@ -723,6 +761,7 @@ export default function App() {
         <Header 
           onMenuPress={handleMenuToggle}
           title={getPageTitle()}
+          onLogoPress={handleLogoPress}
         />
         
         {activeTab === 'home' ? (

@@ -16,6 +16,8 @@ import daijeService from '../../services/daijeService';
 import Toast from '../Toast';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImage, getImageUrl } from '../../utils/imageUtils';
+import { parseApiError, parseImageUploadError, showDetailedErrorAlert } from '../../utils/errorUtils';
+import { checkConnectivityBeforeApiCall, showNetworkAlert } from '../../utils/networkUtils';
 
 const COLORS = {
   primary: '#022C43',
@@ -42,6 +44,7 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
   });
   
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
   const [education, setEducation] = useState([]);
   const [educationInput, setEducationInput] = useState('');
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
@@ -102,10 +105,6 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
       Alert.alert('Greška', 'Ime i prezime je obavezno');
       return false;
     }
-    if (!formData.biography.trim()) {
-      Alert.alert('Greška', 'Biografija je obavezna');
-      return false;
-    }
     return true;
   };
 
@@ -141,44 +140,6 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
     }
   };
 
-  const takePhoto = async () => {
-    try {
-      // Request permission
-      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-      
-      if (permissionResult.granted === false) {
-        Alert.alert('Dozvola potrebna', 'Potrebna je dozvola za pristup kameri.');
-        return;
-      }
-
-      // Launch camera
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: 'images',
-        allowsEditing: false,
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setImageUri(result.assets[0].uri);
-        handleInputChange('image', result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Error taking photo:', error);
-      Alert.alert('Greška', 'Došlo je do greške prilikom snimanja fotografije.');
-    }
-  };
-
-  const showImageOptions = () => {
-    Alert.alert(
-      'Dodaj sliku',
-      'Odaberite opciju',
-      [
-        { text: 'Galerija', onPress: pickImage },
-        { text: 'Kamera', onPress: takePhoto },
-        { text: 'Otkaži', style: 'cancel' }
-      ]
-    );
-  };
 
   const removeImage = () => {
     setImageUri(null);
@@ -190,18 +151,80 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
       setLoading(true);
 
       // Validate required fields
-      if (!validateForm()) return;
+      if (!validateForm()) {
+        setLoading(false);
+        return;
+      }
+      
+      // Check network connectivity before proceeding
+      const isConnected = await checkConnectivityBeforeApiCall(
+        null, // onSuccess - continue with submission
+        (networkError) => {
+          setLoading(false);
+          showNetworkAlert(
+            networkError,
+            () => handleSubmit(), // retry
+            null // cancel
+          );
+        }
+      );
+      
+      if (!isConnected) {
+        return; // Network error handling is done in the callback
+      }
 
       let imagePath = formData.image;
 
       // If we have a new image (local URI), upload it first
       if (imageUri && imageUri.startsWith('file://')) {
         try {
-          imagePath = await uploadImage(imageUri);
+          console.log('📤 Starting image upload for daija...');
+          setUploadProgress('Upload slike u toku...');
+          
+          const uploadResult = await uploadImage(imageUri);
+          // Extract the path from the upload response
+          imagePath = uploadResult.path || uploadResult.imagePath || '';
+          
+          setUploadProgress('Spremanje podataka daije...');
+          console.log('✅ Image uploaded successfully:', imagePath);
         } catch (error) {
-          console.error('Error uploading image:', error);
-          Alert.alert('Greška', 'Došlo je do greške prilikom uploada slike. Pokušajte ponovo.');
-          return;
+          console.error('❌ Image upload failed:', error);
+          
+          // Parse the specific upload error
+          const uploadErrorInfo = parseImageUploadError(error);
+          
+          // Ask user if they want to continue without image
+          const shouldContinue = await new Promise((resolve) => {
+            const buttons = [
+              { text: 'Prekini', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Nastavi bez slike', onPress: () => resolve(true) }
+            ];
+            
+            // If error can be retried, add retry option
+            if (uploadErrorInfo.canRetry !== false) {
+              buttons.splice(1, 0, { 
+                text: 'Pokušaj ponovo', 
+                onPress: () => resolve('retry') 
+              });
+            }
+            
+            const actionsText = uploadErrorInfo.actions?.join('\n• ') || '';
+            const message = `${uploadErrorInfo.message}\n\nŠta da pokušate:\n• ${actionsText}\n\nMožete nastaviti bez slike ili prekinuti i popraviti problem.`;
+            
+            Alert.alert(uploadErrorInfo.title, message, buttons);
+          });
+          
+          if (shouldContinue === 'retry') {
+            // Recursive retry
+            setLoading(false);
+            setTimeout(() => handleSubmit(), 1000);
+            return;
+          } else if (!shouldContinue) {
+            setLoading(false);
+            return;
+          }
+          
+          imagePath = ''; // Continue without image
         }
       }
 
@@ -213,18 +236,26 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
       };
 
       // Submit the form - either create or update
+      console.log('📤 Submitting daija form data...');
       if (editMode && editData?._id) {
         await daijeService.updateItem(editData._id, finalFormData);
-        Alert.alert('Uspjeh', 'Uspješno ste ažurirali daiju!');
+        console.log('✅ Daija updated successfully');
+        Alert.alert(
+          'Uspjeh', 
+          'Daija je uspješno ažuriran! Promjene će biti vidljive nakon odobrenja administratora.',
+          [{ text: 'OK', onPress: () => onSuccess && onSuccess() }]
+        );
       } else {
         await daijeService.createDaija(finalFormData);
-        Alert.alert('Uspjeh', 'Uspješno ste dodali daiju!');
+        console.log('✅ Daija created successfully');
+        Alert.alert(
+          'Uspjeh', 
+          'Daija je uspješno dodan! Biće vidljiv nakon odobrenja administratora.',
+          [{ text: 'OK', onPress: () => onSuccess && onSuccess() }]
+        );
       }
       
-      // Call success callback
-      if (onSuccess) {
-        onSuccess();
-      }
+      // Success callback is now called from Alert button
       
       // Clear form only if not in edit mode
       if (!editMode) {
@@ -240,11 +271,29 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
       }
       
     } catch (error) {
-      console.error('Error submitting form:', error);
-      const errorMessage = editMode ? 'Došlo je do greške prilikom ažuriranja. Pokušajte ponovo.' : 'Došlo je do greške prilikom spremanja. Pokušajte ponovo.';
-      Alert.alert('Greška', errorMessage);
-    } finally {
-      setLoading(false);
+      console.error('❌ Daija form submission failed:', error);
+      
+      // Parse the API error for detailed information
+      const operation = editMode ? 'updating daija' : 'creating daija';
+      const errorInfo = parseApiError(error, operation);
+      
+      // Show detailed error with retry option
+      showDetailedErrorAlert(
+        errorInfo,
+        errorInfo.canRetry ? () => {
+          // Retry after a short delay
+          setTimeout(() => handleSubmit(), 1000);
+        } : null,
+        () => {
+          // User cancelled, just stop loading
+          setLoading(false);
+        }
+      );
+      
+      // Don't set loading to false here if retrying
+      if (!errorInfo.canRetry) {
+        setLoading(false);
+      }
     }
   };
 
@@ -323,7 +372,7 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity style={styles.imagePickerButton} onPress={showImageOptions}>
+            <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
               <View style={styles.imagePickerContent}>
                 <Ionicons name="camera-outline" size={48} color={COLORS.primary} />
                 <Text style={styles.imagePickerText}>Dodaj sliku</Text>
@@ -338,7 +387,7 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
         {/* Title Selection */}
         {renderPicker('Titula', titles, formData.title, (value) => handleInputChange('title', value), true)}
         
-        {renderInput('Biografija', 'biography', 'Unesite biografiju...', true, true)}
+        {renderInput('Biografija', 'biography', 'Unesite biografiju...', true, false)}
         
         {/* Education Section */}
         <View style={styles.inputContainer}>
@@ -376,12 +425,17 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
           onPress={handleSubmit}
           disabled={loading}
         >
-          <Text style={styles.submitButtonText}>
-            {loading 
-              ? (editMode ? 'Ažuriranje...' : 'Dodavanje...') 
-              : (editMode ? 'Ažuriraj Daiju' : 'Dodaj Daiju')
-            }
-          </Text>
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.submitButtonText}>
+                {uploadProgress || (editMode ? 'Ažuriranje daije...' : 'Dodavanje daije...')}
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.submitButtonText}>
+              {editMode ? 'Ažuriraj Daiju' : 'Dodaj Daiju'}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -529,6 +583,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.white,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   imageContainer: {
     flexDirection: 'row',

@@ -69,43 +69,6 @@ const SuggestionForm = ({ onBack, onSuccess }) => {
     }
   };
 
-  const takePhoto = async () => {
-    try {
-      // Request permission
-      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-      
-      if (permissionResult.granted === false) {
-        Alert.alert('Dozvola potrebna', 'Potrebna je dozvola za pristup kameri.');
-        return;
-      }
-
-      // Launch camera
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: 'images',
-        allowsEditing: false,
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setImageUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Error taking photo:', error);
-      Alert.alert('Greška', 'Došlo je do greške prilikom snimanja fotografije.');
-    }
-  };
-
-  const showImageOptions = () => {
-    Alert.alert(
-      'Dodaj sliku',
-      'Odaberite opciju',
-      [
-        { text: 'Galerija', onPress: pickImage },
-        { text: 'Kamera', onPress: takePhoto },
-        { text: 'Otkaži', style: 'cancel' }
-      ]
-    );
-  };
 
   const removeImage = () => {
     setImageUri(null);
@@ -176,7 +139,7 @@ const SuggestionForm = ({ onBack, onSuccess }) => {
                         </TouchableOpacity>
                     </View>
                 ) : (
-                    <TouchableOpacity style={styles.imagePickerButton} onPress={showImageOptions}>
+                    <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
                         <View style={styles.imagePickerContent}>
                             <Ionicons name="camera-outline" size={48} color={COLORS.primary} />
                             <Text style={styles.imagePickerText}>Dodaj sliku</Text>

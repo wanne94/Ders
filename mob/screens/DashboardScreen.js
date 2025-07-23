@@ -60,7 +60,8 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     organizations: [],
     suggestions: [],
     archivedSuggestions: [],
-    suggestionsCount: { total: 0, pending: 0, approved: 0, rejected: 0 }
+    suggestionsCount: { total: 0, pending: 0, approved: 0, rejected: 0 },
+    cancelledReports: []
   });
 
   // Counts for badges
@@ -69,7 +70,8 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     pendingDaije: 0,
     pendingOrganizations: 0,
     pendingSuggestions: 0,
-    rejectedItems: 0
+    rejectedItems: 0,
+    pendingCancelledReports: 0
   });
 
   // Approval settings
@@ -86,6 +88,10 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [showReactivateModal, setShowReactivateModal] = useState(false);
+  const [reactivateReason, setReactivateReason] = useState('');
 
   // Helper function for date formatting
   const formatDate = (dateString) => {
@@ -130,6 +136,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         orgsRes,
         suggestionsRes,
         archivedSuggestionsRes,
+        cancelledReportsRes,
         settingsRes
       ] = await Promise.all([
         usersService?.getAllUsers ? usersService.getAllUsers() : Promise.resolve([]),
@@ -138,6 +145,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         udruzenjaService.getAllUdruzenjaForAdmin(),
         suggestionsService?.getAllSuggestions ? suggestionsService.getAllSuggestions() : Promise.resolve([]),
         suggestionsService?.getArchivedSuggestions ? suggestionsService.getArchivedSuggestions() : Promise.resolve([]),
+        predavanjaService.getCancelledReports('all').catch(() => ({ reports: [] })),
         // Load approval settings from server
         fetch(`${getApiUrl()}/settings/public`, {
           method: 'GET',
@@ -153,7 +161,8 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         daije: Array.isArray(daijeRes) ? daijeRes : (daijeRes?.data ? (Array.isArray(daijeRes.data) ? daijeRes.data : []) : []),
         organizations: Array.isArray(orgsRes) ? orgsRes : (orgsRes?.data ? (Array.isArray(orgsRes.data) ? orgsRes.data : []) : []),
         suggestions: Array.isArray(suggestionsRes) ? suggestionsRes : (suggestionsRes?.data ? (Array.isArray(suggestionsRes.data) ? suggestionsRes.data : []) : []),
-        archivedSuggestions: Array.isArray(archivedSuggestionsRes) ? archivedSuggestionsRes : (archivedSuggestionsRes?.data ? (Array.isArray(archivedSuggestionsRes.data) ? archivedSuggestionsRes.data : []) : [])
+        archivedSuggestions: Array.isArray(archivedSuggestionsRes) ? archivedSuggestionsRes : (archivedSuggestionsRes?.data ? (Array.isArray(archivedSuggestionsRes.data) ? archivedSuggestionsRes.data : []) : []),
+        cancelledReports: Array.isArray(cancelledReportsRes?.reports) ? cancelledReportsRes.reports : (Array.isArray(cancelledReportsRes) ? cancelledReportsRes : [])
       };
 
       setData(newData);
@@ -169,6 +178,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         pendingDaije: (newData.daije || []).filter(d => d.status === 'pending').length,
         pendingOrganizations: (newData.organizations || []).filter(o => o.status === 'pending').length,
         pendingSuggestions: (newData.suggestions || []).filter(s => s.status === 'pending').length,
+        pendingCancelledReports: (newData.cancelledReports || []).filter(r => r.status === 'pending').length,
         rejectedItems: [
           ...(newData.lectures || []).filter(l => l.status === 'rejected'),
           ...(newData.daije || []).filter(d => d.status === 'rejected'),
@@ -325,6 +335,14 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         color: COLORS.info,
         count: counts.pendingSuggestions,
         badge: true
+      },
+      {
+        id: 'otkazivanja',
+        title: 'Otkazivanja',
+        icon: 'alert-circle-outline',
+        color: COLORS.warning,
+        count: counts.pendingCancelledReports,
+        badge: true
       }
     ];
 
@@ -377,6 +395,24 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         case 'suggestion':
           service = suggestionsService;
           break;
+        case 'cancelled_report':
+          // Handle cancelled reports differently
+          if (action === 'approve') {
+            await predavanjaService.reviewCancelledReport(_id, 'approve', 'Odobreno iz mobile dashboard-a');
+          } else if (action === 'reject') {
+            await predavanjaService.reviewCancelledReport(_id, 'reject', rejectionReason || 'Odbačeno iz mobile dashboard-a');
+          }
+          
+          setShowApprovalModal(false);
+          setSelectedItem(null);
+          setRejectionReason('');
+          await handleDataChange();
+
+          Alert.alert(
+            'Uspjeh',
+            `Prijava otkazivanja je uspješno ${action === 'approve' ? 'odobrena' : 'odbačena'}`
+          );
+          return;
         default:
           throw new Error(`Unknown item type: ${type}`);
       }
@@ -485,6 +521,10 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       case 'prijedlozi':
         items = data.suggestions || [];
         type = 'suggestion';
+        break;
+      case 'otkazivanja':
+        items = (data.cancelledReports || []).map(r => ({ ...r, type: 'cancelled_report' }));
+        type = 'mixed';
         break;
       default:
         items = [];
@@ -655,7 +695,8 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
             </View>
           </View>
           <View style={styles.dataItemActions}>
-            {(activeSection === 'za-odobrenje' || item.status === 'pending') && (
+            {((activeSection === 'za-odobrenje' || item.status === 'pending') || 
+              (activeSection === 'otkazivanja' && item.status === 'pending')) && (
               <>
                 <TouchableOpacity
                   style={[styles.actionButton, styles.approveButton]}
@@ -673,6 +714,24 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
             )}
             {(activeSection === 'predavanja' || activeSection === 'daije' || activeSection === 'udruzenja') && (
               <>
+                {/* Cancel button for lectures only */}
+                {(itemType === 'lecture' || activeSection === 'predavanja') && !item.cancelled && (
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.cancelButton]}
+                    onPress={() => handleCancelLecture(item)}
+                  >
+                    <Ionicons name="close-circle-outline" size={16} color={COLORS.white} />
+                  </TouchableOpacity>
+                )}
+                {/* Reactivate button for cancelled lectures only */}
+                {(itemType === 'lecture' || activeSection === 'predavanja') && item.cancelled && (
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.reactivateButton]}
+                    onPress={() => handleReactivateLecture(item)}
+                  >
+                    <Ionicons name="refresh-circle-outline" size={16} color={COLORS.white} />
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity
                   style={[styles.actionButton, styles.editButton]}
                   onPress={() => handleEditItem(item, itemType)}
@@ -732,6 +791,24 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
             <>
               <Text style={styles.dataItemSubtitle}>{item.submitterName}</Text>
               <Text style={styles.dataItemDetail}>{item.reason}</Text>
+            </>
+          )}
+          {itemType === 'cancelled_report' && (
+            <>
+              <Text style={styles.dataItemSubtitle}>
+                {item.lecture_id?.title || 'N/A'}
+              </Text>
+              <Text style={styles.dataItemDetail}>
+                Korisnik: {item.user_id ? `${item.user_id.firstName || ''} ${item.user_id.lastName || ''}`.trim() || item.user_id.email : 'N/A'}
+              </Text>
+              <Text style={styles.dataItemDetail}>
+                Platforma: {item.platform === 'web' ? 'Web' : 'Mobilna'} • {formatDate(item.createdAt || item.timestamp)}
+              </Text>
+              {item.reason && (
+                <Text style={styles.dataItemDetail} numberOfLines={2}>
+                  Razlog: {item.reason}
+                </Text>
+              )}
             </>
           )}
         </View>
@@ -845,6 +922,146 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     );
   };
 
+  // Handle cancel lecture
+  const handleCancelLecture = (lecture) => {
+    if (lecture.cancelled) {
+      Alert.alert('Greška', 'Predavanje je već otkazano');
+      return;
+    }
+    setSelectedItem(lecture);
+    setCancelReason('');
+    setShowCancelModal(true);
+  };
+
+  // Handle reactivate lecture
+  const handleReactivateLecture = (lecture) => {
+    if (!lecture.cancelled) {
+      Alert.alert('Greška', 'Predavanje nije otkazano');
+      return;
+    }
+    setSelectedItem(lecture);
+    setReactivateReason('');
+    setShowReactivateModal(true);
+  };
+
+  // Confirm cancel lecture
+  const confirmCancelLecture = async () => {
+    if (!selectedItem || !cancelReason.trim()) {
+      Alert.alert('Greška', 'Molimo unesite razlog otkazivanja');
+      return;
+    }
+
+    if (cancelReason.trim().length < 10) {
+      Alert.alert('Greška', 'Razlog mora biti najmanje 10 karaktera');
+      return;
+    }
+
+    try {
+      await predavanjaService.cancelLectureDirectly(selectedItem._id, cancelReason.trim());
+      
+      // Update local state
+      setData(prev => ({
+        ...prev,
+        lectures: prev.lectures.map(l => 
+          l._id === selectedItem._id 
+            ? { 
+                ...l, 
+                cancelled: true, 
+                cancelled_at: new Date().toISOString(),
+                cancelled_reason: cancelReason.trim(),
+                status: 'cancelled'
+              }
+            : l
+        )
+      }));
+      
+      setShowCancelModal(false);
+      setSelectedItem(null);
+      setCancelReason('');
+      await handleDataChange();
+
+      Alert.alert(
+        'Uspjeh',
+        `Predavanje "${selectedItem.title}" je uspješno otkazano`
+      );
+
+    } catch (error) {
+      console.error('Error cancelling lecture:', error);
+      Alert.alert(
+        'Greška', 
+        error.response?.data?.message || 'Došlo je do greške prilikom otkazivanja predavanja'
+      );
+    }
+  };
+
+  // Handle reactivate lecture confirmation
+  const handleReactivateConfirm = async () => {
+    if (!selectedItem) {
+      Alert.alert('Greška', 'Nema odabranog predavanja');
+      return;
+    }
+
+    if (!reactivateReason.trim()) {
+      Alert.alert('Greška', 'Razlog reaktiviranja je obavezan');
+      return;
+    }
+
+    if (reactivateReason.trim().length < 5) {
+      Alert.alert('Greška', 'Razlog mora biti najmanje 5 karaktera');
+      return;
+    }
+
+    try {
+      await predavanjaService.reactivateLecture(selectedItem._id, reactivateReason.trim());
+      
+      // Update local state
+      setData(prev => ({
+        ...prev,
+        lectures: prev.lectures.map(l => 
+          l._id === selectedItem._id 
+            ? { 
+                ...l, 
+                cancelled: false,
+                status: 'approved',
+                reactivated_at: new Date().toISOString(),
+                reactivated_reason: reactivateReason.trim()
+              }
+            : l
+        ),
+        // Also update cancelled reports to reflect the lecture status change
+        cancelledReports: prev.cancelledReports.map(r => 
+          r.lecture_id && r.lecture_id._id === selectedItem._id
+            ? {
+                ...r,
+                lecture_id: {
+                  ...r.lecture_id,
+                  cancelled: false,
+                  status: 'approved'
+                }
+              }
+            : r
+        )
+      }));
+      
+      setShowReactivateModal(false);
+      setSelectedItem(null);
+      setReactivateReason('');
+      await handleDataChange();
+
+      Alert.alert(
+        'Uspjeh',
+        `Predavanje "${selectedItem.title}" je uspješno reaktivirano`
+      );
+
+    } catch (error) {
+      console.error('Error reactivating lecture:', error);
+      Alert.alert(
+        'Greška', 
+        error.response?.data?.message || 'Došlo je do greške prilikom reaktiviranja predavanja'
+      );
+    }
+  };
+
   // Helper functions for status and type
   const getStatusColor = (status) => {
     switch (status) {
@@ -880,6 +1097,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       case 'organization': return 'Udruženje';
       case 'user': return 'Korisnik';
       case 'suggestion': return 'Prijedlog';
+      case 'cancelled_report': return 'Prijava otkazivanja';
       default: return type;
     }
   };
@@ -1350,6 +1568,84 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       </View>
     );
 
+    const renderCancelledReportDetails = () => (
+      <View style={styles.detailsContainer}>
+        <Text style={styles.detailsTitle}>Prijava otkazivanja</Text>
+        
+        <View style={styles.detailRow}>
+          <Ionicons name="book-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>Predavanje:</Text>
+          <Text style={styles.detailValue}>{selectedItem.lecture_id?.title || 'N/A'}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Ionicons name="person-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>Korisnik:</Text>
+          <Text style={styles.detailValue}>
+            {selectedItem.user_id ? 
+              `${selectedItem.user_id.firstName || ''} ${selectedItem.user_id.lastName || ''}`.trim() || selectedItem.user_id.email 
+              : 'N/A'
+            }
+          </Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Ionicons name="phone-portrait-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>Platforma:</Text>
+          <Text style={styles.detailValue}>{selectedItem.platform === 'web' ? 'Web' : 'Mobilna'}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Ionicons name="calendar-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>Prijavljeno:</Text>
+          <Text style={styles.detailValue}>{formatDate(selectedItem.createdAt || selectedItem.timestamp)}</Text>
+        </View>
+
+        {selectedItem.reviewed_at && (
+          <View style={styles.detailRow}>
+            <Ionicons name="checkmark-outline" size={16} color={COLORS.gray} />
+            <Text style={styles.detailLabel}>Pregledano:</Text>
+            <Text style={styles.detailValue}>{formatDate(selectedItem.reviewed_at)}</Text>
+          </View>
+        )}
+
+        <View style={styles.detailRow}>
+          <Ionicons name="checkmark-circle-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>Status:</Text>
+          <Text style={[styles.detailValue, { color: getStatusTextColor(selectedItem.status) }]}>
+            {getStatusText(selectedItem.status)}
+          </Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Ionicons name="id-card-outline" size={16} color={COLORS.gray} />
+          <Text style={styles.detailLabel}>ID:</Text>
+          <Text style={styles.detailValue}>{selectedItem._id}</Text>
+        </View>
+
+        {selectedItem.reason && selectedItem.reason.trim() && (
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.descriptionLabel}>Razlog otkazivanja:</Text>
+            <Text style={styles.descriptionText}>{selectedItem.reason}</Text>
+          </View>
+        )}
+
+        {selectedItem.admin_notes && (
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.descriptionLabel}>Napomene administratora:</Text>
+            <Text style={styles.descriptionText}>{selectedItem.admin_notes}</Text>
+          </View>
+        )}
+
+        {selectedItem.proof_image && (
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.descriptionLabel}>Dokaz priložen:</Text>
+            <Text style={styles.descriptionText}>Da (slika)</Text>
+          </View>
+        )}
+      </View>
+    );
+
     const renderDetails = () => {
       switch (selectedItem.type) {
         case 'lecture':
@@ -1362,6 +1658,8 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
           return renderUserDetails();
         case 'suggestion':
           return renderSuggestionDetails();
+        case 'cancelled_report':
+          return renderCancelledReportDetails();
         default:
           return <Text>Nepoznat tip stavke</Text>;
       }
@@ -1636,6 +1934,144 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     />
   );
 
+  // Render cancel lecture modal
+  const renderCancelModal = () => (
+    <Modal
+      visible={showCancelModal}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setShowCancelModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Otkaži predavanje</Text>
+          
+          {selectedItem && (
+            <View style={styles.lectureInfoContainer}>
+              <Text style={styles.lectureInfoLabel}>Predavanje za otkazivanje:</Text>
+              <Text style={styles.lectureInfoTitle}>{selectedItem.title}</Text>
+              {selectedItem.date && (
+                <Text style={styles.lectureInfoDetail}>
+                  {formatDate(selectedItem.date)} u {selectedItem.time}
+                </Text>
+              )}
+              {selectedItem.organization && (
+                <Text style={styles.lectureInfoDetail}>
+                  {selectedItem.organization}
+                </Text>
+              )}
+            </View>
+          )}
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Razlog otkazivanja *:</Text>
+            <TextInput
+              style={[styles.textInput, styles.textArea]}
+              multiline
+              numberOfLines={4}
+              value={cancelReason}
+              onChangeText={setCancelReason}
+              placeholder="Unesite razlog zašto otkazujete ovo predavanje... (minimum 10 karaktera)"
+              placeholderTextColor={COLORS.gray}
+              textAlignVertical="top"
+            />
+          </View>
+
+          <View style={styles.warningContainer}>
+            <Text style={styles.warningText}>
+              ⚠️ Pažnja: Ova akcija će trajno otkazati predavanje. Korisnici neće moći da se prijave za ovo predavanje.
+            </Text>
+          </View>
+
+          <View style={styles.modalActions}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={() => {
+                setShowCancelModal(false);
+                setCancelReason('');
+              }}
+            >
+              <Text style={styles.cancelButtonText}>Odustani</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.confirmButton, styles.dangerButton]}
+              onPress={confirmCancelLecture}
+              disabled={!cancelReason.trim() || cancelReason.trim().length < 10}
+            >
+              <Text style={styles.confirmButtonText}>Otkaži predavanje</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Render reactivate lecture modal
+  const renderReactivateModal = () => (
+    <Modal
+      visible={showReactivateModal}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setShowReactivateModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Reaktiviraj predavanje</Text>
+          
+          {selectedItem && (
+            <View style={styles.lectureInfoContainer}>
+              <Text style={styles.lectureInfoLabel}>Predavanje za reaktivaciju:</Text>
+              <Text style={styles.lectureInfoTitle}>{selectedItem.title}</Text>
+              {selectedItem.date && (
+                <Text style={styles.lectureInfoDetail}>
+                  {formatDate(selectedItem.date)} u {selectedItem.time}
+                </Text>
+              )}
+            </View>
+          )}
+          
+          <Text style={styles.modalDescription}>
+            Unesite razlog reaktiviranja predavanja (minimalno 5 karaktera):
+          </Text>
+          
+          <TextInput
+            style={[styles.modalInput, styles.modalTextArea]}
+            placeholder="Razlog reaktiviranja..."
+            value={reactivateReason}
+            onChangeText={setReactivateReason}
+            multiline={true}
+            numberOfLines={4}
+            maxLength={500}
+          />
+          
+          <Text style={styles.characterCount}>
+            {reactivateReason.length}/500 karaktera
+          </Text>
+          
+          <View style={styles.modalButtons}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={() => {
+                setShowReactivateModal(false);
+                setSelectedItem(null);
+                setReactivateReason('');
+              }}
+            >
+              <Text style={styles.cancelButtonText}>Odustani</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.confirmButton, styles.successButton]}
+              onPress={handleReactivateConfirm}
+              disabled={!reactivateReason.trim() || reactivateReason.trim().length < 5}
+            >
+              <Text style={styles.confirmButtonText}>Reaktiviraj predavanje</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <View style={styles.container}>
      
@@ -1654,6 +2090,8 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       {renderApprovalModal()}
       {renderSettingsModal()}
       {renderEditModal()}
+      {renderCancelModal()}
+      {renderReactivateModal()}
     </View>
   );
 };
@@ -1862,6 +2300,12 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     backgroundColor: COLORS.error,
+  },
+  cancelButton: {
+    backgroundColor: COLORS.warning,
+  },
+  reactivateButton: {
+    backgroundColor: COLORS.success,
   },
   dataItemInfo: {
     marginBottom: 12,
@@ -2113,6 +2557,46 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     textAlignVertical: 'top',
+  },
+  lectureInfoContainer: {
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  lectureInfoLabel: {
+    fontSize: 12,
+    color: COLORS.gray,
+    marginBottom: 4,
+  },
+  lectureInfoTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 4,
+  },
+  lectureInfoDetail: {
+    fontSize: 14,
+    color: COLORS.gray,
+  },
+  warningContainer: {
+    backgroundColor: COLORS.warning + '20',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+  },
+  warningText: {
+    fontSize: 14,
+    color: COLORS.warning,
+    textAlign: 'center',
+  },
+  dangerButton: {
+    backgroundColor: COLORS.error,
+  },
+  successButton: {
+    backgroundColor: COLORS.success,
   },
 });
 

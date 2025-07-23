@@ -53,34 +53,10 @@ const adminMenuItems = [
   }
 ];
 
-const userMenuItems = [
-  {
-    text: 'Dodaj ders',
-    icon: 'book-outline',
-    action: 'add-lecture'
-  },
-  {
-    text: 'Dodaj daiiju',
-    icon: 'person-outline',
-    action: 'add-daija'
-  },
-  {
-    text: 'Dodaj udruženje',
-    icon: 'business-outline',
-    action: 'add-organization'
-  },
-  {
-    text: 'Predloži izmjenu',
-    icon: 'bulb-outline',
-    action: 'suggest-change'
-  }
-];
 
-const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNavigate, onLogout, onAddContent, onAddContentWithType, onProfileNavigate }) => {
-  const [addMenuOpen, setAddMenuOpen] = useState(false);
+const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNavigate, onLogout, onAddContent, onProfileNavigate }) => {
   const slideAnim = useState(new Animated.Value(width))[0];
   const overlayOpacity = useState(new Animated.Value(0))[0];
-  const subMenuHeight = useState(new Animated.Value(0))[0];
 
   React.useEffect(() => {
     if (isOpen) {
@@ -112,24 +88,9 @@ const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNaviga
         })
       ]).start();
       
-      // Reset submenu when closing
-      setAddMenuOpen(false);
-      Animated.timing(subMenuHeight, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: false,
-      }).start();
     }
-  }, [isOpen, slideAnim, overlayOpacity, subMenuHeight]);
+  }, [isOpen, slideAnim, overlayOpacity]);
 
-  React.useEffect(() => {
-    // Animate submenu height
-    Animated.timing(subMenuHeight, {
-      toValue: addMenuOpen ? userMenuItems.length * 50 : 0,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-  }, [addMenuOpen, subMenuHeight]);
 
   const handleMenuItemPress = (item) => {
     // Smooth close animation before navigation
@@ -152,47 +113,12 @@ const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNaviga
     });
   };
 
-  const handleUserMenuItemPress = (item) => {
-    // Smooth close animation before action
-    Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: width,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      })
-    ]).start(() => {
-      onClose();
-      setAddMenuOpen(false);
-      
-      // Open the AddContentPopup with specific type
-      if (onAddContentWithType) {
-        switch (item.action) {
-          case 'add-lecture':
-            onAddContentWithType('lecture');
-            break;
-          case 'add-daija':
-            onAddContentWithType('daija');
-            break;
-          case 'add-organization':
-            onAddContentWithType('organization');
-            break;
-          case 'suggest-change':
-            onAddContentWithType('suggestion');
-            break;
-          default:
-            break;
-        }
-      }
-    });
-  };
 
   const toggleAddMenu = () => {
-    setAddMenuOpen(!addMenuOpen);
+    if (onAddContent) {
+      onAddContent();
+      onClose(); // Zatvori sidebar nakon što se otvori AddContentMenu
+    }
   };
 
   const handleOverlayPress = () => {
@@ -339,51 +265,9 @@ const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNaviga
                     style={styles.menuIcon}
                   />
                   <Text style={styles.menuItemText}>Dodaj</Text>
-                  <Animated.View
-                    style={{
-                      transform: [{
-                        rotate: addMenuOpen ? '180deg' : '0deg'
-                      }]
-                    }}
-                  >
-                    <Ionicons 
-                      name="chevron-down" 
-                      size={16} 
-                      color={COLORS.white} 
-                    />
-                  </Animated.View>
                 </View>
               </TouchableOpacity>
 
-              {/* Animated Add Menu Items */}
-              <Animated.View 
-                style={[
-                  styles.subMenu,
-                  { 
-                    height: subMenuHeight,
-                    overflow: 'hidden'
-                  }
-                ]}
-              >
-                {userMenuItems.map((item, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.subMenuItem}
-                    onPress={() => handleUserMenuItemPress(item)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.menuItemContent}>
-                      <Ionicons 
-                        name={item.icon} 
-                        size={18} 
-                        color={COLORS.white} 
-                        style={styles.menuIcon}
-                      />
-                      <Text style={styles.subMenuItemText}>{item.text}</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </Animated.View>
 
               {/* Profile Option */}
               <TouchableOpacity
@@ -534,12 +418,6 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 20,
   },
-  subMenuItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    paddingLeft: 50, // Indented for sub-items
-    height: 50, // Fixed height for animation
-  },
   menuItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -552,14 +430,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.white,
     flex: 1,
-  },
-  subMenuItemText: {
-    fontSize: 15,
-    color: COLORS.white,
-    flex: 1,
-  },
-  subMenu: {
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
 });
 

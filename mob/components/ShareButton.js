@@ -150,28 +150,23 @@ const ShareButton = ({ profileData, type, style = {}, textStyle = {} }) => {
         {
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
           paddingHorizontal: 20,
           paddingVertical: 12,
-          borderRadius: 25,
+          borderRadius: 15,
           gap: 8,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          elevation: 3,
-          borderWidth: 0.5,
-          borderColor: 'rgba(0, 0, 0, 0.06)',
+          borderWidth: 1,
+          borderColor: 'rgba(255, 255, 255, 0.3)',
         },
         style
       ]}
       activeOpacity={0.75}
     >
-      <Ionicons name="share-outline" size={18} color="#374151" />
+      <Ionicons name="share-outline" size={20} color="white" />
       <Text style={[{ 
-        color: '#374151', 
-        fontSize: 15, 
-        fontWeight: '600',
+        color: 'white', 
+        fontSize: 16, 
+        fontWeight: '500',
         letterSpacing: 0.2
       }, textStyle]}>
         Podijeli

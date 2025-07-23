@@ -8,7 +8,7 @@
  */
 
 /**
- * Sort lectures by date - future lectures first, then past lectures
+ * Sort lectures by date - future lectures first, then past lectures (including cancelled)
  */
 export const sortLecturesByStatus = (lectures) => {
   if (!Array.isArray(lectures)) return [];
@@ -44,8 +44,11 @@ export const sortLecturesByStatus = (lectures) => {
       dateB.setHours(12, 0, 0, 0);
     }
     
-    const isAFuture = dateA > now;
-    const isBFuture = dateB > now;
+    // Treat cancelled lectures as past lectures for sorting purposes
+    const isACancelled = a.cancelled || a.status === 'cancelled';
+    const isBCancelled = b.cancelled || b.status === 'cancelled';
+    const isAFuture = !isACancelled && dateA > now;
+    const isBFuture = !isBCancelled && dateB > now;
     
     // Future lectures come first
     if (isAFuture && !isBFuture) return -1;
@@ -66,6 +69,7 @@ export const sortLecturesByStatus = (lectures) => {
  * - Future lectures first (closest date/time first)
  * - If no time specified, treat as 12:00h
  * - Past lectures last (sorted by time backwards)
+ * - Cancelled lectures treated as past lectures
  */
 export const sortLecturesByTime = (lectures) => {
   if (!Array.isArray(lectures)) return [];
@@ -113,22 +117,28 @@ export const sortLecturesByTime = (lectures) => {
       if (!a.lectureDateTime) return 1;
       if (!b.lectureDateTime) return -1;
       
+      // Treat cancelled lectures as past lectures for sorting purposes
+      const isACancelled = a.cancelled || a.status === 'cancelled';
+      const isBCancelled = b.cancelled || b.status === 'cancelled';
+      const isAFuture = !isACancelled && a.isFuture;
+      const isBFuture = !isBCancelled && b.isFuture;
+      
       // Future lectures come first
-      if (a.isFuture && !b.isFuture) return -1;
-      if (!a.isFuture && b.isFuture) return 1;
+      if (isAFuture && !isBFuture) return -1;
+      if (!isAFuture && isBFuture) return 1;
       
       // Among future lectures, closest first
-      if (a.isFuture && b.isFuture) {
+      if (isAFuture && isBFuture) {
         return a.timeDifference - b.timeDifference;
       }
       
-      // Among past lectures, most recent first (reverse chronological)
+      // Among past lectures (including cancelled), most recent first (reverse chronological)
       return b.timeDifference - a.timeDifference;
     });
 };
 
 /**
- * Check if an entity (lecturer or association) has upcoming lectures
+ * Check if an entity (lecturer or association) has upcoming lectures (excluding cancelled)
  */
 const hasUpcomingLectures = (entity, allLectures) => {
   if (!Array.isArray(allLectures)) return false;
@@ -136,6 +146,9 @@ const hasUpcomingLectures = (entity, allLectures) => {
   const now = new Date();
   
   return allLectures.some(lecture => {
+    // Skip cancelled lectures
+    if (lecture.cancelled) return false;
+    
     // Check if lecture belongs to this entity
     const belongsToEntity = 
       (entity.type === 'daija' && (lecture.daija === entity._id || lecture.daijaId === entity._id)) ||
@@ -237,8 +250,8 @@ export const sortAllDaijeWithActivePriority = (daije, lectures) => {
   
   // Group lectures by daija in a single pass
   lectures.forEach(lecture => {
-    // Only consider approved lectures
-    if (lecture.status !== 'approved') return;
+    // Only consider approved and non-cancelled lectures
+    if (lecture.status !== 'approved' || lecture.cancelled) return;
     
     const daijaKeys = [
       lecture.daija,

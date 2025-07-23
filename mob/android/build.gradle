@@ -9,6 +9,9 @@ buildscript {
     classpath('com.android.tools.build:gradle')
     classpath('com.facebook.react:react-native-gradle-plugin')
     classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
+    classpath('com.google.gms:google-services:4.4.3')
+    classpath('com.google.firebase:firebase-crashlytics-gradle:3.0.2')
+    classpath('com.google.firebase:perf-plugin:1.4.2')
   }
 }
 
@@ -31,6 +34,15 @@ allprojects {
     mavenCentral()
     maven { url 'https://www.jitpack.io' }
   }
+}
+
+// Override Expo's default SDK versions for Android 15 compatibility
+ext {
+  compileSdkVersion = 35
+  targetSdkVersion = 35
+  buildToolsVersion = "35.0.0"
+  minSdkVersion = 24
+  ndkVersion = "26.3.11579264"
 }
 
 apply plugin: "expo-root-project"

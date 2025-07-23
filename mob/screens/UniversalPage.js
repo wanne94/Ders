@@ -252,7 +252,9 @@ const fetchLectures = async () => {
     console.log('UniversalPage: Fetching lectures...');
     const response = await apiClient.get('/lectures/dashboard/public');
     const data = response.data;
-    return Array.isArray(data) ? data : [];
+    // Filter out cancelled lectures from public view
+    const validLectures = (Array.isArray(data) ? data : []).filter(lecture => !lecture.cancelled);
+    return validLectures;
   } catch (error) {
     console.error('UniversalPage: Error fetching lectures:', error.message);
     return [];

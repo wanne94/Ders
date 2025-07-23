@@ -18,7 +18,7 @@ const COLORS = {
 
 const SERVER_URL = 'https://ders.ba';
 
-const Header = ({ onMenuPress, title }) => {
+const Header = ({ onMenuPress, title, onLogoPress }) => {
   const insets = useSafeAreaInsets();
   const [logoSource, setLogoSource] = useState(require('../assets/images/logo.jpg'));
   const [hasError, setHasError] = useState(false);
@@ -38,7 +38,12 @@ const Header = ({ onMenuPress, title }) => {
 
   return (
     <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-      <TouchableOpacity style={styles.logoContainer}>
+      <TouchableOpacity 
+        style={styles.logoContainer}
+        onPress={onLogoPress}
+        activeOpacity={0.7}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
         <Image 
           source={logoSource}
           style={styles.logo}

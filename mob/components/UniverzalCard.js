@@ -139,13 +139,18 @@ const UniverzalCard = ({ data, onPress, style }) => {
     
     switch (entityType) {
       case 'predavanje':
+        // Check if lecture is cancelled
+        const isCancelled = data.cancelled || data.status === 'cancelled';
+        
         return {
           type: 'lecture',
           title: data.title?.toUpperCase() || '',
           statusInfo,
+          isCancelled,
           items: [
             { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
             data.organization && { icon: 'Business', text: data.organization },
+            // Show date/time for all lectures including cancelled ones
             data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
             data.time && { icon: 'Time', text: data.time },
             data.address && { icon: 'LocationOn', text: data.address },
@@ -241,11 +246,17 @@ const UniverzalCard = ({ data, onPress, style }) => {
 
   return (
     <TouchableOpacity 
-      style={[styles.container, style]} 
+      style={[
+        styles.container, 
+        style,
+        // Add slight transparency for cancelled lectures
+        displayData.type === 'lecture' && displayData.isCancelled && { opacity: 0.85 }
+      ]} 
       onPress={onPress}
       activeOpacity={0.7}
     >
-      {/* Status Badge for lectures */}
+
+      {/* Status Badge for all lectures */}
       {displayData.type === 'lecture' && displayData.statusInfo && (
         <View style={[
           styles.statusBadge,
@@ -313,20 +324,30 @@ const UniverzalCard = ({ data, onPress, style }) => {
 
         {/* Right Column - Image */}
         <View style={styles.imageColumn}>
-          <Image
-            source={{ uri: 
-              imageError || !data.image 
-                ? (displayData.type === 'daija' 
-                  ? getDefaultDaijaImage() 
-                  : displayData.type === 'organization'
-                  ? getDefaultOrganizationImage()
-                  : getDefaultLectureImage())
-                : getImageUrl(data.image)
-            }}
-            style={displayData.type === 'daija' ? styles.imageDaija : displayData.type === 'organization' ? styles.imageOrganization : styles.image}
-            resizeMode="cover"
-            onError={() => setImageError(true)}
-          />
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: 
+                imageError || !data.image 
+                  ? (displayData.type === 'daija' 
+                    ? getDefaultDaijaImage() 
+                    : displayData.type === 'organization'
+                    ? getDefaultOrganizationImage()
+                    : getDefaultLectureImage())
+                  : getImageUrl(data.image)
+              }}
+              style={displayData.type === 'daija' ? styles.imageDaija : displayData.type === 'organization' ? styles.imageOrganization : styles.image}
+              resizeMode="cover"
+              onError={() => setImageError(true)}
+            />
+            {/* Diagonal "OTKAZANO" label for cancelled lectures - only over image */}
+            {displayData.type === 'lecture' && displayData.isCancelled && (
+              <View style={styles.cancelledOverlay}>
+                <View style={styles.cancelledLabel}>
+                  <Text style={styles.cancelledText}>OTKAZANO</Text>
+                </View>
+              </View>
+            )}
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -402,6 +423,11 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     alignSelf: 'stretch',
   },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
   image: {
     width: '100%',
     height: '100%',
@@ -464,6 +490,44 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: 'bold',
     letterSpacing: 0.5,
+  },
+  cancelledOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2,
+    pointerEvents: 'none',
+  },
+  cancelledLabel: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    backgroundColor: 'rgba(211, 47, 47, 0.95)',
+    paddingVertical: 8,
+    paddingHorizontal: 60,
+    transform: [
+      { translateX: -50 },
+      { translateY: -50 },
+      { rotate: '-45deg' }
+    ],
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  cancelledText: {
+    color: 'white',
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    textAlign: 'center',
   },
 });
 

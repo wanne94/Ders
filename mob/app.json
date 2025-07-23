@@ -1,7 +1,9 @@
 {
   "expo": {
     "android": {
-      "package": "com.wanne.mobileapp"
+      "package": "com.wanne.mobileapp",
+      "userInterfaceStyle": "automatic",
+      "enableEdgeToEdgeEnforcement": true
     }
   }
 }

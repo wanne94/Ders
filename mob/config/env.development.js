@@ -24,10 +24,9 @@ export const ENV = {
   FALLBACK_API_URL: `${getFallbackLocalURL()}/api`, // WSL IP fallback
   FALLBACK_SERVER_URL: getFallbackLocalURL(),
   
-  // Hibridni pristup - isto kao web aplikacija
-  // Upload i prikaz slika uvek koristi produkcijski server
+  // Upload i prikaz slika - koristimo lokalni server za upload, a produkcijski za prikaz
   IMAGE_SERVER_URL: 'https://ders.ba',
-  UPLOAD_SERVER_URL: 'https://ders.ba',
+  UPLOAD_SERVER_URL: getLocalIP(), // Koristimo lokalni server za upload u development
   
   APP_NAME: 'DERS Mobile',
   ENV_NAME: 'development',

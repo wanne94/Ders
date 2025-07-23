@@ -19,6 +19,7 @@ import { getImageUrl } from '../utils/imageUtils';
 import { formatDateWithDay } from '../utils/dateUtils';
 import { formatDaijaTitle } from '../utils';
 import ShareButton from './ShareButton';
+import CancellationReportForm from './forms/CancellationReportForm';
 import UniverzalCard from './UniverzalCard';
 import { sortLecturesByTime } from '../utils/sortingUtils';
 
@@ -33,6 +34,7 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [relatedLectures, setRelatedLectures] = useState([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [profileLectures, setProfileLectures] = useState([]);
@@ -177,6 +179,24 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
     Linking.openURL(url);
   };
 
+  const handleReportCancellation = () => {
+    setCancelModalVisible(true);
+  };
+
+  const handleCancelModalClose = () => {
+    setCancelModalVisible(false);
+  };
+
+  const handleReportSuccess = (response) => {
+    // Refresh profile data if lecture was auto-cancelled
+    if (response.autoCancel && type === 'lecture') {
+      // Refetch profile data
+      if (!data) {
+        fetchProfile();
+      }
+    }
+  };
+
   const openSocialLink = (url) => {
     Linking.openURL(url);
   };
@@ -294,7 +314,10 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={styles.scrollContentContainer}
+    >
       {/* Hero Section */}
       <View style={styles.heroSection}>
         {/* Back Button */}
@@ -332,6 +355,14 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
             onLoadStart={() => type === 'lecture' && setImageLoading(true)}
             cache="force-cache"
           />
+          {/* Diagonal "OTKAZANO" label for cancelled lectures */}
+          {type === 'lecture' && (profile.cancelled || profile.status === 'cancelled') && (
+            <View style={styles.cancelledOverlay}>
+              <View style={styles.cancelledLabel}>
+                <Text style={styles.cancelledText}>OTKAZANO</Text>
+              </View>
+            </View>
+          )}
         </TouchableOpacity>
 
         <Text style={[
@@ -441,9 +472,17 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
         {/* Action Buttons */}
         <View style={styles.actionContainer}>
           {(type === 'lecture' || type === 'organization') && (profile.address || profile.city) && (
-            <TouchableOpacity style={styles.actionButton} onPress={openLocation}>
+            <TouchableOpacity style={styles.glassButton} onPress={openLocation}>
               <Ionicons name="navigate" size={20} color="white" />
-              <Text style={styles.actionText}>Lokacija</Text>
+              <Text style={styles.glassButtonText}>Lokacija</Text>
+            </TouchableOpacity>
+          )}
+          
+          {/* Report Cancellation Button - Only for lectures and non-cancelled */}
+          {type === 'lecture' && !profile.cancelled && profile.status !== 'cancelled' && (
+            <TouchableOpacity style={styles.glassButtonRed} onPress={handleReportCancellation}>
+              <Ionicons name="warning" size={20} color="white" />
+              <Text style={styles.glassButtonText}>Prijavi da je otkazano</Text>
             </TouchableOpacity>
           )}
           
@@ -529,6 +568,16 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
           )}
         </View>
       )}
+      
+      {/* Cancellation Report Modal */}
+      {type === 'lecture' && profile && (
+        <CancellationReportForm
+          visible={cancelModalVisible}
+          onClose={handleCancelModalClose}
+          lecture={profile}
+          onSuccess={handleReportSuccess}
+        />
+      )}
     </ScrollView>
   );
 };
@@ -537,6 +586,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  scrollContentContainer: {
+    paddingBottom: 100, // Extra padding for bottom navigation
   },
   centerContainer: {
     flex: 1,
@@ -705,6 +757,34 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
+  glassButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    gap: 8,
+  },
+  glassButtonRed: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(220, 53, 69, 0.15)',
+    borderRadius: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    gap: 8,
+  },
+  glassButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: 0.2,
+  },
   actionText: {
     color: 'white',
     fontSize: 16,
@@ -786,6 +866,44 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     marginTop: 10,
+    textAlign: 'center',
+  },
+  cancelledOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2,
+    pointerEvents: 'none',
+  },
+  cancelledLabel: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    backgroundColor: 'rgba(211, 47, 47, 0.95)',
+    paddingVertical: 12,
+    paddingHorizontal: 100,
+    transform: [
+      { translateX: -50 },
+      { translateY: -50 },
+      { rotate: '-45deg' }
+    ],
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  cancelledText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 1.5,
     textAlign: 'center',
   },
 });

@@ -82,6 +82,100 @@ const predavanjaService = {
 
   deleteItem: async (id) => {
     return await predavanjaService.deletePredavanje(id);
+  },
+
+  // Report lecture as cancelled
+  reportCancellation: async (lectureId, reportData) => {
+    try {
+      const response = await apiClient.post(`${ENV.API_ENDPOINTS.PREDAVANJA}/${lectureId}/report-cancelled`, {
+        reason: reportData.reason || '',
+        platform: 'mobile'
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error reporting cancellation:', error);
+      throw error;
+    }
+  },
+
+  // Admin: Get cancelled reports  
+  getCancelledReports: async (status = 'pending', page = 1, limit = 50) => {
+    try {
+      const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/admin/cancelled-reports?status=${status}&page=${page}&limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting cancelled reports:', error);
+      throw error;
+    }
+  },
+
+  // Admin: Review cancelled report
+  reviewCancelledReport: async (reportId, action, adminNotes = '') => {
+    try {
+      const response = await apiClient.put(`${ENV.API_ENDPOINTS.PREDAVANJA}/admin/cancelled-reports/${reportId}`, {
+        action, // 'approve' or 'reject'
+        adminNotes
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error reviewing cancelled report:', error);
+      throw error;
+    }
+  },
+
+  // Admin: Direct cancel lecture
+  cancelLectureDirectly: async (lectureId, reason) => {
+    try {
+      const response = await apiClient.put(`${ENV.API_ENDPOINTS.PREDAVANJA}/admin/${lectureId}/cancel`, {
+        reason
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error cancelling lecture directly:', error);
+      throw error;
+    }
+  },
+
+  // Admin: Bulk update cancelled reports
+  bulkUpdateCancelledReports: async (reportIds, action, adminNote = null) => {
+    try {
+      const response = await apiClient.put(`${ENV.API_ENDPOINTS.PREDAVANJA}/admin/cancelled-reports/bulk`, {
+        reportIds,
+        action,
+        adminNote
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error bulk updating cancelled reports:', error);
+      throw error;
+    }
+  },
+
+  // Admin: Bulk cancel lectures
+  bulkCancelLectures: async (lectureIds, reason) => {
+    try {
+      const response = await apiClient.put(`${ENV.API_ENDPOINTS.PREDAVANJA}/admin/lectures/bulk-cancel`, {
+        lectureIds,
+        reason
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error bulk cancelling lectures:', error);
+      throw error;
+    }
+  },
+
+  // Admin: Reactivate cancelled lecture
+  reactivateLecture: async (lectureId, reason) => {
+    try {
+      const response = await apiClient.put(`${ENV.API_ENDPOINTS.PREDAVANJA}/admin/${lectureId}/reactivate`, {
+        reason
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error reactivating lecture:', error);
+      throw error;
+    }
   }
 };
 
