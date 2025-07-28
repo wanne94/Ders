@@ -76,7 +76,7 @@ const ElementPage = ({ type }) => {
       let response;
       switch (type) {
         case 'lectures':
-          response = await safeApiCall(() => predavanjaService.getAllPredavanja(), []);
+          response = await safeApiCall(() => predavanjaService.getAllPredavanja(1, 100), []);
           break;
         case 'daije':
           response = await safeApiCall(() => daijeService.getAllDaije(), []);

@@ -80,7 +80,12 @@
       "Bash(git rm:*)",
       "WebFetch(domain:localhost)",
       "Bash(sudo ufw:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "mcp__serena__get_current_config",
+      "mcp__serena__list_dir",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__search_for_pattern",
+      "mcp__serena__find_file"
     ],
     "deny": []
   }

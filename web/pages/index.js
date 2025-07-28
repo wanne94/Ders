@@ -35,6 +35,7 @@ import AndroidAppModal from '@/components/AndroidAppModal';
 import DownloadAppSection from '@/components/DownloadAppSection';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 import { deviceUtils, storage } from '@/utils';
+import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
 
 
 
@@ -156,9 +157,10 @@ const QuickActions = () => {
 const TenLectures = ({ lectures, isLoading }) => {
   const router = useRouter();
   
-  // Privremeno koristimo jednostavno sortiranje umesto složene funkcije
+  // Primjenjujemo sortLecturesByStatus funkciju kao na /lectures stranici
   const approvedLectures = (lectures || []).filter(lecture => lecture.status === 'approved');
-  const proximityLectures = approvedLectures.slice(0, 10);
+  const sortedLectures = sortLecturesByStatus(approvedLectures);
+  const proximityLectures = sortedLectures.slice(0, 10);
 
   const handleViewAllLectures = () => {
     router.push('/lectures');
@@ -451,7 +453,7 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
     if (organizations && lectures) {
       // Privremeno koristimo jednostavno sortiranje umesto složene funkcije
       const approvedOrgs = (organizations || []).filter(org => org.status === 'approved');
-      const sortedOrganizations = approvedOrgs.slice(0, 8); // Limit to 8 organizations
+      const sortedOrganizations = approvedOrgs.slice(0, 10); // Limit to 10 organizations
 
       setDisplayOrganizations(sortedOrganizations || []);
     }
@@ -471,7 +473,7 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
           Udruženja
         </Typography>
         <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
-          Upoznaj 8 nasumično odabranih udruženja.
+          Upoznaj 10 nasumično odabranih udruženja.
         </Typography>
 
       {isLoading ? (
@@ -629,7 +631,7 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
       const shuffled = [...approvedDaije].sort(() => Math.random() - 0.5);
       
       // Uzimamo prvih 10
-      const randomDaije = shuffled.slice(0, 8);
+      const randomDaije = shuffled.slice(0, 10);
       setDisplayDaije(randomDaije || []);
     }
   }, [daije, lectures]);
@@ -648,7 +650,7 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
           Daije
         </Typography>
         <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
-        Upoznaj 8 nasumično odabranih daija.
+        Upoznaj 10 nasumično odabranih daija.
         </Typography>
 
       {isLoading ? (
@@ -716,8 +718,8 @@ export default function Home() {
         setIsLoading(true);
         setError(null);
         
-        // Fetch lectures
-        const allLectures = await predavanjaService.getAllPredavanja();
+        // Fetch lectures - bez limita da prikaže sva predavanja sortirana ispravno
+        const allLectures = await predavanjaService.getAllPredavanja(1, 100);
 
         // Normalize lectures data
         const lecturesData = (allLectures || []).map(lecture => ({
