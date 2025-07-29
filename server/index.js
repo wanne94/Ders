@@ -3219,6 +3219,7 @@ app.post('/api/test-body', (req, res) => {
 });
 
 app.use('/api/users', usersRouter);
+app.use('/api/lectures', lecturesRouter);
 
 // Performance test endpoint
 app.get('/api/performance-test', async (req, res) => {
