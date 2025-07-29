@@ -12,12 +12,14 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
+import { jwtDecode } from 'jwt-decode';
 import PageLayout from '@/components/PageLayout';
 import UniversalCard from '@/components/UniversalCard';
 import SkeletonGrid from '@/components/SkeletonGrid';
 import LectureForm from '@/components/LectureForm';
 import DaijaForm from '@/components/DaijaForm';
 import OrganizationForm from '@/components/OrganizationForm';
+import LecturesSection from '@/components/LecturesSection';
 import { safeApiCall, normalizeToArray } from '@/utils/dataHelpers';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
 import { useDebounce } from '@/utils/useDebounce';
@@ -76,7 +78,34 @@ const ElementPage = ({ type }) => {
       let response;
       switch (type) {
         case 'lectures':
-          response = await safeApiCall(() => predavanjaService.getAllPredavanja(1, 100), []);
+          // Use the same endpoint as dashboard - get ALL lectures
+          console.log('🔍 [ElementPage] Fetching ALL lectures (same as dashboard)');
+          // Check if user is admin
+          const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+          let isAdmin = false;
+          if (token) {
+            try {
+              const decodedUser = jwtDecode(token);
+              isAdmin = decodedUser.role === 'admin' || decodedUser.role === 'super_admin';
+            } catch (e) {
+              console.error('Error decoding token:', e);
+            }
+          }
+          
+          if (isAdmin) {
+            // For admin users, use admin endpoint (same as dashboard)
+            response = await safeApiCall(() => predavanjaService.getAllPredavanjaForAdmin(), []);
+            console.log('📊 [ElementPage] Admin: Received ALL lectures:', response.length);
+          } else {
+            // For regular users, use public endpoint
+            console.log('🔍 [ElementPage] Calling getAllPredavanja with status=all');
+            response = await safeApiCall(() => predavanjaService.getAllPredavanja(1, 1000, 'all'), []);
+            console.log('📊 [ElementPage] Public: Received lectures:', response.length);
+            console.log('🔍 [ElementPage] Sample lectures:', response.slice(0, 3));
+          }
+          
+          const cancelledCount = response.filter(l => l.status === 'cancelled' || l.isCancelled).length;
+          console.log('❌ [ElementPage] Cancelled lectures count:', cancelledCount);
           break;
         case 'daije':
           response = await safeApiCall(() => daijeService.getAllDaije(), []);
@@ -90,11 +119,29 @@ const ElementPage = ({ type }) => {
       
       const normalizedData = normalizeToArray(response);
       
+      // Debug raw response
+      if (type === 'lectures') {
+        console.log('🎯 [ElementPage] Raw response:', response);
+        console.log('🎯 [ElementPage] Normalized data:', normalizedData);
+        const cancelledInRaw = normalizedData.filter(l => l.status === 'cancelled' || l.isCancelled).length;
+        console.log('❌ [ElementPage] Cancelled in raw response:', cancelledInRaw);
+        if (cancelledInRaw > 0) {
+          console.log('❌ [ElementPage] Sample cancelled lecture:', normalizedData.find(l => l.status === 'cancelled' || l.isCancelled));
+        }
+      }
+      
       // Add type field based on the page type
       const dataWithType = normalizedData.map(item => ({
         ...item,
         type: config.expectedType
       }));
+      
+      // Debug log for type='lectures'
+      if (type === 'lectures') {
+        console.log('🔍 [ElementPage] Data with type added:', dataWithType.length);
+        const cancelledInData = dataWithType.filter(l => l.status === 'cancelled' || l.isCancelled).length;
+        console.log('❌ [ElementPage] Cancelled in dataWithType:', cancelledInData);
+      }
       
       setState(prev => ({ ...prev, items: dataWithType }));
     } catch (error) {
@@ -109,6 +156,13 @@ const ElementPage = ({ type }) => {
   const filteredItems = useMemo(() => {
     let filtered = [...items];
 
+    // Debug log before filtering
+    if (type === 'lectures') {
+      console.log('🔍 [ElementPage] Items before filtering:', items.length);
+      const cancelledBeforeFilter = items.filter(l => l.status === 'cancelled' || l.isCancelled).length;
+      console.log('❌ [ElementPage] Cancelled before filtering:', cancelledBeforeFilter);
+    }
+
     // Filter by type first
     filtered = filtered.filter(item => {
       switch (type) {
@@ -122,6 +176,13 @@ const ElementPage = ({ type }) => {
           return true;
       }
     });
+
+    // Debug log after type filtering
+    if (type === 'lectures') {
+      console.log('🔍 [ElementPage] Items after type filtering:', filtered.length);
+      const cancelledAfterFilter = filtered.filter(l => l.status === 'cancelled' || l.isCancelled).length;
+      console.log('❌ [ElementPage] Cancelled after type filtering:', cancelledAfterFilter);
+    }
 
     // Apply search filter
     if (debouncedSearchTerm.trim()) {
@@ -299,49 +360,53 @@ const ElementPage = ({ type }) => {
       </Box>
 
       {/* Content */}
-      {isLoading ? (
-        <SkeletonGrid 
-          count={12} 
-          type={type === 'lectures' ? 'lecture' : type === 'daije' ? 'daija' : 'organization'} 
+      {type === 'lectures' ? (
+        <LecturesSection 
+          lectures={currentItems}
+          isLoading={isLoading}
+          title={config.title}
+          emptyMessage={
+            debouncedSearchTerm
+              ? 'Nema rezultata za vašu pretragu'
+              : `Nema dostupnih ${config.title.toLowerCase()}`
+          }
         />
-      ) : error ? (
-        <Alert severity="error">{error}</Alert>
-      ) : !currentItems.length ? (
-        <Alert severity="info">
-          {debouncedSearchTerm
-            ? 'Nema rezultata za vašu pretragu'
-            : `Nema dostupnih ${config.title.toLowerCase()}`}
-        </Alert>
       ) : (
-        <>
-          {type === 'lectures' && (
-            <LecturesGrid>
-              {currentItems.map((item) => (
-                <Box key={item._id} sx={{ height: '300px' }}>
-                  <UniversalCard data={item} />
-                </Box>
-              ))}
-            </LecturesGrid>
-          )}
-          {type === 'daije' && (
-            <DaijeGrid>
-              {currentItems.map((item) => (
-                <Box key={item._id} sx={{ height: '200px' }}>
-                  <UniversalCard data={item} />
-                </Box>
-              ))}
-            </DaijeGrid>
-          )}
-          {type === 'organizations' && (
-            <OrganizationsGrid>
-              {currentItems.map((item) => (
-                <Box key={item._id} sx={{ height: '200px' }}>
-                  <UniversalCard data={item} />
-                </Box>
-              ))}
-            </OrganizationsGrid>
-          )}
-        </>
+        isLoading ? (
+          <SkeletonGrid 
+            count={12} 
+            type={type === 'daije' ? 'daija' : 'organization'} 
+          />
+        ) : error ? (
+          <Alert severity="error">{error}</Alert>
+        ) : !currentItems.length ? (
+          <Alert severity="info">
+            {debouncedSearchTerm
+              ? 'Nema rezultata za vašu pretragu'
+              : `Nema dostupnih ${config.title.toLowerCase()}`}
+          </Alert>
+        ) : (
+          <>
+            {type === 'daije' && (
+              <DaijeGrid>
+                {currentItems.map((item) => (
+                  <Box key={item._id} sx={{ height: '200px' }}>
+                    <UniversalCard data={item} />
+                  </Box>
+                ))}
+              </DaijeGrid>
+            )}
+            {type === 'organizations' && (
+              <OrganizationsGrid>
+                {currentItems.map((item) => (
+                  <Box key={item._id} sx={{ height: '200px' }}>
+                    <UniversalCard data={item} />
+                  </Box>
+                ))}
+              </OrganizationsGrid>
+            )}
+          </>
+        )
       )}
 
       {/* Pagination */}

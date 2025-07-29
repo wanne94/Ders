@@ -9,8 +9,6 @@ const LogoCircle = () => (
     width={50}
     height={50}
     style={{
-      marginTop: '10px',
-      marginBottom: '10px',
       borderRadius: '50%',
       objectFit: 'cover',
       border: '2px solid #c89b3c',

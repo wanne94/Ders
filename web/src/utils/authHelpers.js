@@ -78,14 +78,24 @@ export const getRememberedCredentials = () => {
 // Auth data management
 export const getToken = () => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem(STORAGE_KEYS.TOKEN);
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    console.log('🔑 getToken: Retrieved token with key:', STORAGE_KEYS.TOKEN);
+    console.log('🔑 getToken: Token value:', token);
+    return token;
   }
   return null;
 };
 
 export const setToken = (token) => {
   if (typeof window !== 'undefined') {
+    console.log('🔑 setToken: Storing token with key:', STORAGE_KEYS.TOKEN);
+    console.log('🔑 setToken: Token value:', token);
     localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+    console.log('🔑 setToken: Token stored, verifying...');
+    const storedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    console.log('🔑 setToken: Verification - stored token:', storedToken);
+    // Emit custom event da su se auth podaci promenili
+    window.dispatchEvent(new CustomEvent('authChanged', { detail: { type: 'login' } }));
   }
 };
 
@@ -108,6 +118,8 @@ export const getUserData = () => {
 export const setUserData = (user) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+    // Emit custom event da su se auth podaci promenili
+    window.dispatchEvent(new CustomEvent('authChanged', { detail: { type: 'login' } }));
   }
 };
 
@@ -115,6 +127,8 @@ export const clearAuthData = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(STORAGE_KEYS.TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER);
+    // Emit custom event da su se auth podaci promenili
+    window.dispatchEvent(new CustomEvent('authChanged', { detail: { type: 'logout' } }));
   }
 };
 
@@ -124,6 +138,8 @@ export const clearAllData = () => {
     localStorage.removeItem(STORAGE_KEYS.USER);
     localStorage.removeItem(STORAGE_KEYS.REMEMBERED_EMAIL);
     localStorage.removeItem(STORAGE_KEYS.REMEMBERED_PASSWORD);
+    // Emit custom event da su se auth podaci promenili
+    window.dispatchEvent(new CustomEvent('authChanged', { detail: { type: 'logout' } }));
   }
 };
 

@@ -103,8 +103,8 @@ const SkeletonCard = React.memo(({ type = 'lecture' }) => {
           >
             <Skeleton
               variant={type === 'daija' ? 'circular' : 'rectangular'}
-              width={{ xs: 80, sm: 100 }}
-              height={type === 'lecture' ? { xs: 110, sm: 130 } : { xs: 80, sm: 100 }}
+              width={100}
+              height={type === 'lecture' ? 130 : 100}
               sx={{
                 borderRadius: type === 'daija' ? '50%' : '8px'
               }}

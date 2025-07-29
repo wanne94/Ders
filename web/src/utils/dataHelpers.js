@@ -721,6 +721,16 @@ export const calculateLectureStatus = (lecture) => {
     };
   }
 
+  // Check if lecture is cancelled
+  if (lecture.isCancelled === true || lecture.status === 'cancelled') {
+    return {
+      status: 'cancelled',
+      timeInfo: '',
+      badgeText: 'Otkazano',
+      badgeColor: 'red'
+    };
+  }
+
   const now = new Date();
   const lectureDate = new Date(lecture.date);
   

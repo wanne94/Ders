@@ -55,6 +55,13 @@ const DashSidebar = ({
       count: pendingCount,
       color: 'warning'
     },
+    {
+      id: 'prijave-otkazivanje',
+      text: 'Prijave za otkazivanje',
+      icon: <CancelIcon />,
+      description: 'Prijave otkazivanja predavanja',
+      color: 'warning'
+    },
     // Samo super admin može da vidi odbijene stavke
     ...(userRole === 'super_admin' ? [{
       id: 'odbijeno',

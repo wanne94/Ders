@@ -70,9 +70,11 @@ const ImageCell = memo(({ src, alt, defaultSrc }) => {
 ImageCell.displayName = 'ImageCell';
 
 // Komponenta za akcije sa dropdown menijem
-const ActionsMenu = memo(({ item, type, onEdit, onDelete, onDuplicate, onArchive }) => {
+const ActionsMenu = memo(({ item, type, onEdit, onDelete, onDuplicate, onCancel, onArchive }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  
+  console.log('ActionsMenu - type:', type, 'onCancel:', !!onCancel);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -99,6 +101,11 @@ const ActionsMenu = memo(({ item, type, onEdit, onDelete, onDuplicate, onArchive
 
   const handleArchive = () => {
     onArchive(item);
+    handleClose();
+  };
+
+  const handleCancel = () => {
+    onCancel(item);
     handleClose();
   };
 
@@ -144,6 +151,14 @@ const ActionsMenu = memo(({ item, type, onEdit, onDelete, onDuplicate, onArchive
             <ListItemText>Dupliraj</ListItemText>
           </MenuItem>
         )}
+        {onCancel && (type === 'lecture' || type === 'lectures') && (
+          <MenuItem onClick={handleCancel}>
+            <ListItemIcon>
+              <CancelIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Otkaži</ListItemText>
+          </MenuItem>
+        )}
         {onArchive && type === 'suggestion' && (
           <MenuItem onClick={handleArchive}>
             <ListItemIcon>
@@ -174,7 +189,8 @@ const TableRowMemo = memo(({
   showActions, 
   onEdit, 
   onDelete, 
-  onDuplicate, 
+  onDuplicate,
+  onCancel,
   onArchive, 
   type,
   isSelected,
@@ -223,7 +239,7 @@ const TableRowMemo = memo(({
           {column.getValue(item)}
         </TableCell>
       ))}
-      {showActions && !hideActions && (onEdit || onDelete || onDuplicate || onArchive) && (
+      {showActions && !hideActions && (onEdit || onDelete || onDuplicate || onCancel || onArchive) && (
         <TableCell>
           <ActionsMenu 
             item={item}
@@ -231,6 +247,7 @@ const TableRowMemo = memo(({
             onEdit={onEdit}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
+            onCancel={onCancel}
             onArchive={onArchive}
           />
         </TableCell>
@@ -347,6 +364,7 @@ const DataTable = ({
   onEdit, 
   onDelete, 
   onDuplicate,
+  onCancel,
   onArchive,
   onStatusChange,
   onBulkStatusChange,
@@ -378,6 +396,8 @@ const DataTable = ({
       case 'suggestion':
       case 'suggestions':
         return { key: 'createdAt', direction: 'desc' };
+      case 'cancellation-reports':
+        return { key: 'reportCount', direction: 'desc' };
       default:
         return { key: null, direction: 'asc' };
     }
@@ -449,12 +469,14 @@ const DataTable = ({
               label={
                 currentStatus === 'approved' ? 'Odobreno' :
                 currentStatus === 'pending' ? 'Na čekanju' :
-                currentStatus === 'rejected' ? 'Odbačeno' : 'Nepoznato'
+                currentStatus === 'rejected' ? 'Odbačeno' :
+                currentStatus === 'cancelled' ? 'Otkazano' : 'Nepoznato'
               }
               color={
                 currentStatus === 'approved' ? 'success' :
                 currentStatus === 'pending' ? 'warning' :
-                currentStatus === 'rejected' ? 'error' : 'default'
+                currentStatus === 'rejected' ? 'error' :
+                currentStatus === 'cancelled' ? 'error' : 'default'
               }
               sx={{ minWidth: 80 }}
             />
@@ -665,6 +687,41 @@ const DataTable = ({
           }
         ];
         break;
+      case 'cancellation-reports':
+        columns = [
+          { 
+            id: 'image', 
+            label: 'Slika', 
+            sortable: false,
+            getValue: (item) => (
+              <ImageCell 
+                src={item?.image || null} 
+                alt={item?.title || 'Lecture'} 
+                defaultSrc={getDefaultLectureImage()}
+              />
+            )
+          },
+          { id: 'title', label: 'Naziv predavanja', sortable: true, getValue: (item) => item.title || 'N/A' },
+          { id: 'speaker', label: 'Predavač', sortable: true, getValue: (item) => item.speaker || 'N/A' },
+          { id: 'date', label: 'Datum', sortable: true, getValue: (item) => {
+            const date = item.date;
+            return date ? formatDate(date) : 'N/A';
+          }},
+          { id: 'time', label: 'Vrijeme', sortable: false, getValue: (item) => item.time || 'N/A' },
+          { 
+            id: 'reportCount', 
+            label: 'Broj prijava', 
+            sortable: true, 
+            getValue: (item) => (
+              <Chip
+                label={`${item.reportCount}/3`}
+                color={item.reportCount >= 3 ? 'error' : 'warning'}
+                size="small"
+              />
+            )
+          }
+        ];
+        break;
       default:
         columns = [];
     }
@@ -757,7 +814,7 @@ const DataTable = ({
                   )}
                 </TableCell>
               ))}
-              {showActions && !hideActions && (onEdit || onDelete || onDuplicate || onArchive) && (
+              {showActions && !hideActions && (onEdit || onDelete || onDuplicate || onCancel || onArchive) && (
                 <TableCell>Akcije</TableCell>
               )}
             </TableRow>
@@ -790,6 +847,7 @@ const DataTable = ({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onDuplicate={onDuplicate}
+                  onCancel={onCancel}
                   onArchive={onArchive}
                   type={type}
                   isSelected={isSelected(item._id || item.id)}

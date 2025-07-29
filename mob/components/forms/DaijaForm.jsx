@@ -40,7 +40,7 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
     title: 'prof',
     biography: '',
     image: '',
-    status: 'pending'
+    status: 'approved'
   });
   
   const [loading, setLoading] = useState(false);
@@ -64,7 +64,7 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
       title: editData.title || 'prof',
       biography: editData.biography || '',
       image: editData.image || '',
-      status: editData.status || 'pending'
+      status: editData.status || 'approved'
     });
 
     // Set education array
@@ -242,7 +242,7 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
         console.log('✅ Daija updated successfully');
         Alert.alert(
           'Uspjeh', 
-          'Daija je uspješno ažuriran! Promjene će biti vidljive nakon odobrenja administratora.',
+          'Daija je uspješno ažuriran!',
           [{ text: 'OK', onPress: () => onSuccess && onSuccess() }]
         );
       } else {
@@ -250,7 +250,7 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
         console.log('✅ Daija created successfully');
         Alert.alert(
           'Uspjeh', 
-          'Daija je uspješno dodan! Biće vidljiv nakon odobrenja administratora.',
+          'Daija je uspješno dodan!',
           [{ text: 'OK', onPress: () => onSuccess && onSuccess() }]
         );
       }
@@ -264,7 +264,7 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
           title: 'prof',
           biography: '',
           image: '',
-          status: 'pending'
+          status: 'approved'
         });
         setEducation([]);
         setImageUri(null);

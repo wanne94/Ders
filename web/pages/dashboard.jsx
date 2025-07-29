@@ -15,7 +15,13 @@ import {
   useMediaQuery,
   useTheme,
   CircularProgress,
+  Chip,
+  InputAdornment,
 } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import BlockIcon from '@mui/icons-material/Block';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { jwtDecode } from 'jwt-decode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PageLayout from '@/components/PageLayout';
@@ -95,12 +101,20 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const storedToken = localStorage.getItem('token');
+      const { getToken, getUserData } = require('@/utils/authHelpers');
+      const storedToken = getToken();
+      const userData = getUserData();
+      
+      console.log('📊 Dashboard useEffect: Setting token and user');
+      console.log('📊 Stored token:', !!storedToken);
+      console.log('📊 User data:', userData);
+      
       setToken(storedToken);
       
       if (storedToken) {
         try {
           const decodedUser = jwtDecode(storedToken);
+          console.log('📊 Decoded user from token:', decodedUser);
           setCurrentUser(decodedUser);
         } catch (error) {
           console.error('Error decoding token:', error);
@@ -120,7 +134,8 @@ const Dashboard = () => {
     organizations: [],
     suggestions: [],
     archivedSuggestions: [],
-    suggestionsCount: { total: 0, pending: 0, approved: 0, rejected: 0 }
+    suggestionsCount: { total: 0, pending: 0, approved: 0, rejected: 0 },
+    cancellationReports: { total: 0, pending: 0, autoCancelled: 0, manuallyCancelled: 0, lectures: [] }
   });
   const [counts, setCounts] = useState({
     pendingSuggestions: 0
@@ -138,19 +153,27 @@ const Dashboard = () => {
     addUser: false,
     addOrganization: false,
     addDaija: false,
-    addLecture: false
+    addLecture: false,
+    manageCancellationDialog: false
   });
 
   const [rejectReason, setRejectReason] = useState('');
+  const [cancellationItem, setCancellationItem] = useState(null);
 
   // Deklaracija fetchData mora biti iznad useEffect!
   const fetchData = useCallback(async () => {
+    console.log('📊 Dashboard fetchData: Starting data fetch...');
+    console.log('📊 isAdmin:', isAdmin);
+    console.log('📊 currentUser:', currentUser);
+    console.log('📊 token:', !!token);
+    
     setUi(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       // Only call admin endpoints if user is admin
       const promises = [];
       
       if (isAdmin) {
+        console.log('📊 User is admin, calling admin endpoints...');
         promises.push(
           usersService.getAllUsers(),
           predavanjaService.getAllPredavanjaForAdmin(),
@@ -158,9 +181,11 @@ const Dashboard = () => {
           udruzenjaService.getAllUdruzenjaForAdmin(),
           suggestionsService.getAllSuggestions(),
           suggestionsService.getArchivedSuggestions(),
-          suggestionsService.getSuggestionsCount()
+          suggestionsService.getSuggestionsCount(),
+          axiosInstance.get('/lectures/admin/cancellation-reports').then(res => res.data) // Fetch cancellation reports
         );
       } else {
+        console.log('📊 User is not admin, using public endpoints...');
         // For non-admin users, use public endpoints or return empty data
         promises.push(
           Promise.resolve([]), // users
@@ -169,11 +194,20 @@ const Dashboard = () => {
           udruzenjaService.getAllUdruzenja(), // public organizations
           Promise.resolve([]), // suggestions
           Promise.resolve([]), // archived suggestions
-          Promise.resolve({ total: 0, pending: 0, approved: 0, rejected: 0 }) // suggestions count
+          Promise.resolve({ total: 0, pending: 0, approved: 0, rejected: 0 }), // suggestions count
+          Promise.resolve({ total: 0, pending: 0, autoCancelled: 0, manuallyCancelled: 0, lectures: [] }) // cancellation reports
         );
       }
       
-      const [usersRes, lecturesRes, daijeRes, orgsRes, suggestionsRes, archivedSuggestionsRes, suggestionsCountRes] = await Promise.all(promises);
+      console.log('📊 Executing API calls...');
+      const [usersRes, lecturesRes, daijeRes, orgsRes, suggestionsRes, archivedSuggestionsRes, suggestionsCountRes, cancellationReportsRes] = await Promise.all(promises);
+
+      console.log('📊 API responses received:');
+      console.log('📊 Users:', usersRes);
+      console.log('📊 Lectures:', lecturesRes);
+      console.log('📊 Daije:', daijeRes);
+      console.log('📊 Organizations:', orgsRes);
+      console.log('📊 Cancellation Reports Response:', cancellationReportsRes);
 
       const suggestionsData = Array.isArray(suggestionsRes) ? suggestionsRes : [];
       const archivedSuggestionsData = Array.isArray(archivedSuggestionsRes) ? archivedSuggestionsRes : [];
@@ -193,7 +227,8 @@ const Dashboard = () => {
         organizations: Array.isArray(orgsRes) ? orgsRes : [],
         suggestions: suggestionsData,
         archivedSuggestions: archivedSuggestionsData,
-        suggestionsCount: suggestionsCountRes || { total: 0, pending: 0, approved: 0, rejected: 0 }
+        suggestionsCount: suggestionsCountRes || { total: 0, pending: 0, approved: 0, rejected: 0 },
+        cancellationReports: cancellationReportsRes || { total: 0, pending: 0, autoCancelled: 0, manuallyCancelled: 0, lectures: [] }
       });
 
       // Ažuriraj broj aktivnih prijedloga
@@ -201,8 +236,10 @@ const Dashboard = () => {
         ...prev,
         pendingSuggestions: suggestionsData.filter(s => s.status !== 'archived').length
       }));
+      console.log('📊 Data set successfully');
       setUi(prev => ({ ...prev, isLoading: false, error: null }));
     } catch (error) {
+      console.error('📊 Error fetching dashboard data:', error);
       setUi(prev => ({ ...prev, isLoading: false, error: 'Greška pri dohvaćanju podataka.' }));
     }
   }, [isAdmin]);
@@ -277,6 +314,7 @@ const Dashboard = () => {
       daije: 'daija',
       predavanja: 'lecture',
       'za-odobrenje': 'lecture',
+      'prijave-otkazivanje': 'cancellation-reports',
       organizations: 'organization',
       odbijeno: 'lecture', // Default to lecture for rejected section
       prijedlozi: 'suggestion'
@@ -314,7 +352,16 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (!currentUser || fetchDataCalledRef.current) return;
+    console.log('📊 Dashboard fetchData useEffect triggered');
+    console.log('📊 currentUser:', currentUser);
+    console.log('📊 fetchDataCalledRef.current:', fetchDataCalledRef.current);
+    
+    if (!currentUser || fetchDataCalledRef.current) {
+      console.log('📊 Skipping fetchData - conditions not met');
+      return;
+    }
+    
+    console.log('📊 Calling fetchData...');
     fetchDataCalledRef.current = true;
     fetchData();
   }, [currentUser, fetchData]);
@@ -379,6 +426,51 @@ const Dashboard = () => {
     setDuplicateCount(1);
     setDuplicateCountDialogOpen(true);
   }, []);
+  const handleResetCancellationReports = useCallback(async (item) => {
+    console.log('🔄 Resetting cancellation reports for:', item);
+    try {
+      await axiosInstance.delete(`/lectures/${item._id}/reset-cancellation`);
+      
+      showSnackbar('Prijave otkazivanja su uspješno poništene');
+      await fetchData(); // Refresh podataka
+    } catch (error) {
+      console.error('Error resetting cancellation reports:', error);
+      showSnackbar('Greška pri poništavanju prijava', 'error');
+    }
+  }, [showSnackbar, fetchData]);
+
+  const handleCancelLecture = useCallback(async (item) => {
+    console.log('🚫 handleCancelLecture called with item:', item);
+    try {
+      const reason = window.prompt('Unesite razlog otkazivanja:');
+      
+      if (reason === null) {
+        // Korisnik je kliknuo Cancel
+        return;
+      }
+
+      await axiosInstance.post(`/lectures/${item._id}/override-cancellation`, {
+        isCancelled: true,
+        reason: reason || 'Otkazano od strane administratora'
+      });
+      
+      // Ažuriraj lokalni state
+      setData(prev => ({
+        ...prev,
+        lectures: prev.lectures.map(lecture => 
+          lecture._id === item._id 
+            ? { ...lecture, isCancelled: true, status: 'cancelled' }
+            : lecture
+        )
+      }));
+      
+      showSnackbar('Predavanje je uspješno otkazano');
+      await fetchData(); // Refresh podataka
+    } catch (error) {
+      console.error('Error cancelling lecture:', error);
+      showSnackbar('Greška pri otkazivanju predavanja', 'error');
+    }
+  }, [showSnackbar, fetchData]);
 
   const confirmDelete = useCallback(async () => {
     if (!selectedItem) return;
@@ -757,6 +849,7 @@ const Dashboard = () => {
           onEdit={isAdmin ? handleEdit : undefined}
           onDelete={canDelete ? handleDelete : undefined}
           onDuplicate={handleDuplicate}
+          onCancel={(type === 'lecture' || type === 'lectures') && isAdmin ? handleCancelLecture : undefined}
           onStatusChange={isAdmin ? (item, newStatus) => handleStatusChange(item, type || getTypeFromSection(activeSection), newStatus) : undefined}
           onBulkStatusChange={isAdmin ? handleBulkStatusChange : undefined}
           onBulkDelete={canDelete ? handleBulkDelete : undefined}
@@ -809,31 +902,33 @@ const Dashboard = () => {
           searchQueries.lectures,
           'lecture'
         );
+        
         const pendingDaije = filterData(
           (data.daije || []).filter(d => d.status === 'pending'),
           searchQueries.lectures,
           'daija'
         );
+        
         const pendingOrganizations = filterData(
           (data.organizations || []).filter(o => o.status === 'pending'),
           searchQueries.lectures,
           'organization'
         );
-        content = (
-          <Box>
+        
+        return (
+          <>
             {pendingLectures.length > 0 && renderSection('pending', pendingLectures, 'Predavanja za odobrenje', 'lecture')}
             {pendingDaije.length > 0 && renderSection('pending', pendingDaije, 'Daije za odobrenje', 'daija')}
             {pendingOrganizations.length > 0 && renderSection('pending', pendingOrganizations, 'Udruženja za odobrenje', 'organization')}
             {pendingLectures.length === 0 && pendingDaije.length === 0 && pendingOrganizations.length === 0 && (
-              <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
-                <Typography color="text.secondary" variant="h6">
+              <Box sx={{ textAlign: 'center', py: 8 }}>
+                <Typography variant="h6" color="text.secondary">
                   Nema sadržaja za odobrenje
                 </Typography>
-              </Paper>
+              </Box>
             )}
-          </Box>
+          </>
         );
-        break;
       }
       case 'korisnici': {
         const filteredUsers = filterData(data.users, searchQueries.users, 'user');
@@ -923,6 +1018,89 @@ const Dashboard = () => {
                   Nema odbačenih stavki
                 </Typography>
               </Paper>
+            )}
+          </Box>
+        );
+        break;
+      }
+
+      case 'prijave-otkazivanje': {
+        const cancellationReports = data.cancellationReports || { lectures: [] };
+        console.log('🔍 Cancellation Reports Data:', cancellationReports);
+        console.log('🔍 Lectures in reports:', cancellationReports.lectures);
+        const filteredReports = filterData(
+          cancellationReports.lectures || [],
+          searchQueries.lectures,
+          'lecture'
+        );
+        console.log('🔍 Filtered Reports:', filteredReports);
+
+        content = (
+          <Box sx={{ mb: 4, width: '100%' }}>
+            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
+              Prijave za otkazivanje
+            </Typography>
+
+            {/* Summary Cards */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mb: 4 }}>
+              <Paper sx={{ p: 3, bgcolor: 'warning.light', color: 'warning.dark' }}>
+                <Typography variant="h6">{cancellationReports.total || 0}</Typography>
+                <Typography variant="body2">Ukupno prijava</Typography>
+              </Paper>
+              <Paper sx={{ p: 3, bgcolor: 'info.light', color: 'info.dark' }}>
+                <Typography variant="h6">{cancellationReports.pending || 0}</Typography>
+                <Typography variant="body2">Na čekanju</Typography>
+              </Paper>
+              <Paper sx={{ p: 3, bgcolor: 'error.light', color: 'error.dark' }}>
+                <Typography variant="h6">{cancellationReports.autoCancelled || 0}</Typography>
+                <Typography variant="body2">Automatski otkazano</Typography>
+              </Paper>
+              <Paper sx={{ p: 3, bgcolor: 'grey.300', color: 'grey.800' }}>
+                <Typography variant="h6">{cancellationReports.manuallyCancelled || 0}</Typography>
+                <Typography variant="body2">Ručno otkazano</Typography>
+              </Paper>
+            </Box>
+
+            {/* Search Field */}
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                fullWidth
+                label="Pretraži predavanja"
+                value={searchQueries.lectures}
+                onChange={(e) => handleSearchChange('lectures', e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
+
+            {/* Table */}
+            {filteredReports.length === 0 ? (
+              <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
+                <Typography color="text.secondary">
+                  Nema prijava za otkazivanje
+                </Typography>
+              </Paper>
+            ) : (
+              <DataTable
+                data={filteredReports}
+                type="cancellation-reports"
+                onEdit={(item) => {
+                  setCancellationItem(item);
+                  openDialog('manageCancellationDialog');
+                }}
+                onCancel={(item) => {
+                  setCancellationItem(item);
+                  openDialog('manageCancellationDialog');
+                }}
+                hideActions={!isAdmin}
+                showActions={true}
+                showStatus={false}
+              />
             )}
           </Box>
         );
@@ -1035,12 +1213,13 @@ const Dashboard = () => {
       }
       case 'predavanja':
       default: {
-        const approvedLectures = filterData(
-          (data.lectures || []).filter(l => l.status === 'approved'),
+        // Show all lectures (approved and cancelled)
+        const allLectures = filterData(
+          (data.lectures || []),
           searchQueries.lectures,
           'lecture'
         );
-        content = renderSection('approved', approvedLectures, 'Odobrena predavanja (Dersovi)', 'lecture');
+        content = renderSection('all', allLectures, 'Svi Dersovi', 'lecture');
         break;
       }
     }
@@ -1240,6 +1419,90 @@ const Dashboard = () => {
             >
               Odbaci
             </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Manage Cancellation Reports Dialog */}
+        <Dialog
+          open={dialogs.manageCancellationDialog}
+          onClose={() => closeDialog('manageCancellationDialog')}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            Upravljanje prijavama otkazivanja
+          </DialogTitle>
+          <DialogContent>
+            {cancellationItem && (
+              <>
+                <Typography variant="h6" gutterBottom>
+                  {cancellationItem.title}
+                </Typography>
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Predavač: {cancellationItem.speaker}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Datum: {new Date(cancellationItem.date).toLocaleDateString('hr-HR')}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Vrijeme: {cancellationItem.time}
+                  </Typography>
+                </Box>
+                <Alert severity={cancellationItem.reportCount >= 3 ? "error" : "warning"} sx={{ mb: 3 }}>
+                  Ovo predavanje ima <strong>{cancellationItem.reportCount}</strong> prijav{cancellationItem.reportCount === 1 ? 'u' : 'a/e'} za otkazivanje.
+                </Alert>
+                
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Izaberite jednu od opcija:
+                  </Typography>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    <strong>Prihvati prijavu</strong> - Predavanje će biti OTKAZANO
+                  </Alert>
+                  <Alert severity="info">
+                    <strong>Odbij prijavu</strong> - Sve prijave će biti OBRISANE
+                  </Alert>
+                </Box>
+              </>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 3 }}>
+            <Button
+              onClick={() => {
+                if (window.confirm('Da li ste sigurni da želite ODBITI prijave i obrisati ih?')) {
+                  handleResetCancellationReports(cancellationItem);
+                  closeDialog('manageCancellationDialog');
+                }
+              }}
+              color="error"
+              variant="outlined"
+              size="large"
+            >
+              Odbij prijavu
+            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button 
+                onClick={() => closeDialog('manageCancellationDialog')}
+                variant="text"
+              >
+                Odustani
+              </Button>
+              <Button
+                onClick={() => {
+                  if (window.confirm('Da li ste sigurni da želite PRIHVATITI prijavu i otkazati predavanje?')) {
+                    handleCancelLecture(cancellationItem);
+                    closeDialog('manageCancellationDialog');
+                  }
+                }}
+                color="success"
+                variant="contained"
+                disabled={cancellationItem?.isCancelled}
+                size="large"
+              >
+                Prihvati prijavu
+              </Button>
+            </Box>
           </DialogActions>
         </Dialog>
 

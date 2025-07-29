@@ -62,7 +62,9 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     organization: '',
     organizationId: '',
     image: '',
-    status: 'pending'
+    status: 'approved',
+    isWeeklyLecture: false,
+    totalWeeks: 2
   });
   
   const [loading, setLoading] = useState(false);
@@ -226,7 +228,9 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       organization: editData.organization || '',
       organizationId: editData.organizationId || '',
       image: editData.image || '',
-      status: editData.status || 'pending'
+      status: editData.status || 'approved',
+      isWeeklyLecture: editData.isWeeklyLecture || false,
+      totalWeeks: editData.totalWeeks || 2
     });
 
     // Set image URI if exists
@@ -569,7 +573,9 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           organization: '',
           organizationId: '',
           image: '',
-          status: 'pending'
+          status: 'approved',
+          isWeeklyLecture: false,
+          totalWeeks: 2
         });
         setImageUri(null);
         setSelectedDate(new Date());
@@ -765,6 +771,56 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
 
         {renderInput('Adresa', 'address', 'Unesite adresu...', false, true)}
         {renderInput('Mjesto', 'city', 'Unesite mjesto...', false, true)}
+
+        {/* Weekly lecture section */}
+        <View style={styles.weeklyLectureSection}>
+          <TouchableOpacity 
+            style={styles.checkboxContainer}
+            onPress={() => handleInputChange('isWeeklyLecture', !formData.isWeeklyLecture)}
+            disabled={editMode}
+          >
+            <View style={[styles.checkbox, formData.isWeeklyLecture && styles.checkboxChecked]}>
+              {formData.isWeeklyLecture && (
+                <Ionicons name="checkmark" size={16} color={COLORS.white} />
+              )}
+            </View>
+            <Text style={[styles.checkboxLabel, editMode && styles.disabledText]}>
+              Sedmično predavanje
+            </Text>
+          </TouchableOpacity>
+
+          {formData.isWeeklyLecture && (
+            <View style={styles.weeksInputContainer}>
+              <Text style={styles.inputLabel}>Broj sedmica</Text>
+              <View style={styles.weeksInputWrapper}>
+                <TouchableOpacity 
+                  style={styles.weeksButton}
+                  onPress={() => {
+                    if (formData.totalWeeks > 2 && !editMode) {
+                      handleInputChange('totalWeeks', formData.totalWeeks - 1);
+                    }
+                  }}
+                  disabled={editMode || formData.totalWeeks <= 2}
+                >
+                  <Ionicons name="remove" size={20} color={editMode || formData.totalWeeks <= 2 ? COLORS.gray : COLORS.primary} />
+                </TouchableOpacity>
+                <Text style={styles.weeksNumber}>{formData.totalWeeks}</Text>
+                <TouchableOpacity 
+                  style={styles.weeksButton}
+                  onPress={() => {
+                    if (formData.totalWeeks < 12 && !editMode) {
+                      handleInputChange('totalWeeks', formData.totalWeeks + 1);
+                    }
+                  }}
+                  disabled={editMode || formData.totalWeeks >= 12}
+                >
+                  <Ionicons name="add" size={20} color={editMode || formData.totalWeeks >= 12 ? COLORS.gray : COLORS.primary} />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.weeksHelperText}>Min: 2, Max: 12 sedmica</Text>
+            </View>
+          )}
+        </View>
 
         {/* Padding for sticky button */}
         <View style={styles.bottomPadding} />
@@ -1062,6 +1118,71 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.gray,
     marginTop: 4,
+  },
+  // Weekly lecture styles
+  weeklyLectureSection: {
+    marginBottom: 16,
+    backgroundColor: COLORS.lightGray,
+    padding: 16,
+    borderRadius: 8,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  checkboxChecked: {
+    backgroundColor: COLORS.primary,
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  disabledText: {
+    color: COLORS.gray,
+  },
+  weeksInputContainer: {
+    marginTop: 16,
+  },
+  weeksInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  weeksButton: {
+    width: 40,
+    height: 40,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.white,
+  },
+  weeksNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginHorizontal: 24,
+    minWidth: 40,
+    textAlign: 'center',
+  },
+  weeksHelperText: {
+    fontSize: 12,
+    color: COLORS.gray,
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
 

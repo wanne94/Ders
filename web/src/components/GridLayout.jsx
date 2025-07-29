@@ -80,9 +80,19 @@ export const DaijeGrid = ({ children, ...props }) => (
 );
 
 export const LecturesGrid = ({ children, ...props }) => (
-  <GridLayout variant="lectures" {...props}>
+  <Box
+    sx={{
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 2.5,
+      justifyContent: 'flex-start',
+      width: '100%',
+      ...props.sx
+    }}
+    {...props}
+  >
     {children}
-  </GridLayout>
+  </Box>
 );
 
 export const OrganizationsGrid = ({ children, ...props }) => (

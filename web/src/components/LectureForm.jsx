@@ -14,7 +14,9 @@ import {
     MenuItem,
     FormControl,
     InputLabel,
-    Select
+    Select,
+    FormControlLabel,
+    Checkbox
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -50,7 +52,9 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
     city: '',
     shortDescription: '',
     image: '',
-    status: 'pending'
+    status: 'pending',
+    isWeeklyLecture: false,
+    totalWeeks: 2
   });
 
   const [daije, setDaije] = useState([]);
@@ -94,7 +98,9 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
         city: lecture.city || '',
         shortDescription: lecture.shortDescription || '',
         image: lecture.image || '',
-        status: lecture.status || 'pending'
+        status: lecture.status || 'pending',
+        isWeeklyLecture: lecture.isWeeklyLecture || false,
+        totalWeeks: lecture.totalWeeks || 2
       });
 
       // Set custom speaker/organization flags
@@ -119,7 +125,9 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
         city: '',
         shortDescription: '',
         image: '',
-        status: 'pending'
+        status: 'pending',
+        isWeeklyLecture: false,
+        totalWeeks: 2
       });
       setUseCustomSpeaker(false);
       setUseCustomOrganization(false);
@@ -650,6 +658,39 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
                 disabled={isOrganizationSelected}
                 helperText={isOrganizationSelected ? "Mjesto se automatski popunjava iz odabranog udruženja" : ""}
               />
+
+              {/* Weekly lecture checkbox and weeks input */}
+              <Box sx={{ mt: 2, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.isWeeklyLecture}
+                      onChange={(e) => setFormData(prev => ({ ...prev, isWeeklyLecture: e.target.checked }))}
+                      disabled={isEditing}
+                    />
+                  }
+                  label="Sedmično predavanje"
+                />
+                {formData.isWeeklyLecture && (
+                  <TextField
+                    name="totalWeeks"
+                    label="Broj sedmica"
+                    type="number"
+                    value={formData.totalWeeks}
+                    onChange={handleChange}
+                    fullWidth
+                    margin="normal"
+                    InputProps={{
+                      inputProps: { 
+                        min: 2, 
+                        max: 12 
+                      }
+                    }}
+                    helperText="Unesite broj sedmica za koje želite najaviti predavanje (min: 2, max: 12)"
+                    disabled={isEditing}
+                  />
+                )}
+              </Box>
             </Box>
           </Box>
         </DialogContent>

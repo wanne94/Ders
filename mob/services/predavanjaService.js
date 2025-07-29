@@ -2,8 +2,12 @@ import apiClient from './apiClient';
 import { ENV } from '../config';
 
 const predavanjaService = {
-  getAllPredavanja: async (page = 1, limit = 10) => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/public`);
+  getAllPredavanja: async (page = 1, limit = 10, includeStatus = null) => {
+    let endpoint = `${ENV.API_ENDPOINTS.PREDAVANJA}/public`;
+    if (includeStatus) {
+      endpoint += `?status=${includeStatus}`;
+    }
+    const response = await apiClient.get(endpoint);
     return response.data; // Axios interceptor returns full response, so we need .data
   },
 
@@ -87,8 +91,9 @@ const predavanjaService = {
   // Report lecture as cancelled
   reportCancellation: async (lectureId, reportData) => {
     try {
-      const response = await apiClient.post(`${ENV.API_ENDPOINTS.PREDAVANJA}/${lectureId}/report-cancelled`, {
+      const response = await apiClient.post(`${ENV.API_ENDPOINTS.PREDAVANJA}/${lectureId}/report-cancellation`, {
         reason: reportData.reason || '',
+        proof_image: reportData.proof_image || null,
         platform: 'mobile'
       });
       return response.data;

@@ -55,8 +55,8 @@ const lectureSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending'
+    enum: ['pending', 'approved', 'rejected', 'cancelled'],
+    default: 'approved'
   },
   rejectionReason: {
     type: String,
@@ -65,6 +65,88 @@ const lectureSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
+    required: false
+  },
+  // Cancellation functionality fields
+  cancellationReports: [{
+    userId: {
+      type: mongoose.Schema.Types.Mixed, // Allow both ObjectId and String for guest users
+      required: true
+    },
+    reportedAt: {
+      type: Date,
+      default: Date.now
+    },
+    ipAddress: {
+      type: String,
+      required: false
+    },
+    reason: {
+      type: String,
+      required: false,
+      default: 'Nije specificiran razlog'
+    },
+    howFound: {
+      type: String,
+      required: false,
+      default: 'Nije specificiran način saznavanje'
+    },
+    additionalInfo: {
+      type: String,
+      required: false
+    },
+    proofImage: {
+      type: String,
+      required: false
+    }
+  }],
+  isCancelled: {
+    type: Boolean,
+    default: false
+  },
+  cancelledAt: {
+    type: Date,
+    required: false
+  },
+  cancellationReason: {
+    type: String,
+    required: false,
+    default: 'Otkazano na osnovu prijava korisnika'
+  },
+  // New fields for manual cancellation
+  cancelled_at: {
+    type: Date,
+    required: false
+  },
+  cancelled_reason: {
+    type: String,
+    required: false
+  },
+  // Weekly lecture fields
+  isWeeklyLecture: {
+    type: Boolean,
+    default: false
+  },
+  weeklySeriesId: {
+    type: String,
+    required: false,
+    index: true
+  },
+  weekNumber: {
+    type: Number,
+    required: false,
+    min: 1,
+    max: 12
+  },
+  totalWeeks: {
+    type: Number,
+    required: false,
+    min: 2,
+    max: 12
+  },
+  parentLectureId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Lecture',
     required: false
   }
 }, {
@@ -94,5 +176,12 @@ lectureSchema.index({
   description: 'text',
   shortDescription: 'text'
 });
+
+// 6. Cancellation indexes for performance
+lectureSchema.index({ isCancelled: 1 }); // For filtering cancelled lectures
+lectureSchema.index({ 'cancellationReports.userId': 1 }); // For user cancellation reports
+
+// 7. Weekly lecture indexes
+lectureSchema.index({ weeklySeriesId: 1, weekNumber: 1 }); // For finding lectures in a series
 
 module.exports = mongoose.model('Lecture', lectureSchema); 

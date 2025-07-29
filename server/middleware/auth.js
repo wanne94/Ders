@@ -1,3 +1,25 @@
+const { authMiddleware } = require('../utils/jwt');
+
+// Optional authentication - allows both authenticated and guest users
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    // User has provided token - try to authenticate
+    authMiddleware(req, res, (err) => {
+      if (err) {
+        // Token invalid but continue as guest
+        req.user = null;
+      }
+      next();
+    });
+  } else {
+    // No token provided - continue as guest
+    req.user = null;
+    next();
+  }
+};
+
 const isAdminOrSuperAdmin = (req, res, next) => {
   try {
     if (!req.user) {
@@ -22,5 +44,6 @@ const isAdminOrSuperAdmin = (req, res, next) => {
 };
 
 module.exports = {
-  isAdminOrSuperAdmin
+  isAdminOrSuperAdmin,
+  optionalAuth
 }; 

@@ -30,6 +30,8 @@ import PageLayout from '@/components/PageLayout';
 import ContentContainer from '@/components/ContentContainer';
 import ShareButton from '@/components/ShareButton';
 import UniversalCard from '@/components/UniversalCard';
+import CancellationReportButton from '@/components/CancellationReportButton';
+import CancelledOverlay from '@/components/CancelledOverlay';
 import SkeletonProfile from '@/components/SkeletonProfile';
 import SkeletonGrid from '@/components/SkeletonGrid';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
@@ -289,17 +291,15 @@ const ProfilePage = () => {
           }}
         >
           <ContentContainer>
-            <Grid container spacing={4} alignItems="flex-start" sx={{ py: { xs: 4, sm: 6 } }}>
-              {/* Profile Image */}
-              <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
+            <Grid container spacing={4} alignItems="stretch" sx={{ py: { xs: 4, sm: 6 } }}>
+              {/* Profile Image - Left Column */}
+              <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Box
                   onClick={() => setImageModalOpen(true)}
                   sx={{
                     position: 'relative',
                     width: '100%',
-                    maxWidth: { xs: 150, sm: 200 },
-                    mx: 'auto',
-                    aspectRatio: type === 'daija' ? '1/1' : 'auto',
+                    height: { xs: '40vh', md: '100%' },
                     borderRadius: type === 'daija' ? '50%' : 4,
                     overflow: 'hidden',
                     border: '6px solid rgba(255, 255, 255, 0.2)',
@@ -318,9 +318,7 @@ const ProfilePage = () => {
                     alt={profile.title || profile.name}
                     sx={{ 
                       width: '100%',
-                      height: 'auto',
-                      minHeight: { xs: 180, sm: 250 },
-                      maxHeight: { xs: 280, sm: 350 },
+                      height: '100%',
                       objectFit: 'cover',
                       display: 'block'
                     }}
@@ -329,10 +327,18 @@ const ProfilePage = () => {
                       e.target.src = getDefaultImage();
                     }}
                   />
+                  {/* Cancellation Overlay for lectures */}
+                  {type === 'lecture' && (
+                    <CancelledOverlay 
+                      show={profile.isCancelled || profile.status === 'cancelled'}
+                      text="OTKAZANO"
+                      variant="diagonal"
+                    />
+                  )}
                 </Box>
               </Grid>
 
-              {/* Profile Info */}
+              {/* Profile Info - Right Column */}
               <Grid item xs={12} md={8}>
                 <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
                   <Typography 
@@ -457,6 +463,49 @@ const ProfilePage = () => {
                       </Box>
                     )}
                   </Box>
+
+                  {/* Cancellation Notice */}
+                  {type === 'lecture' && (profile.isCancelled || profile.status === 'cancelled') && (
+                    <Box sx={{
+                      border: '2px solid #f44336',
+                      backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                      borderRadius: 3,
+                      px: { xs: 2.5, sm: 3 },
+                      py: { xs: 2, sm: 2.5 },
+                      mb: 3,
+                      backdropFilter: 'blur(10px)',
+                    }}>
+                      <Typography variant="h6" sx={{ 
+                        color: '#f44336', 
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        mb: 1,
+                        textTransform: 'uppercase',
+                        letterSpacing: 1.5
+                      }}>
+                        ❌ PREDAVANJE JE OTKAZANO
+                      </Typography>
+                      {profile.cancellationReason && (
+                        <Typography variant="body2" sx={{
+                          color: 'rgba(255, 255, 255, 0.9)',
+                          textAlign: 'center',
+                          fontSize: '0.95rem'
+                        }}>
+                          Razlog: {profile.cancellationReason}
+                        </Typography>
+                      )}
+                      {profile.cancelledAt && (
+                        <Typography variant="body2" sx={{
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          textAlign: 'center',
+                          fontSize: '0.85rem',
+                          mt: 1
+                        }}>
+                          Otkazano: {new Date(profile.cancelledAt).toLocaleDateString('bs-BA')}
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
 
                   {/* Description */}
                   {(profile.description || profile.biography) && (
@@ -634,6 +683,43 @@ const ProfilePage = () => {
                     
                     {/* Share Button */}
                     <ShareButton profileData={profile} type={type} />
+                    
+                    {/* Cancellation Report Button - u istoj liniji sa ostalim dugmadima */}
+                    {type === 'lecture' && profile && !profile.isCancelled && (
+                      <Box sx={{
+                        '& .MuiButton-root': {
+                          backgroundColor: 'rgba(255, 152, 0, 0.15)', // Narandžasta pozadina
+                          borderColor: 'rgba(255, 152, 0, 0.6)',      // Narandžasti border  
+                          color: '#ff9800',                           // Narandžasta boja teksta
+                          borderRadius: 3,
+                          px: 3,
+                          py: 1.5,
+                          fontSize: '0.95rem',
+                          fontWeight: 500,
+                          textTransform: 'none',
+                          transition: 'all 0.2s ease',
+                          backdropFilter: 'blur(10px)',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 152, 0, 0.25)',
+                            borderColor: 'rgba(255, 152, 0, 0.8)',
+                            color: '#f57c00',
+                            transform: 'translateY(-1px)',
+                            boxShadow: '0 4px 12px rgba(255, 152, 0, 0.3)'
+                          }
+                        }
+                      }}>
+                        <CancellationReportButton 
+                          lectureId={profile._id}
+                          lectureTitle={profile.title}
+                          variant="outlined"
+                          size="medium"
+                          onReportSuccess={(data) => {
+                            // Optional: Refresh profile data nakon uspješne prijave
+                            console.log('Cancellation reported successfully:', data);
+                          }}
+                        />
+                      </Box>
+                    )}
                   </Box>
                 </Box>
               </Grid>

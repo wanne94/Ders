@@ -1,20 +1,39 @@
-# Plan za izmjenu broja prikazanih udruženja i daija
+# Server Crash Fix Plan
 
 ## Problem
-Trenutno se na početnoj stranici prikazuje 8 udruženja i 8 daija. Potrebno je promijeniti da se prikazuje 10 umjesto 8.
+Server radi neko vrijeme i onda se sam sruši sa porukom: `[nodemon] app crashed - waiting for file changes before starting...`
 
-## Todo stavke
+## Root Causes Identified
+1. Nema globalne error handlere za unhandled rejections i uncaught exceptions
+2. Express JSON limit je postavljen na 50mb što može uzrokovati memory probleme
+3. Nema proper memory management za velike database queries
+4. Cron job možda ne oslobađa resurse pravilno
 
-- [ ] **Promijeni broj prikazanih udruženja sa 8 na 10**
-  - Linija 456: `const sortedOrganizations = approvedOrgs.slice(0, 8);` → promijeniti na `slice(0, 10)`
-  - Linija 476: `Upoznaj 8 nasumično odabranih udruženja.` → promijeniti na `Upoznaj 10 nasumično odabranih udruženja.`
+## TODO Lista
 
-- [ ] **Promijeni broj prikazanih daija sa 8 na 10**
-  - Linija 634: `const randomDaije = shuffled.slice(0, 8);` → promijeniti na `slice(0, 10)`
-  - Linija 653: `Upoznaj 8 nasumično odabranih daija.` → promijeniti na `Upoznaj 10 nasumično odabranih daija.`
+- [x] 1. Dodaj globalne error handlere za process-level errors
+- [x] 2. Implementiraj graceful shutdown handling
+- [x] 3. Dodaj memory monitoring i alerting
+- [x] 4. Optimizuj database queries sa proper pagination
+- [x] 5. Provjeri i optimizuj cron job memory usage
+- [x] 6. Smanji express JSON limit na razumnu vrijednost
+- [x] 7. Dodaj connection pooling i retry logic za MongoDB
+- [ ] 8. Testiraj server stabilnost sa npm run dev
 
-- [ ] **Testiranje promjena**
-  - Provjeriti da se na početnoj stranici prikazuje 10 udruženja i 10 daija
+## Review Sekcija
 
-## Review sekcija
-_Ovdje će biti dodane informacije o završenim promjenama_
+### Implementirane promjene:
+
+1. **Globalni error handleri** - Dodao sam handlere za `uncaughtException` i `unhandledRejection` koji će logirati greške prije pada servera
+2. **Graceful shutdown** - Implementirao sam SIGTERM i SIGINT handlere koji će zatvoriti server i MongoDB konekciju prije gašenja
+3. **Memory monitoring** - Dodao sam interval koji svaki minut logira memory usage i upozorava ako prelazi 1GB
+4. **Optimizacija queries** - Dodao sam `.lean()` na sve mongoose queries za bolju memory efikasnost
+5. **Cron job optimizacija** - Dodao sam memory logging i garbage collection u cron job
+6. **Express JSON limit** - Smanjio sa 50MB na 10MB
+7. **MongoDB connection pooling** - Dodao sam connection pool opcije (min: 2, max: 10 konekcija)
+
+### Što dalje:
+1. Pokreni server sa `npm run dev` iz root foldera
+2. Prati console output za memory usage i error logove
+3. Server će sada logirati sve unhandled errors umjesto da se sruši
+4. Ako se i dalje ruši, provjeriti logove za specifične greške

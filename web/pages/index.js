@@ -12,6 +12,8 @@ import {
   Divider,
   Container,
   IconButton,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
 import {
   School as SchoolIcon,
@@ -33,6 +35,7 @@ import UniversalCard from '@/components/UniversalCard';
 import SkeletonGrid from '@/components/SkeletonGrid';
 import AndroidAppModal from '@/components/AndroidAppModal';
 import DownloadAppSection from '@/components/DownloadAppSection';
+import LecturesSection from '@/components/LecturesSection';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 import { deviceUtils, storage } from '@/utils';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
@@ -148,72 +151,6 @@ const QuickActions = () => {
           </Grid>
         ))}
       </Grid>
-      </Box>
-    </ContentContainer>
-  );
-};
-
-// TenLectures Component
-const TenLectures = ({ lectures, isLoading }) => {
-  const router = useRouter();
-  
-  // Primjenjujemo sortLecturesByStatus funkciju kao na /lectures stranici
-  const approvedLectures = (lectures || []).filter(lecture => lecture.status === 'approved');
-  const sortedLectures = sortLecturesByStatus(approvedLectures);
-  const proximityLectures = sortedLectures.slice(0, 10);
-
-  const handleViewAllLectures = () => {
-    router.push('/lectures');
-  };
-
-  return (
-    <ContentContainer>
-      <Box sx={{ mt: 1, textAlign: 'center' }}>
-        <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
-          Dersovi
-        </Typography>
-        <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
-          Posljednjih 10 najavljenih dersova
-        </Typography>
-
-      {isLoading ? (
-        <SkeletonGrid count={6} type="lecture" />
-      ) : proximityLectures.length === 0 ? (
-        <Typography variant="body1" color="text.secondary">
-          Trenutno nema dostupnih dersova.
-        </Typography>
-      ) : (
-        <>
-          <LecturesGrid 
-            gap={3}
-            sx={{
-              width: '100%',
-            }}
-          >
-            {proximityLectures.map((lecture) => (
-              <Box key={lecture._id} sx={{ height: '300px' }}>
-                <UniversalCard data={{ ...lecture, type: 'Predavanje' }} />
-              </Box>
-            ))}
-          </LecturesGrid>
-          <Box sx={{ mt: 4, mb: 0 }}>
-            <Button 
-              variant="outlined" 
-              size="large"
-              onClick={handleViewAllLectures}
-              sx={{ 
-                px: 4, 
-                py: 1.5,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontSize: '1.1rem'
-              }}
-            >
-              Prikaži sve dersove
-            </Button>
-          </Box>
-        </>
-      )}
       </Box>
     </ContentContainer>
   );
@@ -719,7 +656,9 @@ export default function Home() {
         setError(null);
         
         // Fetch lectures - bez limita da prikaže sva predavanja sortirana ispravno
-        const allLectures = await predavanjaService.getAllPredavanja(1, 100);
+        // Uključi i otkazana predavanja
+        const allLectures = await predavanjaService.getAllPredavanja(1, 100, 'all');
+        console.log('🔍 Raw lectures from API:', allLectures);
 
         // Normalize lectures data
         const lecturesData = (allLectures || []).map(lecture => ({
@@ -826,8 +765,17 @@ export default function Home() {
 
       {/* 10 Lectures */}
       <Box sx={{ width: '100%', mb: 4 }}>
-        <TenLectures lectures={lectures} isLoading={isLoading} />
+        <ContentContainer>
+          <LecturesSection 
+            lectures={lectures} 
+            isLoading={isLoading}
+            limit={10}
+            subtitle="Posljednjih 10 najavljenih dersova"
+            showViewAllButton={true}
+          />
+        </ContentContainer>
       </Box>
+      
 
       {/* Benefits Section */}
       <BenefitsSection />

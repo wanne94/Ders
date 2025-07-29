@@ -119,7 +119,7 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '10mb' })); // Reduced from 50mb to prevent memory issues
 app.use(morgan('combined')); // HTTP request logging
 
 // 🚀 Next.js build - serviranje statičkih fajlova
@@ -351,7 +351,11 @@ const connectDB = async () => {
     const connectionOptions = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      dbName: 'Predavanja'
+      dbName: 'Predavanja',
+      maxPoolSize: 10, // Connection pool size
+      minPoolSize: 2,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     };
     
     await mongoose.connect(MONGODB_URI, connectionOptions);
@@ -405,13 +409,66 @@ const createDatabaseIndexes = async () => {
 // Pokretanje aplikacije
 (async () => {
   try {
+    // Memory monitoring
+    const memoryCheckInterval = setInterval(() => {
+      const memoryUsage = process.memoryUsage();
+      const heapUsedMB = Math.round(memoryUsage.heapUsed / 1024 / 1024);
+      const heapTotalMB = Math.round(memoryUsage.heapTotal / 1024 / 1024);
+      const rssMB = Math.round(memoryUsage.rss / 1024 / 1024);
+      
+      logger.info(`Memory Usage - Heap: ${heapUsedMB}/${heapTotalMB} MB, RSS: ${rssMB} MB`);
+      
+      // Alert if memory usage is too high
+      if (heapUsedMB > 1024) { // Alert if heap usage exceeds 1GB
+        logger.warn(`⚠️ High memory usage detected: ${heapUsedMB} MB`);
+      }
+    }, 60000); // Check every minute
     // Prvo se konektuj na MongoDB
     await connectDB();
     
     // Zatim pokreni Express server
     const server = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
-      logger.info(`HTTP Server is running on port ${PORT}`);
+      console.log(`✅ Server is running on port ${PORT}`);
+      logger.info(`Server started on port ${PORT}`);
+    });
+
+    // Global error handlers
+    process.on('uncaughtException', (error) => {
+      logger.error('Uncaught Exception:', error);
+      console.error('❌ Uncaught Exception:', error);
+      // Give the server time to log the error before shutting down
+      setTimeout(() => {
+        process.exit(1);
+      }, 1000);
+    });
+
+    process.on('unhandledRejection', (reason, promise) => {
+      logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+      console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+      // Don't exit the process for unhandled rejections, just log them
+    });
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      logger.info('SIGTERM signal received: closing HTTP server');
+      server.close(() => {
+        logger.info('HTTP server closed');
+        mongoose.connection.close(false, () => {
+          logger.info('MongoDB connection closed');
+          process.exit(0);
+        });
+      });
+    });
+
+    process.on('SIGINT', () => {
+      logger.info('SIGINT signal received: closing HTTP server');
+      server.close(() => {
+        logger.info('HTTP server closed');
+        mongoose.connection.close(false, () => {
+          logger.info('MongoDB connection closed');
+          process.exit(0);
+        });
+      });
     });
 
     server.on('error', (err) => {

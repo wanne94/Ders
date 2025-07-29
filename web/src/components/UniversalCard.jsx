@@ -18,6 +18,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import SchoolIcon from '@mui/icons-material/School';
 import ClassIcon from '@mui/icons-material/Class';
 import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrganizationSlug, calculateLectureStatus } from '../utils/dataHelpers';
+import CancelledOverlay from './CancelledOverlay';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
 import { formatDaijaTitle } from '../utils';
 
@@ -34,6 +35,16 @@ const UniversalCard = React.memo(({ data }) => {
   }
 
   const getDisplayData = () => {
+    // DEBUG: Check weekly lecture data
+    if (data.type?.toLowerCase() === 'predavanje' && data.title?.includes('test')) {
+      console.log('🔍 DEBUG - Test lecture data:', {
+        title: data.title,
+        isWeeklyLecture: data.isWeeklyLecture,
+        type: data.type,
+        fullData: data
+      });
+    }
+    
     const entityType = data.type?.toLowerCase() || 'unknown';
     
     switch (entityType) {
@@ -138,6 +149,30 @@ const UniversalCard = React.memo(({ data }) => {
         }
       }}
     >
+      {/* Weekly lecture badge - left side */}
+      {displayData.type === 'lecture' && data.isWeeklyLecture && (
+        <Chip
+          label="Sedmični"
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            zIndex: 3,
+            backgroundColor: '#e3f2fd',
+            color: '#1565c0',
+            fontWeight: 'bold',
+            fontSize: '0.75rem',
+            '& .MuiChip-label': {
+              paddingLeft: '6px',
+              paddingRight: '6px',
+              paddingTop: '4px',
+              paddingBottom: '4px'
+            }
+          }}
+        />
+      )}
+
       {/* Enhanced Status badge for lectures */}
       {displayData.type === 'lecture' && displayData.statusInfo && (
         <Chip
@@ -147,7 +182,7 @@ const UniversalCard = React.memo(({ data }) => {
             position: 'absolute',
             top: 8,
             right: 8,
-            zIndex: 1,
+            zIndex: 3, // Povećan z-index da bude iznad svega
             backgroundColor: 
               displayData.statusInfo.badgeColor === 'green' ? '#e8f5e8' :
               displayData.statusInfo.badgeColor === 'yellow' ? '#fff8e1' :
@@ -182,10 +217,46 @@ const UniversalCard = React.memo(({ data }) => {
       )}
       
       <CardActionArea onClick={displayData.onClick} sx={{ height: '100%' }}>
-        <CardContent sx={{ height: '100%', p: 2 }}>
-          <Box sx={{ display: 'flex', height: '100%' }}>
+        <CardContent sx={{ height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>
+          
+          {/* Title section for lectures - full width */}
+          {displayData.type === 'lecture' && (
+            <>
+              <Typography 
+                variant="h6" 
+                component="h2" 
+                sx={{
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  mb: 0.5,
+                  mt: 2.5, // Dodat margin top da naslov bude ispod badge-a
+                  lineHeight: 1.3,
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  textAlign: 'left',
+                  width: '100%',
+                  pr: 10 // Padding right da se tekst ne preklapa sa badge-om
+                }}
+              >
+                {displayData.title}
+              </Typography>
+              <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', mb: 0.5 }} />
+            </>
+          )}
+
+          <Box sx={{ display: 'flex', height: '100%', flex: 1 }}>
             {/* Left side - Information */}
-            <Box sx={{ flex: 1, pr: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <Box sx={{ 
+              flex: 1, 
+              pr: 2, 
+              display: 'flex', 
+              flexDirection: 'column', 
+              justifyContent: 'center',
+              minWidth: 0,
+              overflow: 'hidden'
+            }}>
               {/* Title prefix (for daija titles) */}
               {displayData.titlePrefix && (
                 <Typography 
@@ -201,26 +272,27 @@ const UniversalCard = React.memo(({ data }) => {
                 </Typography>
               )}
 
-              {/* Main title */}
-              <Typography 
-                variant="h6" 
-                component="h2" 
-                sx={{
-                  
-                  fontSize: '18px',
-                  
-                  fontWeight: displayData.type === 'lecture' ? 'bold' : 600,
-                  mb: 0.5,
-                  lineHeight: 1.2,
-                  overflow: 'hidden',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  textAlign: displayData.type === 'lecture' ? 'left' : 'inherit',
-                }}
-              >
-                {displayData.title}
-              </Typography>
+              {/* Main title for non-lecture types */}
+              {displayData.type !== 'lecture' && (
+                <Typography 
+                  variant="h6" 
+                  component="h2" 
+                  sx={{
+                    
+                    fontSize: '18px',
+                    
+                    fontWeight: 600,
+                    mb: 0.5,
+                    lineHeight: 1.2,
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                  }}
+                >
+                  {displayData.title}
+                </Typography>
+              )}
 
               {/* Info items */}
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
@@ -243,8 +315,9 @@ const UniversalCard = React.memo(({ data }) => {
                         color: 'text.secondary',
                         overflow: 'hidden',
                         display: '-webkit-box',
-                        WebkitLineClamp: 2,
+                        WebkitLineClamp: 1, // Smanjen sa 2 na 1 red za kompaktniji prikaz
                         WebkitBoxOrient: 'vertical',
+                        wordBreak: 'break-word' // Omogućava lomljenje dugih linkova
                       }}
                     >
                       {item.text}
@@ -275,7 +348,8 @@ const UniversalCard = React.memo(({ data }) => {
       bgcolor: 'background.default',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      position: 'relative' // Dodano za relativno pozicioniranje overlay-a
     }}
   >
     <Image
@@ -290,6 +364,14 @@ const UniversalCard = React.memo(({ data }) => {
         objectFit: 'cover'
       }}
     />
+    {/* CancelledOverlay - prikazuje se za lecture tip kad je isCancelled true ili status je cancelled */}
+    {displayData.type === 'lecture' && (
+      <CancelledOverlay 
+        show={data.isCancelled === true || data.status === 'cancelled'} 
+        text="OTKAZANO"
+        variant="diagonal"
+      />
+    )}
   </Box>
 </Box>
 

@@ -1,6 +1,17 @@
 import axios from 'axios';
 import { getToken, clearAllData } from './authHelpers';
 
+// Global callback for token expiration - komponente mogu da se pretplate
+let tokenExpirationCallback = null;
+
+export const setTokenExpirationCallback = (callback) => {
+  tokenExpirationCallback = callback;
+};
+
+export const clearTokenExpirationCallback = () => {
+  tokenExpirationCallback = null;
+};
+
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   timeout: 30000, // Increased to 30 seconds for slow servers
@@ -61,11 +72,21 @@ api.interceptors.response.use(
         error.response.status === 401 || 
         error.response.status === 403 || 
         error.response.data?.message === 'Token expired' ||
-        error.response.data?.message === 'Invalid token'
+        error.response.data?.message === 'Invalid token' ||
+        error.response.data?.message === 'Token je istekao' ||
+        error.response.data?.message === 'Token nije validan'
       ) {
         // Clear all data including remembered credentials
         clearAllData();
-        // Don't redirect automatically - let users continue as guests
+        
+        // Notify components about token expiration
+        if (tokenExpirationCallback) {
+          tokenExpirationCallback({
+            status: error.response.status,
+            message: error.response.data?.message || 'Token je istekao'
+          });
+        }
+        
         console.log('🔓 Token expired or invalid - user can continue as guest');
       }
     }

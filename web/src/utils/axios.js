@@ -1,5 +1,11 @@
 import axios from 'axios';
 
+console.log('🔧 API Configuration:', {
+  NODE_ENV: process.env.NODE_ENV,
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: process.env.NEXT_PUBLIC_API_URL
+});
+
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   // Remove default Content-Type header - let browser set it automatically

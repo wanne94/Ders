@@ -256,6 +256,13 @@ const UniverzalCard = ({ data, onPress, style }) => {
       activeOpacity={0.7}
     >
 
+      {/* Weekly lecture badge - left side */}
+      {displayData.type === 'lecture' && data.isWeeklyLecture && (
+        <View style={styles.weeklyBadge}>
+          <Text style={styles.weeklyBadgeText}>Sedmični</Text>
+        </View>
+      )}
+
       {/* Status Badge for all lectures */}
       {displayData.type === 'lecture' && displayData.statusInfo && (
         <View style={[
@@ -528,6 +535,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1.5,
     textAlign: 'center',
+  },
+  weeklyBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#e3f2fd',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#bbdefb',
+    zIndex: 3,
+  },
+  weeklyBadgeText: {
+    color: '#1565c0',
+    fontSize: 11,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
 });
 

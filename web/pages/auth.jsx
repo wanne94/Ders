@@ -151,8 +151,12 @@ const Authentication = () => {
       const { token, user } = response.data;
 
       // Store auth data
+      console.log('🔑 AUTH: Setting token and user data');
+      console.log('🔑 AUTH: Token:', token);
+      console.log('🔑 AUTH: User:', user);
       setToken(token);
       setUserData(user);
+      console.log('🔑 AUTH: Token and user data set successfully');
 
       // Handle remember me
       if (rememberMe) {
@@ -164,8 +168,14 @@ const Authentication = () => {
       // Show success notification
       showNotification(`Dobrodošli, ${user.username}!`, 'success');
 
-      // Redirect to home page
-      router.push('/');
+      // Redirect based on user role
+      if (user.role === 'admin' || user.role === 'super_admin') {
+        console.log('🔑 AUTH: Admin user, redirecting to dashboard');
+        router.push('/dashboard');
+      } else {
+        console.log('🔑 AUTH: Regular user, redirecting to home');
+        router.push('/');
+      }
     } catch (err) {
       let errorMessage = 'Greška pri prijavi';
       

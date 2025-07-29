@@ -48,7 +48,7 @@ const OrganizationForm = ({ onBack, onSuccess, editMode = false, editData = null
     telegram: '',
     viber: '',
     image: '',
-    status: 'pending'
+    status: 'approved'
   });
   
   const [loading, setLoading] = useState(false);
@@ -72,7 +72,7 @@ const OrganizationForm = ({ onBack, onSuccess, editMode = false, editData = null
       telegram: editData.telegram || '',
       viber: editData.viber || '',
       image: editData.image || '',
-      status: editData.status || 'pending'
+      status: editData.status || 'approved'
     });
 
     // Set image URI if exists
@@ -241,7 +241,7 @@ const OrganizationForm = ({ onBack, onSuccess, editMode = false, editData = null
         console.log('✅ Organization updated successfully');
         Alert.alert(
           'Uspjeh', 
-          'Udruženje je uspješno ažurirano! Promjene će biti vidljive nakon odobrenja administratora.',
+          'Udruženje je uspješno ažurirano!',
           [{ text: 'OK', onPress: () => onSuccess && onSuccess() }]
         );
       } else {
@@ -249,7 +249,7 @@ const OrganizationForm = ({ onBack, onSuccess, editMode = false, editData = null
         console.log('✅ Organization created successfully');
         Alert.alert(
           'Uspjeh', 
-          'Udruženje je uspješno dodano! Biće vidljivo nakon odobrenja administratora.',
+          'Udruženje je uspješno dodano!',
           [{ text: 'OK', onPress: () => onSuccess && onSuccess() }]
         );
       }
@@ -271,7 +271,7 @@ const OrganizationForm = ({ onBack, onSuccess, editMode = false, editData = null
           telegram: '',
           viber: '',
           image: '',
-          status: 'pending'
+          status: 'approved'
         });
         setImageUri(null);
       }

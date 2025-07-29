@@ -27,8 +27,23 @@ export const getImageUrl = (imagePath) => {
     return imagePath;
   }
   
-  // If it's already a full URL, return as is
+  // If it's already a full URL, check if it's a valid image URL
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    // Check if it's a social media URL (which won't work as an image)
+    const socialMediaDomains = [
+      'facebook.com', 'fb.com', 'twitter.com', 'x.com', 
+      'instagram.com', 'linkedin.com', 'youtube.com', 
+      'youtu.be', 'tiktok.com'
+    ];
+    
+    const isSocialMediaUrl = socialMediaDomains.some(domain => 
+      imagePath.toLowerCase().includes(domain)
+    );
+    
+    if (isSocialMediaUrl) {
+      // Return default image for social media links
+      return `${IMAGE_SERVER_URL}${defaultImage}`;
+    }
     return imagePath;
   }
   
@@ -89,7 +104,7 @@ export const getDefaultOrganizationImage = () => {
  * @returns {string} - The logo URL
  */
 export const getLogoUrl = () => {
-  const logoPath = '/uploads/images/logo.jpg';
+  const logoPath = '/uploads/logo.jpg';
   return `${IMAGE_SERVER_URL}${logoPath}`;
 };
 

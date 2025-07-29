@@ -32,13 +32,6 @@ const CancellationReportForm = ({
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
 
-  const validateImageSize = (imageUri) => {
-    return new Promise((resolve) => {
-      // For mobile, we'll check the file size after selection
-      // This is a simplified check - more robust validation would be done on the server
-      resolve(true);
-    });
-  };
 
   const pickImage = async () => {
     try {
@@ -129,8 +122,23 @@ const CancellationReportForm = ({
           console.error('Image upload error:', uploadError);
           Alert.alert(
             'Greška pri upload-u slike',
-            'Slika se nije mogla poslati, ali prijava će biti poslana bez dokaza.',
-            [{ text: 'OK' }]
+            'Slika se nije mogla poslati. Želite li nastaviti bez dokaza?',
+            [
+              {
+                text: 'Odustani',
+                onPress: () => {
+                  setLoading(false);
+                  return;
+                },
+                style: 'cancel'
+              },
+              {
+                text: 'Nastavi bez slike',
+                onPress: () => {
+                  // Continue without image
+                }
+              }
+            ]
           );
         } finally {
           setImageUploading(false);

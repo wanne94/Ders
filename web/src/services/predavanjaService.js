@@ -5,10 +5,28 @@ console.log('🔍 PredavanjaService config check:');
 console.log('  - ENV.API_ENDPOINTS.PREDAVANJA:', ENV.API_ENDPOINTS.PREDAVANJA);
 
 const predavanjaService = {
-  getAllPredavanja: async (page = 1, limit = 10) => {
-    const endpoint = `${ENV.API_ENDPOINTS.PREDAVANJA}/public`;
-    console.log('🎯 getAllPredavanja endpoint:', endpoint);
+  getAllPredavanja: async (page = 1, limit = 10, includeStatus = null) => {
+    let endpoint = `${ENV.API_ENDPOINTS.PREDAVANJA}/public`;
+    const params = new URLSearchParams();
+    
+    console.log('📍 getAllPredavanja called with:', { page, limit, includeStatus });
+    
+    if (page) params.append('page', page);
+    if (limit) params.append('limit', limit);
+    if (includeStatus) params.append('status', includeStatus);
+    
+    if (params.toString()) {
+      endpoint += `?${params.toString()}`;
+    }
+    
+    console.log('🎯 getAllPredavanja full URL will be:', endpoint);
+    console.log('📊 Query params:', params.toString());
+    
     const response = await apiClient.get(endpoint);
+    console.log('✅ getAllPredavanja response:', response);
+    console.log('📊 Response length:', response?.length);
+    console.log('❌ Cancelled lectures in response:', response?.filter(l => l.status === 'cancelled' || l.isCancelled)?.length || 0);
+    
     return response; // Backend returns lectures directly, not wrapped in data property
   },
 
