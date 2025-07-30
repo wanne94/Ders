@@ -35,19 +35,6 @@ const UniversalCard = React.memo(({ data }) => {
   }
 
   const getDisplayData = () => {
-    // DEBUG: Check weekly lecture data
-    if (data.type?.toLowerCase() === 'predavanje' && data.title?.toLowerCase().includes('on je allah')) {
-      console.log('🔍 DEBUG - On je Allah lecture data:', {
-        title: data.title,
-        isWeeklyLecture: data.isWeeklyLecture,
-        type: data.type,
-        weekNumber: data.weekNumber,
-        totalWeeks: data.totalWeeks,
-        lecturePart: data.lecturePart,
-        hasLecturePart: 'lecturePart' in data,
-        fullData: data
-      });
-    }
     
     const entityType = data.type?.toLowerCase() || 'unknown';
     
@@ -154,11 +141,6 @@ const UniversalCard = React.memo(({ data }) => {
       }}
     >
       {/* Weekly lecture badge - left side */}
-      {console.log('🎯 Badge check:', { 
-        type: displayData.type, 
-        isWeeklyLecture: data.isWeeklyLecture,
-        willShowBadge: displayData.type === 'lecture' && data.isWeeklyLecture 
-      })}
       {displayData.type === 'lecture' && data.isWeeklyLecture && (
         <Chip
           label="Sedmično"
@@ -377,12 +359,6 @@ const UniversalCard = React.memo(({ data }) => {
     />
     {/* CancelledOverlay - prikazuje se za lecture tip kad je isCancelled true ili status je cancelled */}
     {displayData.type === 'lecture' && (
-      console.log('🔍 [UniversalCard] Checking cancelled overlay:', {
-        title: data.title,
-        isCancelled: data.isCancelled,
-        status: data.status,
-        willShowOverlay: data.isCancelled === true || data.status === 'cancelled'
-      }),
       <CancelledOverlay 
         show={data.isCancelled === true || data.status === 'cancelled'} 
         text="OTKAZANO"

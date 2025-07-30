@@ -1104,14 +1104,12 @@ app.delete('/api/suggestions/:id', authenticateToken, isAdminOrSuperAdmin, async
 // Make lectures endpoint public (remove authentication requirement)
 app.get('/api/lectures/public', async (req, res) => {
   const startTime = Date.now();
-  console.log('🚀 [PERFORMANCE] /api/lectures/public endpoint called at:', new Date().toISOString());
   
   try {
     logger.info('Fetching public lectures');
     
     // Get status from query params
     const { status } = req.query;
-    console.log('🔍 [SERVER] Status parameter:', status);
     
     // Build status filter
     let statusFilter = { status: 'approved' }; // Default to approved only
@@ -1125,24 +1123,18 @@ app.get('/api/lectures/public', async (req, res) => {
           { isCancelled: true }    // additional check for isCancelled field
         ]
       };
-      console.log('✅ [SERVER] Using ALL filter (approved + cancelled + isCancelled)');
     }
     
-    console.log('🔍 [SERVER] Final statusFilter:', statusFilter);
     
     // Debug: Database connection state
     const dbState = mongoose.connection.readyState;
     const dbStates = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
-    console.log(`📊 [PERFORMANCE] Database state: ${dbStates[dbState]} (${dbState})`);
-    
     if (dbState !== 1) {
-      console.error('❌ [PERFORMANCE] Database not connected! State:', dbStates[dbState]);
       return res.status(500).json({ message: 'Database connection error' });
     }
     
     // Debug: Start query timing
     const queryStartTime = Date.now();
-    console.log('🔍 [PERFORMANCE] Starting super-optimized database query...');
     
     // 🚀 SUPER-OPTIMIZED QUERY with forced index usage and minimal data transfer
     
@@ -1157,9 +1149,7 @@ app.get('/api/lectures/public', async (req, res) => {
         .lean()
         .exec();
       
-      console.log('✅ [PERFORMANCE] Used hint-forced query');
     } catch (hintError) {
-      console.log('⚠️ [PERFORMANCE] Hint failed, falling back to regular query:', hintError.message);
       
       // Fallback: Regular optimized query
       lectures = await Lecture.find(statusFilter)
@@ -1172,14 +1162,11 @@ app.get('/api/lectures/public', async (req, res) => {
 
     const queryEndTime = Date.now();
     const queryDuration = queryEndTime - queryStartTime;
-    console.log(`⚡ [PERFORMANCE] Super-optimized database query completed in: ${queryDuration}ms`);
-    console.log(`📊 [PERFORMANCE] Found ${lectures.length} public lectures`);
 
     logger.info(`Found ${lectures.length} public lectures`);
     
     // Debug: Start transformation timing
     const transformStartTime = Date.now();
-    console.log('🔄 [PERFORMANCE] Starting lightning-fast data transformation...');
     
     // 🚀 LIGHTNING-FAST transformation - pre-allocate array for better performance
     const transformedLectures = new Array(lectures.length);
@@ -1194,11 +1181,9 @@ app.get('/api/lectures/public', async (req, res) => {
 
     const transformEndTime = Date.now();
     const transformDuration = transformEndTime - transformStartTime;
-    console.log(`⚡ [PERFORMANCE] Lightning-fast data transformation completed in: ${transformDuration}ms`);
     
     // 🚀 CUSTOM SORTING: Future lectures first (ascending date), then past lectures (descending date)
     const sortStartTime = Date.now();
-    console.log('📅 [PERFORMANCE] Starting custom date-based sorting...');
     
     const now = new Date();
     const futureLectures = [];
@@ -1227,14 +1212,11 @@ app.get('/api/lectures/public', async (req, res) => {
     
     const sortEndTime = Date.now();
     const sortDuration = sortEndTime - sortStartTime;
-    console.log(`📅 [PERFORMANCE] Custom sorting completed in: ${sortDuration}ms`);
-    console.log(`📊 [PERFORMANCE] Future lectures: ${futureLectures.length}, Past lectures: ${pastLectures.length}`);
     
     // Debug: Total endpoint timing
     const totalEndTime = Date.now();
     const totalDuration = totalEndTime - startTime;
     
-    console.log('📈 [PERFORMANCE] Super-optimized endpoint timing breakdown:');
     console.log(`  - Database query: ${queryDuration}ms (${((queryDuration/totalDuration)*100).toFixed(1)}%)`);
     console.log(`  - Data transformation: ${transformDuration}ms (${((transformDuration/totalDuration)*100).toFixed(1)}%)`);
     console.log(`  - Custom sorting: ${sortDuration}ms (${((sortDuration/totalDuration)*100).toFixed(1)}%)`);
@@ -1246,7 +1228,6 @@ app.get('/api/lectures/public', async (req, res) => {
                            totalDuration < 300 ? 'GOOD' : 
                            totalDuration < 500 ? 'MODERATE' : 'SLOW';
     
-    console.log(`🎯 [PERFORMANCE] Performance grade: ${performanceGrade} (${totalDuration}ms)`);
     
     // Add performance headers
     res.set({
@@ -1267,9 +1248,6 @@ app.get('/api/lectures/public', async (req, res) => {
     const errorTime = Date.now();
     const errorDuration = errorTime - startTime;
     
-    console.error('❌ [PERFORMANCE] Error in super-optimized /api/lectures/public after:', errorDuration + 'ms');
-    console.error('❌ [PERFORMANCE] Error details:', error.message);
-    console.error('❌ [PERFORMANCE] Error stack:', error.stack);
     
     logger.error('Error fetching public lectures:', error);
     res.status(500).json({ 
@@ -3349,7 +3327,6 @@ app.post('/api/test-register-simulation', async (req, res) => {
 // 🔧 Test endpoint za debug req.body
 app.post('/api/test-body', (req, res) => {
   console.log('🧪 Test body endpoint called');
-  console.log('📥 REQ.BODY DEBUG:', req.body);
   console.log('📥 REQ.HEADERS:', req.headers);
   
   res.json({
@@ -3368,7 +3345,6 @@ app.use('/api/lectures', lecturesRouter);
 // Performance test endpoint
 app.get('/api/performance-test', async (req, res) => {
   const startTime = Date.now();
-  console.log('🧪 [PERFORMANCE TEST] Starting performance test...');
   
   try {
     const results = {};
@@ -3377,7 +3353,6 @@ app.get('/api/performance-test', async (req, res) => {
     const pingStart = Date.now();
     await mongoose.connection.db.admin().ping();
     results.dbPing = Date.now() - pingStart;
-    console.log(`📊 [PERFORMANCE TEST] DB Ping: ${results.dbPing}ms`);
     
     // Test 2: Count all lectures
     const countStart = Date.now();
@@ -3386,7 +3361,6 @@ app.get('/api/performance-test', async (req, res) => {
       duration: Date.now() - countStart,
       total: totalLectures
     };
-    console.log(`📊 [PERFORMANCE TEST] Lecture Count: ${results.lectureCount.duration}ms (${totalLectures} lectures)`);
     
     // Test 3: Simple find query
     const simpleFindStart = Date.now();
@@ -3395,7 +3369,6 @@ app.get('/api/performance-test', async (req, res) => {
       duration: Date.now() - simpleFindStart,
       count: simpleLectures.length
     };
-    console.log(`📊 [PERFORMANCE TEST] Simple Find: ${results.simpleFind.duration}ms (${simpleLectures.length} lectures)`);
     
     // Test 4: Complex query (same as public endpoint)
     const complexQueryStart = Date.now();
@@ -3407,7 +3380,6 @@ app.get('/api/performance-test', async (req, res) => {
       duration: Date.now() - complexQueryStart,
       count: complexLectures.length
     };
-    console.log(`📊 [PERFORMANCE TEST] Complex Query: ${results.complexQuery.duration}ms (${complexLectures.length} lectures)`);
     
     // Test 5: Query with populate
     const populateQueryStart = Date.now();
@@ -3421,7 +3393,6 @@ app.get('/api/performance-test', async (req, res) => {
       duration: Date.now() - populateQueryStart,
       count: populatedLectures.length
     };
-    console.log(`📊 [PERFORMANCE TEST] Populate Query: ${results.populateQuery.duration}ms (${populatedLectures.length} lectures)`);
     
     // 🚀 Test 6: Optimized query with lean()
     const optimizedQueryStart = Date.now();
@@ -3438,7 +3409,6 @@ app.get('/api/performance-test', async (req, res) => {
       duration: Date.now() - optimizedQueryStart,
       count: optimizedLectures.length
     };
-    console.log(`📊 [PERFORMANCE TEST] Optimized Lean Query: ${results.optimizedQuery.duration}ms (${optimizedLectures.length} lectures)`);
     
     // Test 7: Data transformation
     const transformStart = Date.now();
@@ -3450,7 +3420,6 @@ app.get('/api/performance-test', async (req, res) => {
       duration: Date.now() - transformStart,
       count: transformed.length
     };
-    console.log(`📊 [PERFORMANCE TEST] Data Transform: ${results.dataTransform.duration}ms (${transformed.length} lectures)`);
     
     // 🚀 Test 8: Optimized data transformation (with lean data)
     const optimizedTransformStart = Date.now();
@@ -3462,7 +3431,6 @@ app.get('/api/performance-test', async (req, res) => {
       duration: Date.now() - optimizedTransformStart,
       count: optimizedTransformed.length
     };
-    console.log(`📊 [PERFORMANCE TEST] Optimized Data Transform: ${results.optimizedDataTransform.duration}ms (${optimizedTransformed.length} lectures)`);
     
     // Total test time
     results.totalTime = Date.now() - startTime;
@@ -3473,7 +3441,6 @@ app.get('/api/performance-test', async (req, res) => {
     const totalImprovement = (results.populateQuery.duration + results.dataTransform.duration) - 
                             (results.optimizedQuery.duration + results.optimizedDataTransform.duration);
     
-    console.log('📈 [PERFORMANCE TEST] Complete results:');
     console.log(`  - DB Ping: ${results.dbPing}ms`);
     console.log(`  - Lecture Count: ${results.lectureCount.duration}ms`);
     console.log(`  - Simple Find: ${results.simpleFind.duration}ms`);
@@ -3511,8 +3478,6 @@ app.get('/api/performance-test', async (req, res) => {
     
   } catch (error) {
     const errorTime = Date.now() - startTime;
-    console.error('❌ [PERFORMANCE TEST] Error after:', errorTime + 'ms');
-    console.error('❌ [PERFORMANCE TEST] Error:', error.message);
     
     res.status(500).json({
       message: 'Performance test failed',
@@ -3798,7 +3763,6 @@ app.get('/api/lectures/public-fast', async (req, res) => {
 // Debug endpoint to check "On je Allah" lecture status
 app.get('/api/debug/on-je-allah', async (req, res) => {
   try {
-    console.log('🔍 [DEBUG] Checking "On je Allah" lecture status...');
     
     // Find all lectures with "On je Allah" in title
     const onJeAllahLectures = await Lecture.find({
@@ -3820,10 +3784,6 @@ app.get('/api/debug/on-je-allah', async (req, res) => {
       .select('title status date')
       .limit(5);
     
-    console.log('🔍 [DEBUG] Found lectures with "On je Allah":', onJeAllahLectures.length);
-    console.log('🔍 [DEBUG] Found similar lectures:', similarLectures.length);
-    console.log('🔍 [DEBUG] Total active lectures:', activeLectures.length);
-    console.log('🔍 [DEBUG] Total approved lectures:', approvedLectures.length);
     
     res.json({
       message: 'Debug information for "On je Allah" lecture',
