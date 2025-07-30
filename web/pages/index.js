@@ -542,10 +542,17 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
             gap={3}
             sx={{
               width: '100%',
+              maxWidth: '100%',
+              overflow: 'hidden',
             }}
           >
             {approvedOrganizations.map((organization) => (
-              <Box key={organization._id} sx={{ height: '200px' }}>
+              <Box key={organization._id} sx={{ 
+                height: '200px',
+                width: '100%',
+                maxWidth: '100%',
+                overflow: 'hidden'
+              }}>
                 <UniversalCard data={{ ...organization, type: 'Udruženje' }} />
               </Box>
             ))}
@@ -719,10 +726,17 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
             gap={3}
             sx={{
               width: '100%',
+              maxWidth: '100%',
+              overflow: 'hidden',
             }}
           >
             {approvedDaije.map((daija) => (
-              <Box key={daija._id} sx={{ height: '200px' }}>
+              <Box key={daija._id} sx={{ 
+                height: '200px',
+                width: '100%',
+                maxWidth: '100%',
+                overflow: 'hidden'
+              }}>
                 <UniversalCard data={{ ...daija, type: 'Daija' }} />
               </Box>
             ))}

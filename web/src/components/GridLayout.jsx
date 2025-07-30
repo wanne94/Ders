@@ -63,6 +63,12 @@ const GridLayout = ({
         },
         gap: { xs: 2, sm: 2.5, md: gap },
         width: '100%',
+        maxWidth: '100%',
+        overflow: 'hidden',
+        '& > *': {
+          minWidth: 0,
+          maxWidth: '100%'
+        },
         ...sx
       }}
       {...props}

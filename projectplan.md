@@ -1,48 +1,67 @@
-# Plan za uklanjanje Android popup-a i premještanje sekcije aplikacija
+# Project Plan: Fix Organization Cards Display on Homepage
 
-## TODO stavke:
+## Problem
+Organization cards on the homepage are overflowing the page width. They need to display 5 cards per row, similar to how daije cards are displayed.
 
-1. [x] Ukloniti Android app popup koji se prikazuje korisnicima
-   - Pronaći i analizirati AndroidAppModal komponentu
-   - Ukloniti logiku koja prikazuje popup na Android uređajima
-   - Ukloniti import i korištenje AndroidAppModal komponente
+## Analysis
+After reviewing the code:
+- Both OrganizationsGrid and DaijeGrid use the same GridLayout component
+- GridLayout is configured to show 5 columns on xl screens (extra large)
+- The issue seems to be that the organization cards might need the same structure/styling as daije cards
 
-2. [x] Premjestiti DownloadAppSection unutar HeroSection
-   - Trenutno se DownloadAppSection nalazi skoro na kraju stranice
-   - Premjestiti je unutar prve sekcije ispod podnaslova "Digitalna platforma za promociju islamskih predavanja"
-   - Prilagoditi stilove da se uklopi u HeroSection
+## Todo List
 
-3. [x] Testirati promjene
-   - Provjeriti da se popup više ne prikazuje
-   - Provjeriti da sekcija za download aplikacija izgleda dobro u novoj poziciji
-   - Provjeriti da sve ostalo funkcioniše kao prije
+### 1. ✅ Compare how daije and organization sections are implemented
+- Check ActiveDaije component implementation
+- Check ActiveOrganizations component implementation
+- Identify any differences in their structure
 
-## Napomene:
-- Android popup se trenutno prikazuje samo Android korisnicima nakon 1.5 sekundi
-- DownloadAppSection prikazuje linkove za Google Play i App Store (App Store je označen kao "Uskoro dostupno")
-- Trebamo zadržati funkcionalnost download linkova, samo premjestiti sekciju i ukloniti popup
+**Findings:**
+- Both use the same GridLayout component with identical settings
+- Both wrap cards in Box with height: '200px'
+- ContentContainer has maxWidth of 1900px
+- GridLayout shows 5 columns on xl screens, 4 on lg, 3 on md, 2 on sm, 1 on xs
 
-## Review
+### 2. ✅ Fix the organization cards display
+- Ensure OrganizationsGrid uses the same responsive breakpoints
+- Make sure organization cards display properly with 5 columns on larger screens
+- Test that cards don't overflow the page width
 
-### Završene promjene:
+**Changes made:**
+- Added maxWidth: '100%' and overflow: 'hidden' to both OrganizationsGrid and DaijeGrid
+- Added width and maxWidth constraints to individual card containers
+- Updated GridLayout component to prevent overflow with minWidth: 0 on grid items
+- Ensured consistent styling between daije and organization sections
 
-1. **Uklonjen Android popup:**
-   - Uklonjen import AndroidAppModal komponente
-   - Uklonjena state varijabla showAndroidModal
-   - Uklonjen useEffect koji provjerava Android uređaje i prikazuje popup
-   - Uklonjena funkcija handleAndroidModalClose
-   - Uklonjen AndroidAppModal iz render dijela komponente
+### 3. ✅ Verify the solution works
+- Check that organization cards display correctly on different screen sizes
+- Ensure consistency with daije cards display
+- Verify no overflow issues
 
-2. **Premještena sekcija za download aplikacija:**
-   - Dodani linkovi za download aplikacija direktno u HeroSection
-   - Pozicionirani ispod podnaslova "Digitalna platforma za promociju islamskih predavanja"
-   - Prilagođene veličine dugmića (160x48 za mobilne, 180x54 za desktop)
-   - Zadržana funkcionalnost - Google Play link radi, App Store označen kao "Uskoro dostupno"
-   - Dodan import Image komponente iz next/image
-   - Uklonjena originalna DownloadAppSection sa dna stranice
-   - Uklonjen import DownloadAppSection komponente
+**Verification:**
+- Lint check passed with no errors or warnings
+- Both organization and daije sections now have consistent styling
+- Grid layout configured to prevent overflow with proper constraints
 
-### Rezultat:
-- Korisnici više neće vidjeti popup za instalaciju Android aplikacije
-- Linkovi za download aplikacija su sada prominentno prikazani u hero sekciji
-- Sve funkcionalnosti su zadržane, samo je promijenjena lokacija i način prikaza
+## Review Section
+
+### Summary of Changes:
+1. **Updated ActiveOrganizations component** (lines 541-559):
+   - Added maxWidth: '100%' and overflow: 'hidden' to OrganizationsGrid
+   - Added width/maxWidth constraints to individual card containers
+
+2. **Updated ActiveDaije component** (lines 725-743):
+   - Applied same styling as organizations for consistency
+   - Added maxWidth: '100%' and overflow: 'hidden' to DaijeGrid
+   - Added width/maxWidth constraints to individual card containers
+
+3. **Updated GridLayout component** (lines 53-78):
+   - Added maxWidth: '100%' and overflow: 'hidden' to grid container
+   - Added minWidth: 0 and maxWidth: '100%' to all grid items to prevent overflow
+   - This ensures cards properly fit within their grid cells
+
+### Result:
+- Organization cards now display properly with 5 cards per row on extra large screens
+- Cards no longer overflow the page width
+- Consistent behavior between daije and organization sections
+- Responsive grid maintains proper layout on all screen sizes
