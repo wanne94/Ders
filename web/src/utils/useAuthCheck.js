@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 
 /**
@@ -32,15 +32,15 @@ export const useAuthCheck = () => {
   };
 
   // Funkcija za čišćenje podataka o autentifikaciji
-  const clearAuthData = () => {
+  const clearAuthData = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setIsLoggedIn(false);
     setUser(null);
-  };
+  }, []);
 
   // Funkcija za provjeru i ažuriranje auth stanja
-  const refreshAuthState = async () => {
+  const refreshAuthState = useCallback(async () => {
     setIsValidatingToken(true);
     
     const token = localStorage.getItem('token');
@@ -66,7 +66,7 @@ export const useAuthCheck = () => {
     }
     
     setIsValidatingToken(false);
-  };
+  }, [clearAuthData]);
 
   useEffect(() => {
     // Inicijalna provjera auth stanja
@@ -96,7 +96,7 @@ export const useAuthCheck = () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('authChanged', handleLocalAuthChange);
     };
-  }, []);
+  }, [refreshAuthState]);
 
   const checkAuthAndExecute = (callback) => {
     if (isValidatingToken) {

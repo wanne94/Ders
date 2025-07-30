@@ -242,7 +242,7 @@ const Dashboard = () => {
       console.error('📊 Error fetching dashboard data:', error);
       setUi(prev => ({ ...prev, isLoading: false, error: 'Greška pri dohvaćanju podataka.' }));
     }
-  }, [isAdmin]);
+  }, [isAdmin, currentUser, token]);
 
   // Uklonjen duplikat useEffect - koristimo samo onaj ispod sa fetchDataCalledRef
   const [selectedItem, setSelectedItem] = useState(null);

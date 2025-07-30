@@ -104,7 +104,7 @@ export const useOptimizedLectureStatus = (lecture, options = {}) => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [lecture, enableRealTime, statusInfo?.status, updateInterval, updateStatus]);
+  }, [lecture, enableRealTime, statusInfo, updateInterval, updateStatus]);
 
   // Cleanup on unmount
   useEffect(() => {

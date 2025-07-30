@@ -99,7 +99,11 @@ const UniversalCard = React.memo(({ data }) => {
           infoItems: [
             data.shortDescription && { icon: <BusinessIcon />, text: data.shortDescription },
             data.address && { icon: <LocationOnIcon />, text: data.address },
-            data.city && { icon: <LocationCityIcon />, text: data.city }
+            data.city && { icon: <LocationCityIcon />, text: data.city },
+            data.lectureCount !== undefined && { 
+              icon: <ClassIcon />, 
+              text: `Broj predavanja: ${data.lectureCount || 0}`,           
+            }
           ].filter(Boolean),
           onClick: () => {
             const slug = generateOrganizationSlug(data);
