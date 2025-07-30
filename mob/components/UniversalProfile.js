@@ -354,6 +354,7 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
             onError={type === 'lecture' ? handleImageError : undefined}
             onLoadStart={() => type === 'lecture' && setImageLoading(true)}
             cache="force-cache"
+            resizeMode={type === 'lecture' ? 'contain' : 'cover'}
           />
           {/* Diagonal "OTKAZANO" label for cancelled lectures */}
           {type === 'lecture' && (profile.cancelled || profile.status === 'cancelled') && (
@@ -648,7 +649,8 @@ const styles = StyleSheet.create({
   },
   fullWidthImage: {
     width: '100%',
-    height: screenWidth > 600 ? 500 : Math.max(screenWidth * 0.6, 300),
+    minHeight: 200,
+    maxHeight: screenWidth > 600 ? 600 : screenWidth * 1.2,
     borderRadius: 15,
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
@@ -861,6 +863,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(2, 44, 67, 0.8)',
     borderRadius: 15,
     zIndex: 1,
+    minHeight: 200,
+    maxHeight: screenWidth > 600 ? 600 : screenWidth * 1.2,
   },
   imageLoadingText: {
     color: 'white',

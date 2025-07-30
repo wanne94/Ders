@@ -82,7 +82,7 @@ const LecturesSection = ({
             sx={{
               display: 'flex',
               flexWrap: 'wrap',
-              gap: 2.5,
+              gap: 1.5, // Smanjen gap sa 2.5 na 1.5
               justifyContent: 'flex-start',
               width: '100%',
             }}
@@ -94,10 +94,10 @@ const LecturesSection = ({
                   sx={{ 
                     width: {
                       xs: '100%',
-                      sm: 'calc(50% - 10px)',
-                      md: 'calc(33.333% - 13.33px)',
-                      lg: 'calc(25% - 15px)',
-                      xl: 'calc(20% - 16px)'
+                      sm: 'calc(50% - 6px)', // Prilagođeno za novi gap
+                      md: 'calc(33.333% - 8px)', // Prilagođeno za novi gap
+                      lg: 'calc(25% - 9px)', // Prilagođeno za novi gap
+                      xl: 'calc(20% - 9.6px)' // Prilagođeno za novi gap
                     },
                     height: cardHeight
                   }}

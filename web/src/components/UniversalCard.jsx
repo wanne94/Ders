@@ -242,7 +242,7 @@ const UniversalCard = React.memo(({ data }) => {
             {/* Left side - Information */}
             <Box sx={{ 
               flex: 1, 
-              pr: 2, 
+              pr: 3, // Povećan padding sa 2 na 3 za veći razmak
               display: 'flex', 
               flexDirection: 'column', 
               justifyContent: 'center',
@@ -306,11 +306,11 @@ const UniversalCard = React.memo(({ data }) => {
                       sx={{ 
                         fontSize: '13px',
                         color: 'text.secondary',
+                        textAlign: 'left',
+                        pr: 1, // Dodajemo padding desno za svaku info stavku
+                        whiteSpace: 'nowrap',
                         overflow: 'hidden',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 1, // Smanjen sa 2 na 1 red za kompaktniji prikaz
-                        WebkitBoxOrient: 'vertical',
-                        wordBreak: 'break-word' // Omogućava lomljenje dugih linkova
+                        textOverflow: 'ellipsis'
                       }}
                     >
                       {item.text}

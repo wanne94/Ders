@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-  BackHandler
+  BackHandler,
+  Appearance,
+  StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -530,6 +532,9 @@ export default function App() {
     // Initialize Firebase and check auth
     const initializeApp = async () => {
       try {
+        // Force light theme regardless of system settings
+        Appearance.setColorScheme('light');
+        
         // Firebase trackanje pokretanja aplikacije
         firebaseService.logEvent('app_open');
         firebaseService.logScreenView('Home', 'HomeScreen');
@@ -756,6 +761,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <SystemBars style="light" hidden={false} />
       <View style={styles.container}>
         <Header 

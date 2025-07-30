@@ -175,32 +175,27 @@ export const getStatusBadgeColors = (badgeColor) => {
     case 'green':
       return {
         backgroundColor: '#e8f5e8',
-        borderColor: '#4caf50',
-        textColor: '#1b5e20'
+        textColor: '#2e7d32'
       };
     case 'yellow':
       return {
         backgroundColor: '#fff8e1',
-        borderColor: '#ff9800',
-        textColor: '#e65100'
+        textColor: '#f57f17'
       };
     case 'red':
       return {
         backgroundColor: '#ffebee',
-        borderColor: '#f44336',
-        textColor: '#b71c1c'
+        textColor: '#c62828'
       };
     case 'gray':
       return {
         backgroundColor: '#f5f5f5',
-        borderColor: '#bdbdbd',
-        textColor: '#424242'
+        textColor: '#666666'
       };
     default:
       return {
         backgroundColor: '#f5f5f5',
-        borderColor: '#bdbdbd',
-        textColor: '#424242'
+        textColor: '#666666'
       };
   }
 };
