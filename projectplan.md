@@ -1,51 +1,70 @@
-# Plan dijagnostike i popravke problema sa bazom podataka
+# Plan za prikaz otkazanih predavanja na /lectures stranici
 
 ## Analiza problema
-Baza podataka nije spojena na localhost:3000 - koristi se SSH tunel za produkcijsku bazu
+Nakon detaljne analize, identificiran je ključni problem:
+
+1. Frontend kod je ispravno implementiran - `ElementPage.jsx` poziva API sa `status=all`
+2. Backend kod je ispravno implementiran - prima i obrađuje `status` parametar
+3. Ali API vraća 0 otkazanih predavanja čak i sa `status=all`
 
 ## TODO lista:
 
-1. [x] Provjeriti da li MongoDB servis radi
-   - ✅ Utvrđeno da se koristi SSH tunel na produkcijsku bazu, ne lokalni MongoDB
+1. [x] Provjeri da li se prikazuju otkazana predavanja u frontendu
+   - ✅ Frontend kod je spreman da prikaže otkazana predavanja
+   - ✅ CancelledOverlay komponenta postoji
 
-2. [x] Provjeriti SSH tunel konfiguraciju
-   - Provjeriti da li je SSH tunel aktivan
-   - Provjeriti port forwarding postavke
-   - Verificirati SSH konekciju na produkcijski server
-   - ✅ SSH tuneli su aktivni i forward-uju sa 27017 na lokalni port 27018
+2. [x] Provjeri da li postoji overlay za otkazana predavanja  
+   - ✅ CancelledOverlay komponenta je implementirana
+   - ✅ UniversalCard koristi overlay za cancelled predavanja
 
-3. [x] Provjeriti konfiguraciju konekcije u .env fajlu
-   - Provjeriti MONGODB_URI variablu
-   - Provjeriti da li pokazuje na localhost sa odgovarajućim portom
-   - ✅ PROBLEM IDENTIFICIRAN: .env koristi port 27017, a SSH tunel koristi port 27018
+3. [x] Provjeri da li API vraća otkazana predavanja
+   - ❌ API vraća 0 cancelled predavanja čak i sa status=all
+   - ❌ Predavanje "Diskriminacija žene muslimanke" se ne vraća u API odgovoru
 
-4. [x] Provjeriti server logove za greške
-   - Analizirati error poruke vezane za bazu
-   - Identificirati specifičan problem sa konekcijom
-   - ✅ Problem identificiran kroz analizu konfiguracije
+4. [x] Testirati API endpoint direktno
+   - ✅ Test pokazuje da API vraća 37 predavanja ali nijedno nije otkazano
 
-5. [x] Testirati konekciju kroz tunel
-   - Verificirati da li tunel radi
-   - Testirati MongoDB konekciju kroz tunel
-   - ✅ Tuneli su aktivni na portu 27018
+5. [x] Provjeriti zašto se otkazana predavanja ne vraćaju
+   - ✅ Pronađen uzrok: Dashboard koristi Lecture.find({}) bez filtera, a public endpoint koristi filter koji možda ne pokriva sve slučajeve
 
-6. [x] Popraviti identificovani problem
-   - Implementirati rješenje
-   - Testirati da li radi
-   - ✅ Promijenjen port u .env fajlu sa 27017 na 27018
+## Identificiran problem
 
-## Review sekcija
+Dashboard koristi `/api/lectures` endpoint koji vraća SVA predavanja bez filtera:
+```javascript
+const lectures = await Lecture.find({})
+```
 
-### Identificiran problem
-MongoDB konekcija nije radila jer je postojala neusklađenost između:
-- SSH tunela koji forward-uje produkcijsku bazu na lokalni port **27018**
-- .env konfiguracije koja je pokušavala da se poveže na port **27017**
+Public endpoint koristi filter koji traži samo određene statuse:
+```javascript
+statusFilter = { status: { $in: ['approved', 'cancelled'] } }
+```
 
-### Implementirano rješenje
-1. Identificirano je da postoji više aktivnih SSH tunela koji forward-uju MongoDB sa produkcijskog servera (194.163.176.171:27017) na lokalni port 27018
-2. Promijenjen je MONGODB_URI u .env fajlu sa porta 27017 na port 27018
-3. Dodana je napomena u .env fajl koja objašnjava zašto se koristi port 27018
+Problem je što predavanje može biti otkazano na različite načine:
+- `status: 'cancelled'`
+- `isCancelled: true`
+- Možda čak i `status: 'canceled'` (tipfeler)
 
-### Preporučene akcije
-- Restartovati Node.js server da bi učitao novu konfiguraciju
-- Provjeriti da li aplikacija sada može da se poveže na bazu podataka
+## Implementirano rješenje
+
+Promijenjen je query u `/api/lectures/public` endpoint-u da pokriva sve moguće načine označavanja otkazanih predavanja:
+
+```javascript
+statusFilter = { 
+  $or: [
+    { status: 'approved' },
+    { status: 'cancelled' },
+    { status: 'canceled' }, // in case of typo
+    { isCancelled: true }    // additional check for isCancelled field
+  ]
+};
+```
+
+## Sljedeći koraci
+
+1. **Restartovati server** da bi promjene bile učitane
+2. **Testirati API ponovo** sa `test_updated_api.js` skriptom
+3. **Provjeriti frontend** da li sada prikazuje otkazana predavanja
+
+## Review
+
+Problem je bio u tome što public endpoint nije pokrivao sve moguće načine označavanja otkazanih predavanja. Dashboard je radio jer vraća SVA predavanja, dok je public endpoint imao ograničen filter. Sada bi trebalo da radi ispravno nakon što se server restartuje.

@@ -111,6 +111,20 @@ const ElementPage = ({ type }) => {
           
           const cancelledCount = response.filter(l => l.status === 'cancelled' || l.isCancelled).length;
           console.log('❌ [ElementPage] Cancelled lectures count:', cancelledCount);
+          
+          // Debug: Check for Diskriminacija lecture specifically
+          const diskriminacijaLecture = response.find(l => l.title && l.title.toLowerCase().includes('diskriminacija'));
+          if (diskriminacijaLecture) {
+            console.log('🔍 [ElementPage] Found Diskriminacija lecture:', {
+              title: diskriminacijaLecture.title,
+              status: diskriminacijaLecture.status,
+              isCancelled: diskriminacijaLecture.isCancelled,
+              hasStatus: 'status' in diskriminacijaLecture,
+              hasIsCancelled: 'isCancelled' in diskriminacijaLecture
+            });
+          } else {
+            console.log('❌ [ElementPage] Diskriminacija lecture NOT found in response');
+          }
           break;
         case 'daije':
           response = await safeApiCall(() => daijeService.getAllDaije(), []);

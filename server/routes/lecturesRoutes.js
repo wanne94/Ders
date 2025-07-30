@@ -31,13 +31,22 @@ router.get('/public', async (req, res) => {
   console.log('🔍 [SERVER] Destructured status:', status);
   console.log('🔍 [SERVER] /lectures/public query params:', req.query);
   console.log('🔍 [SERVER] status parameter:', status);
+  console.log('🚨🚨🚨 STATUS VALUE:', status, 'TYPE:', typeof status, 'EQUALS all?:', status === 'all');
   
   let statusFilter = { status: 'approved' }; // Default to approved only
   
   if (status) {
     if (status === 'all') {
-      statusFilter = { status: { $in: ['approved', 'cancelled'] } };
-      console.log('✅ [SERVER] Using ALL filter (approved + cancelled)');
+      // Updated to catch all possible cancelled lectures
+      statusFilter = { 
+        $or: [
+          { status: 'approved' },
+          { status: 'cancelled' },
+          { status: 'canceled' }, // in case of typo
+          { isCancelled: true }    // additional check for isCancelled field
+        ]
+      };
+      console.log('✅ [SERVER] Using ALL filter (approved + cancelled + isCancelled)');
     } else if (Array.isArray(status)) {
       statusFilter = { status: { $in: status } };
     } else {
@@ -77,6 +86,16 @@ router.get('/public', async (req, res) => {
     
     // Method 1: Try with hint to force index usage
     let lectures;
+    
+    // CRITICAL DEBUG: Let's see what's in the database
+    console.log('🚨 [CRITICAL] About to query with statusFilter:', JSON.stringify(statusFilter));
+    const testCancelled = await Lecture.findOne({ status: 'cancelled' });
+    if (testCancelled) {
+      console.log('✅ [CRITICAL] Found at least one cancelled lecture in DB:', testCancelled.title);
+    } else {
+      console.log('❌ [CRITICAL] NO cancelled lectures found in entire database!');
+    }
+    
     try {
       lectures = await Lecture.find(statusFilter)
         .select('title speaker daija organization organizationId address city date time shortDescription image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId')
@@ -130,6 +149,13 @@ router.get('/public', async (req, res) => {
     const queryDuration = queryEndTime - queryStartTime;
     console.log(`⚡ [PERFORMANCE] Super-optimized database query completed in: ${queryDuration}ms`);
     console.log(`📊 [PERFORMANCE] Found ${lectures.length} public lectures`);
+    
+    // CRITICAL: Check what statuses we got
+    const lectureStatusCounts = {};
+    lectures.forEach(l => {
+      lectureStatusCounts[l.status] = (lectureStatusCounts[l.status] || 0) + 1;
+    });
+    console.log('🚨 [CRITICAL] Status breakdown of returned lectures:', lectureStatusCounts);
     
     // IMMEDIATE DEBUG: Check what came from DB
     console.log('\n🚨 [IMMEDIATE CHECK] First lecture from DB query:');
@@ -223,6 +249,23 @@ router.get('/public', async (req, res) => {
         hasIsCancelled: 'isCancelled' in cancelledLectures[0],
         keys: Object.keys(cancelledLectures[0])
       });
+    }
+    
+    // CRITICAL: Check for Diskriminacija lecture
+    const diskriminacijaLecture = lectures.find(l => l.title && l.title.toLowerCase().includes('diskriminacija'));
+    if (diskriminacijaLecture) {
+      console.log('🎯 [CRITICAL] Found Diskriminacija lecture in query results:', {
+        title: diskriminacijaLecture.title,
+        status: diskriminacijaLecture.status,
+        isCancelled: diskriminacijaLecture.isCancelled
+      });
+    } else {
+      console.log('❌ [CRITICAL] Diskriminacija lecture NOT found in query results!');
+      // Let's check if it exists at all
+      const diskriminacijaInDB = await Lecture.findOne({ title: { $regex: 'diskriminacija', $options: 'i' } });
+      if (diskriminacijaInDB) {
+        console.log('🔍 [CRITICAL] But it EXISTS in DB with status:', diskriminacijaInDB.status, 'isCancelled:', diskriminacijaInDB.isCancelled);
+      }
     }
     
     // Debug: Check test weekly lectures

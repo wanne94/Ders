@@ -1109,6 +1109,27 @@ app.get('/api/lectures/public', async (req, res) => {
   try {
     logger.info('Fetching public lectures');
     
+    // Get status from query params
+    const { status } = req.query;
+    console.log('🔍 [SERVER] Status parameter:', status);
+    
+    // Build status filter
+    let statusFilter = { status: 'approved' }; // Default to approved only
+    
+    if (status === 'all') {
+      statusFilter = { 
+        $or: [
+          { status: 'approved' },
+          { status: 'cancelled' },
+          { status: 'canceled' }, // in case of typo
+          { isCancelled: true }    // additional check for isCancelled field
+        ]
+      };
+      console.log('✅ [SERVER] Using ALL filter (approved + cancelled + isCancelled)');
+    }
+    
+    console.log('🔍 [SERVER] Final statusFilter:', statusFilter);
+    
     // Debug: Database connection state
     const dbState = mongoose.connection.readyState;
     const dbStates = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
@@ -1128,11 +1149,8 @@ app.get('/api/lectures/public', async (req, res) => {
     // Method 1: Try with hint to force index usage
     let lectures;
     try {
-      lectures = await Lecture.find({ 
-        status: 'approved'
-        // Removed date filter to show all lectures including past ones
-      })
-        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isWeeklyLecture weekNumber totalWeeks weeklySeriesId lecturePart')
+      lectures = await Lecture.find(statusFilter)
+        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isWeeklyLecture weekNumber totalWeeks weeklySeriesId lecturePart isCancelled cancelledAt cancellationReason')
         .populate('organization', 'name')
         .populate('daija', 'name title image')
         .hint({ status: 1, date: 1 }) // 🚀 Force index usage
@@ -1144,11 +1162,8 @@ app.get('/api/lectures/public', async (req, res) => {
       console.log('⚠️ [PERFORMANCE] Hint failed, falling back to regular query:', hintError.message);
       
       // Fallback: Regular optimized query
-      lectures = await Lecture.find({ 
-        status: 'approved'
-        // Removed date filter to show all lectures including past ones
-      })
-        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isWeeklyLecture weekNumber totalWeeks weeklySeriesId lecturePart')
+      lectures = await Lecture.find(statusFilter)
+        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isWeeklyLecture weekNumber totalWeeks weeklySeriesId lecturePart isCancelled cancelledAt cancellationReason')
         .populate('organization', 'name')
         .populate('daija', 'name title image')
         .lean()
