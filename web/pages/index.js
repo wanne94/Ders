@@ -659,10 +659,45 @@ export default function Home() {
         // Uključi i otkazana predavanja
         const allLectures = await predavanjaService.getAllPredavanja(1, 100, 'all');
         console.log('🔍 Raw lectures from API:', allLectures);
+        
+        // Debug cancelled lectures
+        const cancelledLectures = allLectures.filter(l => l.status === 'cancelled' || l.isCancelled);
+        console.log('❌ Cancelled lectures from API:', cancelledLectures.length);
+        if (cancelledLectures.length > 0) {
+          console.log('❌ Sample cancelled lectures:');
+          cancelledLectures.slice(0, 3).forEach(l => {
+            console.log(`  - ${l.title} (status: ${l.status}, isCancelled: ${l.isCancelled})`);
+          });
+        }
+        
+        // Look for specific lecture
+        const diskriminacija = allLectures.find(l => l.title && l.title.includes('Diskriminacija žena'));
+        if (diskriminacija) {
+          console.log('✅ Diskriminacija lecture FOUND in API response:', {
+            title: diskriminacija.title,
+            status: diskriminacija.status,
+            isCancelled: diskriminacija.isCancelled
+          });
+        } else {
+          console.log('❌ Diskriminacija lecture NOT FOUND in API response');
+        }
+        
+        // Debug weekly lectures
+        const weeklyLectures = allLectures.filter(l => l.isWeeklyLecture);
+        console.log('📅 Weekly lectures found:', weeklyLectures.length);
+        weeklyLectures.forEach(l => {
+          console.log('📅 Weekly lecture:', {
+            title: l.title,
+            isWeeklyLecture: l.isWeeklyLecture,
+            weekNumber: l.weekNumber,
+            totalWeeks: l.totalWeeks
+          });
+        });
 
-        // Normalize lectures data
+        // Normalize lectures data and add type field
         const lecturesData = (allLectures || []).map(lecture => ({
           ...lecture,
+          type: 'Predavanje', // Add type field for UniversalCard
           daija: lecture.daija || null,
           organization: lecture.organization || null
         }));

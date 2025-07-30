@@ -12,6 +12,7 @@ import {
   Modal,
   IconButton,
   Pagination,
+  Chip,
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -181,7 +182,12 @@ const ProfilePage = () => {
     if (type === 'organization') {
       return profile.name;
     }
-    return profile.title;
+    // For lectures, add part number if exists
+    let title = profile.title;
+    if (type === 'lecture' && profile.lecturePart) {
+      title += ` (dio ${profile.lecturePart}.)`;
+    }
+    return title;
   };
 
   const getDefaultImage = () => {
@@ -355,6 +361,29 @@ const ProfilePage = () => {
                   >
                     {getTitle()}
                   </Typography>
+
+                  {/* Weekly lecture badge */}
+                  {type === 'lecture' && profile.isWeeklyLecture && (
+                    <Box sx={{ mb: 2 }}>
+                      <Chip
+                        label="Sedmično predavanje"
+                        size="medium"
+                        sx={{
+                          backgroundColor: '#e3f2fd',
+                          color: '#1565c0',
+                          fontWeight: 'bold',
+                          fontSize: '0.85rem',
+                          px: 2,
+                          py: 0.5,
+                          height: 'auto',
+                          '& .MuiChip-label': {
+                            px: 1,
+                            py: 0.5
+                          }
+                        }}
+                      />
+                    </Box>
+                  )}
 
                   {/* Meta Information */}
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 3 }}>

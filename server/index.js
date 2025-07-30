@@ -449,25 +449,33 @@ const createDatabaseIndexes = async () => {
     });
 
     // Graceful shutdown
-    process.on('SIGTERM', () => {
+    process.on('SIGTERM', async () => {
       logger.info('SIGTERM signal received: closing HTTP server');
-      server.close(() => {
+      server.close(async () => {
         logger.info('HTTP server closed');
-        mongoose.connection.close(false, () => {
+        try {
+          await mongoose.connection.close();
           logger.info('MongoDB connection closed');
           process.exit(0);
-        });
+        } catch (error) {
+          logger.error('Error closing MongoDB connection:', error);
+          process.exit(1);
+        }
       });
     });
 
-    process.on('SIGINT', () => {
+    process.on('SIGINT', async () => {
       logger.info('SIGINT signal received: closing HTTP server');
-      server.close(() => {
+      server.close(async () => {
         logger.info('HTTP server closed');
-        mongoose.connection.close(false, () => {
+        try {
+          await mongoose.connection.close();
           logger.info('MongoDB connection closed');
           process.exit(0);
-        });
+        } catch (error) {
+          logger.error('Error closing MongoDB connection:', error);
+          process.exit(1);
+        }
       });
     });
 
@@ -1124,7 +1132,7 @@ app.get('/api/lectures/public', async (req, res) => {
         status: 'approved'
         // Removed date filter to show all lectures including past ones
       })
-        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
+        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isWeeklyLecture weekNumber totalWeeks weeklySeriesId lecturePart')
         .populate('organization', 'name')
         .populate('daija', 'name title image')
         .hint({ status: 1, date: 1 }) // 🚀 Force index usage
@@ -1140,7 +1148,7 @@ app.get('/api/lectures/public', async (req, res) => {
         status: 'approved'
         // Removed date filter to show all lectures including past ones
       })
-        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
+        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isWeeklyLecture weekNumber totalWeeks weeklySeriesId lecturePart')
         .populate('organization', 'name')
         .populate('daija', 'name title image')
         .lean()
@@ -1779,7 +1787,13 @@ app.put('/api/lectures/:id', authenticateToken, async (req, res) => {
     let updateData = {
       ...req.body,
       daija: req.body.daijaId || null,
-      organizationId: req.body.organizationId || null
+      organizationId: req.body.organizationId || null,
+      // Explicitly include weekly lecture fields
+      isWeeklyLecture: req.body.isWeeklyLecture || false,
+      weekNumber: req.body.isWeeklyLecture ? (req.body.weekNumber || 1) : null,
+      totalWeeks: req.body.totalWeeks || null,
+      weeklySeriesId: req.body.weeklySeriesId || null,
+      lecturePart: req.body.lecturePart || null
     };
 
     // Update date if provided
@@ -1792,6 +1806,14 @@ app.put('/api/lectures/:id', authenticateToken, async (req, res) => {
     // Ne dozvoljavamo mijenjanje createdBy polja
     delete updateData.createdBy;
 
+    // Check if converting to weekly lecture
+    const isConvertingToWeekly = updateData.isWeeklyLecture && !existingLecture.isWeeklyLecture;
+    
+    // Check if adding part number to existing weekly series
+    const isAddingPart = existingLecture.isWeeklyLecture && 
+                        updateData.lecturePart && 
+                        !existingLecture.lecturePart;
+    
     const lecture = await Lecture.findByIdAndUpdate(
       req.params.id,
       updateData,
@@ -1802,14 +1824,121 @@ app.put('/api/lectures/:id', authenticateToken, async (req, res) => {
       id: lecture._id, 
       title: lecture.title,
       updatedBy: req.user.id,
-      userRole: req.user.role
+      userRole: req.user.role,
+      isConvertingToWeekly,
+      isAddingPart
     });
+    
+    // If adding part number to existing series, update all lectures in series
+    if (isAddingPart) {
+      const allInSeries = await Lecture.find({ 
+        weeklySeriesId: lecture.weeklySeriesId 
+      }).sort('weekNumber');
+      
+      logger.info(`Updating part numbers for ${allInSeries.length} lectures in series`);
+      
+      for (const seriesLecture of allInSeries) {
+        const partNumber = updateData.lecturePart + (seriesLecture.weekNumber - 1);
+        await Lecture.updateOne(
+          { _id: seriesLecture._id },
+          { lecturePart: partNumber }
+        );
+        logger.info(`Updated lecture week ${seriesLecture.weekNumber} to part ${partNumber}`);
+      }
+    }
+    
+    // If converting to weekly OR increasing totalWeeks, create additional lectures
+    let createdLectures = [lecture];
+    const isIncreasingWeeks = existingLecture.isWeeklyLecture && 
+                            updateData.totalWeeks > existingLecture.totalWeeks;
+    
+    if (isConvertingToWeekly || isIncreasingWeeks) {
+      // Find existing lectures in the series
+      let maxExistingWeek = 1;
+      if (isIncreasingWeeks) {
+        const existingInSeries = await Lecture.find({ 
+          weeklySeriesId: lecture.weeklySeriesId 
+        });
+        maxExistingWeek = Math.max(...existingInSeries.map(l => l.weekNumber || 0));
+        logger.info(`Found ${existingInSeries.length} existing lectures, max week: ${maxExistingWeek}`);
+      }
+      
+      const startWeek = isConvertingToWeekly ? 2 : maxExistingWeek + 1;
+      const weeksTocreate = updateData.totalWeeks - startWeek + 1;
+      
+      if (weeksTocreate > 0) {
+        logger.info(`Creating ${weeksTocreate} additional weekly lectures (weeks ${startWeek} to ${updateData.totalWeeks})`);
+        
+        // Get the date of the first lecture in series for proper week calculation
+        const baseLecture = isIncreasingWeeks ? 
+          await Lecture.findOne({ weeklySeriesId: lecture.weeklySeriesId, weekNumber: 1 }) : 
+          lecture;
+        
+        for (let week = startWeek; week <= updateData.totalWeeks; week++) {
+          const weekDate = new Date(baseLecture.date);
+          weekDate.setDate(weekDate.getDate() + (week - 1) * 7);
+          
+          const weeklyLectureData = {
+            title: lecture.title,
+            speaker: lecture.speaker,
+            daija: lecture.daija,
+            organization: lecture.organization,
+            organizationId: lecture.organizationId,
+            address: lecture.address,
+            city: lecture.city,
+            date: weekDate,
+            time: lecture.time,
+            shortDescription: lecture.shortDescription,
+            description: lecture.description,
+            image: lecture.image,
+            status: lecture.status,
+            createdBy: lecture.createdBy,
+            // Weekly lecture specific fields
+            isWeeklyLecture: true,
+            weeklySeriesId: lecture.weeklySeriesId,
+            weekNumber: week,
+            totalWeeks: updateData.totalWeeks,
+            parentLectureId: baseLecture._id,
+            lecturePart: lecture.lecturePart ? lecture.lecturePart + (week - 1) : null
+          };
+          
+          const newLecture = new Lecture(weeklyLectureData);
+          const savedLecture = await newLecture.save();
+          createdLectures.push(savedLecture);
+          
+          logger.info(`Created weekly lecture week ${week}/${updateData.totalWeeks}`);
+        }
+        
+        // Update totalWeeks for all existing lectures in the series
+        if (isIncreasingWeeks) {
+          await Lecture.updateMany(
+            { weeklySeriesId: lecture.weeklySeriesId },
+            { totalWeeks: updateData.totalWeeks }
+          );
+          logger.info(`Updated totalWeeks to ${updateData.totalWeeks} for all lectures in series`);
+        }
+      }
+    }
     
     // Transform response to include daijaId for frontend compatibility
     const responseData = {
       ...lecture.toObject(),
       daijaId: lecture.daija || null
     };
+    
+    // Add info about created lectures if converted to weekly or increased weeks
+    if (isConvertingToWeekly || isIncreasingWeeks) {
+      const newLecturesCount = createdLectures.length - 1; // Exclude the updated lecture
+      if (newLecturesCount > 0) {
+        responseData.weeklySeriesInfo = {
+          totalCreated: newLecturesCount,
+          weeklySeriesId: lecture.weeklySeriesId,
+          message: isConvertingToWeekly ? 
+            `Uspješno kreirano ${createdLectures.length} sedmičnih predavanja` :
+            `Uspješno dodano ${newLecturesCount} dodatnih sedmica`
+        };
+      }
+    }
     
     res.json(responseData);
   } catch (error) {

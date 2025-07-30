@@ -9,6 +9,10 @@ import {
   TextField,
   InputAdornment,
   Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
@@ -38,14 +42,15 @@ const ElementPage = ({ type }) => {
     error: null,
     searchTerm: '',
     page: 1,
-    isFormOpen: false
+    isFormOpen: false,
+    statusFilter: 'all' // 'all', 'active', 'cancelled'
   });
   
   const itemsPerPage = 20;
   const debouncedSearchTerm = useDebounce(state.searchTerm, 300);
   
   // Destructure for easier access
-  const { items, isLoading, error, searchTerm, page, isFormOpen } = state;
+  const { items, isLoading, error, searchTerm, page, isFormOpen, statusFilter } = state;
 
   // Memoized configuration based on type
   const config = useMemo(() => {
@@ -227,13 +232,22 @@ const ElementPage = ({ type }) => {
       });
     }
 
+    // Apply status filter for lectures
+    if (type === 'lectures' && statusFilter !== 'all') {
+      if (statusFilter === 'cancelled') {
+        filtered = filtered.filter(item => item.status === 'cancelled' || item.isCancelled === true);
+      } else if (statusFilter === 'active') {
+        filtered = filtered.filter(item => item.status === 'approved' && item.isCancelled !== true);
+      }
+    }
+
     // Apply sorting for lectures
     if (type === 'lectures') {
       filtered = sortLecturesByStatus(filtered);
     }
 
     return filtered;
-  }, [items, debouncedSearchTerm, type]);
+  }, [items, debouncedSearchTerm, type, statusFilter]);
 
   // Reset page when search changes
   useEffect(() => {
@@ -264,6 +278,10 @@ const ElementPage = ({ type }) => {
 
   const handleSearchChange = useCallback((event) => {
     setState(prev => ({ ...prev, searchTerm: event.target.value }));
+  }, []);
+
+  const handleStatusFilterChange = useCallback((event) => {
+    setState(prev => ({ ...prev, statusFilter: event.target.value, page: 1 }));
   }, []);
 
   const handleAddClick = useCallback(() => {
@@ -329,13 +347,14 @@ const ElementPage = ({ type }) => {
       </Box>
 
       {/* Search and Add Button */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 4, flexWrap: 'wrap' }}>
         <TextField
-          fullWidth
+          fullWidth={type !== 'lectures'}
           variant="outlined"
           placeholder="Pretraži..."
           value={searchTerm}
           onChange={handleSearchChange}
+          sx={{ flex: type === 'lectures' ? 1 : 'auto' }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -344,6 +363,25 @@ const ElementPage = ({ type }) => {
             ),
           }}
         />
+        
+        {/* Status filter for lectures */}
+        {type === 'lectures' && (
+          <FormControl sx={{ minWidth: 200 }}>
+            <InputLabel id="status-filter-label">Prikaži</InputLabel>
+            <Select
+              labelId="status-filter-label"
+              id="status-filter"
+              value={statusFilter}
+              label="Prikaži"
+              onChange={handleStatusFilterChange}
+            >
+              <MenuItem value="all">Sva predavanja</MenuItem>
+              <MenuItem value="active">Aktivna predavanja</MenuItem>
+              <MenuItem value="cancelled">Otkazana predavanja</MenuItem>
+            </Select>
+          </FormControl>
+        )}
+        
         <Button
           variant="contained"
           color="primary"

@@ -40,6 +40,12 @@ const generateTimeOptions = () => {
 const timeOptions = generateTimeOptions();
 
 const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture }) => {
+  // Calculate remaining weeks for existing weekly lectures
+  const calculateRemainingWeeks = (totalWeeks, weekNumber) => {
+    if (!totalWeeks || !weekNumber) return 0;
+    return Math.max(0, totalWeeks - weekNumber + 1);
+  };
+  
   const [formData, setFormData] = useState({
     title: '',
     daijaId: '',
@@ -54,7 +60,10 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
     image: '',
     status: 'pending',
     isWeeklyLecture: false,
-    totalWeeks: 2
+    totalWeeks: 2,
+    weekNumber: null,
+    weeklySeriesId: '',
+    lecturePart: null
   });
 
   const [daije, setDaije] = useState([]);
@@ -64,6 +73,7 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [remainingWeeks, setRemainingWeeks] = useState(0);
 
   // Check if organization is selected (disable address/city fields)
   const isOrganizationSelected = Boolean(formData.organizationId && !useCustomOrganization);
@@ -100,7 +110,10 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
         image: lecture.image || '',
         status: lecture.status || 'pending',
         isWeeklyLecture: lecture.isWeeklyLecture || false,
-        totalWeeks: lecture.totalWeeks || 2
+        totalWeeks: lecture.totalWeeks || 2,
+        weekNumber: lecture.weekNumber || 1,
+        weeklySeriesId: lecture.weeklySeriesId || '',
+        lecturePart: lecture.lecturePart || null
       });
 
       // Set custom speaker/organization flags
@@ -110,6 +123,11 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
       // Set image preview if editing - use getImageUrl to get proper server URL
       if (lecture.image && lecture.image.trim() !== '') {
         setImagePreview(getImageUrl(lecture.image));
+      }
+      
+      // Calculate remaining weeks for existing weekly lectures
+      if (lecture.isWeeklyLecture && lecture.weekNumber && lecture.totalWeeks) {
+        setRemainingWeeks(calculateRemainingWeeks(lecture.totalWeeks, lecture.weekNumber));
       }
     } else {
       // Reset form when not editing
@@ -127,7 +145,10 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
         image: '',
         status: 'pending',
         isWeeklyLecture: false,
-        totalWeeks: 2
+        totalWeeks: 2,
+        weekNumber: null,
+        weeklySeriesId: '',
+        lecturePart: null
       });
       setUseCustomSpeaker(false);
       setUseCustomOrganization(false);
@@ -358,14 +379,21 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
 
       // Remove imageFile from the data sent to server
       delete finalFormData.imageFile;
+      
+      // Generate weeklySeriesId if converting to weekly lecture
+      if (finalFormData.isWeeklyLecture && !finalFormData.weeklySeriesId) {
+        const timestamp = Date.now();
+        const randomString = Math.random().toString(36).substr(2, 9);
+        finalFormData.weeklySeriesId = `WL_${timestamp}_${randomString}`;
+      }
 
       let response;
       if (lecture) {
         // Update existing lecture
         response = await axiosInstance.put(`/lectures/${lecture._id}`, finalFormData);
       } else {
-        // Create new lecture using public endpoint (no authentication required)
-        response = await axiosInstance.post('/lectures/public', finalFormData);
+        // Create new lecture - requires authentication
+        response = await axiosInstance.post('/lectures', finalFormData);
       }
       
       setSuccess(true);
@@ -666,29 +694,82 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
                     <Checkbox
                       checked={formData.isWeeklyLecture}
                       onChange={(e) => setFormData(prev => ({ ...prev, isWeeklyLecture: e.target.checked }))}
-                      disabled={isEditing}
                     />
                   }
                   label="Sedmično predavanje"
                 />
                 {formData.isWeeklyLecture && (
-                  <TextField
-                    name="totalWeeks"
-                    label="Broj sedmica"
-                    type="number"
-                    value={formData.totalWeeks}
-                    onChange={handleChange}
-                    fullWidth
-                    margin="normal"
-                    InputProps={{
-                      inputProps: { 
-                        min: 2, 
-                        max: 12 
+                  <>
+                    {isEditing && formData.weeklySeriesId ? (
+                      // For existing weekly lectures, show remaining weeks
+                      <>
+                        <Typography variant="body2" sx={{ mt: 1, mb: 1, color: 'text.secondary' }}>
+                          Sedmica {formData.weekNumber} od {formData.totalWeeks}
+                        </Typography>
+                        <TextField
+                          name="remainingWeeks"
+                          label="Preostalo sedmica za održati"
+                          type="number"
+                          value={remainingWeeks}
+                          onChange={(e) => {
+                            const newRemaining = parseInt(e.target.value) || 0;
+                            setRemainingWeeks(newRemaining);
+                            // Calculate new totalWeeks
+                            const newTotalWeeks = formData.weekNumber + newRemaining - 1;
+                            setFormData(prev => ({ ...prev, totalWeeks: newTotalWeeks }));
+                          }}
+                          fullWidth
+                          margin="normal"
+                          InputProps={{
+                            inputProps: { 
+                              min: 0, 
+                              max: 12 - formData.weekNumber + 1
+                            }
+                          }}
+                          helperText={`Koliko još sedmica želite kreirati nakon sedmice ${formData.weekNumber}?`}
+                        />
+                      </>
+                    ) : (
+                      // For new weekly lectures or converting regular to weekly
+                      <TextField
+                        name="totalWeeks"
+                        label="Broj sedmica"
+                        type="number"
+                        value={formData.totalWeeks}
+                        onChange={handleChange}
+                        fullWidth
+                        margin="normal"
+                        InputProps={{
+                          inputProps: { 
+                            min: 2, 
+                            max: 12 
+                          }
+                        }}
+                        helperText="Unesite ukupan broj sedmica (min: 2, max: 12)"
+                      />
+                    )}
+                    
+                    {/* Lecture part field */}
+                    <TextField
+                      name="lecturePart"
+                      label={isEditing && formData.weeklySeriesId ? "Broj dijela" : "Početni broj dijela"}
+                      type="number"
+                      value={formData.lecturePart || ''}
+                      onChange={handleChange}
+                      fullWidth
+                      margin="normal"
+                      InputProps={{
+                        inputProps: { 
+                          min: 1
+                        }
+                      }}
+                      helperText={
+                        isEditing && formData.weeklySeriesId 
+                          ? "Broj dijela ovog predavanja (npr. 26)"
+                          : "Od kojeg dijela počinje serija (npr. 155)"
                       }
-                    }}
-                    helperText="Unesite broj sedmica za koje želite najaviti predavanje (min: 2, max: 12)"
-                    disabled={isEditing}
-                  />
+                    />
+                  </>
                 )}
               </Box>
             </Box>

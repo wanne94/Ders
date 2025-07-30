@@ -43,7 +43,8 @@ const createNextWeeklyLecture = async (lecture) => {
   }
 };
 
-const $1
+const processWeeklyLectures = async () => {
+  try {
     // Log memory usage at start
     const startMemory = process.memoryUsage();
     logger.info(`Cron job starting - Memory: ${Math.round(startMemory.heapUsed / 1024 / 1024)} MB`);
@@ -83,8 +84,6 @@ const $1
       }
     }
 
-    $1
-    
     // Log memory usage at end and force garbage collection if available
     const endMemory = process.memoryUsage();
     logger.info(`Cron job completed - Memory: ${Math.round(endMemory.heapUsed / 1024 / 1024)} MB`);

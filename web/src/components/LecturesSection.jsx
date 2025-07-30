@@ -19,16 +19,35 @@ const LecturesSection = ({
 }) => {
   const router = useRouter();
   
+  // Debug logging
+  console.log('🔍 [LecturesSection] Raw lectures received:', lectures.length);
+  const cancelledInRaw = lectures.filter(l => l.status === 'cancelled' || l.isCancelled);
+  console.log('❌ [LecturesSection] Cancelled lectures in raw data:', cancelledInRaw.length);
+  if (cancelledInRaw.length > 0) {
+    console.log('❌ [LecturesSection] Sample cancelled lecture:', cancelledInRaw[0]);
+  }
+  
   // Filtriramo approved i cancelled predavanja
   const filteredLectures = lectures.filter(lecture => 
     lecture.status === 'approved' || lecture.status === 'cancelled'
   );
+  console.log('✅ [LecturesSection] After filtering (approved + cancelled):', filteredLectures.length);
   
   // Sortiramo predavanja
   const sortedLectures = sortLecturesByStatus(filteredLectures);
+  console.log('📊 [LecturesSection] After sorting:', sortedLectures.length);
   
   // Primenjujemo limit ako je potrebno
   const displayLectures = limit ? sortedLectures.slice(0, limit) : sortedLectures;
+  console.log('📋 [LecturesSection] Final display lectures:', displayLectures.length);
+  
+  // Check if Diskriminacija lecture is in display
+  const diskriminacija = displayLectures.find(l => l.title && l.title.includes('Diskriminacija žena'));
+  if (diskriminacija) {
+    console.log('✅ [LecturesSection] Diskriminacija lecture IS in display list!');
+  } else {
+    console.log('❌ [LecturesSection] Diskriminacija lecture NOT in display list');
+  }
 
   const handleViewAll = () => {
     router.push(viewAllPath);
@@ -76,23 +95,33 @@ const LecturesSection = ({
               width: '100%',
             }}
           >
-            {displayLectures.map((lecture) => (
-              <Box 
-                key={lecture._id} 
-                sx={{ 
-                  width: {
-                    xs: '100%',
-                    sm: 'calc(50% - 10px)',
-                    md: 'calc(33.333% - 13.33px)',
-                    lg: 'calc(25% - 15px)',
-                    xl: 'calc(20% - 16px)'
-                  },
-                  height: cardHeight
-                }}
-              >
-                <UniversalCard data={{ ...lecture, type: 'Predavanje' }} />
-              </Box>
-            ))}
+            {displayLectures.map((lecture) => {
+              // Debug weekly lecture before passing to UniversalCard
+              if (lecture.title?.toLowerCase().includes('test')) {
+                console.log('📌 LecturesSection passing to UniversalCard:', {
+                  title: lecture.title,
+                  isWeeklyLecture: lecture.isWeeklyLecture,
+                  type: 'Predavanje'
+                });
+              }
+              return (
+                <Box 
+                  key={lecture._id} 
+                  sx={{ 
+                    width: {
+                      xs: '100%',
+                      sm: 'calc(50% - 10px)',
+                      md: 'calc(33.333% - 13.33px)',
+                      lg: 'calc(25% - 15px)',
+                      xl: 'calc(20% - 16px)'
+                    },
+                    height: cardHeight
+                  }}
+                >
+                  <UniversalCard data={{ ...lecture, type: 'Predavanje' }} />
+                </Box>
+              );
+            })}
           </Box>
           
           {showViewAllButton && sortedLectures.length > displayLectures.length && (

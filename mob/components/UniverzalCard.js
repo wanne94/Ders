@@ -259,7 +259,12 @@ const UniverzalCard = ({ data, onPress, style }) => {
       {/* Weekly lecture badge - left side */}
       {displayData.type === 'lecture' && data.isWeeklyLecture && (
         <View style={styles.weeklyBadge}>
-          <Text style={styles.weeklyBadgeText}>Sedmični</Text>
+          <Text style={styles.weeklyBadgeText}>
+            {data.weekNumber && data.totalWeeks 
+              ? `Sedmično (${data.weekNumber}/${data.totalWeeks})`
+              : "Sedmično"
+            }
+          </Text>
         </View>
       )}
 
@@ -295,6 +300,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
           displayData.type === 'lecture' && styles.lectureTitle
         ]} numberOfLines={2}>
           {displayData.title}
+          {data.lecturePart && ` (dio ${data.lecturePart}.)`}
         </Text>
       </View>
       

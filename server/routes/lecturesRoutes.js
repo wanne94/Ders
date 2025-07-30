@@ -1,9 +1,12 @@
 console.log('🚨🚨🚨 LOADING lecturesRoutes.js FILE! 🚨🚨🚨');
+console.log('📅 DEBUG ENABLED - Version 2');
 const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const Lecture = require('../models/Lecture');
 const User = require('../models/User');
+const Organization = require('../models/Organization'); // Add Organization model
+const Daija = require('../models/Daija'); // Add Daija model
 const { authMiddleware: authenticateToken } = require('../utils/jwt');
 const { isAdminOrSuperAdmin, optionalAuth } = require('../middleware/auth');
 const { calculateLecturesStatus } = require('../utils/lectureStatus');
@@ -43,6 +46,8 @@ router.get('/public', async (req, res) => {
   }
   
   console.log('🔍 [SERVER] Final statusFilter:', statusFilter);
+  console.log('🚨 [CRITICAL] Status param is:', status, 'Type:', typeof status);
+  console.log('🚨 [CRITICAL] Should include cancelled?', status === 'all');
   
   try {
     // Debug: Database connection state
@@ -74,7 +79,7 @@ router.get('/public', async (req, res) => {
     let lectures;
     try {
       lectures = await Lecture.find(statusFilter)
-        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId')
+        .select('title speaker daija organization organizationId address city date time shortDescription image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId')
         .populate({
           path: 'organizationId',
           select: 'name',
@@ -85,17 +90,28 @@ router.get('/public', async (req, res) => {
           select: 'name title image',
           strictPopulate: false
         })
-        .hint({ status: 1, date: 1 }) // 🚀 Force index usage
+        // .hint({ status: 1, date: 1 }) // 🚀 Force index usage - DISABLED
         .lean()
         .exec();
       
       console.log('✅ [PERFORMANCE] Used hint-forced query');
+      
+      // Debug first lecture
+      if (lectures.length > 0) {
+        const firstLecture = lectures[0];
+        console.log('🔍 [DEBUG] First lecture from DB:', {
+          title: firstLecture.title,
+          isWeeklyLecture: firstLecture.isWeeklyLecture,
+          hasField: 'isWeeklyLecture' in firstLecture,
+          type: typeof firstLecture.isWeeklyLecture
+        });
+      }
     } catch (hintError) {
       console.log('⚠️ [PERFORMANCE] Hint failed, falling back to regular query:', hintError.message);
       
       // Fallback: Regular optimized query
       lectures = await Lecture.find(statusFilter)
-        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId')
+        .select('title speaker daija organization organizationId address city date time shortDescription image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId')
         .populate({
           path: 'organizationId',
           select: 'name',
@@ -115,34 +131,197 @@ router.get('/public', async (req, res) => {
     console.log(`⚡ [PERFORMANCE] Super-optimized database query completed in: ${queryDuration}ms`);
     console.log(`📊 [PERFORMANCE] Found ${lectures.length} public lectures`);
     
+    // IMMEDIATE DEBUG: Check what came from DB
+    console.log('\n🚨 [IMMEDIATE CHECK] First lecture from DB query:');
+    if (lectures.length > 0) {
+      const firstLecture = lectures[0];
+      console.log('Has isWeeklyLecture:', 'isWeeklyLecture' in firstLecture);
+      console.log('isWeeklyLecture value:', firstLecture.isWeeklyLecture);
+      console.log('All keys:', Object.keys(firstLecture));
+      
+      // Check a specific weekly lecture
+      const weeklyOne = lectures.find(l => l.title && l.title.includes('Ramazan'));
+      if (weeklyOne) {
+        console.log('\n🚨 [IMMEDIATE CHECK] Ramazan lecture:');
+        console.log('Title:', weeklyOne.title);
+        console.log('isWeeklyLecture:', weeklyOne.isWeeklyLecture);
+        console.log('weekNumber:', weeklyOne.weekNumber);
+        console.log('totalWeeks:', weeklyOne.totalWeeks);
+        console.log('weeklySeriesId:', weeklyOne.weeklySeriesId);
+      }
+    }
+
+    // 🔍 RAW DEBUG - Check what's coming from database
+    if (lectures.length > 0) {
+      const firstLecture = lectures[0];
+      console.log('\n🔍 [RAW DEBUG] First lecture from DB:', {
+        title: firstLecture.title,
+        hasWeeklyField: 'isWeeklyLecture' in firstLecture,
+        isWeeklyLecture: firstLecture.isWeeklyLecture,
+        weekNumber: firstLecture.weekNumber,
+        totalWeeks: firstLecture.totalWeeks,
+        weeklySeriesId: firstLecture.weeklySeriesId,
+        allKeys: Object.keys(firstLecture).filter(k => k.includes('week') || k.includes('Weekly'))
+      });
+      
+      // Find Ramazan lecture specifically
+      const ramazanLecture = lectures.find(l => l.title && l.title.includes('Ramazan'));
+      if (ramazanLecture) {
+        console.log('\n🔍 [RAW DEBUG] Ramazan lecture from DB:', {
+          title: ramazanLecture.title,
+          hasWeeklyField: 'isWeeklyLecture' in ramazanLecture,
+          isWeeklyLecture: ramazanLecture.isWeeklyLecture,
+          weekNumber: ramazanLecture.weekNumber,
+          totalWeeks: ramazanLecture.totalWeeks,
+          weeklySeriesId: ramazanLecture.weeklySeriesId
+        });
+      }
+    }
+    console.log('🔍 [DEBUG] Checking for test lecture...');
+    
+    // Debug: Check if weekly fields are present before transformation
+    const weeklyLecture = lectures.find(l => l.title && l.title.includes('TEST SEDMIČNO'));
+    if (weeklyLecture) {
+      console.log('🎯 [DEBUG] Weekly lecture before transformation:', {
+        title: weeklyLecture.title,
+        isWeeklyLecture: weeklyLecture.isWeeklyLecture,
+        weekNumber: weeklyLecture.weekNumber,
+        totalWeeks: weeklyLecture.totalWeeks,
+        hasField: 'isWeeklyLecture' in weeklyLecture,
+        allKeys: Object.keys(weeklyLecture).slice(0, 20) // First 20 keys
+      });
+    } else {
+      console.log('❌ [DEBUG] No TEST SEDMIČNO lecture found in query results');
+      // Show first few titles
+      console.log('📋 [DEBUG] First 3 lecture titles:');
+      lectures.slice(0, 3).forEach(l => {
+        console.log(`  - ${l.title}`);
+      });
+    }
+    
+    // Debug: Check raw lecture data
+    const testLecture = lectures.find(l => l.title && l.title.includes('TEST SEDMIČNO PREDAVANJE'));
+    if (testLecture) {
+      console.log('🎯 [RAW DATA] Found test lecture:', {
+        title: testLecture.title,
+        isWeeklyLecture: testLecture.isWeeklyLecture,
+        hasField: 'isWeeklyLecture' in testLecture,
+        allFields: Object.keys(testLecture)
+      });
+    } else {
+      console.log('❌ [RAW DATA] No test lecture found in query results');
+    }
+    
     // Debug: Check cancelled lectures
     const cancelledLectures = lectures.filter(l => l.status === 'cancelled' || l.isCancelled);
     console.log(`❌ [SERVER] Found ${cancelledLectures.length} cancelled lectures in query result`);
     if (cancelledLectures.length > 0) {
-      console.log('❌ [SERVER] Sample cancelled lecture:', cancelledLectures[0]);
+      console.log('❌ [SERVER] Sample cancelled lecture:', {
+        title: cancelledLectures[0].title,
+        status: cancelledLectures[0].status,
+        isCancelled: cancelledLectures[0].isCancelled,
+        hasIsCancelled: 'isCancelled' in cancelledLectures[0],
+        keys: Object.keys(cancelledLectures[0])
+      });
     }
+    
+    // Debug: Check test weekly lectures
+    const testLectures = lectures.filter(l => l.title && l.title.toLowerCase().includes('test'));
+    console.log(`🧪 [DEBUG] Found ${testLectures.length} test lectures`);
+    testLectures.forEach((lecture, i) => {
+      console.log(`🧪 Test lecture ${i + 1}:`, {
+        title: lecture.title,
+        isWeeklyLecture: lecture.isWeeklyLecture,
+        weekNumber: lecture.weekNumber,
+        totalWeeks: lecture.totalWeeks
+      });
+    });
     
     // Debug: Start transformation timing
     const transformStartTime = Date.now();
     console.log('🔄 [PERFORMANCE] Starting lightning-fast data transformation...');
+    console.log('📋 [TRANSFORM DEBUG] Number of lectures to transform:', lectures.length);
+    if (lectures.length > 0) {
+      console.log('📋 [TRANSFORM DEBUG] First lecture title:', lectures[0].title);
+    }
     
     // 🚀 LIGHTNING-FAST transformation - pre-allocate array for better performance
     const transformedLectures = new Array(lectures.length);
+    
+    // Debug cancelled lectures before transformation
+    const cancelledBeforeTransform = lectures.filter(l => l.status === 'cancelled' || l.isCancelled);
+    console.log('🔍 [TRANSFORM DEBUG] Cancelled lectures BEFORE transformation:', cancelledBeforeTransform.length);
+    
     for (let i = 0; i < lectures.length; i++) {
       const lecture = lectures[i];
       
-      transformedLectures[i] = {
-        ...lecture,
+      // Debug cancelled lecture transformation
+      if (lecture.status === 'cancelled' || lecture.isCancelled) {
+        console.log('🔍 [TRANSFORM] Cancelled lecture BEFORE transform:', {
+          title: lecture.title,
+          status: lecture.status,
+          isCancelled: lecture.isCancelled,
+          hasIsCancelled: 'isCancelled' in lecture
+        });
+      }
+      
+      // Debug first test lecture
+      if (i === 0 && lecture.title?.toLowerCase().includes('test')) {
+        console.log('🔍 [TRANSFORM] Test lecture BEFORE transform:', {
+          title: lecture.title,
+          isWeeklyLecture: lecture.isWeeklyLecture,
+          hasField: 'isWeeklyLecture' in lecture
+        });
+      }
+      
+      // Use Object.assign to ensure all properties are copied
+      transformedLectures[i] = Object.assign({}, lecture, {
         daijaId: lecture.daija ? lecture.daija._id : null,
         speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
           ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
-          : lecture.speaker || 'Nepoznat predavač'
-      };
+          : lecture.speaker || 'Nepoznat predavač',
+        // Explicitly include weekly lecture fields
+        isWeeklyLecture: lecture.isWeeklyLecture,
+        weekNumber: lecture.weekNumber,
+        totalWeeks: lecture.totalWeeks,
+        weeklySeriesId: lecture.weeklySeriesId,
+        // Explicitly include cancellation fields
+        isCancelled: lecture.isCancelled,
+        cancelledAt: lecture.cancelledAt,
+        cancellationReason: lecture.cancellationReason
+      });
+      
+      // Debug cancelled lecture after transformation
+      if (lecture.status === 'cancelled' || lecture.isCancelled) {
+        console.log('🔍 [TRANSFORM] Cancelled lecture AFTER transform:', {
+          title: transformedLectures[i].title,
+          status: transformedLectures[i].status,
+          isCancelled: transformedLectures[i].isCancelled,
+          hasIsCancelled: 'isCancelled' in transformedLectures[i]
+        });
+      }
+      
+      // Debug first test lecture after transform
+      if (i === 0 && lecture.title?.toLowerCase().includes('test')) {
+        console.log('🔍 [TRANSFORM] Test lecture AFTER transform:', {
+          title: transformedLectures[i].title,
+          isWeeklyLecture: transformedLectures[i].isWeeklyLecture,
+          hasField: 'isWeeklyLecture' in transformedLectures[i]
+        });
+      }
     }
+    
+    // Debug cancelled lectures after transformation
+    const cancelledAfterTransform = transformedLectures.filter(l => l && (l.status === 'cancelled' || l.isCancelled));
+    console.log('🔍 [TRANSFORM DEBUG] Cancelled lectures AFTER transformation:', cancelledAfterTransform.length);
 
     const transformEndTime = Date.now();
     const transformDuration = transformEndTime - transformStartTime;
     console.log(`⚡ [PERFORMANCE] Lightning-fast data transformation completed in: ${transformDuration}ms`);
+    
+    // Debug: Check weekly lectures after transformation
+    const weeklyAfterTransform = transformedLectures.filter(l => l.isWeeklyLecture);
+    console.log(`🔍 [DEBUG] Weekly lectures after transformation: ${weeklyAfterTransform.length}`);
     
     // 🚀 CUSTOM SORTING: Future lectures first (ascending date), then past lectures (descending date)
     const sortStartTime = Date.now();
@@ -156,6 +335,18 @@ router.get('/public', async (req, res) => {
     for (let i = 0; i < transformedLectures.length; i++) {
       const lecture = transformedLectures[i];
       const lectureDate = new Date(lecture.date);
+      
+      // Debug cancelled lectures during sorting
+      if (lecture.status === 'cancelled' || lecture.isCancelled) {
+        console.log('🔍 [SORT DEBUG] Processing cancelled lecture:', {
+          title: lecture.title,
+          date: lecture.date,
+          status: lecture.status,
+          isCancelled: lecture.isCancelled,
+          isValidDate: !isNaN(lectureDate.getTime()),
+          isFuture: lectureDate >= now
+        });
+      }
       
       if (lectureDate >= now) {
         futureLectures.push(lecture);
@@ -172,6 +363,17 @@ router.get('/public', async (req, res) => {
     
     // Combine: future lectures first, then past lectures
     const sortedLectures = [...futureLectures, ...pastLectures];
+    
+    // Debug: Check cancelled lectures in final sorted array
+    const cancelledInSorted = sortedLectures.filter(l => l.status === 'cancelled' || l.isCancelled);
+    console.log('❌ [SORT DEBUG] Cancelled lectures in final sorted array:', cancelledInSorted.length);
+    if (cancelledInSorted.length > 0) {
+      console.log('❌ [SORT DEBUG] First cancelled lecture:', {
+        title: cancelledInSorted[0].title,
+        status: cancelledInSorted[0].status,
+        isCancelled: cancelledInSorted[0].isCancelled
+      });
+    }
     
     const sortEndTime = Date.now();
     const sortDuration = sortEndTime - sortStartTime;
@@ -210,6 +412,66 @@ router.get('/public', async (req, res) => {
       'X-Index-Hint': 'forced'
     });
 
+    // Debug: Final check before sending
+    const finalWeeklyCount = sortedLectures.filter(l => l.isWeeklyLecture).length;
+    console.log(`📤 [DEBUG] Sending ${sortedLectures.length} lectures, ${finalWeeklyCount} are weekly`);
+    
+// 🔍 COMPREHENSIVE DEBUG LOGGING
+    console.log('\n🔍 [FINAL DEBUG] About to send response...');
+    console.log('Total lectures:', sortedLectures.length);
+    
+    // Check first lecture in detail
+    if (sortedLectures.length > 0) {
+      const firstLecture = sortedLectures[0];
+      console.log('\nFirst lecture details:');
+      console.log('  Title:', firstLecture.title);
+      console.log('  Has isWeeklyLecture field:', 'isWeeklyLecture' in firstLecture);
+      console.log('  isWeeklyLecture value:', firstLecture.isWeeklyLecture);
+      console.log('  weekNumber:', firstLecture.weekNumber);
+      console.log('  totalWeeks:', firstLecture.totalWeeks);
+      console.log('  All keys:', Object.keys(firstLecture));
+    }
+    
+    // Check Ramazan lectures specifically
+    const ramazanLectures = sortedLectures.filter(l => l.title && l.title.includes('Ramazan'));
+    console.log('\nRamazan lectures found:', ramazanLectures.length);
+    if (ramazanLectures.length > 0) {
+      console.log('First Ramazan lecture weekly fields:');
+      const ramLec = ramazanLectures[0];
+      console.log('  isWeeklyLecture:', ramLec.isWeeklyLecture);
+      console.log('  weekNumber:', ramLec.weekNumber);
+      console.log('  totalWeeks:', ramLec.totalWeeks);
+    }
+    
+    // FINAL DEBUG: Check exactly what we're sending
+    console.log('\n🚨 [CRITICAL DEBUG] Final check before res.json():');
+    const testWeeklyLecture = sortedLectures.find(l => l.isWeeklyLecture === true);
+    if (testWeeklyLecture) {
+      console.log('Found weekly lecture to send:', {
+        title: testWeeklyLecture.title,
+        isWeeklyLecture: testWeeklyLecture.isWeeklyLecture,
+        weekNumber: testWeeklyLecture.weekNumber,
+        totalWeeks: testWeeklyLecture.totalWeeks,
+        weeklySeriesId: testWeeklyLecture.weeklySeriesId,
+        hasAllFields: {
+          isWeeklyLecture: 'isWeeklyLecture' in testWeeklyLecture,
+          weekNumber: 'weekNumber' in testWeeklyLecture,
+          totalWeeks: 'totalWeeks' in testWeeklyLecture,
+          weeklySeriesId: 'weeklySeriesId' in testWeeklyLecture
+        }
+      });
+      
+      // Test serialization
+      const testJson = JSON.stringify(testWeeklyLecture);
+      const parsed = JSON.parse(testJson);
+      console.log('After JSON stringify/parse test:');
+      console.log('  isWeeklyLecture preserved:', parsed.isWeeklyLecture === testWeeklyLecture.isWeeklyLecture);
+      console.log('  weekNumber preserved:', parsed.weekNumber === testWeeklyLecture.weekNumber);
+    } else {
+      console.log('❌ No weekly lectures found in final array!');
+    }
+    
+    console.log('📤 [DEBUG] Calling res.json() with', sortedLectures.length, 'lectures');
     res.json(sortedLectures);
   } catch (error) {
     const errorTime = Date.now();
@@ -254,7 +516,7 @@ router.get('/public/with-status', async (req, res) => {
     const lectures = await Lecture.find({ 
       status: { $in: ['approved', 'cancelled'] }
     })
-      .select('title speaker daija organization organizationId address city date time duration shortDescription description image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId')
+      .select('title speaker daija organization organizationId address city date time duration shortDescription image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId')
       .populate({
         path: 'organizationId',
         select: 'name',
@@ -281,7 +543,16 @@ router.get('/public/with-status', async (req, res) => {
       daijaId: lecture.daija ? lecture.daija._id : null,
       speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
         ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
-        : lecture.speaker || 'Nepoznat predavač'
+        : lecture.speaker || 'Nepoznat predavač',
+      // Explicitly include weekly lecture fields
+      isWeeklyLecture: lecture.isWeeklyLecture,
+      weekNumber: lecture.weekNumber,
+      totalWeeks: lecture.totalWeeks,
+      weeklySeriesId: lecture.weeklySeriesId,
+      // Explicitly include cancellation fields
+      isCancelled: lecture.isCancelled,
+      cancelledAt: lecture.cancelledAt,
+      cancellationReason: lecture.cancellationReason
     }));
 
     const transformEndTime = Date.now();
@@ -391,6 +662,157 @@ router.get('/public/with-status', async (req, res) => {
         error: error.message,
         feature: 'status-enhanced'
       }
+    });
+  }
+});
+
+// Create new lecture
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    console.log('🚀 [CREATE LECTURE] Request body:', req.body);
+    
+    const {
+      title,
+      type = 'Predavanje',
+      daija,
+      organization,
+      organizationId,
+      address,
+      city,
+      date,
+      time,
+      duration = 60,
+      shortDescription,
+      description,
+      image,
+      status = 'approved',
+      isWeeklyLecture = false,
+      totalWeeks = 2
+    } = req.body;
+
+    // Validation
+    if (!title || !address || !city || !date || !time) {
+      return res.status(400).json({ 
+        message: 'Naslov, adresa, grad, datum i vrijeme su obavezni.' 
+      });
+    }
+
+    // Validate date is not in the past
+    const lectureDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (lectureDate < today) {
+      return res.status(400).json({ 
+        message: 'Datum predavanja ne može biti u prošlosti.' 
+      });
+    }
+
+    // If it's a weekly lecture, validate totalWeeks
+    if (isWeeklyLecture) {
+      if (totalWeeks < 2 || totalWeeks > 12) {
+        return res.status(400).json({ 
+          message: 'Broj sedmica mora biti između 2 i 12.' 
+        });
+      }
+    }
+
+    if (isWeeklyLecture) {
+      // Create all lectures in the series at once
+      const weeklySeriesId = `WL_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const lectures = [];
+      
+      for (let week = 1; week <= totalWeeks; week++) {
+        const weekDate = new Date(lectureDate);
+        weekDate.setDate(weekDate.getDate() + (week - 1) * 7);
+        
+        const lectureData = {
+          type,
+          title: title,
+          daija,
+          organization,
+          organizationId,
+          address,
+          city,
+          date: weekDate,
+          time,
+          duration,
+          shortDescription,
+          description,
+          image,
+          status,
+          createdBy: req.user.id,
+          isWeeklyLecture: true,
+          weeklySeriesId,
+          weekNumber: week,
+          totalWeeks,
+          parentLectureId: week === 1 ? null : undefined,
+          lecturePart: req.body.lecturePart ? req.body.lecturePart + (week - 1) : null
+        };
+        
+        const newLecture = new Lecture(lectureData);
+        const savedLecture = await newLecture.save();
+        
+        // Set parentLectureId for subsequent lectures
+        if (week === 1) {
+          lectures.forEach((l, i) => {
+            if (i > 0) l.parentLectureId = savedLecture._id;
+          });
+        }
+        
+        lectures.push(savedLecture);
+      }
+      
+      console.log(`✅ Created ${lectures.length} weekly lectures with series ID: ${weeklySeriesId}`);
+      
+      // Return the first lecture with info about the series
+      res.status(201).json({
+        message: `Uspješno kreirano ${totalWeeks} sedmičnih predavanja`,
+        lecture: lectures[0],
+        seriesInfo: {
+          weeklySeriesId,
+          totalWeeks,
+          createdLectures: lectures.length,
+          lectureIds: lectures.map(l => l._id)
+        }
+      });
+      
+    } else {
+      // Create single lecture
+      const lectureData = {
+        type,
+        title,
+        daija,
+        organization,
+        organizationId,
+        address,
+        city,
+        date: lectureDate,
+        time,
+        duration,
+        shortDescription,
+        description,
+        image,
+        status,
+        createdBy: req.user.id
+      };
+      
+      const newLecture = new Lecture(lectureData);
+      const savedLecture = await newLecture.save();
+      
+      console.log('✅ Created single lecture:', savedLecture.title);
+      
+      res.status(201).json({
+        message: 'Predavanje uspješno kreirano',
+        lecture: savedLecture
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Error creating lecture:', error);
+    res.status(500).json({ 
+      message: 'Greška pri kreiranju predavanja',
+      error: error.message 
     });
   }
 });

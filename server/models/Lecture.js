@@ -148,6 +148,12 @@ const lectureSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Lecture',
     required: false
+  },
+  // Part number for series lectures (e.g., "dio 155")
+  lecturePart: {
+    type: Number,
+    required: false,
+    min: 1
   }
 }, {
   timestamps: true
