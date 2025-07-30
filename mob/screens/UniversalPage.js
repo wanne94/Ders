@@ -349,11 +349,10 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
 const fetchLectures = async () => {
   try {
     // console.log('UniversalPage: Fetching lectures...');
-    const response = await apiClient.get('/lectures/dashboard/public');
+    const response = await apiClient.get('/lectures/public?status=all');
     const data = response.data;
-    // Filter out cancelled lectures from public view
-    const validLectures = (Array.isArray(data) ? data : []).filter(lecture => !lecture.cancelled);
-    return validLectures;
+    // Return all lectures including cancelled ones
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     // console.error('UniversalPage: Error fetching lectures:', error.message);
     return [];

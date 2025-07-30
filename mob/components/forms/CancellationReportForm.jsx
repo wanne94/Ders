@@ -250,7 +250,7 @@ const CancellationReportForm = ({
               
               {proofImage ? (
                 <View style={styles.imagePreviewContainer}>
-                  <Image source={{ uri: proofImage.uri }} style={styles.imagePreview} />
+                  <Image source={{ uri: proofImage.uri }} style={styles.imagePreview} resizeMode="contain" />
                   <TouchableOpacity
                     style={styles.removeImageButton}
                     onPress={removeImage}
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
   },
   imagePreview: {
     width: 120,
-    height: 90,
+    height: 120,
     borderRadius: 8,
     backgroundColor: '#f5f5f5',
   },

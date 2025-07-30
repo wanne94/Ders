@@ -366,7 +366,7 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
           <Text style={styles.inputLabel}>Slika daije (neobavezno)</Text>
           {imageUri ? (
             <View style={styles.imageContainer}>
-              <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+              <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="contain" />
               <TouchableOpacity style={styles.removeImageButton} onPress={removeImage}>
                 <Ionicons name="close-circle" size={30} color={COLORS.error} />
               </TouchableOpacity>
@@ -600,9 +600,9 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   imagePreview: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 8,
   },
   removeImageButton: {
     padding: 8,

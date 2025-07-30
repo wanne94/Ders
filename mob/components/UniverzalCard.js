@@ -140,7 +140,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
     switch (entityType) {
       case 'predavanje':
         // Check if lecture is cancelled
-        const isCancelled = data.cancelled || data.status === 'cancelled';
+        const isCancelled = data.isCancelled || data.status === 'cancelled';
         
         return {
           type: 'lecture',
@@ -538,12 +538,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     left: '50%',
+    width: 200, // Široka traka da pokrije dijagonalu
+    height: 40,
     backgroundColor: '#f44336',
-    paddingVertical: 6,
-    paddingHorizontal: 40,
     transform: [
-      { translateX: -50 },
-      { translateY: -50 },
+      { translateX: -100 }, // Pola širine
+      { translateY: -20 },  // Pola visine
       { rotate: '-45deg' }
     ],
     alignItems: 'center',
@@ -556,10 +556,13 @@ const styles = StyleSheet.create({
   },
   cancelledText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     letterSpacing: 1.5,
     textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   weeklyBadge: {
     position: 'absolute',

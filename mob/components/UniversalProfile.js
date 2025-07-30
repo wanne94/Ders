@@ -19,7 +19,7 @@ import { getImageUrl } from '../utils/imageUtils';
 import { formatDateWithDay } from '../utils/dateUtils';
 import { formatDaijaTitle } from '../utils';
 import ShareButton from './ShareButton';
-import CancellationReportForm from './forms/CancellationReportForm';
+import CancellationReportButton from './CancellationReportButton';
 import UniverzalCard from './UniverzalCard';
 import { sortLecturesByTime } from '../utils/sortingUtils';
 
@@ -34,7 +34,6 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
-  const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [relatedLectures, setRelatedLectures] = useState([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [profileLectures, setProfileLectures] = useState([]);
@@ -179,18 +178,18 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
     Linking.openURL(url);
   };
 
-  const handleReportCancellation = () => {
-    setCancelModalVisible(true);
-  };
-
-  const handleCancelModalClose = () => {
-    setCancelModalVisible(false);
-  };
 
   const handleReportSuccess = (response) => {
-    // Refresh profile data if lecture was auto-cancelled
-    if (response.autoCancel && type === 'lecture') {
-      // Refetch profile data
+    // Refresh profile data if lecture was cancelled
+    if (response.isCancelled && type === 'lecture') {
+      // Update local profile state
+      setProfile(prevProfile => ({
+        ...prevProfile,
+        isCancelled: true,
+        status: 'cancelled'
+      }));
+      
+      // Refetch profile data if needed
       if (!data) {
         fetchProfile();
       }
@@ -357,7 +356,7 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
             resizeMode={type === 'lecture' ? 'contain' : 'cover'}
           />
           {/* Diagonal "OTKAZANO" label for cancelled lectures */}
-          {type === 'lecture' && (profile.cancelled || profile.status === 'cancelled') && (
+          {type === 'lecture' && (profile.isCancelled || profile.status === 'cancelled') && (
             <View style={styles.cancelledOverlay}>
               <View style={styles.cancelledLabel}>
                 <Text style={styles.cancelledText}>OTKAZANO</Text>
@@ -479,15 +478,20 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
             </TouchableOpacity>
           )}
           
-          {/* Report Cancellation Button - Only for lectures and non-cancelled */}
-          {type === 'lecture' && !profile.cancelled && profile.status !== 'cancelled' && (
-            <TouchableOpacity style={styles.glassButtonRed} onPress={handleReportCancellation}>
-              <Ionicons name="warning" size={20} color="white" />
-              <Text style={styles.glassButtonText}>Prijavi da je otkazano</Text>
-            </TouchableOpacity>
-          )}
-          
           <ShareButton profileData={profile} type={type} />
+          
+          {/* Report Cancellation Button - Only for lectures and non-cancelled */}
+          {type === 'lecture' && !profile.isCancelled && profile.status !== 'cancelled' && (
+            <CancellationReportButton
+              lectureId={profile._id}
+              lectureTitle={profile.title}
+              isAlreadyCancelled={profile.isCancelled || profile.status === 'cancelled'}
+              onReportSuccess={handleReportSuccess}
+              variant="contained"
+              size="medium"
+              style={styles.cancellationButton}
+            />
+          )}
         </View>
       </View>
 
@@ -570,15 +574,6 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
         </View>
       )}
       
-      {/* Cancellation Report Modal */}
-      {type === 'lecture' && profile && (
-        <CancellationReportForm
-          visible={cancelModalVisible}
-          onClose={handleCancelModalClose}
-          lecture={profile}
-          onSuccess={handleReportSuccess}
-        />
-      )}
     </ScrollView>
   );
 };
@@ -632,6 +627,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+    overflow: 'hidden',
+    position: 'relative',
   },
   profileImage: {
     width: 300,
@@ -646,6 +643,9 @@ const styles = StyleSheet.create({
   fullWidthImageContainer: {
     width: '100%',
     marginBottom: 20,
+    overflow: 'hidden',
+    borderRadius: 15,
+    position: 'relative',
   },
   fullWidthImage: {
     width: '100%',
@@ -787,6 +787,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 0.2,
   },
+  cancellationButton: {
+    marginTop: 0,
+  },
   actionText: {
     color: 'white',
     fontSize: 16,
@@ -880,35 +883,37 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 2,
     pointerEvents: 'none',
+    overflow: 'hidden',
   },
   cancelledLabel: {
     position: 'absolute',
     top: '50%',
     left: '50%',
-    backgroundColor: 'rgba(211, 47, 47, 0.95)',
-    paddingVertical: 12,
-    paddingHorizontal: 100,
+    width: 300, // Šira traka za veću sliku
+    height: 40,
+    backgroundColor: '#f44336',
     transform: [
-      { translateX: -50 },
-      { translateY: -50 },
+      { translateX: -150 }, // Pola širine
+      { translateY: -20 },  // Pola visine
       { rotate: '-45deg' }
     ],
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   cancelledText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: 'bold',
     letterSpacing: 1.5,
     textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
 });
 

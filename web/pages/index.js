@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Image from 'next/image';
 import {
   Box,
   Typography,
@@ -33,8 +34,6 @@ import ContentContainer from '@/components/ContentContainer';
 import { OrganizationsGrid, DaijeGrid, LecturesGrid } from '@/components/GridLayout';
 import UniversalCard from '@/components/UniversalCard';
 import SkeletonGrid from '@/components/SkeletonGrid';
-import AndroidAppModal from '@/components/AndroidAppModal';
-import DownloadAppSection from '@/components/DownloadAppSection';
 import LecturesSection from '@/components/LecturesSection';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 import { deviceUtils, storage } from '@/utils';
@@ -66,6 +65,124 @@ const HeroSection = () => {
         <Typography variant="h5" sx={{ mb: 3, opacity: 0.9, fontSize: '1.5rem' }}>
         Digitalna platforma za promociju islamskih predavanja
         </Typography>
+        
+        {/* Download App Section */}
+        <Box sx={{ mt: 5 }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              opacity: 0.9,
+              mb: 3,
+              fontWeight: 400
+            }}
+          >
+            Preuzmi DERS mobilnu aplikaciju
+          </Typography>
+          
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              gap: 3, 
+              justifyContent: 'center', 
+              flexWrap: 'wrap',
+              alignItems: 'flex-start'
+            }}
+          >
+            {/* Google Play Button */}
+            <Box
+              component="a"
+              href="https://play.google.com/store/apps/details?id=com.daije.mobile"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)'
+                }
+              }}
+            >
+              <Box
+                sx={{
+                  position: 'relative',
+                  width: { xs: 160, md: 180 },
+                  height: { xs: 48, md: 54 },
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Image
+                  src="/google-play-badge.png"
+                  alt="Download on Google Play"
+                  width={180}
+                  height={54}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+              </Box>
+            </Box>
+            
+            {/* App Store Button - Disabled */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                opacity: 0.5,
+                cursor: 'not-allowed'
+              }}
+            >
+              <Box
+                sx={{
+                  position: 'relative',
+                  width: { xs: 160, md: 180 },
+                  height: { xs: 48, md: 54 },
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Image
+                  src="/app shore download.png"
+                  alt="Download on App Store - Coming Soon"
+                  width={180}
+                  height={54}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+              </Box>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  mt: 1, 
+                  opacity: 0.7,
+                  fontSize: '0.9rem',
+                  textAlign: 'center',
+                  color: 'white'
+                }}
+              >
+                Uskoro dostupno
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
       </ContentContainer>
     </Box>
   );
@@ -646,7 +763,6 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
-  const [showAndroidModal, setShowAndroidModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -706,21 +822,6 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // Check for Android mobile devices and show modal
-  useEffect(() => {
-    const checkAndroidModal = () => {
-      const modalShown = storage.get('androidAppModalShown');
-      
-      if (!modalShown && deviceUtils.isAndroidMobile()) {
-        // Small delay to allow page to load
-        setTimeout(() => {
-          setShowAndroidModal(true);
-        }, 1500);
-      }
-    };
-
-    checkAndroidModal();
-  }, []);
 
   useEffect(() => {
     // Provjeri da li treba prikazati poruku o uspješnoj registraciji
@@ -732,11 +833,6 @@ export default function Home() {
     }
   }, []);
 
-  // Function to handle Android modal close
-  const handleAndroidModalClose = () => {
-    storage.set('androidAppModalShown', 'true');
-    setShowAndroidModal(false);
-  };
 
   // Inside the component, filter data before using it with safety checks
   const approvedOrganizations = (organizations || []).filter(item => item.status === 'approved');
@@ -804,21 +900,12 @@ export default function Home() {
         <ActiveOrganizations organizations={organizations} lectures={lectures} isLoading={isLoading} />
       </Box>
 
-      {/* Download App Section */}
-      <Box sx={{ width: '100%', mb: 4 }}>
-        <DownloadAppSection />
-      </Box>
 
       {/* Quick Actions */}
       <Box sx={{ width: '100%', mb: 4 }}>
         <QuickActions />
       </Box>
 
-      {/* Android App Modal */}
-      <AndroidAppModal 
-        open={showAndroidModal}
-        onClose={handleAndroidModalClose}
-      />
      
     </PageLayout>
   );

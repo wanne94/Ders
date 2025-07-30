@@ -133,7 +133,7 @@ const SuggestionForm = ({ onBack, onSuccess }) => {
                 <Text style={styles.inputLabel}>Slika (neobavezno)</Text>
                 {imageUri ? (
                     <View style={styles.imageContainer}>
-                        <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+                        <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="contain" />
                         <TouchableOpacity style={styles.removeImageButton} onPress={removeImage}>
                             <Ionicons name="close-circle" size={30} color={COLORS.error} />
                         </TouchableOpacity>
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   },
   imagePreview: {
     width: 120,
-    height: 80,
+    height: 120,
     borderRadius: 8,
   },
   removeImageButton: {

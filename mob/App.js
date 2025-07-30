@@ -761,7 +761,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <SystemBars style="light" hidden={false} />
       <View style={styles.container}>
         <Header 
