@@ -1,9 +1,11 @@
 {
   "expo": {
+    "name": "Ders",
+    "slug": "ders-mobile",
+    "version": "1.0.0",
     "android": {
-      "package": "com.wanne.mobileapp",
-      "userInterfaceStyle": "automatic",
-      "enableEdgeToEdgeEnforcement": true
+      "package": "com.daije.mobile",
+      "userInterfaceStyle": "automatic"
     }
   }
 }

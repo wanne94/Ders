@@ -1,67 +1,46 @@
-# Project Plan: Fix Organization Cards Display on Homepage
+# Plan za rješavanje API grešaka (500 errors) u mobilnoj aplikaciji
 
-## Problem
-Organization cards on the homepage are overflowing the page width. They need to display 5 cards per row, similar to how daije cards are displayed.
+## Problem:
+Mobilna aplikacija prikazuje 500 greške pri pokušaju dohvaćanja podataka sa sljedećih endpoint-a:
+- `/api/daije/public` - Greška pri dohvaćanju daija
+- `/api/lectures/dashboard/public` - Greška pri dohvaćanju predavanja za dashboard
+- `/api/organizations/public` - Greška pri dohvaćanju organizacija
 
-## Analysis
-After reviewing the code:
-- Both OrganizationsGrid and DaijeGrid use the same GridLayout component
-- GridLayout is configured to show 5 columns on xl screens (extra large)
-- The issue seems to be that the organization cards might need the same structure/styling as daije cards
+## TODO Lista:
 
-## Todo List
+- [x] Analiziraj API greške (500 error) za daije, lectures i organizations endpoints
+- [x] Provjeri backend API rute i middleware za public endpoints
+- [x] Provjeri konfiguraciju API URL-a u mobilnoj aplikaciji
+- [x] Provjeri da li backend server radi i da li je dostupan na http://192.168.0.20:5003
+- [x] Provjeri CORS konfiguraciju na backend serveru
+- [x] Implementiraj rješenja za API greške
 
-### 1. ✅ Compare how daije and organization sections are implemented
-- Check ActiveDaije component implementation
-- Check ActiveOrganizations component implementation
-- Identify any differences in their structure
+## Review Sekcija:
 
-**Findings:**
-- Both use the same GridLayout component with identical settings
-- Both wrap cards in Box with height: '200px'
-- ContentContainer has maxWidth of 1900px
-- GridLayout shows 5 columns on xl screens, 4 on lg, 3 on md, 2 on sm, 1 on xs
+### Pronađen uzrok problema:
+Backend server ne može da se poveže sa MongoDB bazom podataka jer SSH tunel nije pokrenut. Server koristi port 27018 koji se forward-uje na remote MongoDB server putem SSH tunela.
 
-### 2. ✅ Fix the organization cards display
-- Ensure OrganizationsGrid uses the same responsive breakpoints
-- Make sure organization cards display properly with 5 columns on larger screens
-- Test that cards don't overflow the page width
+### Analiza:
+1. **API greške** - Svi endpoint-i vraćaju 500 grešku jer ne mogu pristupiti bazi podataka
+2. **Backend rute** - Rute su ispravno implementirane sa try/catch blokovima
+3. **API konfiguracija** - Mobilna aplikacija koristi ispravnu adresu (http://192.168.0.20:5003)
+4. **CORS** - Ispravno konfigurisano za sve domene u development modu
+5. **MongoDB konekcija** - Server pokušava da se poveže na mongodb://127.0.0.1:27018/Predavanja ali SSH tunel nije aktivan
 
-**Changes made:**
-- Added maxWidth: '100%' and overflow: 'hidden' to both OrganizationsGrid and DaijeGrid
-- Added width and maxWidth constraints to individual card containers
-- Updated GridLayout component to prevent overflow with minWidth: 0 on grid items
-- Ensured consistent styling between daije and organization sections
+### Rješenje:
+Za pokretanje aplikacije u development modu, potrebno je:
 
-### 3. ✅ Verify the solution works
-- Check that organization cards display correctly on different screen sizes
-- Ensure consistency with daije cards display
-- Verify no overflow issues
+1. **Pokrenuti SSH tunel** koji forward-uje lokalni port 27018 na remote MongoDB:
+   ```bash
+   ssh -L 27018:localhost:27017 root@194.163.176.171 -N
+   ```
+   Password: WanNeAvdo1994
 
-**Verification:**
-- Lint check passed with no errors or warnings
-- Both organization and daije sections now have consistent styling
-- Grid layout configured to prevent overflow with proper constraints
+2. **Alternativno rješenje** - Instalirati lokalnu MongoDB instancu i promijeniti MONGODB_URI u .env fajlu na:
+   ```
+   MONGODB_URI=mongodb://127.0.0.1:27017/Predavanja
+   ```
 
-## Review Section
-
-### Summary of Changes:
-1. **Updated ActiveOrganizations component** (lines 541-559):
-   - Added maxWidth: '100%' and overflow: 'hidden' to OrganizationsGrid
-   - Added width/maxWidth constraints to individual card containers
-
-2. **Updated ActiveDaije component** (lines 725-743):
-   - Applied same styling as organizations for consistency
-   - Added maxWidth: '100%' and overflow: 'hidden' to DaijeGrid
-   - Added width/maxWidth constraints to individual card containers
-
-3. **Updated GridLayout component** (lines 53-78):
-   - Added maxWidth: '100%' and overflow: 'hidden' to grid container
-   - Added minWidth: 0 and maxWidth: '100%' to all grid items to prevent overflow
-   - This ensures cards properly fit within their grid cells
-
-### Result:
-- Organization cards now display properly with 5 cards per row on extra large screens
-- Cards no longer overflow the page width
-- Consistent behavior between daije and organization sections
-- Responsive grid maintains proper layout on all screen sizes
+### Napomene:
+- Server već ima skripte za pokretanje tunela: `start-ssh-tunnel.sh` i `setup-mongodb-tunnel.sh`
+- Za produkciju se koristi direktna konekcija bez tunela

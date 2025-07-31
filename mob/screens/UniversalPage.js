@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, Alert, FlatList, ActivityIndicator, Text, SafeAreaView, RefreshControl, TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import UniverzalCard from '../components/UniverzalCard';
 import Menu from '../components/Menu';
 import apiClient from '../services/apiClient';
@@ -207,10 +208,18 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
     }
   };
 
-  const handleLogout = () => {
-    // TODO: Implement real logout logic
-    if (onNavigate) {
-      onNavigate('home');
+  const handleLogout = async () => {
+    try {
+      // Clear auth token
+      await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem('userRole');
+      
+      // Navigate to home
+      if (onNavigate) {
+        onNavigate('home');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
 
@@ -221,9 +230,9 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
   };
 
   const handleAddContentWithType = (type) => {
-    // TODO: Implement specific content type adding
+    // Navigate to add content screen with pre-selected type
     if (onNavigate) {
-      onNavigate('add-content');
+      onNavigate('add-content', { preselectedType: type });
     }
   };
 

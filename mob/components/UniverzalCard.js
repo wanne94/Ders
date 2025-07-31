@@ -164,8 +164,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
           title: formatDaijaTitle(data.name, data.title) || 'Nepoznata daija',
           
           items: [
-            data.shortDescription && { icon: 'Description', text: data.shortDescription }
-,
+            data.shortDescription && { icon: 'Description', text: data.shortDescription },
             data.lectureCount !== undefined && { icon: "MenuBook", text: `Broj predavanja: ${data.lectureCount || 0}` },
           ].filter(Boolean)
         };
@@ -177,8 +176,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
           items: [
             data.address && { icon: 'LocationOn', text: data.address },
             data.city && { icon: 'LocationCity', text: data.city },
-            data.shortDescription && { icon: 'Description', text: data.shortDescription }
-,
+            data.shortDescription && { icon: 'Description', text: data.shortDescription },
             data.lectureCount !== undefined && { icon: "MenuBook", text: `Broj predavanja: ${data.lectureCount || 0}` },
           ].filter(Boolean)
         };
@@ -220,8 +218,7 @@ const UniverzalCard = ({ data, onPress, style }) => {
             items: [
               data.address && { icon: 'LocationOn', text: data.address },
               data.city && { icon: 'LocationCity', text: data.city },
-              data.shortDescription && { icon: 'Description', text: data.shortDescription }
-,
+              data.shortDescription && { icon: 'Description', text: data.shortDescription },
               data.lectureCount !== undefined && { icon: "MenuBook", text: `Broj predavanja: ${data.lectureCount || 0}` },
             ].filter(Boolean)
           };

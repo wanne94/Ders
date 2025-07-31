@@ -561,6 +561,124 @@ app.get('/api/lectures/rejected', authenticateToken, isAdminOrSuperAdmin, async 
   }
 });
 
+// Get cancelled reports for admin
+app.get('/api/lectures/admin/cancelled-reports', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    logger.info('Fetching cancelled reports for admin:', {
+      userId: req.user.id,
+      role: req.user.role,
+      queryParams: req.query
+    });
+
+    const { status = 'all', page = 1, limit = 50 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Build query filter
+    let filter = { 'cancellationReports.0': { $exists: true } }; // Has at least one report
+    
+    if (status === 'pending') {
+      filter.isCancelled = false;
+    } else if (status === 'approved') {
+      filter.isCancelled = true;
+    }
+
+    // Get lectures with cancellation reports
+    const lectures = await Lecture.find(filter)
+      .populate('daija', 'name title image')
+      .populate('organization', 'name')
+      .populate('createdBy', 'firstName lastName email')
+      .sort({ 'cancellationReports.reportedAt': -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    // Get total count for pagination
+    const total = await Lecture.countDocuments(filter);
+
+    // Transform the data for frontend
+    const reports = lectures.map(lecture => ({
+      ...lecture,
+      reportCount: lecture.cancellationReports?.length || 0,
+      lastReportDate: lecture.cancellationReports?.[lecture.cancellationReports.length - 1]?.reportedAt,
+      daijaId: lecture.daija?._id || lecture.daija || null,
+      speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
+        ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
+        : lecture.speaker || 'Nepoznat predavač'
+    }));
+
+    res.json({
+      reports,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / parseInt(limit))
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error fetching cancelled reports:', error);
+    res.status(500).json({ message: 'Greška pri dohvaćanju prijava otkazanih predavanja' });
+  }
+});
+
+// Update cancelled report status for admin
+app.put('/api/lectures/:id/admin/cancellation-status', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action, reason } = req.body; // action: 'approve' or 'reject'
+
+    logger.info('Updating cancellation status:', {
+      lectureId: id,
+      action,
+      reason,
+      adminId: req.user.id
+    });
+
+    const lecture = await Lecture.findById(id);
+    if (!lecture) {
+      return res.status(404).json({ message: 'Predavanje nije pronađeno' });
+    }
+
+    if (!lecture.cancellationReports || lecture.cancellationReports.length === 0) {
+      return res.status(400).json({ message: 'Nema prijava otkazivanja za ovo predavanje' });
+    }
+
+    if (action === 'approve') {
+      // Mark lecture as cancelled
+      lecture.isCancelled = true;
+      lecture.cancelledAt = new Date();
+      lecture.cancellationReason = reason || 'Otkazano na osnovu prijava korisnika';
+      lecture.status = 'cancelled';
+    } else if (action === 'reject') {
+      // Clear cancellation reports
+      lecture.cancellationReports = [];
+      lecture.isCancelled = false;
+      lecture.cancelledAt = null;
+      lecture.cancellationReason = null;
+    } else {
+      return res.status(400).json({ message: 'Nepoznata akcija' });
+    }
+
+    const updatedLecture = await lecture.save();
+
+    logger.info('Cancellation status updated:', {
+      lectureId: id,
+      isCancelled: updatedLecture.isCancelled,
+      action
+    });
+
+    res.json({
+      message: action === 'approve' ? 'Predavanje je označeno kao otkazano' : 'Prijave otkazivanja su odbačene',
+      lecture: updatedLecture
+    });
+
+  } catch (error) {
+    logger.error('Error updating cancellation status:', error);
+    res.status(500).json({ message: 'Greška pri ažuriranju statusa otkazivanja' });
+  }
+});
+
 // Dashboard endpoint - returns all lectures for admin dashboard (public access)
 app.get('/api/lectures/dashboard/public', async (req, res) => {
   try {

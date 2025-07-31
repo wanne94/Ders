@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { SystemBars } from 'react-native-edge-to-edge';
+// import { SystemBars } from 'react-native-edge-to-edge'; // Temporarily disabled
 import UniverzalCard from './components/UniverzalCard';
 import UniversalProfile from './components/UniversalProfile';
 import BottomNavigation from './components/BottomNavigation';
@@ -462,6 +462,7 @@ const QuickActions = ({ onNavigate }) => {
 
 // Main App Component
 export default function App() {
+  console.log('App component starting...');
   const [activeTab, setActiveTab] = useState('home');
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileData, setProfileData] = useState(null);
@@ -762,7 +763,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      <SystemBars style="light" hidden={false} />
+      {/* <SystemBars style="light" hidden={false} /> */}
       <View style={styles.container}>
         <Header 
           onMenuPress={handleMenuToggle}

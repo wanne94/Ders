@@ -189,10 +189,7 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
         status: 'cancelled'
       }));
       
-      // Refetch profile data if needed
-      if (!data) {
-        fetchProfile();
-      }
+      // Profile will be refreshed on next mount
     }
   };
 

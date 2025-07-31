@@ -1,6 +1,6 @@
 {
   "name": "mobile-app",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "main": "index.js",
   "scripts": {
     "start": "expo start",
@@ -28,16 +28,12 @@
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/datetimepicker": "8.4.1",
     "@react-native-community/netinfo": "^11.4.1",
-    "@react-native-firebase/analytics": "^22.4.0",
-    "@react-native-firebase/app": "^22.4.0",
-    "@react-native-firebase/crashlytics": "^22.4.0",
-    "@react-native-firebase/perf": "^22.4.0",
-    "@react-native-firebase/remote-config": "^22.4.0",
     "@react-native-picker/picker": "2.11.1",
     "@react-navigation/bottom-tabs": "^7.3.15",
     "@react-navigation/native": "^7.1.11",
     "@react-navigation/stack": "^7.3.4",
-    "date-fns": "^4.1.0",
+    "date-fns": "^2.30.0",
+    "es-abstract": "^1.22.5",
     "expo": "53.0.20",
     "expo-build-properties": "~0.14.6",
     "expo-calendar": "^14.1.4",
@@ -50,7 +46,7 @@
     "react-dom": "19.0.0",
     "react-native": "0.79.5",
     "react-native-dotenv": "^3.4.9",
-    "react-native-edge-to-edge": "^1.6.2",
+    "react-native-edge-to-edge": "1.6.0",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
@@ -61,7 +57,7 @@
     "@babel/core": "^7.20.0",
     "@expo/config-plugins": "~10.1.1",
     "@expo/prebuild-config": "~9.0.0",
-    "@types/react": "~19.0.10",
+    "@types/react": "~18.2.14",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
     "eslint": "^9.29.0",
@@ -73,11 +69,6 @@
     "metro-core": "^0.82.4",
     "metro-resolver": "^0.82.4",
     "typescript": "^5.8.3"
-  },
-  "overrides": {
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "@types/react": "~19.0.10"
   },
   "expo": {
     "doctor": {

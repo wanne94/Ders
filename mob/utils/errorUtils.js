@@ -136,7 +136,7 @@ export const parseApiError = (error, operation = 'performing operation') => {
         message: responseData.message || 'Neki podaci nisu u ispravnom formatu.',
         actions: [
           'Provjerite format email adrese',
-          'Provjerite format telefona (+387 XX XXX XXX)',
+          'Provjerite format telefona (uključite pozivni broj)',
           'Provjerite da web adrese počinju sa http:// ili https://',
           'Provjerite da svi tekstovi nisu predugački'
         ],

@@ -77,7 +77,8 @@ export const getImageUrl = (imagePath, size = IMAGE_SIZES.MEDIUM, format = 'webp
   
   // Fix common path variations
   if (cleanPath.startsWith('/upload/images/')) {
-    cleanPath = cleanPath.replace('/upload/images/', '/uploads/images/');\n  } else if (cleanPath.startsWith('upload/images/')) {
+    cleanPath = cleanPath.replace('/upload/images/', '/uploads/images/');
+  } else if (cleanPath.startsWith('upload/images/')) {
     cleanPath = cleanPath.replace('upload/images/', '/uploads/images/');
   }
   

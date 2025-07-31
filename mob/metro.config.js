@@ -46,6 +46,12 @@ config.transformer.getTransformOptions = async () => ({
   },
 });
 
+// Dodaj shimove za problematične module
+config.resolver.extraNodeModules = {
+  ...config.resolver.extraNodeModules,
+  'es-abstract': path.resolve(__dirname, 'node_modules/es-abstract'),
+};
+
 // Ukloni source maps iz production build-a
 if (process.env.NODE_ENV === 'production') {
   config.transformer.minifierConfig = {

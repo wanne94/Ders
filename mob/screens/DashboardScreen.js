@@ -1821,7 +1821,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
 
           <View style={styles.modalActions}>
             <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
+              style={[styles.modalButton, styles.modalCancelButton]}
               onPress={() => setShowApprovalModal(false)}
             >
               <Text style={styles.cancelButtonText}>Otkaži</Text>
@@ -1892,7 +1892,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
 
           <View style={styles.modalActions}>
             <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
+              style={[styles.modalButton, styles.modalCancelButton]}
               onPress={() => setShowSettingsModal(false)}
             >
               <Text style={styles.cancelButtonText}>Otkaži</Text>
@@ -1985,7 +1985,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
 
           <View style={styles.modalActions}>
             <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
+              style={[styles.modalButton, styles.modalCancelButton]}
               onPress={() => {
                 setShowCancelModal(false);
                 setCancelReason('');
@@ -2050,7 +2050,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
           
           <View style={styles.modalButtons}>
             <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
+              style={[styles.modalButton, styles.modalCancelButton]}
               onPress={() => {
                 setShowReactivateModal(false);
                 setSelectedItem(null);
@@ -2500,7 +2500,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  cancelButton: {
+  modalCancelButton: {
     backgroundColor: COLORS.lightGray,
   },
   confirmButton: {
