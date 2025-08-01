@@ -18,6 +18,7 @@ import { predavanjaService, daijeService, udruzenjaService } from '../services';
 import { getImageUrl } from '../utils/imageUtils';
 import { formatDateWithDay } from '../utils/dateUtils';
 import { formatDaijaTitle } from '../utils';
+import { isAuthenticated as checkIsAuthenticated } from '../utils/authHelpers';
 import ShareButton from './ShareButton';
 import CancellationReportButton from './CancellationReportButton';
 import UniverzalCard from './UniverzalCard';
@@ -38,6 +39,7 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [profileLectures, setProfileLectures] = useState([]);
   const [loadingProfileLectures, setLoadingProfileLectures] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     // If data is passed directly, use it
@@ -80,6 +82,18 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
       setLoading(false);
     }
   }, [type, id, data]);
+
+  // Check authentication and follow status
+  useEffect(() => {
+    const checkAuthAndFollowStatus = async () => {
+      const authenticated = await checkIsAuthenticated();
+      setIsAuthenticated(authenticated);
+      
+      
+    };
+    
+    checkAuthAndFollowStatus();
+  }, [profile, type]);
 
   // Fetch related lectures when viewing a lecture profile
   useEffect(() => {

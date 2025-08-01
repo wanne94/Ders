@@ -10,11 +10,9 @@ export const ANALYTICS_EVENTS = {
   
   // Daija events
   VIEW_DAIJA_PROFILE: 'view_daija_profile',
-  FOLLOW_DAIJA: 'follow_daija',
   
   // Organization events
   VIEW_ORGANIZATION: 'view_organization',
-  FOLLOW_ORGANIZATION: 'follow_organization',
   
   // Search events
   SEARCH_PERFORMED: 'search',
@@ -34,8 +32,7 @@ export const ANALYTICS_EVENTS = {
   TAB_SWITCH: 'tab_switch',
   
   // Social
-  SOCIAL_SHARE: 'share',
-  SOCIAL_FOLLOW: 'social_follow'
+  SOCIAL_SHARE: 'share'
 };
 
 // Helper function to safely log events

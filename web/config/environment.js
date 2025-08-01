@@ -5,8 +5,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Base URLs based on environment
 const config = {
   development: {
-    API_URL: 'http://localhost:5003/api',
-    SERVER_URL: 'http://localhost:5003',
+    API_URL: 'https://ders.ba/api',
+    SERVER_URL: 'https://ders.ba',
     APP_URL: 'http://localhost:3000',
     DEBUG: true,
     LOG_LEVEL: 'debug',

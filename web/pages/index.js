@@ -291,16 +291,6 @@ const BenefitsSection = () => {
       description: 'Svako korisno predavanje koje podijeliš može nekome koristiti – a za to ti se piše nagrada kod Allaha. "Ko uputi na dobro, ima nagradu kao i onaj koji to dobro čini." (Muslim)'
     },
     {
-      icon: NotificationsIcon,
-      title: 'Primanje notifikacija',
-      description: 'Dobijaš obavijesti kada se organizuju nova predavanja, novosti i slično.'
-    },
-    {
-      icon: PersonAddIcon,
-      title: 'Praćenje daija i udruženja',
-      description: 'Moći ćeš zapratiti daije i udruženja, te primati notifikacije kada oni budu organizovali nova predavanja.'
-    },
-    {
       icon: BookmarkIcon,
       title: 'Predlaganje izmjena postojećih informacija',
       description: 'Ako primijetiš netačne ili zastarjele podatke, možeš predložiti izmjene koje će biti pregledane od strane admin tima.'

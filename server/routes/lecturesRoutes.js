@@ -623,7 +623,6 @@ router.post('/', authenticateToken, async (req, res) => {
       const newLecture = new Lecture(lectureData);
       const savedLecture = await newLecture.save();
       
-      
       res.status(201).json({
         message: 'Predavanje uspješno kreirano',
         lecture: savedLecture
@@ -951,6 +950,7 @@ router.post('/:id/report-cancellation', optionalAuth, async (req, res) => {
     }
 
     await lecture.save();
+    
 
     // Response message based on action taken
     const responseMessage = lecture.isCancelled 
@@ -1086,6 +1086,7 @@ router.post('/:id/override-cancellation', authenticateToken, isAdminOrSuperAdmin
     }
 
     await lecture.save();
+    
 
     res.json({ 
       message: isCancelled 

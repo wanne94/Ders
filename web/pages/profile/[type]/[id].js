@@ -13,6 +13,8 @@ import {
   IconButton,
   Pagination,
   Chip,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -27,6 +29,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import BusinessIcon from '@mui/icons-material/Business';
 import DirectionsIcon from '@mui/icons-material/Directions';
 import CloseIcon from '@mui/icons-material/Close';
+import EventIcon from '@mui/icons-material/Event';
 import PageLayout from '@/components/PageLayout';
 import ContentContainer from '@/components/ContentContainer';
 import ShareButton from '@/components/ShareButton';
@@ -40,6 +43,7 @@ import { formatDateWithDay } from '@/utils/dataHelpers';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
 import { formatDaijaTitle } from '@/utils';
 import { safeApiCall, normalizeToArray } from '@/utils/dataHelpers';
+import { downloadICS, addToGoogleCalendar } from '@/utils/calendarUtils';
 
 const ProfilePage = () => {
   const router = useRouter();
@@ -57,6 +61,10 @@ const ProfilePage = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const lecturesPerPage = 10;
+  
+  // Calendar dropdown state
+  const [calendarAnchorEl, setCalendarAnchorEl] = useState(null);
+  const calendarOpen = Boolean(calendarAnchorEl);
 
   useEffect(() => {
     if (!type || !id) return;
@@ -194,6 +202,28 @@ const ProfilePage = () => {
     if (type === 'daija') return getDefaultDaijaImage();
     if (type === 'organization') return getDefaultOrganizationImage();
     return getDefaultLectureImage();
+  };
+
+  const handleCalendarClick = (event) => {
+    setCalendarAnchorEl(event.currentTarget);
+  };
+
+  const handleCalendarClose = () => {
+    setCalendarAnchorEl(null);
+  };
+
+  const handleDownloadICS = () => {
+    if (profile && type === 'lecture') {
+      downloadICS(profile);
+      handleCalendarClose();
+    }
+  };
+
+  const handleAddToGoogleCalendar = () => {
+    if (profile && type === 'lecture') {
+      addToGoogleCalendar(profile);
+      handleCalendarClose();
+    }
   };
 
   const getRelatedTitle = () => {
@@ -712,6 +742,60 @@ const ProfilePage = () => {
                     
                     {/* Share Button */}
                     <ShareButton profileData={profile} type={type} />
+                    
+                    {/* Add to Calendar Button - samo za predavanja koja nisu otkazana */}
+                    {type === 'lecture' && profile && !profile.isCancelled && profile.date && (
+                      <>
+                        <Button
+                          variant="outlined"
+                          startIcon={<EventIcon />}
+                          onClick={handleCalendarClick}
+                          sx={{
+                            borderColor: 'rgba(255, 255, 255, 0.5)',
+                            color: 'white',
+                            borderRadius: 3,
+                            px: 3,
+                            py: 1.5,
+                            fontSize: '0.95rem',
+                            fontWeight: 500,
+                            textTransform: 'none',
+                            transition: 'all 0.2s ease',
+                            backdropFilter: 'blur(10px)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                            '&:hover': {
+                              borderColor: 'white',
+                              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                              transform: 'translateY(-1px)',
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                            }
+                          }}
+                        >
+                          Dodaj u kalendar
+                        </Button>
+                        <Menu
+                          anchorEl={calendarAnchorEl}
+                          open={calendarOpen}
+                          onClose={handleCalendarClose}
+                          anchorOrigin={{
+                            vertical: 'bottom',
+                            horizontal: 'left',
+                          }}
+                          transformOrigin={{
+                            vertical: 'top',
+                            horizontal: 'left',
+                          }}
+                        >
+                          <MenuItem onClick={handleDownloadICS}>
+                            <EventIcon sx={{ mr: 1 }} />
+                            Preuzmi .ics fajl
+                          </MenuItem>
+                          <MenuItem onClick={handleAddToGoogleCalendar}>
+                            <EventIcon sx={{ mr: 1 }} />
+                            Dodaj u Google kalendar
+                          </MenuItem>
+                        </Menu>
+                      </>
+                    )}
                     
                     {/* Cancellation Report Button - u istoj liniji sa ostalim dugmadima */}
                     {type === 'lecture' && profile && !profile.isCancelled && (

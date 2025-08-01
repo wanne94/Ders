@@ -1,11 +1,12 @@
 import React, { useState, useEffect, memo } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { format } from 'date-fns';
 import { bs } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
 import { getImageUrl, getDefaultDaijaImage, getDefaultLectureImage, getDefaultOrganizationImage } from '../utils/imageUtils';
 import { formatDaijaTitle } from '../utils';
 import { calculateLectureStatus, getStatusBadgeColors } from '../utils/lectureStatusHelpers';
+import * as Calendar from 'expo-calendar';
 // import { COLORS, TYPOGRAPHY, SPACING } from '../theme';
 
 const { width } = Dimensions.get('window');
@@ -82,9 +83,10 @@ const Icons = {
   Description: () => <Ionicons name="document-text" size={16} color={COLORS.gray} />,
 };
 
-const UniverzalCard = ({ data, onPress, style }) => {
+const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
   const [imageError, setImageError] = useState(false);
   const [statusInfo, setStatusInfo] = useState(null);
+  
   
   // Calculate status for lectures - only once on mount
   useEffect(() => {
@@ -241,17 +243,69 @@ const UniverzalCard = ({ data, onPress, style }) => {
     return IconComponent ? <IconComponent /> : null;
   };
 
+  // Add to calendar function
+  const handleAddToCalendar = async (e) => {
+    e.stopPropagation(); // Prevent triggering card's onPress
+    
+    try {
+      const { status } = await Calendar.requestCalendarPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Dozvola potrebna', 'Potrebna je dozvola za pristup kalendaru.');
+        return;
+      }
+
+      const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+      const defaultCalendar = calendars.find(cal => cal.source.name === 'Default') || calendars[0];
+
+      if (!defaultCalendar) {
+        Alert.alert('Greška', 'Nije pronađen kalendar.');
+        return;
+      }
+
+      // Parse date and time
+      const eventDate = new Date(data.date);
+      if (data.time) {
+        const [hours, minutes] = data.time.split(':');
+        eventDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      }
+      
+      // End time (1 hour later by default)
+      const endDate = new Date(eventDate);
+      endDate.setHours(endDate.getHours() + 1);
+
+      const eventDetails = {
+        title: data.title,
+        startDate: eventDate,
+        endDate: endDate,
+        location: [data.address, data.city].filter(Boolean).join(', '),
+        notes: `Predavač: ${data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker || "Nepoznat daija"}\n${data.description || ''}`,
+        calendarId: defaultCalendar.id,
+      };
+
+      await Calendar.createEventAsync(defaultCalendar.id, eventDetails);
+      
+      Alert.alert('Uspjeh', 'Događaj je dodat u kalendar!');
+    } catch (error) {
+      console.error('Error adding to calendar:', error);
+      Alert.alert('Greška', 'Nije moguće dodati događaj u kalendar.');
+    }
+  };
+
   return (
     <TouchableOpacity 
       style={[
         styles.container, 
         style,
         // Add slight transparency for cancelled lectures
-        displayData.type === 'lecture' && displayData.isCancelled && { opacity: 0.85 }
+        displayData.type === 'lecture' && displayData.isCancelled && { opacity: 0.85 },
+        // Add green background for followed daije/organizations
+        isFollowing && (displayData.type === 'daija' || displayData.type === 'organization') && styles.followingContainer
       ]} 
       onPress={onPress}
       activeOpacity={0.7}
     >
+
+      
 
       {/* Weekly lecture badge - left side */}
       {displayData.type === 'lecture' && data.isWeeklyLecture && (
@@ -333,6 +387,18 @@ const UniverzalCard = ({ data, onPress, style }) => {
             </View>
           ))}
         </View>
+        
+        {/* Add to Calendar button for lectures */}
+        {displayData.type === 'lecture' && data.date && !displayData.isCancelled && (
+          <TouchableOpacity 
+            style={styles.calendarButton} 
+            onPress={handleAddToCalendar}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="calendar-outline" size={18} color={COLORS.primary} />
+            <Text style={styles.calendarButtonText}>Dodaj u kalendar</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
         {/* Right Column - Image */}
@@ -561,6 +627,11 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
+  followingContainer: {
+    backgroundColor: '#E8F5E9', // Svijetlo zelena pozadina
+    borderWidth: 1,
+    borderColor: '#4CAF50', // Zeleni obrub
+  },
   weeklyBadge: {
     position: 'absolute',
     top: 8,
@@ -576,6 +647,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
+  calendarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e3f2fd',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    gap: 6,
+  },
+  calendarButtonText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
 
 // Memoize component to prevent unnecessary re-renders
@@ -590,6 +677,7 @@ export default memo(UniverzalCard, (prevProps, nextProps) => {
     prevProps.data?.cancelled === nextProps.data?.cancelled &&
     prevProps.data?.date === nextProps.data?.date &&
     prevProps.data?.time === nextProps.data?.time &&
-    prevProps.onPress === nextProps.onPress
+    prevProps.onPress === nextProps.onPress &&
+    prevProps.isFollowing === nextProps.isFollowing
   );
 });

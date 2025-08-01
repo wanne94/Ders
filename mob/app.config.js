@@ -13,11 +13,13 @@ export default {
     android: {
       package: "com.daije.mobile",
       userInterfaceStyle: "automatic",
-      googleServicesFile: "./google-services.json",
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
       }
+    },
+    ios: {
+      bundleIdentifier: "com.daije.mobile"
     },
     plugins: [
       [
@@ -35,6 +37,11 @@ export default {
           }
         }
       ]
-    ]
+    ],
+    extra: {
+      eas: {
+        projectId: "7f91fc40-bde1-4c3b-b0c7-fba7de078f81"
+      }
+    }
   }
 };

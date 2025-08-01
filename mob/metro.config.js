@@ -16,7 +16,7 @@ config.resolver.blockList = [
 
 // Optimizacije za smanjenje bundle veličine
 config.resolver.assetExts.push('db', 'mp3', 'ttf', 'obj', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg');
-config.resolver.blacklistRE = /(__tests__|\.test\.|\.spec\.|\.stories\.|node_modules[\/\\]react[\/\\]dist[\/\\].*)/;
+config.resolver.blacklistRE = /(__tests__|\.test\.|\.spec\.|\.stories\.|node_modules[\/\\]react[\/\\]dist[\/\\].*|.*@react-native-firebase\/messaging.*)/;
 
 // Zakomentiraj polyfills koji mogu biti problematični
 // config.resolver.alias = {

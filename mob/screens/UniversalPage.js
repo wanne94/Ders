@@ -10,6 +10,7 @@ import daijeService from '../services/daijeService';
 import { formatDateWithDay } from '../utils/dateUtils';
 import { applySorting, sortLecturesByStatus } from '../utils/sortingUtils';
 import { ENV } from '../config';
+import { getUserData } from '../utils/authHelpers';
 
 const COLORS = {
   primary: '#022C43',
@@ -128,10 +129,11 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
     }
   };
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    loadData(true);
-  }, [type]);
+    
+    await loadData(true);
+  }, [type, isAuthenticated]);
 
   const loadMoreItems = () => {
     const nextPage = currentPage + 1;
@@ -146,8 +148,17 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
   const hasMoreItems = displayedData.length < data.length;
 
   useEffect(() => {
-    loadData();
-  }, [type]);
+    const loadAllData = async () => {
+      console.log('UniversalPage useEffect triggered:', { type, isAuthenticated });
+      
+      
+      
+      // Then load main data
+      await loadData();
+    };
+    
+    loadAllData();
+  }, [type, isAuthenticated]);
 
   const handleItemPress = (item) => {
     if (!item) return;
@@ -243,17 +254,28 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
   };
 
   // Memoized render item function for better performance
-  const renderItem = useCallback(({ item }) => (
-    <UniverzalCard
-      data={{
-        ...item,
-        type: type === 'lectures' ? 'predavanje' : 
-              type === 'speakers' ? 'daija' : 
-              type === 'organizations' ? 'udruženje' : item.type
-      }}
-      onPress={() => handleItemPress(item)}
-    />
-  ), [type, handleItemPress]);
+  const renderItem = useCallback(({ item }) => {
+    // Render item called
+    // Normalize ID - handle MongoDB ObjectId format
+    const rawId = item._id || item.id;
+    const itemId = typeof rawId === 'object' && rawId.toString ? rawId.toString() : String(rawId);
+    const isFollowing = false;
+
+    
+    
+    return (
+      <UniverzalCard
+        data={{
+          ...item,
+          type: type === 'lectures' ? 'predavanje' : 
+                type === 'speakers' ? 'daija' : 
+                type === 'organizations' ? 'udruženje' : item.type
+        }}
+        onPress={() => handleItemPress(item)}
+        isFollowing={isFollowing}
+      />
+    );
+  }, [type, handleItemPress]);
 
   // Key extractor for optimal list performance
   const keyExtractor = useCallback((item, index) => 
@@ -310,6 +332,7 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
       <FlatList
         data={displayedData}
         renderItem={renderItem}
+        
         keyExtractor={keyExtractor}
         style={styles.content}
         contentContainerStyle={[

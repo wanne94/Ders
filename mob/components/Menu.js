@@ -45,10 +45,18 @@ const menuItems = [
   }
 ];
 
+const userMenuItems = [
+  {
+    text: 'Postavke',
+    icon: 'settings-outline',
+    path: 'settings'
+  }
+];
+
 const adminMenuItems = [
   {
     text: 'Admin Panel',
-    icon: 'settings-outline',
+    icon: 'shield-outline',
     path: 'dashboard'
   }
 ];
@@ -251,6 +259,26 @@ const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNaviga
 
           {isAuthenticated ? (
             <>
+              {/* User Menu Items */}
+              {userMenuItems.map((item, index) => (
+                <TouchableOpacity
+                  key={`user-${index}`}
+                  style={styles.menuItem}
+                  onPress={() => handleMenuItemPress(item)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.menuItemContent}>
+                    <Ionicons 
+                      name={item.icon} 
+                      size={20} 
+                      color={COLORS.white} 
+                      style={styles.menuIcon}
+                    />
+                    <Text style={styles.menuItemText}>{item.text}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+
               {/* Add Menu Toggle */}
               <TouchableOpacity
                 style={styles.menuItem}

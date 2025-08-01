@@ -42,6 +42,12 @@ const Daija = require('./models/Daija');
 const Suggestion = require('./models/Suggestion');
 const Settings = require('./models/Settings');
 
+// Import Firebase service
+const { initializeFirebase } = require('./services/firebaseService');
+
+// Import Cron Jobs
+const { initializeCronJobs } = require('./services/cronJobs');
+
 const app = express();
 const PORT = process.env.PORT || 5003;
 
@@ -365,6 +371,15 @@ const connectDB = async () => {
     
     await createDatabaseIndexes();
     
+    // Initialize Firebase Admin SDK
+    try {
+      initializeFirebase();
+      console.log("✅ Firebase Admin SDK initialized");
+    } catch (error) {
+      console.error("⚠️  Firebase Admin SDK initialization failed:", error.message);
+      // Continue without Firebase - it's not critical for basic operation
+    }
+    
   } catch (err) {
     console.error("❌ MongoDB connection failed:", err.message);
     logger.error('Could not connect to MongoDB:', err);
@@ -430,6 +445,9 @@ const createDatabaseIndexes = async () => {
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`✅ Server is running on port ${PORT}`);
       logger.info(`Server started on port ${PORT}`);
+      
+      // Initialize cron jobs
+      initializeCronJobs();
     });
 
     // Global error handlers
