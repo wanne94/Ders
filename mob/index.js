@@ -2,5 +2,12 @@ import { registerRootComponent } from 'expo';
 import React from 'react';
 
 import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
 
-registerRootComponent(App);
+const AppWithErrorBoundary = () => (
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
+
+registerRootComponent(AppWithErrorBoundary);

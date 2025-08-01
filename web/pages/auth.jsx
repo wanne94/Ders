@@ -33,6 +33,7 @@ import {
     setToken,
     setUserData,
 } from '@/utils/authHelpers';
+import { logAuth } from '@/services/analytics';
 
 const Authentication = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -167,6 +168,9 @@ const Authentication = () => {
 
       // Show success notification
       showNotification(`Dobrodošli, ${user.username}!`, 'success');
+      
+      // Log successful login
+      logAuth('email', false);
 
       // Redirect based on user role
       if (user.role === 'admin' || user.role === 'super_admin') {
@@ -268,6 +272,8 @@ const Authentication = () => {
         if (typeof window !== 'undefined') {
           localStorage.setItem('registrationSuccess', 'true');
         }
+        // Log successful registration
+        logAuth('email', true);
         router.push('/');
         // Ne prikazuj poruku ovdje, već na početnoj
       } else {

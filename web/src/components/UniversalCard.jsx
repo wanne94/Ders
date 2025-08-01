@@ -21,6 +21,7 @@ import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrga
 import CancelledOverlay from './CancelledOverlay';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
 import { formatDaijaTitle } from '../utils';
+import { logLectureView, logDaijaProfileView, logOrganizationView } from '@/services/analytics';
 
 const UniversalCard = React.memo(({ data }) => {
   const router = useRouter();
@@ -65,6 +66,7 @@ const UniversalCard = React.memo(({ data }) => {
           ].filter(Boolean),
           onClick: () => {
             const slug = generateLectureSlug(data);
+            logLectureView(data._id, data.title, data.organization?._id, data.daija?._id);
             router.push(`/profile/lecture/${data._id}`);
           }
         };
@@ -86,6 +88,7 @@ const UniversalCard = React.memo(({ data }) => {
           ].filter(Boolean),
           onClick: () => {
             const slug = generateDaijaSlug(data);
+            logDaijaProfileView(data._id, data.name);
             router.push(`/profile/daija/${data._id}`);
           }
         };
@@ -107,6 +110,7 @@ const UniversalCard = React.memo(({ data }) => {
           ].filter(Boolean),
           onClick: () => {
             const slug = generateOrganizationSlug(data);
+            logOrganizationView(data._id, data.name);
             router.push(`/profile/organization/${data._id}`);
           }
         };

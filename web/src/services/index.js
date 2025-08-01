@@ -5,4 +5,5 @@ export { default as daijeService } from './daijeService';
 export { default as suggestionsService } from './suggestionsService';
 export { default as usersService } from './usersService';
 export { default as settingsService } from './settingsService';
+export * as analytics from './analytics';
 export { ENV } from './config'; 

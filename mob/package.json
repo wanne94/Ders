@@ -1,6 +1,6 @@
 {
   "name": "mobile-app",
-  "version": "1.0.10",
+  "version": "1.1.0",
   "main": "index.js",
   "scripts": {
     "start": "expo start",
@@ -19,7 +19,15 @@
     "build": "./build-android.sh",
     "build:dev": "./build-android.sh dev",
     "build:prod": "./build-android.sh prod aab",
-    "build:prod:apk": "./build-android.sh prod apk"
+    "build:prod:apk": "./build-android.sh prod apk",
+    "expo": "expo start --clear",
+    "expo:tunnel": "expo start --tunnel",
+    "expo:lan": "expo start --lan",
+    "prod:android": "./build-aab.sh",
+    "prod:android:apk": "./build-apk.sh",
+    "prod:android:clean": "cd android && ./gradlew clean",
+    "prebuild": "expo prebuild --platform android",
+    "prebuild:clean": "expo prebuild --platform android --clean"
   },
   "dependencies": {
     "@expo/ngrok": "^4.1.3",
@@ -28,6 +36,10 @@
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/datetimepicker": "8.4.1",
     "@react-native-community/netinfo": "^11.4.1",
+    "@react-native-firebase/analytics": "^22.4.0",
+    "@react-native-firebase/app": "^22.4.0",
+    "@react-native-firebase/crashlytics": "^22.4.0",
+    "@react-native-firebase/perf": "^22.4.0",
     "@react-native-picker/picker": "2.11.1",
     "@react-navigation/bottom-tabs": "^7.3.15",
     "@react-navigation/native": "^7.1.11",
@@ -51,7 +63,8 @@
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-url-polyfill": "^2.0.0",
-    "react-native-web": "^0.20.0"
+    "react-native-web": "^0.20.0",
+    "@expo/metro-runtime": "~5.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

@@ -13,6 +13,20 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    
+    // Try to log error to Firebase Crashlytics if available
+    try {
+      const firebaseService = require('../config/firebase-expo').default;
+      if (firebaseService && firebaseService.isInitialized) {
+        firebaseService.logError(error, {
+          component: errorInfo.componentStack,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (firebaseError) {
+      console.error('Could not log to Firebase:', firebaseError);
+    }
+    
     this.setState({
       error: error,
       errorInfo: errorInfo

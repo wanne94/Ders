@@ -13,7 +13,15 @@ const config = {
     ENABLE_DEV_TOOLS: true,
     ENABLE_MOCK_DATA: false,
     CACHE_MAX_AGE: 0,
-    ENABLE_ANALYTICS: false
+    ENABLE_ANALYTICS: false,
+    // Firebase config for development (same as production for now)
+    FIREBASE_API_KEY: 'YOUR_FIREBASE_API_KEY',
+    FIREBASE_AUTH_DOMAIN: 'ders-6ea21.firebaseapp.com',
+    FIREBASE_PROJECT_ID: 'ders-6ea21',
+    FIREBASE_STORAGE_BUCKET: 'ders-6ea21.appspot.com',
+    FIREBASE_MESSAGING_SENDER_ID: 'YOUR_SENDER_ID',
+    FIREBASE_APP_ID: 'YOUR_APP_ID',
+    FIREBASE_MEASUREMENT_ID: 'YOUR_MEASUREMENT_ID'
   },
   production: {
     API_URL: 'https://ders.ba/api',
@@ -24,7 +32,15 @@ const config = {
     ENABLE_DEV_TOOLS: false,
     ENABLE_MOCK_DATA: false,
     CACHE_MAX_AGE: 31536000,
-    ENABLE_ANALYTICS: true
+    ENABLE_ANALYTICS: true,
+    // Firebase config for production
+    FIREBASE_API_KEY: 'YOUR_FIREBASE_API_KEY',
+    FIREBASE_AUTH_DOMAIN: 'ders-6ea21.firebaseapp.com',
+    FIREBASE_PROJECT_ID: 'ders-6ea21',
+    FIREBASE_STORAGE_BUCKET: 'ders-6ea21.appspot.com',
+    FIREBASE_MESSAGING_SENDER_ID: 'YOUR_SENDER_ID',
+    FIREBASE_APP_ID: 'YOUR_APP_ID',
+    FIREBASE_MEASUREMENT_ID: 'YOUR_MEASUREMENT_ID'
   }
 };
 

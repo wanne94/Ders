@@ -38,6 +38,8 @@ import LecturesSection from '@/components/LecturesSection';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 import { deviceUtils, storage } from '@/utils';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
+import { logNavigation, logSocialShare } from '@/services/analytics';
+import { usePerformanceTracking, measureAsyncOperation } from '@/hooks/usePerformanceTracking';
 
 
 
@@ -619,6 +621,7 @@ const SocialMediaSection = () => {
             href="https://www.facebook.com/profile.php?id=61561889404089"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => logSocialShare('social_media', 'ders_page', 'facebook')}
             sx={{
               backgroundColor: '#1877F2',
               color: 'white',
@@ -650,6 +653,7 @@ const SocialMediaSection = () => {
             href="https://www.instagram.com/ders_ba/"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => logSocialShare('social_media', 'ders_page', 'instagram')}
             sx={{
               background: 'linear-gradient(45deg, #F56040 0%, #E1306C 25%, #C13584 50%, #833AB4 75%, #5851DB 100%)',
               color: 'white',
@@ -778,6 +782,9 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
   const router = useRouter();
+  
+  // Track page performance
+  usePerformanceTracking('home_page_render');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -785,9 +792,10 @@ export default function Home() {
         setIsLoading(true);
         setError(null);
         
-        // Fetch lectures - bez limita da prikaže sva predavanja sortirana ispravno
-        // Uključi i otkazana predavanja
-        const allLectures = await predavanjaService.getAllPredavanja(1, 100, 'all');
+        // Fetch lectures with performance tracking
+        const allLectures = await measureAsyncOperation('fetch_lectures', async () => {
+          return await predavanjaService.getAllPredavanja(1, 100, 'all');
+        });
         
         // Debug cancelled lectures
         const cancelledLectures = allLectures.filter(l => l.status === 'cancelled' || l.isCancelled);
@@ -813,12 +821,16 @@ export default function Home() {
 
         setLectures(lecturesData);
         
-        // Fetch organizations with lecture counts from server
-        const organizationsData = await udruzenjaService.getAllUdruzenja();
+        // Fetch organizations with performance tracking
+        const organizationsData = await measureAsyncOperation('fetch_organizations', async () => {
+          return await udruzenjaService.getAllUdruzenja();
+        });
         setOrganizations(organizationsData || []);
         
-        // Fetch daije with lecture counts from server
-        const daijeData = await daijeService.getAllDaije();
+        // Fetch daije with performance tracking
+        const daijeData = await measureAsyncOperation('fetch_daije', async () => {
+          return await daijeService.getAllDaije();
+        });
         setDaije(daijeData || []);
         
       } catch (err) {

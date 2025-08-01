@@ -37,7 +37,7 @@ import {
   getUserData,
   logout
 } from './utils/authHelpers';
-import firebaseService from './config/firebase';
+import firebaseService from './config/firebase-expo';
 
 Dimensions.get('window');
 
@@ -478,6 +478,8 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   
+  // Initialize Firebase on app start - REMOVED duplicate initialization
+  
   // Shared lectures state for sorting purposes
   const [allLectures, setAllLectures] = useState([]);
 
@@ -536,14 +538,19 @@ export default function App() {
         // Force light theme regardless of system settings
         Appearance.setColorScheme('light');
         
-        // Firebase trackanje pokretanja aplikacije
+        // Initialize Firebase first
+        await firebaseService.init();
+        console.log('Firebase initialized successfully');
+        
+        // Then track app opening
         firebaseService.logEvent('app_open');
         firebaseService.logScreenView('Home', 'HomeScreen');
         
         await checkAuth();
       } catch (error) {
         console.error('App initialization error:', error);
-        firebaseService.logError(error, { context: 'app_initialization' });
+        // Don't use firebaseService here as it might not be initialized
+        console.error('Firebase error logging skipped - service may not be initialized');
       }
     };
 

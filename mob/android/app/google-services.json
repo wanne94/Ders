@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "187360391937",
+    "project_id": "ders-6ea21",
+    "storage_bucket": "ders-6ea21.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:187360391937:android:7ecfd06992e41c4e1be100",
+        "android_client_info": {
+          "package_name": "com.daije.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8hsgRprPm2JLUSFs3lsIsZzYDnJ-r-qo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
