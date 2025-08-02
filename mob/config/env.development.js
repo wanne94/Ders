@@ -1,9 +1,8 @@
 // Konfiguracija za Expo Go development
 const getLocalIP = () => {
-  // Za Expo Go, koristi IP adresu tvog računara na lokalnoj mreži
-  // Promeni ovu IP adresu na svoju lokalnu IP adresu (ipconfig/ifconfig)
-  return 'http://192.168.0.20:5003';
-};
+  // Koristimo produkcijsku API adresu jer lokalni server ne radi
+  return 'https://ders.ba';
+};;
 
 const getBackupURL = () => {
   // Backup opcija - može se koristiti alternativna IP adresa
@@ -16,36 +15,53 @@ const getFallbackLocalURL = () => {
 };
 
 export const ENV = {
-  // API pozivi - koristi lokalni server
-  API_URL: `${getLocalIP()}/api`,
-  SERVER_URL: getLocalIP(),
-  BACKUP_API_URL: `${getBackupURL()}/api`,
-  BACKUP_SERVER_URL: getBackupURL(),
-  FALLBACK_API_URL: `${getFallbackLocalURL()}/api`, // WSL IP fallback
-  FALLBACK_SERVER_URL: getFallbackLocalURL(),
+  IS_DEV: true,
   
-  // Upload i prikaz slika - koristimo lokalni server za upload, a produkcijski za prikaz
+  // API Configuration  
+  API_URL: `https://ders.ba/api`,
+  SERVER_URL: `https://ders.ba/api`,
+  BACKUP_API_URL: `https://ders.ba/api`,
+  UPLOADS_URL: `https://ders.ba/uploads`,
+  FALLBACK_API_URL: `https://ders.ba/api`, // Fallback URL
+  
+  // Image handling
   IMAGE_SERVER_URL: 'https://ders.ba',
-  UPLOAD_SERVER_URL: getLocalIP(), // Koristimo lokalni server za upload u development
+  UPLOAD_SERVER_URL: 'https://ders.ba',
   
+  // App info
   APP_NAME: 'DERS Mobile',
   ENV_NAME: 'development',
   DEBUG: true,
+  
+  // WebSocket
+  WS_URL: 'wss://ders.ba',
+
+  // API Endpoints (relative to API_URL)
   API_ENDPOINTS: {
     PREDAVANJA: '/lectures',
     DAIJE: '/daije',
     UDRUZENJA: '/organizations',
     USERS: '/users'
   },
+
+  // Features
+  ENABLE_NOTIFICATIONS: true,
+  ENABLE_OFFLINE_MODE: true,
+  ENABLE_ANALYTICS: false,
+
+  // Other settings
+  LOG_LEVEL: 'debug',
+  REQUEST_TIMEOUT: 30000,
+  MAX_RETRY_ATTEMPTS: 3,
   
-  // Helper function za slike - isto kao web app
+  // Helper function za slike
   getImageUrl: (imagePath) => {
     if (!imagePath) return 'https://ders.ba/uploads/images/default.jpg';
     
     // If it's already a full URL, return as is
     if (imagePath.startsWith('http')) return imagePath;
     
-    // Unified path handling - always use production server for images
+    // Unified path handling
     let cleanPath = imagePath;
     
     // Ensure /uploads/images/ format
@@ -54,7 +70,6 @@ export const ENV = {
       cleanPath = `/uploads/images/${cleanPath.replace(/^\/+/, '')}`;
     }
     
-    // Always use production server for images
     return `https://ders.ba${cleanPath}`;
   },
   
@@ -65,4 +80,4 @@ export const ENV = {
     default: 'https://ders.ba/uploads/images/default.jpg',
     logo: 'https://ders.ba/uploads/images/logo.jpg'
   })
-}; 
+};;; 

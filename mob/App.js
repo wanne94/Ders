@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,7 +11,10 @@ import {
   RefreshControl,
   BackHandler,
   Appearance,
-  StatusBar
+  StatusBar,
+  InteractionManager,
+  SectionList,
+  FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -105,80 +108,166 @@ const fetchUdruzenja = async () => {
   }
 };
 
-// Lectures Section Component
-const LecturesSection = ({ onProfileOpen, allLectures = [], onNavigateToLectures }) => {
-  const [lectures, setLectures] = useState([]);
+// Home Page Section List Component
+const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection }) => {
+  const [sections, setSections] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
+  const [refreshing, setRefreshing] = useState(false);
+  
+  const loadAllData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      
+      // Load all data in parallel
+      const [lecturesData, daijeData, udruzenjaData] = await Promise.all([
+        fetchLectures(),
+        fetchDaije(),
+        fetchUdruzenja()
+      ]);
+      
+      // Process lectures
+      const approvedLectures = (Array.isArray(lecturesData) ? lecturesData : [])
+        .filter(lecture => lecture.status === 'approved' && !lecture.cancelled);
+      const sortedLectures = sortLecturesByStatus(approvedLectures).slice(0, 10);
+      
+      // Process daije
+      const approvedDaije = (Array.isArray(daijeData) ? daijeData : [])
+        .filter(daija => daija.status === 'approved');
+      const shuffledDaije = [...approvedDaije].sort(() => Math.random() - 0.5).slice(0, 10);
+      
+      // Process udruzenja
+      const approvedOrgs = (Array.isArray(udruzenjaData) ? udruzenjaData : [])
+        .filter(org => org.status === 'approved');
+      const shuffledOrgs = [...approvedOrgs].sort(() => Math.random() - 0.5).slice(0, 10);
+      
+      // Create sections
+      const newSections = [
+        {
+          title: 'Dersovi',
+          data: sortedLectures,
+          type: 'lecture',
+          onViewAll: () => onNavigateToSection('lectures')
+        },
+        {
+          title: 'Daije',
+          subtitle: 'Upoznaj 10 nasumično odabranih daija.',
+          data: shuffledDaije,
+          type: 'daija',
+          onViewAll: () => onNavigateToSection('speakers')
+        },
+        {
+          title: 'Udruženja',
+          subtitle: 'Upoznaj 10 nasumično odabranih udruženja.',
+          data: shuffledOrgs,
+          type: 'organization',
+          onViewAll: () => onNavigateToSection('organizations')
+        }
+      ];
+      
+      setSections(newSections);
+    } catch (error) {
+      console.error('Error loading home data:', error);
+      setSections([]);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  }, [onNavigateToSection]);
+  
   useEffect(() => {
-    const loadLectures = async () => {
-      try {
-        setIsLoading(true);
-        const data = await fetchLectures();
-        // Filter only approved and non-cancelled lectures, matching web app behavior
-        const approvedLectures = (Array.isArray(data) ? data : []).filter(lecture => 
-          lecture.status === 'approved' && !lecture.cancelled
-        );
-        // Apply centralized sorting by date
-        const sortedData = sortLecturesByStatus(approvedLectures);
-        setLectures(sortedData.slice(0, 8)); // Limit to 8 lectures for homepage
-      } catch (err) {
-        console.error('Error loading lectures:', err);
-        setLectures([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadLectures();
-  }, [allLectures]);
-
+    loadAllData();
+  }, [loadAllData]);
+  
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadAllData();
+  }, [loadAllData]);
+  
+  const renderItem = useCallback(({ item, section }) => (
+    <UniverzalCard
+      key={`${section.type}-${item._id || item.id}`}
+      data={{
+        ...item,
+        type: section.type
+      }}
+      onPress={() => onProfileOpen(item, section.type)}
+    />
+  ), [onProfileOpen]);
+  
+  const renderSectionHeader = useCallback(({ section }) => (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{section.title}</Text>
+      {section.subtitle && (
+        <Text style={styles.sectionSubtitle}>{section.subtitle}</Text>
+      )}
+    </View>
+  ), []);
+  
+  const renderSectionFooter = useCallback(({ section }) => (
+    <View style={styles.section}>
+      <TouchableOpacity 
+        style={styles.viewAllButton}
+        onPress={section.onViewAll}
+      >
+        <Text style={styles.viewAllButtonText}>
+          Pogledaj sve {section.title.toLowerCase()}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  ), []);
+  
+  const keyExtractor = useCallback((item, index) => 
+    `${item._id || item.id || index}`, []);
+  
   if (isLoading) {
     return (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Dersovi</Text>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Učitavanje...</Text>
       </View>
     );
   }
-
-  if (!lectures?.length) {
-    return (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Dersovi</Text>
-        <Text style={styles.emptyText}>Trenutno nema dostupnih dersova.</Text>
-      </View>
-    );
-  }
-
+  
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Dersovi</Text>
-      <Text style={styles.sectionSubtitle}>
-        Posljednja 8 najavljenih dersova
-      </Text>
-      <View style={styles.cardsContainer}>
-        {lectures?.map((lecture, index) => (
-          lecture ? (
-            <UniverzalCard
-              key={`lecture-${lecture?._id || lecture?.id || index}`}
-              data={lecture}
-              onPress={() => {
-                if (lecture && onProfileOpen) {
-                  onProfileOpen(lecture, 'lecture');
-                }
-              }}
-            />
-          ) : null
-        ))}
-      </View>
-    </View>
+    <SectionList
+      sections={sections}
+      renderItem={renderItem}
+      renderSectionHeader={renderSectionHeader}
+      renderSectionFooter={renderSectionFooter}
+      keyExtractor={keyExtractor}
+      stickySectionHeadersEnabled={false}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.sectionListContent}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[COLORS.primary]}
+          tintColor={COLORS.primary}
+          title="Povlačite za osvježavanje..."
+          titleColor={COLORS.primary}
+        />
+      }
+      // Performance optimizations
+      windowSize={10}
+      initialNumToRender={10}
+      maxToRenderPerBatch={5}
+      updateCellsBatchingPeriod={50}
+      removeClippedSubviews={true}
+      getItemLayout={(data, index) => ({
+        length: 200, // Approximate height of each card
+        offset: 200 * index,
+        index,
+      })}
+    />
   );
-};
+});
 
 // Main App Component
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
+  const homeScrollRef = useRef(null);
+  const universalPageRef = useRef(null);
   const [refreshing, setRefreshing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -190,17 +279,35 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
 
+  // Load all lectures for sorting purposes
+  useEffect(() => {
+    const loadAllLectures = async () => {
+      try {
+        const data = await fetchLectures();
+        const approvedLectures = (Array.isArray(data) ? data : []).filter(lecture => 
+          lecture.status === 'approved' && !lecture.cancelled
+        );
+        setAllLectures(approvedLectures);
+      } catch (error) {
+        console.error('Error loading all lectures:', error);
+        setAllLectures([]);
+      }
+    };
+
+    loadAllLectures();
+  }, []);
+
   const handleBack = () => setActiveTab('home');
   const handleMenuToggle = () => setMenuOpen(!menuOpen);
   const handleMenuNavigate = (path) => {
     setActiveTab(path);
     setMenuOpen(false);
   };
-  const handleProfileOpen = (data, type) => {
+  const handleProfileOpen = useCallback((data, type) => {
     setProfileData(data);
     setProfileType(type);
     setActiveTab('profile');
-  };
+  }, []);
   const handleProfileBack = () => {
     setActiveTab('home');
     setProfileData(null);
@@ -217,7 +324,18 @@ export default function App() {
     setUser(userData);
     setActiveTab('home');
   };
-  const handleTabPress = (tab) => setActiveTab(tab);
+  const handleTabPress = (tab) => {
+    // If clicking on the same tab, scroll to top
+    if (tab === activeTab) {
+      if (tab === 'home' && homeScrollRef.current) {
+        homeScrollRef.current.scrollTo({ x: 0, y: 0, animated: true });
+      } else if (['lectures', 'speakers', 'organizations'].includes(tab) && universalPageRef.current) {
+        // For FlatList, use scrollToOffset
+        universalPageRef.current.scrollToOffset({ offset: 0, animated: true });
+      }
+    }
+    setActiveTab(tab);
+  };
   const handleLogoPress = () => setActiveTab('home');
   const handleContentAdded = () => {
     setShowFormPopup(false);
@@ -231,10 +349,10 @@ export default function App() {
   };
   const handleProfileNavigate = () => setActiveTab('userProfile');
   
-  const onRefresh = () => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 2000);
-  };
+  }, []);
   
   const getPageTitle = () => {
     switch(activeTab) {
@@ -247,20 +365,25 @@ export default function App() {
   };
   
   const shouldShowBottomNavigation = () => {
-    return !['profile', 'dashboard', 'auth', 'userProfile', 'search'].includes(activeTab);
+    return !['dashboard', 'auth', 'userProfile', 'search'].includes(activeTab);
   };
 
   // Main component render
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return <LecturesSection onProfileOpen={handleProfileOpen} allLectures={allLectures} onNavigateToLectures={() => setActiveTab('lectures')} />;
+        return (
+          <HomePageSectionList 
+            onProfileOpen={handleProfileOpen}
+            onNavigateToSection={(section) => setActiveTab(section)}
+          />
+        );
       case 'lectures':
-        return <UniversalPage type="lectures" onBack={handleBack} onProfileOpen={handleProfileOpen} allLectures={allLectures} isAuthenticated={isAuthenticated} user={user} onNavigate={(screen) => setActiveTab(screen)} />;
+        return <UniversalPage type="lectures" onBack={handleBack} onProfileOpen={handleProfileOpen} allLectures={allLectures} isAuthenticated={isAuthenticated} user={user} onNavigate={(screen) => setActiveTab(screen)} scrollRef={universalPageRef} />;
       case 'speakers':
-        return <UniversalPage type="speakers" onBack={handleBack} onProfileOpen={handleProfileOpen} allLectures={allLectures} isAuthenticated={isAuthenticated} user={user} onNavigate={(screen) => setActiveTab(screen)} />;
+        return <UniversalPage type="speakers" onBack={handleBack} onProfileOpen={handleProfileOpen} allLectures={allLectures} isAuthenticated={isAuthenticated} user={user} onNavigate={(screen) => setActiveTab(screen)} scrollRef={universalPageRef} />;
       case 'organizations':
-        return <UniversalPage type="organizations" onBack={handleBack} onProfileOpen={handleProfileOpen} allLectures={allLectures} isAuthenticated={isAuthenticated} user={user} onNavigate={(screen) => setActiveTab(screen)} />;
+        return <UniversalPage type="organizations" onBack={handleBack} onProfileOpen={handleProfileOpen} allLectures={allLectures} isAuthenticated={isAuthenticated} user={user} onNavigate={(screen) => setActiveTab(screen)} scrollRef={universalPageRef} />;
       case 'search':
         return <SearchScreen onBack={handleBack} onNavigate={(screen) => setActiveTab(screen)} />;
       case 'profile':
@@ -300,7 +423,7 @@ export default function App() {
         return <ProfileScreen navigation={{ navigate: (screen) => setActiveTab(screen) }} />;
 
       default:
-        return <LecturesSection onProfileOpen={handleProfileOpen} allLectures={allLectures} onNavigateToLectures={() => setActiveTab('lectures')} />;
+        return <LecturesSection onProfileOpen={handleProfileOpen}  onNavigateToLectures={() => setActiveTab('lectures')} />;
     }
   };
 
@@ -315,30 +438,7 @@ export default function App() {
           onLogoPress={handleLogoPress}
         />
         
-        {activeTab === 'home' ? (
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingBottom: shouldShowBottomNavigation() ? 100 : 20 }
-            ]}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                colors={[COLORS.primary]}
-                tintColor={COLORS.primary}
-                title="Povlačite za osvježavanje..."
-                titleColor={COLORS.primary}
-              />
-            }
-          >
-            {renderContent()}
-          </ScrollView>
-        ) : (
-          renderContent()
-        )}
+        {renderContent()}
 
         {shouldShowBottomNavigation() && (
           <BottomNavigation
@@ -390,6 +490,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+  },
+  sectionListContent: {
+    paddingBottom: 100, // For bottom navigation
   },
   section: {
     padding: 20,

@@ -99,14 +99,14 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
         interval = setInterval(() => {
           const newStatus = calculateLectureStatus(data);
           setStatusInfo(newStatus);
-        }, 60000); // Update only every minute for active lectures
+        }, 120000); // Update only every 2 minutes for active lectures
       }
       
       return () => {
         if (interval) clearInterval(interval);
       };
     }
-  }, [data]);
+  }, [data._id, data.id, data.date, data.time, data.isCancelled, data.status]); // Only recalculate when these critical fields change
 
   // Handle null or undefined data
   if (!data) {

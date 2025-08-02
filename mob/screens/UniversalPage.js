@@ -20,7 +20,41 @@ const COLORS = {
   lightGray: '#f5f5f5',
 };
 
-const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures = [], onNavigate, user, isAuthenticated }) => {
+// API functions using the real services
+const fetchLectures = async () => {
+  try {
+    // console.log('UniversalPage: Fetching lectures...');
+    const response = await apiClient.get('/lectures/public?status=all');
+    const data = response.data;
+    // Return all lectures including cancelled ones
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    // console.error('UniversalPage: Error fetching lectures:', error.message);
+    return [];
+  }
+};
+
+const fetchDaije = async () => {
+  try {
+    const data = await daijeService.getAllDaije();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    // console.error('Error fetching daije:', error);
+    return [];
+  }
+};
+
+const fetchOrganizations = async () => {
+  try {
+    const data = await udruzenjaService.getAllUdruzenja();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    // console.error('Error fetching organizations:', error);
+    return [];
+  }
+};
+
+const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures = [], onNavigate, user, isAuthenticated, scrollRef }) => {
   const [data, setData] = useState([]);
   const [displayedData, setDisplayedData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,7 +63,7 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
   const [searchQuery, setSearchQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   
-  const ITEMS_PER_PAGE = 20; // Isto kao na webu
+  const ITEMS_PER_PAGE = 10; // Smanjen broj za bolje performanse
 
   const getPageConfig = () => {
     switch (type) {
@@ -101,6 +135,7 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
       if (!isRefresh) {
         setIsLoading(true);
       }
+
       const result = await pageConfig.fetchFunction();
       const rawData = Array.isArray(result) ? result : [];
       
@@ -108,6 +143,7 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
       const sortedData = type === 'lectures' 
         ? sortLecturesByStatus(rawData)
         : applySorting(rawData, type, allLectures);
+
       setData(sortedData);
       
       // Reset to first page when refreshing
@@ -149,7 +185,7 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
 
   useEffect(() => {
     const loadAllData = async () => {
-      console.log('UniversalPage useEffect triggered:', { type, isAuthenticated });
+
       
       
       
@@ -332,6 +368,7 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
+        ref={scrollRef}
         data={displayedData}
         renderItem={renderItem}
         
@@ -342,6 +379,11 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
           displayedData.length === 0 && styles.emptyContentContainer
         ]}
         showsVerticalScrollIndicator={false}
+        windowSize={10}
+        initialNumToRender={10}
+        maxToRenderPerBatch={5}
+        updateCellsBatchingPeriod={50}
+        removeClippedSubviews={true}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -352,10 +394,8 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
         }
         ListEmptyComponent={ListEmptyComponent}
         ListFooterComponent={ListFooterComponent}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        windowSize={10}
-        removeClippedSubviews={true}
+        onEndReached={loadMoreItems}
+        onEndReachedThreshold={0.5}
         getItemLayout={(data, index) => ({
           length: 200, // Approximate height of each card
           offset: 200 * index,
@@ -377,40 +417,6 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
       />
     </SafeAreaView>
   );
-};
-
-// API functions using the real services
-const fetchLectures = async () => {
-  try {
-    // console.log('UniversalPage: Fetching lectures...');
-    const response = await apiClient.get('/lectures/public?status=all');
-    const data = response.data;
-    // Return all lectures including cancelled ones
-    return Array.isArray(data) ? data : [];
-  } catch (error) {
-    // console.error('UniversalPage: Error fetching lectures:', error.message);
-    return [];
-  }
-};
-
-const fetchDaije = async () => {
-  try {
-    const data = await daijeService.getAllDaije();
-    return Array.isArray(data) ? data : [];
-  } catch (error) {
-    // console.error('Error fetching daije:', error);
-    return [];
-  }
-};
-
-const fetchOrganizations = async () => {
-  try {
-    const data = await udruzenjaService.getAllUdruzenja();
-    return Array.isArray(data) ? data : [];
-  } catch (error) {
-    // console.error('Error fetching organizations:', error);
-    return [];
-  }
 };
 
 const styles = StyleSheet.create({
