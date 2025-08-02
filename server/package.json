@@ -41,7 +41,6 @@
     "mongoose": "^7.8.7",
     "morgan": "^1.10.0",
     "multer": "^2.0.0",
-    "node-cron": "^4.2.1",
     "node-fetch": "^2.7.0",
     "react": "18.3.1",
     "react-native": "0.76.9",

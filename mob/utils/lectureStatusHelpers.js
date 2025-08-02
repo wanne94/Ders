@@ -19,7 +19,7 @@ export const calculateLectureStatus = (lecture) => {
   }
 
   // Check if lecture is cancelled first
-  if (lecture.cancelled || lecture.status === 'cancelled') {
+  if (lecture.isCancelled === true || lecture.cancelled || lecture.status === 'cancelled') {
     return {
       status: 'cancelled',
       timeInfo: '',

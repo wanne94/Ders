@@ -256,16 +256,6 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
     }
   };
 
-  const onDateTimePress = () => {
-    Alert.alert(
-      'Dodaj u kalendar',
-      `Želite li da dodate "${profile.title}" u svoj kalendar?`,
-      [
-        { text: 'Ne', style: 'cancel' },
-        { text: 'Da', onPress: addToCalendar }
-      ]
-    );
-  };
 
   const handleImageLoad = () => {
     setImageLoading(false);
@@ -386,17 +376,17 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
         {/* Meta Information */}
         <View style={styles.metaContainer}>
           {type === 'lecture' && profile.date && (
-            <TouchableOpacity style={styles.metaItem} onPress={onDateTimePress}>
+            <View style={styles.metaItem}>
               <Ionicons name="calendar" size={16} color="white" />
               <Text style={styles.metaText}>{formatDateWithDay(profile.date)}</Text>
-            </TouchableOpacity>
+            </View>
           )}
 
           {type === 'lecture' && profile.time && (
-            <TouchableOpacity style={styles.metaItem} onPress={onDateTimePress}>
+            <View style={styles.metaItem}>
               <Ionicons name="time" size={16} color="white" />
               <Text style={styles.metaText}>{profile.time}</Text>
-            </TouchableOpacity>
+            </View>
           )}
 
           {type === 'lecture' && profile.speaker && (
@@ -490,6 +480,14 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
           )}
           
           <ShareButton profileData={profile} type={type} />
+          
+          {/* Add to Calendar Button - Only for lectures that are not cancelled */}
+          {type === 'lecture' && profile.date && !profile.isCancelled && profile.status !== 'cancelled' && (
+            <TouchableOpacity style={styles.glassButton} onPress={addToCalendar}>
+              <Ionicons name="calendar-outline" size={20} color="white" />
+              <Text style={styles.glassButtonText}>Dodaj u kalendar</Text>
+            </TouchableOpacity>
+          )}
           
           {/* Report Cancellation Button - Only for lectures and non-cancelled */}
           {type === 'lecture' && !profile.isCancelled && profile.status !== 'cancelled' && (

@@ -196,7 +196,9 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
   };
 
   const handleSearch = () => {
-    Alert.alert('Pretraga', 'Funkcionalnost pretrage će biti dostupna uskoro');
+    if (onNavigate) {
+      onNavigate('search');
+    }
   };
 
   const handleMenuPress = () => {

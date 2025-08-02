@@ -46,7 +46,6 @@ const Settings = require('./models/Settings');
 const { initializeFirebase } = require('./services/firebaseService');
 
 // Import Cron Jobs
-const { initializeCronJobs } = require('./services/cronJobs');
 
 const app = express();
 const PORT = process.env.PORT || 5003;
@@ -446,8 +445,6 @@ const createDatabaseIndexes = async () => {
       console.log(`✅ Server is running on port ${PORT}`);
       logger.info(`Server started on port ${PORT}`);
       
-      // Initialize cron jobs
-      initializeCronJobs();
     });
 
     // Global error handlers
