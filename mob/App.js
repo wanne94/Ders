@@ -18,7 +18,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-// import { SystemBars } from 'react-native-edge-to-edge'; // Temporarily disabled
 import UniverzalCard from './components/UniverzalCard';
 import UniversalProfile from './components/UniversalProfile';
 import BottomNavigation from './components/BottomNavigation';
@@ -36,6 +35,7 @@ import ProfileScreen from './screens/ProfileScreen';
 import AddContentMenu from './components/AddContentMenu';
 import AddContentPopup from './components/AddContentPopup';
 import SearchScreen from './screens/SearchScreen';
+import UpdateChecker from './components/UpdateChecker';
 import {
   isAuthenticated as checkIsAuthenticated,
   getUserData,
@@ -109,10 +109,11 @@ const fetchUdruzenja = async () => {
 };
 
 // Home Page Section List Component
-const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection }) => {
+const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection, forceRefresh }) => {
   const [sections, setSections] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [hasLoadedData, setHasLoadedData] = useState(false);
   
   const loadAllData = useCallback(async () => {
     try {
@@ -165,6 +166,7 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection }) 
       ];
       
       setSections(newSections);
+      setHasLoadedData(true);
     } catch (error) {
       console.error('Error loading home data:', error);
       setSections([]);
@@ -175,11 +177,23 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection }) 
   }, [onNavigateToSection]);
   
   useEffect(() => {
-    loadAllData();
-  }, [loadAllData]);
+    // Only load data if we haven't loaded it yet
+    if (!hasLoadedData) {
+      loadAllData();
+    }
+  }, [hasLoadedData, loadAllData]);
+  
+  // Effect to handle force refresh
+  useEffect(() => {
+    if (forceRefresh) {
+      setHasLoadedData(false);
+      loadAllData();
+    }
+  }, [forceRefresh, loadAllData]);
   
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    setHasLoadedData(false); // Force reload on manual refresh
     loadAllData();
   }, [loadAllData]);
   
@@ -269,6 +283,7 @@ export default function App() {
   const homeScrollRef = useRef(null);
   const universalPageRef = useRef(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [shouldRefreshHome, setShouldRefreshHome] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showFormPopup, setShowFormPopup] = useState(false);
@@ -281,21 +296,51 @@ export default function App() {
 
   // Load all lectures for sorting purposes
   useEffect(() => {
+    let mounted = true;
+    
     const loadAllLectures = async () => {
       try {
         const data = await fetchLectures();
-        const approvedLectures = (Array.isArray(data) ? data : []).filter(lecture => 
-          lecture.status === 'approved' && !lecture.cancelled
-        );
-        setAllLectures(approvedLectures);
+        if (mounted) {
+          const approvedLectures = (Array.isArray(data) ? data : []).filter(lecture => 
+            lecture.status === 'approved' && !lecture.cancelled
+          );
+          setAllLectures(approvedLectures);
+        }
       } catch (error) {
-        console.error('Error loading all lectures:', error);
-        setAllLectures([]);
+        if (mounted) {
+          console.error('Error loading all lectures:', error);
+          setAllLectures([]);
+        }
       }
     };
 
     loadAllLectures();
+    
+    // Cleanup function
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  // Handle hardware back button
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        // If we're on home screen, let default behavior happen (exit app)
+        if (activeTab === 'home') {
+          return false;
+        }
+        
+        // Otherwise, go back to home
+        setActiveTab('home');
+        return true; // Prevent default behavior
+      }
+    );
+
+    return () => backHandler.remove();
+  }, [activeTab]);
 
   const handleBack = () => setActiveTab('home');
   const handleMenuToggle = () => setMenuOpen(!menuOpen);
@@ -325,6 +370,12 @@ export default function App() {
     setActiveTab('home');
   };
   const handleTabPress = (tab) => {
+    // Handle add button separately
+    if (tab === 'add') {
+      setShowAddMenu(!showAddMenu);
+      return;
+    }
+    
     // If clicking on the same tab, scroll to top
     if (tab === activeTab) {
       if (tab === 'home' && homeScrollRef.current) {
@@ -340,7 +391,10 @@ export default function App() {
   const handleContentAdded = () => {
     setShowFormPopup(false);
     setSelectedFormType(null);
-    onRefresh();
+    // Trigger refresh only for home page
+    setShouldRefreshHome(true);
+    // Reset the refresh trigger after a short delay
+    setTimeout(() => setShouldRefreshHome(false), 100);
   };
   const handleAddContentOptionSelect = (type) => {
     setSelectedFormType(type);
@@ -376,6 +430,7 @@ export default function App() {
           <HomePageSectionList 
             onProfileOpen={handleProfileOpen}
             onNavigateToSection={(section) => setActiveTab(section)}
+            forceRefresh={shouldRefreshHome}
           />
         );
       case 'lectures':
@@ -385,7 +440,7 @@ export default function App() {
       case 'organizations':
         return <UniversalPage type="organizations" onBack={handleBack} onProfileOpen={handleProfileOpen} allLectures={allLectures} isAuthenticated={isAuthenticated} user={user} onNavigate={(screen) => setActiveTab(screen)} scrollRef={universalPageRef} />;
       case 'search':
-        return <SearchScreen onBack={handleBack} onNavigate={(screen) => setActiveTab(screen)} />;
+        return <SearchScreen onBack={handleBack} onNavigate={(screen) => setActiveTab(screen)} onAddContent={handleAddContentOptionSelect} onProfileOpen={handleProfileOpen} />;
       case 'profile':
         return (
           <UniversalProfile 
@@ -393,6 +448,7 @@ export default function App() {
             type={profileType} 
             onBack={handleProfileBack}
             onProfileOpen={handleProfileOpen}
+            onAdd={handleAddContentOptionSelect}
           />
         );
       case 'dashboard':
@@ -420,17 +476,22 @@ export default function App() {
           setActiveTab('auth');
           return null;
         }
-        return <ProfileScreen navigation={{ navigate: (screen) => setActiveTab(screen) }} />;
+        return <ProfileScreen navigation={{ navigate: (screen) => setActiveTab(screen) }} onBack={handleBack} />;
 
       default:
-        return <LecturesSection onProfileOpen={handleProfileOpen}  onNavigateToLectures={() => setActiveTab('lectures')} />;
+        return (
+          <HomePageSectionList 
+            onProfileOpen={handleProfileOpen}
+            onNavigateToSection={(section) => setActiveTab(section)}
+            forceRefresh={shouldRefreshHome}
+          />
+        );
     }
   };
 
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      {/* <SystemBars style="light" hidden={false} /> */}
       <View style={styles.container}>
         <Header 
           onMenuPress={handleMenuToggle}
@@ -475,6 +536,8 @@ export default function App() {
           onSuccess={handleContentAdded}
           initialType={selectedFormType}
         />
+        
+        <UpdateChecker />
       </View>
     </SafeAreaProvider>
   );

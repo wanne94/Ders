@@ -14,7 +14,7 @@ const COLORS = {
   lightGray: '#f5f5f5',
 };
 
-const SearchScreen = ({ onBack, onNavigate }) => {
+const SearchScreen = ({ onBack, onNavigate, onAddContent, onProfileOpen }) => {
   const [searchResults, setSearchResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -28,17 +28,9 @@ const SearchScreen = ({ onBack, onNavigate }) => {
   };
 
   const handleItemPress = (type, item) => {
-    // Navigate to appropriate detail screen based on type
-    switch (type) {
-      case 'lecture':
-        onNavigate && onNavigate('lecture-detail', { lecture: item });
-        break;
-      case 'daija':
-        onNavigate && onNavigate('daija-detail', { daija: item });
-        break;
-      case 'organization':
-        onNavigate && onNavigate('organization-detail', { organization: item });
-        break;
+    // Use the same profile navigation as other screens
+    if (onProfileOpen) {
+      onProfileOpen(item, type);
     }
   };
 
@@ -58,6 +50,7 @@ const SearchScreen = ({ onBack, onNavigate }) => {
           results={searchResults}
           onItemPress={handleItemPress}
           isLoading={isSearching}
+          onAdd={onAddContent}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

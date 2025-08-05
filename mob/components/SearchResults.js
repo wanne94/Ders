@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   ActivityIndicator
 } from 'react-native';
 import UniverzalCard from './UniverzalCard';
@@ -20,7 +19,7 @@ const COLORS = {
   border: '#e0e0e0'
 };
 
-const SearchResults = ({ results, onItemPress, isLoading }) => {
+const SearchResults = ({ results, onItemPress, isLoading, onAdd }) => {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
@@ -69,6 +68,7 @@ const SearchResults = ({ results, onItemPress, isLoading }) => {
               <UniverzalCard
                 data={{ ...lecture, type: 'predavanje' }}
                 onPress={() => onItemPress('lecture', lecture)}
+                onAdd={onAdd}
               />
             </View>
           ))}
@@ -84,6 +84,7 @@ const SearchResults = ({ results, onItemPress, isLoading }) => {
               <UniverzalCard
                 data={{ ...daija, type: 'daija' }}
                 onPress={() => onItemPress('daija', daija)}
+                onAdd={onAdd}
               />
             </View>
           ))}
@@ -99,6 +100,7 @@ const SearchResults = ({ results, onItemPress, isLoading }) => {
               <UniverzalCard
                 data={{ ...org, type: 'udruženje' }}
                 onPress={() => onItemPress('organization', org)}
+                onAdd={onAdd}
               />
             </View>
           ))}

@@ -31,6 +31,8 @@ const BottomNavigation = ({ activeTab, onTabPress, isAddMenuOpen = false }) => {
           key={tab.id}
           style={styles.addButton}
           onPress={() => onTabPress(tab.id)}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <View style={[
             styles.addButtonInner,
@@ -51,6 +53,8 @@ const BottomNavigation = ({ activeTab, onTabPress, isAddMenuOpen = false }) => {
         key={tab.id}
         style={[styles.tab, isActive && styles.activeTab]}
         onPress={() => onTabPress(tab.id)}
+        activeOpacity={0.7}
+        delayPressIn={0}
       >
         <Ionicons 
           name={isActive ? tab.activeIcon : tab.icon} 

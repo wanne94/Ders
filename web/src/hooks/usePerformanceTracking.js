@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { trace } from 'firebase/performance';
 import { performance, isPerformanceAvailable } from '@/config/firebase';
 
-export const usePerformanceTracking = (traceName, dependencies = []) => {
+export const usePerformanceTracking = (traceName) => {
   useEffect(() => {
     if (!isPerformanceAvailable()) return;
 
@@ -32,7 +32,7 @@ export const usePerformanceTracking = (traceName, dependencies = []) => {
     return () => {
       stopTrace();
     };
-  }, dependencies);
+  }, [traceName]);
 };
 
 // Custom hook for measuring component mount time

@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, Share, Linking, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { getImageUrl } from '../utils/imageUtils';
 
 const ShareButton = ({ profileData, type, style = {}, textStyle = {} }) => {
   if (!profileData) return null;
@@ -9,13 +10,27 @@ const ShareButton = ({ profileData, type, style = {}, textStyle = {} }) => {
   const shareUrl = `https://ders.ba/profile/${type}/${id}`;
   
   let shareText = '';
+  let imageUrl = '';
   
   if (type === 'lecture') {
-    shareText = `${profileData.title}\nDatum: ${new Date(profileData.date).toLocaleDateString('sr-RS')} u ${profileData.time}\nAdresa: ${profileData.address}, ${profileData.city}`;
+    shareText = `🎓 ${profileData.title}
+
+📅 ${new Date(profileData.date).toLocaleDateString('sr-RS')} u ${profileData.time}
+📍 ${profileData.address}, ${profileData.city}${profileData.organization ? `
+🏛️ ${profileData.organization}` : ''}${profileData.speaker ? `
+👤 ${profileData.speaker}` : ''}`;
+    imageUrl = profileData.image ? getImageUrl(profileData.image) : 'https://ders.ba/uploads/images/default.jpg';
   } else if (type === 'daija') {
-    shareText = `${profileData.name}${profileData.title ? ' - ' + profileData.title : ''}\n${profileData.biography || ''}`;
+    shareText = `👤 ${profileData.name}${profileData.title ? ' - ' + profileData.title : ''}
+
+${profileData.biography || ''}`;
+    imageUrl = profileData.image ? getImageUrl(profileData.image) : 'https://ders.ba/uploads/images/default.jpg';
   } else if (type === 'organization') {
-    shareText = `${profileData.name}\n${profileData.description || ''}\nAdresa: ${profileData.address}, ${profileData.city}`;
+    shareText = `🏛️ ${profileData.name}
+
+${profileData.description || ''}
+📍 ${profileData.address}, ${profileData.city}`;
+    imageUrl = profileData.image ? getImageUrl(profileData.image) : 'https://ders.ba/uploads/images/default.jpg';
   }
 
   const handleShare = async () => {
@@ -44,21 +59,33 @@ const ShareButton = ({ profileData, type, style = {}, textStyle = {} }) => {
   const handleSpecificShare = (platform) => {
     const encodedText = encodeURIComponent(shareText);
     const encodedUrl = encodeURIComponent(shareUrl);
+    const fullMessage = encodeURIComponent(`${shareText}
+
+${shareUrl}`);
     
     let url;
+    let webFallbackUrl;
     
     switch (platform) {
       case 'whatsapp':
-        url = `whatsapp://send?text=${encodedText}%0A%0A${encodedUrl}`;
+        // Use web.whatsapp.com for better compatibility
+        url = `whatsapp://send?text=${fullMessage}`;
+        webFallbackUrl = `https://api.whatsapp.com/send?text=${fullMessage}`;
         break;
       case 'viber':
-        url = `viber://forward?text=${encodedText}%0A%0A${encodedUrl}`;
+        // Viber doesn't support images via URL scheme
+        url = `viber://forward?text=${fullMessage}`;
+        webFallbackUrl = null;
         break;
       case 'telegram':
-        url = `tg://msg?text=${encodedText}%0A%0A${encodedUrl}`;
+        // Use Telegram web share for better compatibility
+        url = `tg://msg?text=${fullMessage}`;
+        webFallbackUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
         break;
       case 'facebook':
+        // Use Facebook share dialog which supports Open Graph tags
         url = `fb://facewebmodal/f?href=${encodedUrl}`;
+        webFallbackUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`;
         break;
       default:
         handleShare();
@@ -68,11 +95,22 @@ const ShareButton = ({ profileData, type, style = {}, textStyle = {} }) => {
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
         Linking.openURL(url);
+      } else if (webFallbackUrl) {
+        // Try web fallback
+        Linking.openURL(webFallbackUrl).catch(() => {
+          handleShare(); // Final fallback to native share
+        });
       } else {
         handleShare(); // Fallback to native share
       }
     }).catch(() => {
-      handleShare(); // Fallback to native share
+      if (webFallbackUrl) {
+        Linking.openURL(webFallbackUrl).catch(() => {
+          handleShare(); // Final fallback
+        });
+      } else {
+        handleShare(); // Fallback to native share
+      }
     });
   };
 

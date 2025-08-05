@@ -2,13 +2,15 @@
  * Centralized sorting utilities for lectures, lecturers, and associations
  * 
  * Sorting Rules:
- * 🎯 Lectures: Show upcoming lectures first (closest date/time), past lectures last
+ * 🎯 Lectures: Show active ("u toku") lectures first, then upcoming lectures (closest date/time), past lectures last
  * 🎯 Lecturers: Those with upcoming lectures first, others after
  * 🎯 Associations: Those with upcoming lectures first, others after
  */
 
+import { calculateLectureStatus } from './lectureStatusHelpers';
+
 /**
- * Sort lectures by date - future lectures first, then past lectures (including cancelled)
+ * Sort lectures by status - active ("u toku") first, then future lectures, then past lectures (including cancelled)
  */
 export const sortLecturesByStatus = (lectures) => {
   if (!Array.isArray(lectures)) return [];
@@ -17,6 +19,14 @@ export const sortLecturesByStatus = (lectures) => {
   
   return lectures.sort((a, b) => {
     if (!a.date || !b.date) return 0;
+    
+    // Calculate status for both lectures
+    const statusA = calculateLectureStatus(a);
+    const statusB = calculateLectureStatus(b);
+    
+    // Active lectures ("u toku") come first
+    if (statusA.status === 'active' && statusB.status !== 'active') return -1;
+    if (statusA.status !== 'active' && statusB.status === 'active') return 1;
     
     const dateA = new Date(a.date);
     const dateB = new Date(b.date);
@@ -50,7 +60,7 @@ export const sortLecturesByStatus = (lectures) => {
     const isAFuture = !isACancelled && dateA > now;
     const isBFuture = !isBCancelled && dateB > now;
     
-    // Future lectures come first
+    // Future lectures come after active but before past
     if (isAFuture && !isBFuture) return -1;
     if (!isAFuture && isBFuture) return 1;
     

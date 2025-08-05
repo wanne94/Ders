@@ -106,7 +106,7 @@ const predavanjaService = {
   // Admin: Get cancelled reports  
   getCancelledReports: async (status = 'pending', page = 1, limit = 50) => {
     try {
-      const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/admin/cancelled-reports?status=${status}&page=${page}&limit=${limit}`);
+      const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/admin/cancellation-reports?status=${status}&page=${page}&limit=${limit}`);
       return response.data;
     } catch (error) {
       console.error('Error getting cancelled reports:', error);
@@ -117,7 +117,7 @@ const predavanjaService = {
   // Admin: Review cancelled report
   reviewCancelledReport: async (reportId, action, adminNotes = '') => {
     try {
-      const response = await apiClient.put(`${ENV.API_ENDPOINTS.PREDAVANJA}/admin/cancelled-reports/${reportId}`, {
+      const response = await apiClient.put(`${ENV.API_ENDPOINTS.PREDAVANJA}/admin/cancellation-reports/${reportId}`, {
         action, // 'approve' or 'reject'
         adminNotes
       });
@@ -144,7 +144,7 @@ const predavanjaService = {
   // Admin: Bulk update cancelled reports
   bulkUpdateCancelledReports: async (reportIds, action, adminNote = null) => {
     try {
-      const response = await apiClient.put(`${ENV.API_ENDPOINTS.PREDAVANJA}/admin/cancelled-reports/bulk`, {
+      const response = await apiClient.put(`${ENV.API_ENDPOINTS.PREDAVANJA}/admin/cancellation-reports/bulk`, {
         reportIds,
         action,
         adminNote

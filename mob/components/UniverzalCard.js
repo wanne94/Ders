@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { format } from 'date-fns';
 import { bs } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
@@ -106,7 +106,7 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
         if (interval) clearInterval(interval);
       };
     }
-  }, [data._id, data.id, data.date, data.time, data.isCancelled, data.status]); // Only recalculate when these critical fields change
+  }, [data, data._id, data.id, data.date, data.time, data.isCancelled, data.status]); // Only recalculate when these critical fields change
 
   // Handle null or undefined data
   if (!data) {
@@ -284,12 +284,6 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
         </View>
       )}
       
-      {/* Live Indicator for active lectures */}
-      {displayData.type === 'lecture' && displayData.statusInfo?.status === 'active' && (
-        <View style={styles.liveIndicator}>
-          <Text style={styles.liveIndicatorText}>🔴 UŽIVO</Text>
-        </View>
-      )}
       
       {/* Card Title - Above both columns, only for lectures */}
       {displayData.type === 'lecture' && (
@@ -509,24 +503,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     lineHeight: 14,
-  },
-  liveIndicator: {
-    position: 'absolute',
-    top: 40,
-    right: 8,
-    backgroundColor: '#ff1744',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    zIndex: 1,
-  },
-  liveIndicatorText: {
-    color: 'white',
-    fontSize: 9,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
   },
   cancelledOverlay: {
     position: 'absolute',

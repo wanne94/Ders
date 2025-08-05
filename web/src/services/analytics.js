@@ -140,7 +140,7 @@ export const initPageViewTracking = () => {
   }
 };
 
-export default {
+const analyticsService = {
   logEvent,
   logLectureView,
   logDaijaProfileView,
@@ -154,3 +154,5 @@ export default {
   initPageViewTracking,
   ANALYTICS_EVENTS
 };
+
+export default analyticsService;

@@ -26,7 +26,7 @@ import { sortLecturesByTime } from '../utils/sortingUtils';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
+const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd }) => {
   const id = data?._id || data?.id;
   
   const [profile, setProfile] = useState(null);
@@ -39,7 +39,6 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [profileLectures, setProfileLectures] = useState([]);
   const [loadingProfileLectures, setLoadingProfileLectures] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     // If data is passed directly, use it
@@ -86,8 +85,8 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
   // Check authentication and follow status
   useEffect(() => {
     const checkAuthAndFollowStatus = async () => {
-      const authenticated = await checkIsAuthenticated();
-      setIsAuthenticated(authenticated);
+      await checkIsAuthenticated();
+      // Authentication check performed
       
       
     };
@@ -479,7 +478,9 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
             </TouchableOpacity>
           )}
           
-          <ShareButton profileData={profile} type={type} />
+          {type === 'lecture' && (
+            <ShareButton profileData={profile} type={type} />
+          )}
           
           {/* Add to Calendar Button - Only for lectures that are not cancelled */}
           {type === 'lecture' && profile.date && !profile.isCancelled && profile.status !== 'cancelled' && (
@@ -505,27 +506,45 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
       </View>
 
       {/* Lectures Section - For daija and organization profiles */}
-      {(type === 'daija' || type === 'organization') && profileLectures.length > 0 && (
+      {(type === 'daija' || type === 'organization') && (
         <View style={styles.relatedSection}>
           <Text style={styles.relatedTitle}>Predavanja</Text>
           {loadingProfileLectures ? (
             <ActivityIndicator size="small" color="#022C43" style={styles.relatedLoader} />
           ) : (
-            <View style={styles.relatedList}>
-              {profileLectures.map((lecture) => (
-                <UniverzalCard
-                  key={lecture._id}
-                  data={lecture}
+            profileLectures.length > 0 ? (
+              <View style={styles.relatedList}>
+                {profileLectures.map((lecture) => (
+                  <UniverzalCard
+                    key={lecture._id}
+                    data={lecture}
+                    onPress={() => {
+                      // Navigate to the lecture profile
+                      if (onProfileOpen) {
+                        onProfileOpen(lecture, 'lecture');
+                      }
+                    }}
+                    onAdd={onAdd}
+                    style={styles.relatedCard}
+                  />
+                ))}
+              </View>
+            ) : (
+              <View style={styles.noLecturesContainer}>
+                <Text style={styles.noLecturesText}>Nema najavljenih predavanja</Text>
+                <TouchableOpacity 
+                  style={styles.viewAllLecturesButton}
                   onPress={() => {
-                    // Navigate to the lecture profile
-                    if (onProfileOpen) {
-                      onProfileOpen(lecture, 'lecture');
+                    // Navigate back to main screen or lectures list
+                    if (onBack) {
+                      onBack();
                     }
                   }}
-                  style={styles.relatedCard}
-                />
-              ))}
-            </View>
+                >
+                  <Text style={styles.viewAllLecturesButtonText}>Pogledaj sva predavanja</Text>
+                </TouchableOpacity>
+              </View>
+            )
           )}
         </View>
       )}
@@ -575,6 +594,7 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen }) => {
                       onProfileOpen(lecture, 'lecture');
                     }
                   }}
+                  onAdd={onAdd}
                   style={styles.relatedCard}
                 />
               ))}
@@ -923,6 +943,38 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+  },
+  noLecturesContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noLecturesText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: 20,
+  },
+  viewAllLecturesButton: {
+    backgroundColor: '#022C43',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  viewAllLecturesButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

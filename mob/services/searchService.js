@@ -1,4 +1,5 @@
-import { getApiUrl } from '../config';
+import apiClient from './apiClient';
+import { calculateLectureStatus } from '../utils/lectureStatusHelpers';
 
 /**
  * Search service for searching lectures, daije, and organizations
@@ -23,17 +24,10 @@ class SearchService {
       const searchQuery = query.toLowerCase();
       
       // Fetch all data in parallel
-      const API_URL = getApiUrl();
-      const [lecturesResponse, daijeResponse, organizationsResponse] = await Promise.all([
-        fetch(`${API_URL}/predavanja`),
-        fetch(`${API_URL}/daije`),
-        fetch(`${API_URL}/udruzenja`)
-      ]);
-
       const [lectures, daije, organizations] = await Promise.all([
-        lecturesResponse.json(),
-        daijeResponse.json(),
-        organizationsResponse.json()
+        apiClient.get('/predavanja'),
+        apiClient.get('/daije'),
+        apiClient.get('/udruzenja')
       ]);
 
       // Filter lectures
@@ -83,8 +77,21 @@ class SearchService {
         return searchFields.includes(searchQuery);
       });
 
+      // Sort lectures - "u toku" lectures first
+      const sortedLectures = filteredLectures.sort((a, b) => {
+        const statusA = calculateLectureStatus(a);
+        const statusB = calculateLectureStatus(b);
+        
+        // If one is active and the other is not, active comes first
+        if (statusA.status === 'active' && statusB.status !== 'active') return -1;
+        if (statusA.status !== 'active' && statusB.status === 'active') return 1;
+        
+        // Otherwise keep original order
+        return 0;
+      });
+
       return {
-        lectures: filteredLectures.slice(0, 10), // Limit results
+        lectures: sortedLectures.slice(0, 10), // Limit results
         daije: filteredDaije.slice(0, 10),
         organizations: filteredOrganizations.slice(0, 10),
         totalResults: filteredLectures.length + filteredDaije.length + filteredOrganizations.length

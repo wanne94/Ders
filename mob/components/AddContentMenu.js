@@ -52,12 +52,12 @@ const AddContentMenu = ({ visible, onOptionSelect, onClose }) => {
         Animated.spring(translateYAnim, {
           toValue: 0,
           useNativeDriver: true,
-          tension: 100,
-          friction: 8,
+          tension: 120,
+          friction: 10,
         }),
         Animated.timing(opacityAnim, {
           toValue: 1,
-          duration: 250,
+          duration: 150,
           useNativeDriver: true,
         })
       ]).start();
@@ -110,6 +110,8 @@ const AddContentMenu = ({ visible, onOptionSelect, onClose }) => {
               ]}
               onPress={() => handleOptionPress(option)}
               activeOpacity={0.7}
+              delayPressIn={0}
+              hitSlop={{ top: 5, bottom: 5, left: 10, right: 10 }}
             >
               <Ionicons name={option.icon} size={18} color={COLORS.primary} />
               <Text style={styles.menuText}>{option.title}</Text>
@@ -151,8 +153,8 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },

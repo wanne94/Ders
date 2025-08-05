@@ -46,11 +46,7 @@ const menuItems = [
 ];
 
 const userMenuItems = [
-  {
-    text: 'Postavke',
-    icon: 'settings-outline',
-    path: 'settings'
-  }
+  // Settings removed as notifications are not implemented
 ];
 
 const adminMenuItems = [
@@ -251,33 +247,8 @@ const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNaviga
           )}
 
           {/* Auth/User Menu Section */}
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              {isAuthenticated ? 'Korisnički meni' : 'Autentifikacija'}
-            </Text>
-          </View>
-
           {isAuthenticated ? (
             <>
-              {/* User Menu Items */}
-              {userMenuItems.map((item, index) => (
-                <TouchableOpacity
-                  key={`user-${index}`}
-                  style={styles.menuItem}
-                  onPress={() => handleMenuItemPress(item)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.menuItemContent}>
-                    <Ionicons 
-                      name={item.icon} 
-                      size={20} 
-                      color={COLORS.white} 
-                      style={styles.menuIcon}
-                    />
-                    <Text style={styles.menuItemText}>{item.text}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
 
               {/* Add Menu Toggle */}
               <TouchableOpacity
@@ -341,6 +312,11 @@ const Menu = ({ isOpen, onClose, onNavigate, isAuthenticated, user, onAuthNaviga
             </>
           ) : (
             <>
+              {/* Auth Section Header */}
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Autentifikacija</Text>
+              </View>
+              
               {/* Login Option */}
               <TouchableOpacity
                 style={styles.menuItem}

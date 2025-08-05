@@ -11,6 +11,7 @@ import {
   Switch,
   KeyboardAvoidingView,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { usersService } from '../services/usersService';
@@ -32,7 +33,7 @@ const COLORS = {
   danger: '#dc3545',
 };
 
-const ProfileScreen = ({ navigation }) => {
+const ProfileScreen = ({ navigation, onBack }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -67,14 +68,28 @@ const ProfileScreen = ({ navigation }) => {
     
     loadUserProfile();
     
+    // Handle hardware back button
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        if (onBack) {
+          onBack();
+          return true; // Prevent default behavior
+        }
+        return false; // Use default behavior
+      }
+    );
+    
     // Cleanup function to prevent memory leaks
     return () => {
       isMountedRef.current = false;
       // Clear all timeouts
       timeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
       timeoutsRef.current = [];
+      // Remove back handler
+      backHandler.remove();
     };
-  }, []);
+  }, [onBack]);
 
   const loadUserProfile = async () => {
     try {
@@ -256,8 +271,15 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header Section - No duplicate header with navigation */}
+      {/* Header Section with Back Button */}
       <View style={styles.headerCard}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={onBack}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+        </TouchableOpacity>
         <View style={styles.headerContent}>
           <View style={styles.avatarContainer}>
             <Ionicons name="person" size={40} color={COLORS.white} />
@@ -526,10 +548,19 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    zIndex: 1,
+    padding: 8,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 40, // Add margin to avoid overlapping with back button
   },
   avatarContainer: {
     width: 80,

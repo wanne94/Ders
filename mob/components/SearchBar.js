@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   TextInput,
@@ -31,15 +31,7 @@ const SearchBar = ({ onSearch, onClose, placeholder = "Pretraži predavanja, dai
   
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  useEffect(() => {
-    if (debouncedSearchQuery) {
-      performSearch(debouncedSearchQuery);
-    } else {
-      onSearch && onSearch(null);
-    }
-  }, [debouncedSearchQuery]);
-
-  const performSearch = async (query) => {
+  const performSearch = useCallback(async (query) => {
     setIsSearching(true);
     try {
       const results = await searchService.searchAll(query);
@@ -50,7 +42,15 @@ const SearchBar = ({ onSearch, onClose, placeholder = "Pretraži predavanja, dai
     } finally {
       setIsSearching(false);
     }
-  };
+  }, [onSearch]);
+
+  useEffect(() => {
+    if (debouncedSearchQuery) {
+      performSearch(debouncedSearchQuery);
+    } else {
+      onSearch && onSearch(null);
+    }
+  }, [debouncedSearchQuery, onSearch, performSearch]);
 
   const handleClear = () => {
     setSearchQuery('');

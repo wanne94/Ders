@@ -27,9 +27,7 @@ class ApiClient {
     const baseUrl = this.getCurrentBaseURL();
     const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
     
-    const urlType = this.urlIndex === 0 ? 'primary' : 
-                    this.urlIndex === 1 ? 'backup' : 'fallback';
-    console.log(`Making API request to: ${fullUrl} (${urlType})`);
+    // Removed excessive API request logging
     
     // Add default headers
     const headers = {
@@ -44,10 +42,10 @@ class ApiClient {
     if (!isAuthRoute) {
       try {
         const token = await AsyncStorage.getItem('auth_token');
-        console.log('Token from AsyncStorage:', token ? 'EXISTS' : 'NOT FOUND');
+        // Token check removed for security
         if (token) {
           headers.Authorization = `Bearer ${token}`;
-          console.log('Authorization header set:', headers.Authorization.substring(0, 20) + '...');
+          // Removed excessive logging
         } else {
           console.warn('No auth token found in AsyncStorage for URL:', url);
         }
@@ -101,13 +99,13 @@ class ApiClient {
         
         // Check for authentication errors
         if (response.status === 401 && responseData.data?.message === 'Nema tokena ili pogrešan format') {
-          console.log('No token or invalid format, user needs to login');
+          // No token or invalid format, user needs to login
           await AsyncStorage.removeItem('auth_token');
           appEvents.emit(AUTH_EVENTS.LOGIN_REQUIRED);
         }
         // Check for expired token error
         else if (response.status === 403 && responseData.data?.message === 'Token je istekao') {
-          console.log('Token expired, attempting to refresh...');
+          // Token expired, attempting to refresh...
           
           // Only attempt refresh once to avoid infinite loop
           if (!options._isRetryAfterRefresh) {
@@ -119,7 +117,7 @@ class ApiClient {
               if (refreshResponse.token) {
                 // Save new token
                 await AsyncStorage.setItem('auth_token', refreshResponse.token);
-                console.log('Token refreshed successfully');
+                // Token refreshed successfully
                 
                 // Retry original request with new token
                 return this.request(url, { ...options, _isRetryAfterRefresh: true }, retries);

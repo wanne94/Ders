@@ -11,13 +11,13 @@ const STORAGE_KEYS = {
 // Token functions
 export const setToken = async (token) => {
   try {
-    console.log('Setting token:', token ? `${token.substring(0, 20)}...` : 'EMPTY TOKEN');
+    // Setting token
     if (!token || token.trim() === '') {
       console.error('Attempting to set empty token!');
       return;
     }
     await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token);
-    console.log('Token saved successfully');
+    // Token saved successfully
   } catch (error) {
     console.error('Error setting token:', error);
   }
