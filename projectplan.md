@@ -1,25 +1,27 @@
-# Plan za dodavanje indikacije kada daija ili udruženje nemaju predavanja
+# Plan za promjenu verzija aplikacije i buildanje AAB fajla
 
 ## TODO Lista:
 
-1. [x] Analizirati kako se učitavaju predavanja za daije i udruženja u UniversalProfile komponenti
-2. [x] Pronaći gdje se prikazuje sekcija "Predavanja" za daije i udruženja
-3. [x] Dodati poruku "Nema najavljenih predavanja" kada daija/udruženje nemaju predavanja
-4. [x] Testirati prikaz za daije i udruženja sa i bez predavanja
+1. [x] Promijeniti verziju u package.json fajlu (trenutno 1.1.0)
+2. [x] Promijeniti versionCode i versionName u android/app/build.gradle (trenutno versionCode: 15, versionName: 1.1.2)
+3. [x] Provjeriti da li postoje sve potrebne konfiguracije za build
+4. [x] Pokrenuti build AAB komandu lokalno
+5. [x] Provjeriti da li je AAB fajl uspješno kreiran
+
+## Napomene:
+- Trenutne verzije: package.json (1.1.0), Android versionCode (15), Android versionName (1.1.2)
+- Build komanda već postoji u package.json: `npm run build-aab`
+- AAB fajl će biti generisan u android/app/build/outputs/bundle/release/
 
 ## Review
 
 ### Promjene koje su napravljene:
-1. **Modifikovana sekcija predavanja u UniversalProfile komponenti** - Promjena omogućava prikaz sekcije "Predavanja" čak i kada nema predavanja
-2. **Dodana logika za prikaz poruke** - Kada daija ili udruženje nemaju predavanja, prikazuje se poruka "Nema najavljenih predavanja"
-3. **Dodani stilovi** - Kreiran `noLecturesContainer` i `noLecturesText` za stilizovanje poruke
+1. **Promijenjena verzija u package.json** - Sa 1.1.0 na 1.1.3
+2. **Promijenjen versionCode u Android build.gradle** - Sa 15 na 16
+3. **Promijenjena versionName u Android build.gradle** - Sa 1.1.2 na 1.1.3
+4. **Uspješno buildovan AAB fajl** - Kreiran app-release.aab (veličina: 49.5 MB)
 
-### Što je postignuto:
-- Poruka se prikazuje samo u profilima daija i udruženja (ne u profilima predavanja)
-- Poruka je stilizovana sa italic fontom i sivom bojom
-- Sekcija "Predavanja" se uvijek prikazuje, ali sa odgovarajućim sadržajem
-
-## Napomene:
-- Indikacija će biti prikazana za daije i udruženja
-- Prikazaće se samo kada se uđe u profil daije ili udruženja
-- Poruka će biti prikazana umjesto liste predavanja kada nemaju nijedno predavanje
+### Rezultat:
+- AAB fajl je uspješno kreiran na lokaciji: `/home/avdo/Ders/mob/android/app/build/outputs/bundle/release/app-release.aab`
+- Fajl je spreman za upload na Google Play Store
+- Build proces je prošao bez grešaka
