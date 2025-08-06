@@ -694,6 +694,49 @@ app.put('/api/lectures/:id/admin/cancellation-status', authenticateToken, isAdmi
   }
 });
 
+// Admin cancel lecture endpoint - compatible with mobile app
+app.put('/api/lectures/admin/:id/cancel', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    logger.info('Admin cancelling lecture:', {
+      lectureId: id,
+      reason,
+      adminId: req.user.id
+    });
+
+    const lecture = await Lecture.findById(id);
+    if (!lecture) {
+      return res.status(404).json({ message: 'Predavanje nije pronađeno' });
+    }
+
+    // Mark lecture as cancelled
+    lecture.isCancelled = true;
+    lecture.cancelledAt = new Date();
+    lecture.cancellationReason = reason || 'Otkazano od strane administratora';
+    lecture.status = 'cancelled';
+    lecture.cancelledBy = req.user.id;
+
+    const updatedLecture = await lecture.save();
+
+    logger.info('Lecture cancelled by admin:', {
+      lectureId: id,
+      isCancelled: updatedLecture.isCancelled,
+      cancelledBy: req.user.username
+    });
+
+    res.json({
+      message: 'Predavanje je uspješno otkazano',
+      lecture: updatedLecture
+    });
+
+  } catch (error) {
+    logger.error('Error cancelling lecture:', error);
+    res.status(500).json({ message: 'Greška pri otkazivanju predavanja' });
+  }
+});
+
 // Dashboard endpoint - returns all lectures for admin dashboard (public access)
 app.get('/api/lectures/dashboard/public', async (req, res) => {
   try {
