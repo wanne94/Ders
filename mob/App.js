@@ -36,6 +36,7 @@ import AddContentMenu from './components/AddContentMenu';
 import AddContentPopup from './components/AddContentPopup';
 import SearchScreen from './screens/SearchScreen';
 import UpdateChecker from './components/UpdateChecker';
+import { SkeletonCardList } from './components/SkeletonCard';
 import {
   isAuthenticated as checkIsAuthenticated,
   getUserData,
@@ -66,13 +67,19 @@ const COLORS = {
 const fetchLectures = async () => {
   try {
     // Fetching lectures...
-    const response = await apiClient.get('/lectures/dashboard/public');
+    // Using same endpoint as web app to include cancelled lectures
+    const response = await apiClient.get('/lectures/public?status=all');
     const data = response.data;
     
     // Lectures response received
     
     if (Array.isArray(data)) {
-      // Processing lectures data
+      // Processing lectures data - includes both approved and cancelled
+      const cancelledLectures = data.filter(l => l.isCancelled === true || l.status === 'cancelled');
+      if (cancelledLectures.length > 0) {
+        console.log('📊 Otkazana predavanja pronadjena:', cancelledLectures.length);
+        console.log('📊 Primjer otkazanog predavanja:', cancelledLectures[0]);
+      }
     }
     
     return Array.isArray(data) ? data : [];
@@ -126,10 +133,14 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection, fo
         fetchUdruzenja()
       ]);
       
-      // Process lectures
-      const approvedLectures = (Array.isArray(lecturesData) ? lecturesData : [])
-        .filter(lecture => lecture.status === 'approved' && !lecture.cancelled);
-      const sortedLectures = sortLecturesByStatus(approvedLectures).slice(0, 10);
+      // Process lectures - include all lectures (approved and cancelled) like web app
+      const allLectures = Array.isArray(lecturesData) ? lecturesData : [];
+      // Add type field to each lecture
+      const lecturesWithType = allLectures.map(lecture => ({
+        ...lecture,
+        type: 'predavanje'
+      }));
+      const sortedLectures = sortLecturesByStatus(lecturesWithType).slice(0, 10);
       
       // Process daije
       const approvedDaije = (Array.isArray(daijeData) ? daijeData : [])
@@ -236,8 +247,18 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection, fo
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Učitavanje...</Text>
+        <View style={styles.skeletonSection}>
+          <Text style={styles.sectionTitle}>Dersovi</Text>
+          <SkeletonCardList count={3} type="lecture" />
+        </View>
+        <View style={styles.skeletonSection}>
+          <Text style={styles.sectionTitle}>Daije</Text>
+          <SkeletonCardList count={3} type="daija" />
+        </View>
+        <View style={styles.skeletonSection}>
+          <Text style={styles.sectionTitle}>Udruženja</Text>
+          <SkeletonCardList count={3} type="organization" />
+        </View>
       </View>
     );
   }
@@ -302,10 +323,14 @@ export default function App() {
       try {
         const data = await fetchLectures();
         if (mounted) {
-          const approvedLectures = (Array.isArray(data) ? data : []).filter(lecture => 
-            lecture.status === 'approved' && !lecture.cancelled
-          );
-          setAllLectures(approvedLectures);
+          // Include all lectures (approved and cancelled) like web app
+          const allLecturesData = Array.isArray(data) ? data : [];
+          // Add type field to each lecture
+          const lecturesWithType = allLecturesData.map(lecture => ({
+            ...lecture,
+            type: 'predavanje'
+          }));
+          setAllLectures(lecturesWithType);
         }
       } catch (error) {
         if (mounted) {
@@ -580,8 +605,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   loadingContainer: {
-    alignItems: 'center',
-    padding: 20,
+    flex: 1,
+    paddingTop: 20,
+  },
+  skeletonSection: {
+    marginBottom: 30,
   },
   loadingText: {
     marginTop: 10,

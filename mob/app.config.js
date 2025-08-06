@@ -12,6 +12,7 @@ export default {
     },
     android: {
       package: "com.daije.mobile",
+      versionCode: 17,
       userInterfaceStyle: "automatic",
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",

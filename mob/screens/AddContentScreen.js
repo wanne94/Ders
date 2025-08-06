@@ -369,6 +369,7 @@ const AddContentScreen = ({ onBack }) => {
         value={formData[field] || ''}
         onChangeText={(value) => handleInputChange(field, value)}
         placeholder={placeholder}
+        placeholderTextColor={COLORS.gray}
         multiline={multiline}
         numberOfLines={multiline ? 4 : 1}
       />
@@ -529,6 +530,7 @@ const AddContentScreen = ({ onBack }) => {
             value={educationInput}
             onChangeText={setEducationInput}
             placeholder="Dodaj obrazovanje..."
+            placeholderTextColor={COLORS.gray}
           />
           <TouchableOpacity style={styles.addButton} onPress={addEducation}>
             <Ionicons name="add" size={20} color={COLORS.white} />
@@ -719,6 +721,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     backgroundColor: COLORS.white,
+    color: COLORS.primary,
   },
   multilineInput: {
     height: 100,

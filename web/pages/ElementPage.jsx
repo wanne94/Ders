@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import {
   Typography,
   Box,
@@ -351,8 +352,44 @@ const ElementPage = ({ type }) => {
     );
   }
 
+  // Get canonical URL and meta tags
+  const getCanonicalUrl = () => {
+    const baseUrl = 'https://ders.ba';
+    switch (type) {
+      case 'lectures':
+        return `${baseUrl}/lectures`;
+      case 'daije':
+        return `${baseUrl}/daije`;
+      case 'organizations':
+        return `${baseUrl}/organizations`;
+      default:
+        return baseUrl;
+    }
+  };
+
+  // Determine if current page should be indexed
+  const shouldIndex = page === 1;
+
   return (
-    <PageLayout sx={{ paddingTop: '20px' }}>
+    <>
+      <Head>
+        {/* Add noindex for paginated pages (page > 1) */}
+        {!shouldIndex && (
+          <meta name="robots" content="noindex, follow" />
+        )}
+        
+        {/* Canonical URL always points to the first page */}
+        <link rel="canonical" href={getCanonicalUrl()} />
+        
+        {/* Add prev/next for pagination SEO */}
+        {page > 1 && (
+          <link rel="prev" href={`${getCanonicalUrl()}?page=${page - 1}`} />
+        )}
+        {page < totalPages && (
+          <link rel="next" href={`${getCanonicalUrl()}?page=${page + 1}`} />
+        )}
+      </Head>
+      <PageLayout sx={{ paddingTop: '20px' }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
@@ -476,7 +513,8 @@ const ElementPage = ({ type }) => {
 
       {/* Form Dialog */}
       {getFormComponent()}
-    </PageLayout>
+      </PageLayout>
+    </>
   );
 };
 

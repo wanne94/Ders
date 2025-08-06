@@ -18,4 +18,4 @@ const LogoCircle = () => (
   />
 );
 
-export default LogoCircle; 
+export default LogoCircle;

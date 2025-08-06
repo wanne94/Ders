@@ -35,6 +35,12 @@ const UpdateChecker = () => {
       // Get current version
       const currentVersion = VersionCheck.getCurrentVersion();
       
+      // Check if currentVersion is valid
+      if (!currentVersion) {
+        console.log('Could not get current version');
+        return;
+      }
+      
       // Get latest version from store
       const latestVersion = await VersionCheck.getLatestVersion({
         provider: Platform.OS === 'ios' ? 'appStore' : 'playStore',

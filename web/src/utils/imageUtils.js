@@ -105,6 +105,14 @@ export const getDefaultOrganizationImage = () => {
  */
 export const getLogoUrl = () => {
   const logoPath = '/uploads/logo.jpg';
+  
+  // U development modu, preferiraj lokalnu verziju
+  if (process.env.NODE_ENV === 'development') {
+    // Koristi lokalnu verziju ako postoji
+    return logoPath;
+  }
+  
+  // U produkciji ili ako lokalna ne postoji, koristi server verziju
   return `${IMAGE_SERVER_URL}${logoPath}`;
 };
 

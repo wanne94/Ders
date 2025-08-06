@@ -131,6 +131,41 @@ export const formatDaijaTitle = (name, title) => {
   return `${lowercaseTitle}. ${name}`;
 };
 
+// Generate SEO-friendly slug from text
+export const generateSlug = (text) => {
+  if (!text) return '';
+  
+  // Convert to lowercase
+  let slug = text.toLowerCase();
+  
+  // Replace special Bosnian characters
+  const charMap = {
+    'š': 's', 'đ': 'd', 'č': 'c', 'ć': 'c', 'ž': 'z',
+    'Š': 's', 'Đ': 'd', 'Č': 'c', 'Ć': 'c', 'Ž': 'z'
+  };
+  
+  for (const [key, value] of Object.entries(charMap)) {
+    slug = slug.replace(new RegExp(key, 'g'), value);
+  }
+  
+  // Remove special characters and replace spaces with hyphens
+  slug = slug
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-')          // Replace spaces with hyphens
+    .replace(/-+/g, '-')           // Replace multiple hyphens with single hyphen
+    .replace(/^-+|-+$/g, '');      // Remove leading/trailing hyphens
+  
+  return slug;
+};
+
+// Generate URL for daija profile with SEO-friendly slug
+export const generateDaijaUrl = (daija) => {
+  if (!daija) return '';
+  
+  const slug = generateSlug(daija.name);
+  return `/profile/daija/${daija._id}${slug ? `/${slug}` : ''}`;
+};
+
 // Device detection utilities
 export const deviceUtils = {
   isAndroid: () => {

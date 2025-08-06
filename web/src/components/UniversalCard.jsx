@@ -20,7 +20,7 @@ import ClassIcon from '@mui/icons-material/Class';
 import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrganizationSlug, calculateLectureStatus } from '../utils/dataHelpers';
 import CancelledOverlay from './CancelledOverlay';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
-import { formatDaijaTitle } from '../utils';
+import { formatDaijaTitle, generateSlug } from '../utils';
 import { logLectureView, logDaijaProfileView, logOrganizationView } from '@/services/analytics';
 
 const UniversalCard = React.memo(({ data }) => {
@@ -65,9 +65,9 @@ const UniversalCard = React.memo(({ data }) => {
             data.city && { icon: <LocationCityIcon />, text: data.city }
           ].filter(Boolean),
           onClick: () => {
-            const slug = generateLectureSlug(data);
+            const slug = generateSlug(data.title);
             logLectureView(data._id, data.title, data.organization?._id, data.daija?._id);
-            router.push(`/profile/lecture/${data._id}`);
+            router.push(`/predavanje/${slug}`);
           }
         };
       
@@ -87,9 +87,9 @@ const UniversalCard = React.memo(({ data }) => {
             }
           ].filter(Boolean),
           onClick: () => {
-            const slug = generateDaijaSlug(data);
+            const slug = generateSlug(data.name);
             logDaijaProfileView(data._id, data.name);
-            router.push(`/profile/daija/${data._id}`);
+            router.push(`/daija/${slug}`);
           }
         };
       
@@ -109,9 +109,9 @@ const UniversalCard = React.memo(({ data }) => {
             }
           ].filter(Boolean),
           onClick: () => {
-            const slug = generateOrganizationSlug(data);
+            const slug = generateSlug(data.name);
             logOrganizationView(data._id, data.name);
-            router.push(`/profile/organization/${data._id}`);
+            router.push(`/udruzenje/${slug}`);
           }
         };
       

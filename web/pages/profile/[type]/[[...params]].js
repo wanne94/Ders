@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import {
   Alert,
   Box,
@@ -41,13 +42,16 @@ import SkeletonGrid from '@/components/SkeletonGrid';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 import { formatDateWithDay } from '@/utils/dataHelpers';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
-import { formatDaijaTitle } from '@/utils';
+import { formatDaijaTitle, generateSlug } from '@/utils';
 import { safeApiCall, normalizeToArray } from '@/utils/dataHelpers';
 import { downloadICS, addToGoogleCalendar } from '@/utils/calendarUtils';
 
 const ProfilePage = () => {
   const router = useRouter();
-  const { type, id } = router.query;
+  const { type, params } = router.query;
+  
+  // Extract ID from params array (params[0] is ID, params[1] is optional slug)
+  const id = params?.[0];
   
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -299,9 +303,78 @@ const ProfilePage = () => {
     );
   }
 
+  // Generate dynamic title for SEO
+  const getPageTitle = () => {
+    if (!profile) return 'Profil - Ders';
+    
+    if (type === 'daija') {
+      const name = profile.name || 'Daija';
+      const title = profile.title || '';
+      const bio = profile.bio ? ' - Biografija' : '';
+      return `${name}${title ? ', ' + title : ''}${bio}`;
+    } else if (type === 'lecture') {
+      return `${profile.title || 'Predavanje'} - Ders`;
+    } else if (type === 'organization') {
+      return `${profile.name || 'Organizacija'} - Ders`;
+    }
+    return 'Profil - Ders';
+  };
+
+  const getPageDescription = () => {
+    if (!profile) return '';
+    
+    if (type === 'daija') {
+      return profile.bio || `Profil daije ${profile.name}. Pronađite predavanja i informacije.`;
+    } else if (type === 'lecture') {
+      return profile.description || `${profile.title} - Predavanje`;
+    } else if (type === 'organization') {
+      return profile.description || `${profile.name} - Islamska organizacija`;
+    }
+    return '';
+  };
+
+  // Get canonical URL for profile
+  const getCanonicalUrl = () => {
+    if (!profile) return 'https://ders.ba';
+    
+    // For daija profiles, use short URL
+    if (type === 'daija' && profile?.name) {
+      const slug = generateSlug(profile.name);
+      return `https://ders.ba/daija/${slug}`;
+    }
+    
+    // For organization profiles, use short URL
+    if (type === 'organization' && profile?.name) {
+      const slug = generateSlug(profile.name);
+      return `https://ders.ba/udruzenje/${slug}`;
+    }
+    
+    // For lecture profiles, use short URL
+    if (type === 'lecture' && profile?.title) {
+      const slug = generateSlug(profile.title);
+      return `https://ders.ba/predavanje/${slug}`;
+    }
+    
+    return `https://ders.ba/profile/${type}/${id}`;
+  };
+
   return (
-    <PageLayout>
-      <ContentContainer sx={{ py: 4 }}>
+    <>
+      <Head>
+        <title>{getPageTitle()}</title>
+        <meta name="description" content={getPageDescription()} />
+        <link rel="canonical" href={getCanonicalUrl()} />
+        {profile && (
+          <>
+            <meta property="og:title" content={getPageTitle()} />
+            <meta property="og:description" content={getPageDescription()} />
+            <meta property="og:url" content={getCanonicalUrl()} />
+            {profile.image && <meta property="og:image" content={getImageUrl(profile.image)} />}
+          </>
+        )}
+      </Head>
+      <PageLayout>
+        <ContentContainer sx={{ py: 4 }}>
         {/* Back Button */}
         <Box sx={{ mb: 3 }}>
           <Button
@@ -1002,7 +1075,8 @@ const ProfilePage = () => {
           />
         </Box>
       </Modal>
-    </PageLayout>
+      </PageLayout>
+    </>
   );
 };
 

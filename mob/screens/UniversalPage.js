@@ -11,6 +11,7 @@ import { formatDateWithDay } from '../utils/dateUtils';
 import { applySorting, sortLecturesByStatus } from '../utils/sortingUtils';
 import { ENV } from '../config';
 import { getUserData } from '../utils/authHelpers';
+import { SkeletonCardList } from '../components/SkeletonCard';
 
 const COLORS = {
   primary: '#022C43',
@@ -27,7 +28,12 @@ const fetchLectures = async () => {
     const response = await apiClient.get('/lectures/public?status=all');
     const data = response.data;
     // Return all lectures including cancelled ones
-    return Array.isArray(data) ? data : [];
+    const lectures = Array.isArray(data) ? data : [];
+    // Add type field to each lecture
+    return lectures.map(lecture => ({
+      ...lecture,
+      type: 'predavanje'
+    }));
   } catch (error) {
     // console.error('UniversalPage: Error fetching lectures:', error.message);
     return [];
@@ -346,8 +352,10 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Učitavanje...</Text>
+          <SkeletonCardList 
+            count={6} 
+            type={type === 'lectures' ? 'lecture' : type === 'speakers' ? 'daija' : 'organization'} 
+          />
         </View>
         <Menu 
           isOpen={menuOpen}

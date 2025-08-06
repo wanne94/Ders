@@ -918,11 +918,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    width: 300, // Šira traka za veću sliku
+    width: 500, // Povećana širina da sigurno pokrije dijagonalu
     height: 40,
     backgroundColor: '#f44336',
     transform: [
-      { translateX: -150 }, // Pola širine
+      { translateX: -250 }, // Pola širine
       { translateY: -20 },  // Pola visine
       { rotate: '-45deg' }
     ],

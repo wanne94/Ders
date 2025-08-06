@@ -36,6 +36,7 @@ function MyApp({ Component, pageProps }) {
     <ThemeProvider theme={theme}>
       <Head>
         <title>Ders</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
       <CssBaseline />
       <LocalizationProvider 

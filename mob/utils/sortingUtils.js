@@ -11,66 +11,79 @@ import { calculateLectureStatus } from './lectureStatusHelpers';
 
 /**
  * Sort lectures by status - active ("u toku") first, then future lectures, then past lectures (including cancelled)
+ * This implementation matches the web version exactly for consistency
  */
 export const sortLecturesByStatus = (lectures) => {
   if (!Array.isArray(lectures)) return [];
   
-  const now = new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to beginning of day
   
   return lectures.sort((a, b) => {
     if (!a.date || !b.date) return 0;
     
-    // Calculate status for both lectures
-    const statusA = calculateLectureStatus(a);
-    const statusB = calculateLectureStatus(b);
+    // Helper function to get lecture status - matching web implementation
+    const getLectureStatus = (lecture) => {
+      const now = new Date();
+      const lectureDateTime = new Date(lecture.date);
+      
+      // Set lecture time (default to 12:00 if not specified)
+      if (lecture.time) {
+        const [hours, minutes] = lecture.time.split(':').map(Number);
+        if (!isNaN(hours) && !isNaN(minutes)) {
+          lectureDateTime.setHours(hours, minutes, 0, 0);
+        } else {
+          lectureDateTime.setHours(12, 0, 0, 0);
+        }
+      } else {
+        lectureDateTime.setHours(12, 0, 0, 0);
+      }
+      
+      // Calculate lecture end time (assuming 1 hour duration)
+      const lectureEndTime = new Date(lectureDateTime.getTime() + 60 * 60 * 1000);
+      
+      if (now >= lectureDateTime && now <= lectureEndTime) {
+        return 'utoku'; // Currently active
+      } else if (lectureDateTime > now) {
+        return 'uskoro'; // Future
+      } else {
+        return 'proslo'; // Past
+      }
+    };
     
-    // Active lectures ("u toku") come first
-    if (statusA.status === 'active' && statusB.status !== 'active') return -1;
-    if (statusA.status !== 'active' && statusB.status === 'active') return 1;
+    const statusA = getLectureStatus(a);
+    const statusB = getLectureStatus(b);
     
+    // Define priority order: utoku = 1, uskoro = 2, proslo = 3
+    const statusPriority = { utoku: 1, uskoro: 2, proslo: 3 };
+    
+    const priorityA = statusPriority[statusA];
+    const priorityB = statusPriority[statusB];
+    
+    // If different statuses, sort by priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    
+    // Same status - sort by date
     const dateA = new Date(a.date);
     const dateB = new Date(b.date);
     
-    // Set time if available (default to 12:00 if not specified)
-    if (a.time) {
-      const [hours, minutes] = a.time.split(':').map(Number);
-      if (!isNaN(hours) && !isNaN(minutes)) {
-        dateA.setHours(hours, minutes, 0, 0);
-      } else {
-        dateA.setHours(12, 0, 0, 0);
-      }
-    } else {
-      dateA.setHours(12, 0, 0, 0);
-    }
-    
-    if (b.time) {
-      const [hours, minutes] = b.time.split(':').map(Number);
-      if (!isNaN(hours) && !isNaN(minutes)) {
-        dateB.setHours(hours, minutes, 0, 0);
-      } else {
-        dateB.setHours(12, 0, 0, 0);
-      }
-    } else {
-      dateB.setHours(12, 0, 0, 0);
-    }
-    
-    // Treat cancelled lectures as past lectures for sorting purposes
-    const isACancelled = a.cancelled || a.status === 'cancelled';
-    const isBCancelled = b.cancelled || b.status === 'cancelled';
-    const isAFuture = !isACancelled && dateA > now;
-    const isBFuture = !isBCancelled && dateB > now;
-    
-    // Future lectures come after active but before past
-    if (isAFuture && !isBFuture) return -1;
-    if (!isAFuture && isBFuture) return 1;
-    
-    // Among future lectures, earliest first
-    if (isAFuture && isBFuture) {
+    if (statusA === 'uskoro') {
+      // Future lectures: earliest first
       return dateA.getTime() - dateB.getTime();
+    } else if (statusA === 'proslo') {
+      // Past lectures: most recent first
+      return dateB.getTime() - dateA.getTime();
+    } else if (statusA === 'utoku') {
+      // Active lectures: sort by time if available
+      if (a.time && b.time) {
+        return a.time.localeCompare(b.time);
+      }
+      return 0;
+    } else {
+      return 0;
     }
-    
-    // Among past lectures, most recent first
-    return dateB.getTime() - dateA.getTime();
   });
 };
 

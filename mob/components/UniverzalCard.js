@@ -185,10 +185,14 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
       default:
         // Fallback for unknown types or when type field is not available
         if (data.title && (data.speaker || data.daija)) {
+          // Check if lecture is cancelled
+          const isCancelled = data.isCancelled || data.status === 'cancelled';
+          
           return {
             type: 'lecture',
             title: data.title?.toUpperCase() || '',
             statusInfo,
+            isCancelled,
             items: [
               { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
               data.organization && { icon: 'Business', text: data.organization },
@@ -234,6 +238,16 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
   };
 
   const displayData = getDisplayData();
+
+  // Debug za otkazana predavanja
+  if (displayData.type === 'lecture' && displayData.isCancelled) {
+    console.log('🚫 Otkazano predavanje detektovano:', {
+      title: displayData.title,
+      isCancelled: displayData.isCancelled,
+      originalIsCancelled: data.isCancelled,
+      originalStatus: data.status
+    });
+  }
 
   // console.log('Image URL:', data.image ? getImageUrl(data.image) : 'Using default image');
 
@@ -387,7 +401,7 @@ const styles = StyleSheet.create({
       shadowOpacity: 0.1,
       shadowRadius: 2,
     },
-    marginBottom: SPACING.sm, // Smanjen sa card.margin (8) na sm (8) - može se smanjiti na xs (4) ako treba
+    marginBottom: SPACING.sm,
   },
   cardTitleContainer: {
     marginBottom: SPACING.xs,
@@ -513,17 +527,18 @@ const styles = StyleSheet.create({
     zIndex: 2,
     pointerEvents: 'none',
     overflow: 'hidden',
+    borderRadius: 8, // Match image border radius
   },
   cancelledLabel: {
     position: 'absolute',
     top: '50%',
     left: '50%',
-    width: 200, // Široka traka da pokrije dijagonalu
-    height: 40,
+    width: 200, // Širina prilagođena za sliku
+    height: 30,
     backgroundColor: '#f44336',
     transform: [
       { translateX: -100 }, // Pola širine
-      { translateY: -20 },  // Pola visine
+      { translateY: -15 },  // Pola visine
       { rotate: '-45deg' }
     ],
     alignItems: 'center',
@@ -538,7 +553,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
-    letterSpacing: 1.5,
+    letterSpacing: 1,
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 1, height: 1 },

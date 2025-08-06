@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import Image from 'next/image';
 import {
   Box,
@@ -61,7 +62,7 @@ const HeroSection = () => {
     >
       <ContentContainer>
         <Typography variant="h2" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-          DERS
+          Islamska predavanja - Ders.ba
         </Typography>
         <Divider color="white" sx={{ width: '20%', margin: '1rem auto', opacity: 0.5 }} />
         <Typography variant="h5" sx={{ mb: 3, opacity: 0.9, fontSize: '1.5rem' }}>
@@ -866,6 +867,11 @@ export default function Home() {
         alignItems: 'center'
       }}
     >
+      <Head>
+        <title>Islamska predavanja - Ders.ba</title>
+        <meta name="description" content="Pronađite najnovija predavanja, pratite omiljene daije i organizacije na jednom mjestu." />
+        <link rel="canonical" href="https://ders.ba" />
+      </Head>
       {/* Poruka o uspješnoj registraciji/prijavi */}
       {showRegistrationSuccess && (
         <Alert severity="success" sx={{ mb: 4, width: '100%', maxWidth: '600px', margin: '0 auto' }}>
