@@ -149,7 +149,7 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
           statusInfo,
           isCancelled,
           items: [
-            { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
+            { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker },
             data.organization && { icon: 'Business', text: data.organization },
             // Show date/time for all lectures including cancelled ones
             data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
@@ -162,7 +162,7 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
       case 'daija':
         return {
           type: 'daija',
-          title: formatDaijaTitle(data.name, data.title) || 'Nepoznata daija',
+          title: formatDaijaTitle(data.name, data.title) || data.name || data.title,
           
           items: [
             data.shortDescription && { icon: 'Description', text: data.shortDescription },
@@ -194,7 +194,7 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
             statusInfo,
             isCancelled,
             items: [
-              { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) || "Nepoznat daija" : data.speaker || "Nepoznat daija" },
+              { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker },
               data.organization && { icon: 'Business', text: data.organization },
               data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
               data.time && { icon: 'Time', text: data.time },
@@ -207,7 +207,7 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
         if ((data.title && data.name) || (data.name && data.title)) {
           return {
             type: 'daija',
-            title: data.name || 'Nepoznata daija',
+            title: data.name || data.title,
             titlePrefix: data.title?.toUpperCase(),
             items: [
               data.title && { icon: 'School', text: data.title.toUpperCase() },

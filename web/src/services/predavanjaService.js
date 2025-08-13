@@ -83,6 +83,18 @@ const predavanjaService = {
 
     const response = await apiClient.patch(`${ENV.API_ENDPOINTS.PREDAVANJA}/${id}`, payload);
     return response; // Backend returns response directly, not wrapped in data property
+  },
+
+  getStatistics: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    
+    if (params.year) queryParams.append('year', params.year);
+    if (params.startYear) queryParams.append('startYear', params.startYear);
+    if (params.endYear) queryParams.append('endYear', params.endYear);
+    
+    const endpoint = `${ENV.API_ENDPOINTS.PREDAVANJA}/statistics${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await apiClient.get(endpoint);
+    return response;
   }
 };
 

@@ -25,6 +25,7 @@ import UniversalPage from './screens/UniversalPage';
 import DashboardScreen from './screens/DashboardScreen';
 import Header from './components/Header';
 import Menu from './components/Menu';
+import SimplifiedStatistics from './components/SimplifiedStatistics';
 import apiClient from './services/apiClient';
 import daijeService from './services/daijeService';
 import udruzenjaService from './services/udruzenjaService';
@@ -273,6 +274,7 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection, fo
       stickySectionHeadersEnabled={false}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.sectionListContent}
+      ListHeaderComponent={<SimplifiedStatistics />}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}

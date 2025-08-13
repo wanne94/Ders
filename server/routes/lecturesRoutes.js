@@ -202,7 +202,7 @@ router.get('/public', async (req, res) => {
         daijaId: lecture.daija ? lecture.daija._id : null,
         speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
           ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
-          : lecture.speaker || 'Nepoznat predavač',
+          : lecture.speaker,
         // Explicitly include weekly lecture fields
         isWeeklyLecture: lecture.isWeeklyLecture,
         weekNumber: lecture.weekNumber,
@@ -499,6 +499,7 @@ router.post('/', authenticateToken, async (req, res) => {
       title,
       type = 'Predavanje',
       daija,
+      speaker,
       organization,
       organizationId,
       address,
@@ -554,6 +555,7 @@ router.post('/', authenticateToken, async (req, res) => {
           type,
           title: title,
           daija,
+          speaker,
           organization,
           organizationId,
           address,
@@ -606,6 +608,7 @@ router.post('/', authenticateToken, async (req, res) => {
         type,
         title,
         daija,
+        speaker,
         organization,
         organizationId,
         address,
@@ -637,30 +640,128 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
-// Get single lecture by ID
-router.get('/:id', async (req, res) => {
+// Get lecture statistics by month and year
+router.get('/statistics', async (req, res) => {
+  console.log('Statistics endpoint hit!');
   try {
-    // Validate ObjectId format
-    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ message: 'Invalid lecture ID format' });
+    const { year, startYear, endYear } = req.query;
+    
+    // Build date filter
+    let dateFilter = { status: 'approved' };
+    
+    if (year) {
+      // Specific year
+      const yearInt = parseInt(year);
+      dateFilter.date = {
+        $gte: new Date(yearInt, 0, 1),
+        $lt: new Date(yearInt + 1, 0, 1)
+      };
+    } else if (startYear && endYear) {
+      // Date range
+      dateFilter.date = {
+        $gte: new Date(parseInt(startYear), 0, 1),
+        $lt: new Date(parseInt(endYear) + 1, 0, 1)
+      };
     }
     
-    const lecture = await Lecture.findById(req.params.id)
-      .populate('createdBy', 'firstName lastName email');
+    // Get all lectures matching the filter
+    const lectures = await Lecture.find(dateFilter).select('date title daija organization');
     
-    if (!lecture) {
-      return res.status(404).json({ message: 'Lecture not found' });
-    }
+    // Process statistics
+    const monthlyStats = {};
+    const yearlyStats = {};
+    let totalCount = 0;
     
-    // Transform lecture to include daijaId for frontend compatibility
-    const transformedLecture = {
-      ...lecture.toObject(),
-      daijaId: lecture.daija || null
-    };
+    lectures.forEach(lecture => {
+      if (!lecture.date) return;
+      
+      const date = new Date(lecture.date);
+      const year = date.getFullYear();
+      const month = date.getMonth(); // 0-11
+      const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+      
+      // Monthly stats
+      if (!monthlyStats[monthKey]) {
+        monthlyStats[monthKey] = {
+          year,
+          month: month + 1,
+          count: 0,
+          lectures: []
+        };
+      }
+      monthlyStats[monthKey].count++;
+      monthlyStats[monthKey].lectures.push({
+        id: lecture._id,
+        title: lecture.title,
+        date: lecture.date,
+        daija: lecture.daija,
+        organization: lecture.organization
+      });
+      
+      // Yearly stats
+      if (!yearlyStats[year]) {
+        yearlyStats[year] = {
+          year,
+          count: 0,
+          monthlyBreakdown: {}
+        };
+      }
+      yearlyStats[year].count++;
+      
+      if (!yearlyStats[year].monthlyBreakdown[month + 1]) {
+        yearlyStats[year].monthlyBreakdown[month + 1] = 0;
+      }
+      yearlyStats[year].monthlyBreakdown[month + 1]++;
+      
+      totalCount++;
+    });
     
-    res.json(transformedLecture);
+    // Calculate averages and find peak month
+    const monthlyArray = Object.values(monthlyStats);
+    const averagePerMonth = monthlyArray.length > 0 
+      ? (totalCount / monthlyArray.length).toFixed(1) 
+      : 0;
+    
+    const peakMonth = monthlyArray.reduce((max, current) => 
+      current.count > (max?.count || 0) ? current : max, 
+      null
+    );
+    
+    // Get available years for filter
+    const availableYears = [...new Set(lectures.map(l => 
+      new Date(l.date).getFullYear()
+    ))].sort((a, b) => b - a);
+    
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          totalLectures: totalCount,
+          averagePerMonth,
+          peakMonth: peakMonth ? {
+            year: peakMonth.year,
+            month: peakMonth.month,
+            count: peakMonth.count
+          } : null,
+          totalMonths: monthlyArray.length,
+          totalYears: Object.keys(yearlyStats).length
+        },
+        monthlyStats: monthlyArray.sort((a, b) => {
+          if (a.year !== b.year) return b.year - a.year;
+          return b.month - a.month;
+        }),
+        yearlyStats: Object.values(yearlyStats).sort((a, b) => b.year - a.year),
+        availableYears
+      }
+    });
+    
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching lecture statistics:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Greška pri dohvaćanju statistika predavanja',
+      error: error.message 
+    });
   }
 });
 
@@ -691,7 +792,6 @@ router.get('/daija/:daijaId', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
 // Get lectures by organization ID
 router.get('/organization/:organizationId', async (req, res) => {
   try {
@@ -712,7 +812,6 @@ router.get('/organization/:organizationId', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
 // Admin endpoint - Get all lectures with cancellation reports for dashboard
 router.get('/admin/cancellation-reports', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
   try {
@@ -798,7 +897,6 @@ router.get('/admin/cancellation-reports', authenticateToken, isAdminOrSuperAdmin
     res.status(500).json({ message: 'Greška pri dohvaćanju prijava otkazivanja' });
   }
 });
-
 // Get all lectures for admin (including cancelled)
 router.get('/', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
   try {
@@ -822,7 +920,6 @@ router.get('/', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
 // Get pending lectures (admin only)
 router.get('/pending', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
   try {
@@ -841,7 +938,6 @@ router.get('/pending', authenticateToken, isAdminOrSuperAdmin, async (req, res) 
     res.status(500).json({ message: error.message });
   }
 });
-
 // Get approved lectures
 router.get('/approved', async (req, res) => {
   try {
@@ -860,7 +956,6 @@ router.get('/approved', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
 // Get latest lectures
 router.get('/latest', async (req, res) => {
   try {
@@ -880,6 +975,211 @@ router.get('/latest', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+// TEST ENDPOINT - Get public lectures without populate to debug
+router.get('/public-test', async (req, res) => {
+  
+  try {
+    const { status } = req.query;
+    
+    let statusFilter = { status: 'approved' };
+    
+    if (status === 'all') {
+      statusFilter = { status: { $in: ['approved', 'cancelled'] } };
+    }
+    
+    
+    // Simple query without populate
+    const lectures = await Lecture.find(statusFilter)
+      .select('title speaker status isCancelled date')
+      .lean();
+    
+    const cancelled = lectures.filter(l => l.status === 'cancelled');
+    
+    if (cancelled.length > 0) {
+    }
+    
+    res.json({
+      total: lectures.length,
+      cancelled: cancelled.length,
+      lectures: lectures
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+// Get weekly lecture series
+router.get('/weekly-series/:seriesId', async (req, res) => {
+  try {
+    const { seriesId } = req.params;
+    
+    const lectures = await Lecture.find({ 
+      weeklySeriesId: seriesId 
+    })
+      .populate('daija', 'name title')
+      .populate('organizationId', 'name')
+      .sort({ weekNumber: 1 });
+
+    if (lectures.length === 0) {
+      return res.status(404).json({ message: 'Serija predavanja nije pronađena' });
+    }
+
+    // Get series info from first lecture
+    const seriesInfo = {
+      seriesId: seriesId,
+      title: lectures[0].title,
+      totalWeeks: lectures[0].totalWeeks,
+      createdLectures: lectures.length,
+      remainingLectures: lectures[0].totalWeeks - lectures.length,
+      lectures: lectures.map(lecture => ({
+        _id: lecture._id,
+        weekNumber: lecture.weekNumber,
+        date: lecture.date,
+        time: lecture.time,
+        status: lecture.status,
+        isCancelled: lecture.isCancelled,
+        speaker: lecture.daija ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim() : lecture.speaker,
+        organization: lecture.organizationId?.name || lecture.organization,
+        address: lecture.address,
+        city: lecture.city
+      }))
+    };
+
+    res.json(seriesInfo);
+
+  } catch (error) {
+    res.status(500).json({ message: 'Greška pri dohvaćanju serije predavanja' });
+  }
+});
+
+// Get single lecture by ID
+router.get('/:id', async (req, res) => {
+  try {
+    // Skip if this is the statistics route (fallback for deployment issues)
+    if (req.params.id === 'statistics') {
+      const { year, startYear, endYear } = req.query;
+      
+      // Build date filter
+      let dateFilter = { status: 'approved' };
+      
+      if (year) {
+        // Specific year
+        const yearInt = parseInt(year);
+        dateFilter.date = {
+          $gte: new Date(yearInt, 0, 1),
+          $lt: new Date(yearInt + 1, 0, 1)
+        };
+      } else if (startYear && endYear) {
+        // Date range
+        dateFilter.date = {
+          $gte: new Date(parseInt(startYear), 0, 1),
+          $lt: new Date(parseInt(endYear) + 1, 0, 1)
+        };
+      }
+      
+      // Get all lectures matching the filter
+      const lectures = await Lecture.find(dateFilter).select('date title daija organization');
+      
+      // Process statistics
+      const monthlyStats = {};
+      const yearlyStats = {};
+      let totalCount = 0;
+      
+      lectures.forEach(lecture => {
+        if (!lecture.date) return;
+        
+        const date = new Date(lecture.date);
+        const year = date.getFullYear();
+        const month = date.getMonth(); // 0-11
+        const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+        
+        // Monthly stats
+        if (!monthlyStats[monthKey]) {
+          monthlyStats[monthKey] = {
+            year,
+            month: month + 1,
+            count: 0,
+            lectures: []
+          };
+        }
+        monthlyStats[monthKey].count++;
+        
+        // Yearly stats
+        if (!yearlyStats[year]) {
+          yearlyStats[year] = {
+            year,
+            count: 0,
+            monthlyBreakdown: {}
+          };
+        }
+        yearlyStats[year].count++;
+        
+        if (!yearlyStats[year].monthlyBreakdown[month + 1]) {
+          yearlyStats[year].monthlyBreakdown[month + 1] = 0;
+        }
+        yearlyStats[year].monthlyBreakdown[month + 1]++;
+        
+        totalCount++;
+      });
+      
+      // Calculate averages and find peak month
+      const monthlyArray = Object.values(monthlyStats);
+      const averagePerMonth = monthlyArray.length > 0 
+        ? (totalCount / monthlyArray.length).toFixed(1) 
+        : 0;
+      
+      const peakMonth = monthlyArray.reduce((max, current) => 
+        current.count > (max?.count || 0) ? current : max, 
+        null
+      );
+      
+      return res.json({
+        success: true,
+        data: {
+          summary: {
+            totalLectures: totalCount,
+            averagePerMonth,
+            peakMonth: peakMonth ? {
+              year: peakMonth.year,
+              month: peakMonth.month,
+              count: peakMonth.count
+            } : null
+          },
+          monthlyStats: monthlyArray,
+          yearlyStats: Object.values(yearlyStats)
+        }
+      });
+    }
+    
+    // Validate ObjectId format
+    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid lecture ID format' });
+    }
+    
+    const lecture = await Lecture.findById(req.params.id)
+      .populate('createdBy', 'firstName lastName email');
+    
+    if (!lecture) {
+      return res.status(404).json({ message: 'Lecture not found' });
+    }
+    
+    // Transform lecture to include daijaId for frontend compatibility
+    const transformedLecture = {
+      ...lecture.toObject(),
+      daijaId: lecture.daija || null
+    };
+    
+    res.json(transformedLecture);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+
+
+
+
 
 // Cancellation endpoints
 // Report lecture cancellation
@@ -1100,38 +1400,6 @@ router.post('/:id/override-cancellation', authenticateToken, isAdminOrSuperAdmin
   }
 });
 
-// TEST ENDPOINT - Get public lectures without populate to debug
-router.get('/public-test', async (req, res) => {
-  
-  try {
-    const { status } = req.query;
-    
-    let statusFilter = { status: 'approved' };
-    
-    if (status === 'all') {
-      statusFilter = { status: { $in: ['approved', 'cancelled'] } };
-    }
-    
-    
-    // Simple query without populate
-    const lectures = await Lecture.find(statusFilter)
-      .select('title speaker status isCancelled date')
-      .lean();
-    
-    const cancelled = lectures.filter(l => l.status === 'cancelled');
-    
-    if (cancelled.length > 0) {
-    }
-    
-    res.json({
-      total: lectures.length,
-      cancelled: cancelled.length,
-      lectures: lectures
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // Admin endpoint - Reset cancellation reports
 router.delete('/:id/reset-cancellation', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
@@ -1318,48 +1586,6 @@ router.post('/process-weekly', authenticateToken, isAdminOrSuperAdmin, async (re
   }
 });
 
-// Get weekly lecture series
-router.get('/weekly-series/:seriesId', async (req, res) => {
-  try {
-    const { seriesId } = req.params;
-    
-    const lectures = await Lecture.find({ 
-      weeklySeriesId: seriesId 
-    })
-      .populate('daija', 'name title')
-      .populate('organizationId', 'name')
-      .sort({ weekNumber: 1 });
 
-    if (lectures.length === 0) {
-      return res.status(404).json({ message: 'Serija predavanja nije pronađena' });
-    }
-
-    // Get series info from first lecture
-    const seriesInfo = {
-      seriesId: seriesId,
-      title: lectures[0].title,
-      totalWeeks: lectures[0].totalWeeks,
-      createdLectures: lectures.length,
-      remainingLectures: lectures[0].totalWeeks - lectures.length,
-      lectures: lectures.map(lecture => ({
-        _id: lecture._id,
-        weekNumber: lecture.weekNumber,
-        date: lecture.date,
-        time: lecture.time,
-        status: lecture.status,
-        isCancelled: lecture.isCancelled,
-        speaker: lecture.daija ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim() : lecture.speaker,
-        organization: lecture.organizationId?.name || lecture.organization,
-        address: lecture.address,
-        city: lecture.city
-      }))
-    };
-
-    res.json(seriesInfo);
-
-  } catch (error) {
-    res.status(500).json({ message: 'Greška pri dohvaćanju serije predavanja' });
-  }
-});
 
 module.exports = router; 

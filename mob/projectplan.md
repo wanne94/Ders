@@ -134,7 +134,7 @@ Kompletno testiranje mobilne aplikacije DERS.BA je završeno. Svi planirani zada
 
 ### 📄 DETALJAN IZVJEŠTAJ
 Sve pronađene probleme, prijedloge rješenja i implementacijski plan se nalaze u:
-`/home/avdo/Ders/mob/temp/test-results.md`
+`/home/avdo/Ders/temp/test-results.md`
 
 ### 🔄 SLJEDEĆI KORACI
 1. Prioritizovati kritične probleme

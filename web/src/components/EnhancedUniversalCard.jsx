@@ -63,12 +63,11 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
           isLive: lectureStatus.isLive,
           isUpcoming: lectureStatus.isUpcoming,
           infoItems: [
-            { icon: <PersonIcon />, text: 
-              data.daija && typeof data.daija === 'object' 
-                ? formatDaijaTitle(data.daija.name, data.daija.title) || 'Daija nije unesen'
-                : data.speaker || 'Daija nije unesen' 
-            },
-            { icon: <BusinessIcon />, text: data.organization || 'Nepoznato udruženje' },
+            data.daija && typeof data.daija === 'object' 
+              ? { icon: <PersonIcon />, text: formatDaijaTitle(data.daija.name, data.daija.title) }
+              : data.speaker ? { icon: <PersonIcon />, text: data.speaker }
+              : null,
+            data.organization && { icon: <BusinessIcon />, text: data.organization },
             data.date && { icon: <CalendarTodayIcon />, text: formatDateWithDay(data.date) },
             data.time && { icon: <AccessTimeIcon />, text: data.time },
             data.address && { icon: <LocationOnIcon />, text: data.address },

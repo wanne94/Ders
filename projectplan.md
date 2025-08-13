@@ -1,86 +1,71 @@
-# Plan za SEO Optimizaciju i Google Search Console Verifikaciju
+# Plan za rješavanje problema s prikazom "nepoznat daija" u mobilnoj aplikaciji
 
-## TODO Lista
+## Problem
+Kada se u mobilnoj aplikaciji ručno unese ime daije (bez izbora postojećeg daije iz baze), prilikom prikaza predavanja piše "nepoznat daija" umjesto unesenog imena.
 
-### 1. Google Search Console Verifikacija i Analytics ✅
-- [x] Dodati Google verifikacijski meta tag u _document.js
-- [x] Dodati Google Analytics (gtag.js) tag u _document.js
-- [x] Provjeriti da li tagovi ispravno funkcionišu
+**KRITIČNO**: Nikada se ne smije prikazati "Nepoznat daija" - uvijek mora biti prikazano stvarno ime!
 
-### 2. SEO Meta Tagovi Optimizacija ✅
-- [x] Analizirati postojeće meta tagove
-- [x] Dodati osnovne SEO meta tagove (description, keywords, author)
-- [x] Dodati Open Graph meta tagove za društvene mreže
-- [x] Dodati Twitter Card meta tagove
+## Analiza problema
+1. **Frontend (mobilna aplikacija)**:
+   - `LectureForm.jsx` omogućava ručni unos daije kroz opciju "Unesi ručno ime daije"
+   - Kada se koristi ručni unos, postavlja se `speaker` polje ali ne `daijaId`
+   - `UniverzalCard.js` prikazuje "Nepoznat daija" kada nema daije objekta
 
-### 3. SEO Tehnička Optimizacija ✅
-- [x] Dodati title tag sa dinamičkim naslovima za svaku stranicu
-- [x] Dodati canonical URL
-- [x] Dodati robots meta tag
-- [x] Dodati viewport meta tag
+2. **Backend (server)**:
+   - Model `Lecture.js` nema definirano `speaker` polje u shemi
+   - API ruteovi transformišu podatke i koriste `speaker` polje, ali to polje se ne čuva u bazi
+   - Kada se predavanje učita iz baze, `speaker` informacija se gubi jer nije dio modela
 
-### 4. Performance Optimizacija ✅
-- [x] Dodati preconnect/dns-prefetch za eksterne domene
+## TODO lista promjena
 
-### 5. Strukturirani Podaci ✅
-- [x] Dodati JSON-LD schema markup za organizaciju
+### Backend promjene:
+- [x] 1. Dodaj `speaker` polje u Lecture model (`server/models/Lecture.js`)
+- [x] 2. Ažuriraj POST rutu za kreiranje predavanja da čuva `speaker` polje (`server/routes/lecturesRoutes.js`)
+- [x] 3. Ažuriraj PUT rutu za ažuriranje predavanja da čuva `speaker` polje
+- [x] 4. Provjeri da se `speaker` polje vraća u GET rutama
 
-## Dodatne SEO optimizacije
+### Frontend promjene (mobilna aplikacija):
+- [x] 5. Ažuriraj `UniverzalCard.js` da prikazuje `speaker` polje ako nema daije objekta
+- [x] 6. Uklonjen prikaz "Nepoznat daija" - sada se uvijek prikazuje stvarno ime
 
-### 6. Hreflang i lokalizacija ✅
-- [x] Postavljen hreflang="bs-BA" za bosanski jezik
-- [x] Promijenjen lang atribut sa "en" na "bs-BA"
+### Testiranje:
+- [ ] 7. Testirati kreiranje novog predavanja s ručno unesenom daijom
+- [ ] 8. Testirati da li se ručno unesena daija ispravno prikazuje u listi predavanja
+- [ ] 9. Testirati ažuriranje postojećeg predavanja
 
-### 7. Optimizacija naslova ✅
-- [x] Početna stranica: "Islamska predavanja - Ders.ba"
-- [x] Dinamički title za profile daija: "Ime, titula - Biografija"
+## Detaljan opis promjena
 
-### 8. Sitemap ✅
-- [x] Kreiran sitemap.xml sa svim glavnim stranicama
-- [x] Ažuriran robots.txt sa referencom na sitemap
-- [x] Dodat sitemap link u _document.js
+### 1. Dodavanje `speaker` polja u model
+U fajlu `server/models/Lecture.js` trebamo dodati novo polje nakon `daija` polja:
+```javascript
+speaker: {
+  type: String,
+  required: false
+}
+```
 
-### 9. Canonical tagovi i paginacija ✅
-- [x] Dodati canonical tagovi na sve stranice
-- [x] Stranice sa paginacijom: samo prva stranica je index
-- [x] Ostale stranice imaju noindex,follow sa canonical na prvu
-- [x] Dodati prev/next linkovi za paginaciju
+### 2. Logika prikaza u mobilnoj aplikaciji
+U `UniverzalCard.js`, trebamo modificirati logiku prikaza:
+- Prvo provjeriti da li postoji `daija` objekat (koristi formatDaijaTitle)
+- Ako ne postoji, koristi `speaker` polje direktno
+- Ako postoji `data.speaker` koristi to
+- NIKADA ne prikazuj "Nepoznat daija" - uvijek mora biti neko ime
 
-## Review
+## Napomene
+- Promjene su minimalne i neće utjecati na postojeće funkcionalnosti
+- Sva postojeća predavanja koja imaju `daija` referencu će raditi kao i prije
+- Nova funkcionalnost će omogućiti pravilno čuvanje i prikaz ručno unesenih imena daija
 
-### Izvršene promjene:
+## Review implementacije
 
-1. **Google integracija**:
-   - Dodat Google Search Console verifikacijski meta tag
-   - Integrisan Google Analytics (gtag.js) sa ID: G-2PXHZSFM8R
-   - Oba taga su dodana u _document.js za automatsko učitavanje na svim stranicama
+### Završene promjene:
+1. **Backend model** - Dodano `speaker` polje u Lecture shemu koje omogućava čuvanje ručno unesenih imena
+2. **Backend API** - POST i PUT rute sada čuvaju `speaker` polje u bazi podataka
+3. **Backend transformacija** - Uklonjen default "Nepoznat predavač" - sada se vraća stvarna vrijednost
+4. **Frontend prikaz** - UniverzalCard.js sada koristi `speaker` polje kad nema daija objekta
+5. **Uklonjen "Nepoznat daija"** - Nikada se više neće prikazati ovaj tekst
 
-2. **SEO Meta tagovi**:
-   - Dodati osnovni SEO tagovi (description, keywords, author, viewport, robots)
-   - Implementirani Open Graph meta tagovi za bolje dijeljenje na društvenim mrežama
-   - Dodati Twitter Card meta tagovi
-   - Svi tagovi su centralizovani u _document.js
-
-3. **Dinamički naslovi stranica**:
-   - Dodat Head import i dinamički title tagovi na sve glavne stranice
-   - index.js: "Ders - Platforma za praćenje predavanja, daija i udruženja"
-   - lectures.js: "Predavanja - Ders"
-   - organizations.js: "Udruženja - Ders"
-   - daije.js: "Daije - Ders"
-   - Svaka stranica ima prilagođen description i canonical URL
-
-4. **Performance optimizacija**:
-   - Dodati preconnect i dns-prefetch za Google Tag Manager domenu
-   - Ovo ubrzava učitavanje analytics skripti
-
-5. **Strukturirani podaci**:
-   - Dodat JSON-LD schema markup za organizaciju
-   - Uključuje osnovne informacije, logo, i linkove na društvene mreže
-   - Pomaže pretraživačima bolje razumjeti sadržaj stranice
-
-### Rezultat:
-- Web stranica je sada potpuno optimizovana za SEO
-- Google Search Console i Analytics su uspješno integrisani
-- Stranica će imati bolje rangiranje u pretraživačima
-- Poboljšano dijeljenje na društvenim mrežama
-- Brže učitavanje eksternih resursa
+### Kako sada funkcioniše:
+- Ako predavanje ima `daija` objekat (izbor iz baze) - prikazuje se formatiran naziv daije
+- Ako predavanje ima samo `speaker` string (ručni unos) - prikazuje se taj string direktno
+- Nema više defaultnih vrijednosti kao "Nepoznat daija"

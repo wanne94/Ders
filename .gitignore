@@ -47,14 +47,9 @@ Thumbs.db
 /web/public/upload/
 /public/upload/
 /public/uploads/
-
-# Temporary files
-*.tmp
-*.temp
-tmp/
+ 
+#temporary files
 temp/
-.cache/
-.temp/
 
 # Security & Credentials
 *.pem
@@ -94,6 +89,7 @@ mongodb-data/
 *.pid
 *.seed
 *.pid.lock
+
 # Large files
 *.zip
 mob.zip

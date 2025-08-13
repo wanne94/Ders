@@ -16,6 +16,10 @@ const lectureSchema = new mongoose.Schema({
     ref: 'Daija',
     required: false
   },
+  speaker: {
+    type: String,
+    required: false
+  },
   organization: {
     type: String,
     required: false

@@ -548,6 +548,126 @@ app.get('/api/lectures', async (req, res) => {
   }
 });
 
+// Statistics route - MUST come before any dynamic routes
+app.get('/api/lectures/statistics', async (req, res) => {
+  console.log('Statistics endpoint hit in index.js!');
+  const Lecture = require('./models/Lecture');
+  
+  try {
+    const { year, startYear, endYear } = req.query;
+    
+    // Build date filter
+    let dateFilter = { status: 'approved' };
+    
+    if (year) {
+      const yearInt = parseInt(year);
+      dateFilter.date = {
+        $gte: new Date(yearInt, 0, 1),
+        $lt: new Date(yearInt + 1, 0, 1)
+      };
+    } else if (startYear && endYear) {
+      dateFilter.date = {
+        $gte: new Date(parseInt(startYear), 0, 1),
+        $lt: new Date(parseInt(endYear) + 1, 0, 1)
+      };
+    }
+    
+    const lectures = await Lecture.find(dateFilter).select('date title daija organization');
+    
+    // Process statistics
+    const monthlyStats = {};
+    const yearlyStats = {};
+    let totalCount = 0;
+    
+    lectures.forEach(lecture => {
+      if (!lecture.date) return;
+      
+      const date = new Date(lecture.date);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+      
+      if (!monthlyStats[monthKey]) {
+        monthlyStats[monthKey] = {
+          year,
+          month: month + 1,
+          count: 0,
+          lectures: []
+        };
+      }
+      monthlyStats[monthKey].count++;
+      monthlyStats[monthKey].lectures.push({
+        id: lecture._id,
+        title: lecture.title,
+        date: lecture.date,
+        daija: lecture.daija,
+        organization: lecture.organization
+      });
+      
+      if (!yearlyStats[year]) {
+        yearlyStats[year] = {
+          year,
+          count: 0,
+          monthlyBreakdown: {}
+        };
+      }
+      yearlyStats[year].count++;
+      
+      if (!yearlyStats[year].monthlyBreakdown[month + 1]) {
+        yearlyStats[year].monthlyBreakdown[month + 1] = 0;
+      }
+      yearlyStats[year].monthlyBreakdown[month + 1]++;
+      
+      totalCount++;
+    });
+    
+    const monthlyArray = Object.values(monthlyStats);
+    const averagePerMonth = monthlyArray.length > 0 
+      ? (totalCount / monthlyArray.length).toFixed(1) 
+      : 0;
+    
+    const peakMonth = monthlyArray.reduce((max, current) => 
+      current.count > (max?.count || 0) ? current : max, 
+      null
+    );
+    
+    const availableYears = [...new Set(lectures.map(l => 
+      new Date(l.date).getFullYear()
+    ))].sort((a, b) => b - a);
+    
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          totalLectures: totalCount,
+          averagePerMonth,
+          peakMonth: peakMonth ? {
+            year: peakMonth.year,
+            month: peakMonth.month,
+            count: peakMonth.count
+          } : null,
+          totalMonths: monthlyArray.length,
+          totalYears: Object.keys(yearlyStats).length
+        },
+        monthlyStats: monthlyArray.sort((a, b) => {
+          if (a.year !== b.year) return b.year - a.year;
+          return b.month - a.month;
+        }),
+        yearlyStats: Object.values(yearlyStats).sort((a, b) => b.year - a.year),
+        availableYears
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching lecture statistics:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Greška pri dohvaćanju statistika predavanja',
+      error: error.message 
+    });
+  }
+});
+
 // Get all rejected lectures
 app.get('/api/lectures/rejected', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
   try {
@@ -618,7 +738,7 @@ app.get('/api/lectures/admin/cancelled-reports', authenticateToken, isAdminOrSup
       daijaId: lecture.daija?._id || lecture.daija || null,
       speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
         ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
-        : lecture.speaker || 'Nepoznat predavač'
+        : lecture.speaker
     }));
 
     res.json({
@@ -758,7 +878,7 @@ app.get('/api/lectures/dashboard/public', async (req, res) => {
       daijaId: lecture.daija ? lecture.daija._id : null,
       speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
         ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
-        : lecture.speaker || 'Nepoznat predavač'
+        : lecture.speaker
     }));
 
     res.json(transformedLectures);
@@ -1437,45 +1557,13 @@ app.get('/api/lectures/public', async (req, res) => {
   }
 });
 
-// Get single lecture by ID
+// REMOVED - This route is now handled in lecturesRoutes.js
+// The duplicate here was causing /statistics to be treated as :id
+/*
 app.get('/api/lectures/:id', async (req, res) => {
-  try {
-    logger.info('Fetching lecture by ID:', req.params.id);
-    
-    // Validate ObjectId format
-    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
-      logger.warn('Invalid lecture ID format:', req.params.id);
-      return res.status(400).json({ message: 'Invalid lecture ID format' });
-    }
-    
-    const lecture = await Lecture.findById(req.params.id)
-      .populate('createdBy', 'firstName lastName email')
-      .populate('daija', 'name title image');
-    
-    if (!lecture) {
-      logger.warn('Lecture not found with ID:', req.params.id);
-      return res.status(404).json({ message: 'Lecture not found' });
-    }
-    
-    logger.info('Found lecture:', { 
-      id: lecture._id, 
-      title: lecture.title, 
-      createdBy: lecture.createdBy?.firstName 
-    });
-    
-    // Transform lecture to include daijaId for frontend compatibility
-    const transformedLecture = {
-      ...lecture.toObject(),
-      daijaId: lecture.daija?._id || lecture.daija || null,
-      speaker: lecture.daija ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim() : lecture.speaker || 'Nepoznat daija'
-    };
-    
-    res.json(transformedLecture);
-  } catch (error) {
-    logger.error('Error fetching lecture by ID:', error);
-    res.status(500).json({ message: error.message });
-  }
+  // Route moved to lecturesRoutes.js
 });
+*/
 
 // Get lectures by daija ID
 app.get('/api/lectures/daija/:daijaId', async (req, res) => {
@@ -1956,6 +2044,7 @@ app.put('/api/lectures/:id', authenticateToken, async (req, res) => {
     let updateData = {
       ...req.body,
       daija: req.body.daijaId || null,
+      speaker: req.body.speaker || null,
       organizationId: req.body.organizationId || null,
       // Explicitly include weekly lecture fields
       isWeeklyLecture: req.body.isWeeklyLecture || false,

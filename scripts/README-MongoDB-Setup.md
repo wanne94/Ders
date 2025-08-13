@@ -41,7 +41,7 @@ netsh advfirewall firewall add rule name="MongoDB WSL2" dir=in action=allow prot
 ```bash
 # U WSL2:
 cd /mnt/c/react-apps/predavanje
-node scripts/test-mongodb-connection.js
+node ../temp/test-mongodb-connection.js
 ```
 
 ## Riješenje 2: Automatska konfiguracija (Pojednostavljeno)

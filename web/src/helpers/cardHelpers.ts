@@ -28,17 +28,19 @@ export const formatLectureCard = (lecture: any): CardData => {
       ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim()
       : lecture.speaker;
     
-    infoItems.push({
-      icon: '👨‍🏫',
-      text: speakerName || 'Nepoznat daija'
-    });
+    if (speakerName) {
+      infoItems.push({
+        icon: '👨‍🏫',
+        text: speakerName
+      });
+    }
   }
 
   // Organization
   if (lecture.organization?.name || lecture.organization) {
     infoItems.push({
       icon: '🏢',
-      text: lecture.organization?.name || lecture.organization || 'Nepoznato udruženje'
+      text: lecture.organization?.name || lecture.organization
     });
   }
 
@@ -126,7 +128,7 @@ export const formatDaijaCard = (daija: any, lectureCount?: number): CardData => 
 
   const formatDaijaName = (daija: any) => {
     // Use name field for daija
-    return daija?.name || 'Nepoznat daija';
+    return daija?.name || '';
   };
 
   const formatDaijaTitle = (daija: any) => {

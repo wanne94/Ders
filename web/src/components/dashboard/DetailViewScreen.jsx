@@ -257,9 +257,11 @@ const DetailViewScreen = ({
       </Grid>
       <Grid item xs={12} md={8}>
         <Stack spacing={2}>
-          <Typography variant="h4" gutterBottom>
-            {item.name || 'Nepoznata daija'}
-          </Typography>
+          {item.name && (
+            <Typography variant="h4" gutterBottom>
+              {item.name}
+            </Typography>
+          )}
           
           {item.email && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

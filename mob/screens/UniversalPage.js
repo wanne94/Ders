@@ -12,6 +12,7 @@ import { applySorting, sortLecturesByStatus } from '../utils/sortingUtils';
 import { ENV } from '../config';
 import { getUserData } from '../utils/authHelpers';
 import { SkeletonCardList } from '../components/SkeletonCard';
+import SimplifiedStatistics from '../components/SimplifiedStatistics';
 
 const COLORS = {
   primary: '#022C43',
@@ -332,6 +333,14 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
     </View>
   );
 
+  // Header component for lectures - shows statistics
+  const ListHeaderComponent = () => {
+    if (type === 'lectures') {
+      return <SimplifiedStatistics />;
+    }
+    return null;
+  };
+
   // Show more button component
   const ListFooterComponent = () => {
     if (!hasMoreItems) return null;
@@ -401,6 +410,7 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
           />
         }
         ListEmptyComponent={ListEmptyComponent}
+        ListHeaderComponent={ListHeaderComponent}
         ListFooterComponent={ListFooterComponent}
         onEndReached={loadMoreItems}
         onEndReachedThreshold={0.5}

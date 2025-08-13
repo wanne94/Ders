@@ -33,7 +33,13 @@ const UpdateChecker = () => {
       await AsyncStorage.setItem(UPDATE_CHECK_KEY, now.toString());
 
       // Get current version
-      const currentVersion = VersionCheck.getCurrentVersion();
+      let currentVersion = null;
+      try {
+        currentVersion = VersionCheck.getCurrentVersion();
+      } catch (error) {
+        console.log('Error getting current version:', error);
+        return;
+      }
       
       // Check if currentVersion is valid
       if (!currentVersion) {
@@ -53,10 +59,16 @@ const UpdateChecker = () => {
       }
 
       // Compare versions
-      const needUpdate = await VersionCheck.needUpdate({
-        currentVersion,
-        latestVersion: latestVersion.version,
-      });
+      let needUpdate = null;
+      try {
+        needUpdate = await VersionCheck.needUpdate({
+          currentVersion,
+          latestVersion: latestVersion.version,
+        });
+      } catch (error) {
+        console.log('Error comparing versions:', error);
+        return;
+      }
 
       if (needUpdate && needUpdate.isNeeded) {
         // Check if user already dismissed this version
@@ -72,8 +84,10 @@ const UpdateChecker = () => {
         });
 
         // Determine if it's a force update (major version change)
-        const currentMajor = parseInt(currentVersion.split('.')[0]);
-        const latestMajor = parseInt(latestVersion.version.split('.')[0]);
+        const currentParts = currentVersion ? currentVersion.split('.') : ['0'];
+        const latestParts = latestVersion.version ? latestVersion.version.split('.') : ['0'];
+        const currentMajor = parseInt(currentParts[0]) || 0;
+        const latestMajor = parseInt(latestParts[0]) || 0;
         
         if (latestMajor > currentMajor) {
           setIsForceUpdate(true);

@@ -36,7 +36,9 @@ export const generateICS = (lecture) => {
   const location = [address, city].filter(Boolean).join(', ');
   
   // Build description
-  const fullDescription = `Predavač: ${speaker || 'Nepoznat'}\\n${description || ''}`;
+  const fullDescription = speaker 
+    ? `Predavač: ${speaker}\\n${description || ''}` 
+    : description || '';
   
   // Generate ICS content
   const icsContent = [
@@ -113,7 +115,9 @@ export const addToGoogleCalendar = (lecture) => {
     action: 'TEMPLATE',
     text: title,
     dates: `${formatDateGoogle(eventDate)}/${formatDateGoogle(endDate)}`,
-    details: `Predavač: ${speaker || 'Nepoznat'}\n${description || ''}`,
+    details: speaker 
+      ? `Predavač: ${speaker}\n${description || ''}` 
+      : description || '',
     location: [address, city].filter(Boolean).join(', ')
   });
   

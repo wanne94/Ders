@@ -33,6 +33,7 @@ import { sortLecturers, sortAssociations } from '../../utils/sortingUtils';
 import Toast from '../Toast';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImage, getImageUrl } from '../../utils/imageUtils';
+import { isAuthenticated as checkIsAuthenticated } from '../../utils/authHelpers';
 
 const COLORS = {
   primary: '#022C43',
@@ -512,6 +513,20 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     try {
       setLoading(true);
 
+      // Check if user is authenticated
+      const isAuth = await checkIsAuthenticated();
+      if (!isAuth) {
+        Alert.alert(
+          'Prijavite se', 
+          'Morate biti prijavljeni da biste dodali predavanje. Molimo prijavite se na svoj nalog.',
+          [
+            { text: 'OK', style: 'default' }
+          ]
+        );
+        setLoading(false);
+        return;
+      }
+
       // Validate required fields
       if (!validateForm()) {
         return;
@@ -538,9 +553,10 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       }
 
-      // Prepare final form data
+      // Prepare final form data - map daijaId to daija for server compatibility
       const finalFormData = {
         ...formData,
+        daija: formData.daijaId, // Server expects 'daija' field, not 'daijaId'
         image: imagePath,
         date: formattedDate
       };
@@ -602,6 +618,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         value={formData[field]}
         onChangeText={(value) => handleInputChange(field, value)}
         placeholder={placeholder}
+        placeholderTextColor={COLORS.gray}
         multiline={multiline}
         numberOfLines={multiline ? 4 : 1}
       />
@@ -620,12 +637,15 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
             onValueChange={onValueChange}
             style={styles.picker}
             mode="dropdown"
+            itemStyle={styles.pickerItem}
           >
             {items.map((item, index) => (
               <Picker.Item
                 key={item.value || `item-${index}`}
                 label={item.label}
                 value={item.value}
+                style={styles.pickerItem}
+                color="#000000"
               />
             ))}
           </Picker>
@@ -934,6 +954,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     backgroundColor: COLORS.white,
+    color: '#000000',
   },
   multilineInput: {
     height: 100,
@@ -961,12 +982,15 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     borderRadius: 8,
     backgroundColor: COLORS.white,
+    overflow: 'hidden',
   },
   picker: {
     height: 50,
+    color: '#000000',
   },
   pickerItem: {
-    // Add any custom styles for picker items if needed
+    color: '#000000',
+    fontSize: 16,
   },
   // Modal styles
   modalOverlay: {

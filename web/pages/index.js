@@ -36,6 +36,7 @@ import { OrganizationsGrid, DaijeGrid, LecturesGrid } from '@/components/GridLay
 import UniversalCard from '@/components/UniversalCard';
 import SkeletonGrid from '@/components/SkeletonGrid';
 import LecturesSection from '@/components/LecturesSection';
+import SimplifiedStatistics from '@/components/SimplifiedStatistics';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 import { deviceUtils, storage } from '@/utils';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
@@ -923,9 +924,14 @@ export default function Home() {
       </Box>
 
 
-      {/* Quick Actions */}
+      {/* Quick Actions - REMOVED
       <Box sx={{ width: '100%', mb: 4 }}>
         <QuickActions />
+      </Box> */}
+
+      {/* Lecture Statistics */}
+      <Box sx={{ width: '100%', mb: 4 }}>
+        <SimplifiedStatistics />
       </Box>
 
      
