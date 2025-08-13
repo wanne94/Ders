@@ -144,12 +144,15 @@ const CancellationReportForm = ({
                       if (errors.howFound) setErrors({ ...errors, howFound: null });
                     }}
                     style={styles.picker}
+                    dropdownIconColor="#000000"
                   >
                     {howFoundOptions.map((option) => (
                       <Picker.Item 
                         key={option.value} 
                         label={option.label} 
                         value={option.value}
+                        color="#000000"
+                        style={{backgroundColor: '#FFFFFF'}}
                       />
                     ))}
                   </Picker>
@@ -292,9 +295,12 @@ const styles = StyleSheet.create({
     borderColor: COLORS.borderGray,
     borderRadius: 8,
     overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
   },
   picker: {
     height: 50,
+    color: '#000000',
+    backgroundColor: '#FFFFFF',
   },
   errorText: {
     color: COLORS.error,

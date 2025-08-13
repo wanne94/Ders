@@ -897,11 +897,8 @@ const Dashboard = () => {
 
     switch (activeSection) {
       case 'za-odobrenje': {
-        const pendingLectures = filterData(
-          (data.lectures || []).filter(l => l.status === 'pending'),
-          searchQueries.lectures,
-          'lecture'
-        );
+        // Lectures no longer need approval - automatically approved
+        const pendingLectures = [];
         
         const pendingDaije = filterData(
           (data.daije || []).filter(d => d.status === 'pending'),
@@ -917,10 +914,9 @@ const Dashboard = () => {
         
         return (
           <>
-            {pendingLectures.length > 0 && renderSection('pending', pendingLectures, 'Predavanja za odobrenje', 'lecture')}
             {pendingDaije.length > 0 && renderSection('pending', pendingDaije, 'Daije za odobrenje', 'daija')}
             {pendingOrganizations.length > 0 && renderSection('pending', pendingOrganizations, 'Udruženja za odobrenje', 'organization')}
-            {pendingLectures.length === 0 && pendingDaije.length === 0 && pendingOrganizations.length === 0 && (
+            {pendingDaije.length === 0 && pendingOrganizations.length === 0 && (
               <Box sx={{ textAlign: 'center', py: 8 }}>
                 <Typography variant="h6" color="text.secondary">
                   Nema sadržaja za odobrenje

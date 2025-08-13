@@ -36,11 +36,50 @@ const SimplifiedStatistics = () => {
       setIsLoading(true);
       setError(null);
       
-      // Fetch statistics for 2025
-      const response = await apiClient.get('/lectures/statistics?year=2025');
+      // Temporary workaround: fetch all lectures and calculate statistics locally
+      // until the server endpoint is fixed in production
+      const response = await apiClient.get('/lectures/public?status=all');
       
-      if (response.data && response.data.success) {
-        setStatistics(response.data.data);
+      if (response.data) {
+        const lectures = Array.isArray(response.data) ? response.data : [];
+        
+        // Filter for 2025 and approved lectures
+        const lectures2025 = lectures.filter(lecture => {
+          if (!lecture.date || lecture.status !== 'approved') return false;
+          const year = new Date(lecture.date).getFullYear();
+          return year === 2025;
+        });
+        
+        // Calculate monthly statistics
+        const monthlyStats = {};
+        let totalCount = 0;
+        
+        lectures2025.forEach(lecture => {
+          const date = new Date(lecture.date);
+          const month = date.getMonth() + 1; // 1-12
+          const year = date.getFullYear();
+          
+          const key = `${year}-${month}`;
+          if (!monthlyStats[key]) {
+            monthlyStats[key] = {
+              year,
+              month,
+              count: 0
+            };
+          }
+          monthlyStats[key].count++;
+          totalCount++;
+        });
+        
+        // Convert to array format expected by the component
+        const monthlyStatsArray = Object.values(monthlyStats);
+        
+        setStatistics({
+          summary: {
+            totalLectures: totalCount
+          },
+          monthlyStats: monthlyStatsArray
+        });
       }
     } catch (err) {
       console.error('Error fetching statistics:', err);
@@ -75,8 +114,8 @@ const SimplifiedStatistics = () => {
     return null;
   }
 
-  // Prepare data for the chart
-  const monthNames = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+  // Prepare data for the chart - using numbers instead of letters
+  const monthNames = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
   const monthFullNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec'];
   
   // Find max value for scaling
@@ -100,6 +139,7 @@ const SimplifiedStatistics = () => {
     <View style={styles.container}>
       <View style={styles.card}>
         <Text style={styles.title}>Statistika predavanja 2025</Text>
+        <Text style={styles.subtitle}>Mjesečno</Text>
         
         {/* Chart Container */}
         <ScrollView 
@@ -173,6 +213,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.primary,
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: COLORS.gray,
     textAlign: 'center',
     marginBottom: 20,
   },

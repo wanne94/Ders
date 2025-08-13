@@ -274,7 +274,9 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection, fo
       stickySectionHeadersEnabled={false}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.sectionListContent}
-      ListHeaderComponent={<SimplifiedStatistics />}
+      ListFooterComponent={<SimplifiedStatistics />}
+      bounces={true}
+      overScrollMode="always"
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -302,6 +304,11 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection, fo
 
 // Main App Component
 export default function App() {
+  // Force light theme regardless of system settings
+  useEffect(() => {
+    Appearance.setColorScheme('light');
+  }, []);
+  
   const [activeTab, setActiveTab] = useState('home');
   const homeScrollRef = useRef(null);
   const universalPageRef = useRef(null);
@@ -403,15 +410,7 @@ export default function App() {
       return;
     }
     
-    // If clicking on the same tab, scroll to top
-    if (tab === activeTab) {
-      if (tab === 'home' && homeScrollRef.current) {
-        homeScrollRef.current.scrollTo({ x: 0, y: 0, animated: true });
-      } else if (['lectures', 'speakers', 'organizations'].includes(tab) && universalPageRef.current) {
-        // For FlatList, use scrollToOffset
-        universalPageRef.current.scrollToOffset({ offset: 0, animated: true });
-      }
-    }
+    // Removed auto-scroll to top when clicking same tab to prevent scroll issues
     setActiveTab(tab);
   };
   const handleLogoPress = () => setActiveTab('home');
@@ -582,7 +581,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   sectionListContent: {
-    paddingBottom: 100, // For bottom navigation
+    paddingBottom: 150, // Padding for bottom navigation and statistics
   },
   section: {
     padding: 20,

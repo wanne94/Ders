@@ -1,71 +1,65 @@
-# Plan za rješavanje problema s prikazom "nepoznat daija" u mobilnoj aplikaciji
+# Plan za automatsko odobravanje SAMO predavanja
 
-## Problem
-Kada se u mobilnoj aplikaciji ručno unese ime daije (bez izbora postojećeg daije iz baze), prilikom prikaza predavanja piše "nepoznat daija" umjesto unesenog imena.
+## Cilj
+Ukloniti potrebu za odobravanjem SAMO za predavanja (Lectures) - sva predavanja će biti automatski javna čim se kreiraju.
+Daije i Organizacije će i dalje zahtijevati odobravanje.
+Promjene se primjenjuju na backend, web aplikaciju i mobilnu aplikaciju.
 
-**KRITIČNO**: Nikada se ne smije prikazati "Nepoznat daija" - uvijek mora biti prikazano stvarno ime!
+## TODO Lista
 
-## Analiza problema
-1. **Frontend (mobilna aplikacija)**:
-   - `LectureForm.jsx` omogućava ručni unos daije kroz opciju "Unesi ručno ime daije"
-   - Kada se koristi ručni unos, postavlja se `speaker` polje ali ne `daijaId`
-   - `UniverzalCard.js` prikazuje "Nepoznat daija" kada nema daije objekta
+### Backend promjene
+- [x] 1. Izmijeni samo Lecture model da ima default status 'approved' (već je postavljeno)
+- [x] 2. Ažuriraj POST rutu za kreiranje predavanja da uvijek postavlja status na 'approved'
+- [x] 3. Ukloni needsApproval logiku SAMO za predavanja u server/index.js
+- [x] 4. Zadrži postojeću logiku odobravanja za Daije i Organizacije
 
-2. **Backend (server)**:
-   - Model `Lecture.js` nema definirano `speaker` polje u shemi
-   - API ruteovi transformišu podatke i koriste `speaker` polje, ali to polje se ne čuva u bazi
-   - Kada se predavanje učita iz baze, `speaker` informacija se gubi jer nije dio modela
+### Web aplikacija promjene  
+- [x] 5. Ukloni status polje iz LectureForm komponente (/web/src/components/LectureForm.jsx)
+- [x] 6. Ukloni status iz UnifiedForm za predavanja (/web/src/components/UnifiedForm.jsx)
+- [x] 7. Ažuriraj dashboard sekciju "Za odobrenje" da ne prikazuje predavanja (/web/pages/dashboard.jsx)
+- [x] 8. Ažuriraj brojače u dashboard-u da ne računaju pending predavanja
+- [x] 9. Ukloni status kolonu za predavanja u DataTable komponenti
 
-## TODO lista promjena
+### Mobilna aplikacija promjene
+- [x] 10. Ukloni status polje iz LectureForm (/mob/components/forms/LectureForm.jsx)
+- [x] 11. Ažuriraj AddContentScreen da ne postavlja status za predavanja (/mob/screens/AddContentScreen.js)
+- [x] 12. Ažuriraj DashboardScreen sekciju "Za odobrenje" da ne prikazuje predavanja (/mob/screens/DashboardScreen.js)
+- [x] 13. Ažuriraj brojače da ne računaju pending predavanja
+- [x] 14. Ukloni prikaz statusa za predavanja u UniversalPage (/mob/screens/UniversalPage.js)
 
-### Backend promjene:
-- [x] 1. Dodaj `speaker` polje u Lecture model (`server/models/Lecture.js`)
-- [x] 2. Ažuriraj POST rutu za kreiranje predavanja da čuva `speaker` polje (`server/routes/lecturesRoutes.js`)
-- [x] 3. Ažuriraj PUT rutu za ažuriranje predavanja da čuva `speaker` polje
-- [x] 4. Provjeri da se `speaker` polje vraća u GET rutama
+### Testiranje
+- [ ] 15. Testiraj kreiranje predavanja na web-u - treba biti odmah vidljivo
+- [ ] 16. Testiraj kreiranje predavanja na mobilnoj app - treba biti odmah vidljivo
+- [ ] 17. Testiraj da Daije i dalje kreiraju sa statusom 'pending' (web i mob)
+- [ ] 18. Testiraj da Organizacije i dalje kreiraju sa statusom 'pending' (web i mob)
+- [ ] 19. Provjeri dashboard "Za odobrenje" sekciju na web-u - ne smije prikazivati predavanja
+- [ ] 20. Provjeri dashboard "Za odobrenje" sekciju na mob app - ne smije prikazivati predavanja
 
-### Frontend promjene (mobilna aplikacija):
-- [x] 5. Ažuriraj `UniverzalCard.js` da prikazuje `speaker` polje ako nema daije objekta
-- [x] 6. Uklonjen prikaz "Nepoznat daija" - sada se uvijek prikazuje stvarno ime
+## Review - Implementirane promjene
 
-### Testiranje:
-- [ ] 7. Testirati kreiranje novog predavanja s ručno unesenom daijom
-- [ ] 8. Testirati da li se ručno unesena daija ispravno prikazuje u listi predavanja
-- [ ] 9. Testirati ažuriranje postojećeg predavanja
+### Backend
+1. **POST rute za predavanja** - Uklonjena logika needsApproval, predavanja se uvijek kreiraju sa statusom 'approved'
+2. **Public endpoint** - Također postavlja status na 'approved' za sva predavanja
+3. **Model** - Lecture model već ima default status 'approved'
 
-## Detaljan opis promjena
+### Web aplikacija
+1. **LectureForm.jsx** - Uklonjen status field iz forme
+2. **UnifiedForm.jsx** - Uklonjen status field za tip 'lecture'
+3. **dashboard.jsx** - Sekcija "Za odobrenje" više ne prikazuje predavanja, brojač ne računa pending predavanja
 
-### 1. Dodavanje `speaker` polja u model
-U fajlu `server/models/Lecture.js` trebamo dodati novo polje nakon `daija` polja:
-```javascript
-speaker: {
-  type: String,
-  required: false
-}
-```
+### Mobilna aplikacija
+1. **LectureForm.jsx** - Uklonjen status field iz forme
+2. **AddContentScreen.js** - Uklonjen status field za tip 'lecture'
+3. **DashboardScreen.js** - Sekcija "Za odobrenje" više ne prikazuje predavanja, brojač ne računa pending predavanja
 
-### 2. Logika prikaza u mobilnoj aplikaciji
-U `UniverzalCard.js`, trebamo modificirati logiku prikaza:
-- Prvo provjeriti da li postoji `daija` objekat (koristi formatDaijaTitle)
-- Ako ne postoji, koristi `speaker` polje direktno
-- Ako postoji `data.speaker` koristi to
-- NIKADA ne prikazuj "Nepoznat daija" - uvijek mora biti neko ime
+### Što je ostalo netaknuto
+- Daije i Organizacije i dalje imaju sistem odobravanja
+- Postojeća predavanja sa statusom 'pending' nisu mijenjana
+- Admin funkcionalnost za mijenjanje statusa postojećih predavanja ostaje
 
 ## Napomene
-- Promjene su minimalne i neće utjecati na postojeće funkcionalnosti
-- Sva postojeća predavanja koja imaju `daija` referencu će raditi kao i prije
-- Nova funkcionalnost će omogućiti pravilno čuvanje i prikaz ručno unesenih imena daija
-
-## Review implementacije
-
-### Završene promjene:
-1. **Backend model** - Dodano `speaker` polje u Lecture shemu koje omogućava čuvanje ručno unesenih imena
-2. **Backend API** - POST i PUT rute sada čuvaju `speaker` polje u bazi podataka
-3. **Backend transformacija** - Uklonjen default "Nepoznat predavač" - sada se vraća stvarna vrijednost
-4. **Frontend prikaz** - UniverzalCard.js sada koristi `speaker` polje kad nema daija objekta
-5. **Uklonjen "Nepoznat daija"** - Nikada se više neće prikazati ovaj tekst
-
-### Kako sada funkcioniše:
-- Ako predavanje ima `daija` objekat (izbor iz baze) - prikazuje se formatiran naziv daije
-- Ako predavanje ima samo `speaker` string (ručni unos) - prikazuje se taj string direktno
-- Nema više defaultnih vrijednosti kao "Nepoznat daija"
+- VAŽNO: Mijenjamo SAMO logiku za Lectures (predavanja)
+- Daije i Organizacije zadržavaju postojeći sistem odobravanja
+- Promjene se primjenjuju na sve platforme: backend, web i mobilna aplikacija
+- Sve promjene su minimalne i jednostavne
+- Postojeća predavanja sa statusom 'pending' ostaju kakva jesu

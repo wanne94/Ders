@@ -491,10 +491,11 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
             onValueChange={(itemValue) =>
               setRegisterData({ ...registerData, securityQuestionIndex: itemValue })
             }
+            dropdownIconColor="#000000"
           >
-            <Picker.Item label="Izaberite pitanje..." value="" />
+            <Picker.Item label="Izaberite pitanje..." value="" color="#000000" style={{backgroundColor: '#FFFFFF'}} />
             {SECURITY_QUESTIONS.map((question, index) => (
-              <Picker.Item key={index} label={question} value={index} />
+              <Picker.Item key={index} label={question} value={index} color="#000000" style={{backgroundColor: '#FFFFFF'}} />
             ))}
           </Picker>
         </View>
@@ -845,9 +846,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 8,
+    backgroundColor: '#FFFFFF',
   },
   picker: {
     height: 50,
+    color: '#000000',
+    backgroundColor: '#FFFFFF',
   },
   switchContainer: {
     flexDirection: 'row',

@@ -12,7 +12,6 @@ import { applySorting, sortLecturesByStatus } from '../utils/sortingUtils';
 import { ENV } from '../config';
 import { getUserData } from '../utils/authHelpers';
 import { SkeletonCardList } from '../components/SkeletonCard';
-import SimplifiedStatistics from '../components/SimplifiedStatistics';
 
 const COLORS = {
   primary: '#022C43',
@@ -335,9 +334,7 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
 
   // Header component for lectures - shows statistics
   const ListHeaderComponent = () => {
-    if (type === 'lectures') {
-      return <SimplifiedStatistics />;
-    }
+    // Removed statistics from lectures screen
     return null;
   };
 
@@ -396,11 +393,10 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
           displayedData.length === 0 && styles.emptyContentContainer
         ]}
         showsVerticalScrollIndicator={false}
-        windowSize={10}
-        initialNumToRender={10}
-        maxToRenderPerBatch={5}
-        updateCellsBatchingPeriod={50}
-        removeClippedSubviews={true}
+        windowSize={5}
+        initialNumToRender={5}
+        maxToRenderPerBatch={3}
+        updateCellsBatchingPeriod={100}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -412,13 +408,6 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
         ListEmptyComponent={ListEmptyComponent}
         ListHeaderComponent={ListHeaderComponent}
         ListFooterComponent={ListFooterComponent}
-        onEndReached={loadMoreItems}
-        onEndReachedThreshold={0.5}
-        getItemLayout={(data, index) => ({
-          length: 200, // Approximate height of each card
-          offset: 200 * index,
-          index,
-        })}
       />
       
       <Menu 

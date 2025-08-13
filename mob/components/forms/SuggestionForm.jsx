@@ -160,12 +160,15 @@ const SuggestionForm = ({ onBack, onSuccess }) => {
                         selectedValue={referenceType}
                         onValueChange={(itemValue) => setReferenceType(itemValue)}
                         style={styles.picker}
+                        dropdownIconColor="#000000"
                     >
                         {typeOptions.map((option) => (
                             <Picker.Item 
                                 key={option.value} 
                                 label={option.label} 
-                                value={option.value} 
+                                value={option.value}
+                                color="#000000"
+                                style={{backgroundColor: '#FFFFFF'}}
                             />
                         ))}
                     </Picker>
@@ -334,12 +337,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 12,
-    backgroundColor: COLORS.white,
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
   },
   picker: {
     height: 50,
-    color: COLORS.primary,
+    color: '#000000',
+    backgroundColor: '#FFFFFF',
   },
   submitContainer: {
     padding: 20,

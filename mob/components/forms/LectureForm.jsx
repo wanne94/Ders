@@ -63,7 +63,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     organization: '',
     organizationId: '',
     image: '',
-    status: 'approved',
     isWeeklyLecture: false,
     totalWeeks: 2
   });
@@ -229,7 +228,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       organization: editData.organization || '',
       organizationId: editData.organizationId || '',
       image: editData.image || '',
-      status: editData.status || 'approved',
       isWeeklyLecture: editData.isWeeklyLecture || false,
       totalWeeks: editData.totalWeeks || 2
     });
@@ -589,7 +587,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           organization: '',
           organizationId: '',
           image: '',
-          status: 'approved',
           isWeeklyLecture: false,
           totalWeeks: 2
         });
@@ -638,6 +635,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
             style={styles.picker}
             mode="dropdown"
             itemStyle={styles.pickerItem}
+            dropdownIconColor="#000000"
           >
             {items.map((item, index) => (
               <Picker.Item
@@ -953,7 +951,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: COLORS.white,
+    backgroundColor: '#FFFFFF',
     color: '#000000',
   },
   multilineInput: {
@@ -981,16 +979,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 8,
-    backgroundColor: COLORS.white,
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
   },
   picker: {
     height: 50,
     color: '#000000',
+    backgroundColor: '#FFFFFF',
   },
   pickerItem: {
     color: '#000000',
     fontSize: 16,
+    backgroundColor: '#FFFFFF',
   },
   // Modal styles
   modalOverlay: {

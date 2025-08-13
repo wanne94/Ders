@@ -1776,13 +1776,9 @@ app.post('/api/lectures', authenticateToken, async (req, res) => {
       });
     }
     
-    // Get approval settings
-    const approvalSettings = await Settings.findOne({ key: 'approvalSettings' });
-    const needsApproval = approvalSettings?.value?.lecture !== false; // Default to true if setting not found
-    
-    // Only allow admin/super_admin to explicitly set status, otherwise use approval settings
+    // Lectures are always automatically approved
     const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
-    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : (needsApproval ? 'pending' : 'approved');
+    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : 'approved';
     
     // Parse date from DD.MM.YYYY format if needed
     let parsedDate = req.body.date;
@@ -1809,14 +1805,6 @@ app.post('/api/lectures', authenticateToken, async (req, res) => {
       status: finalStatus,
       createdBy: req.user.id
     };
-    
-    logger.info('Using approval settings:', { 
-      needsApproval,
-      setting: approvalSettings?.value?.lecture,
-      isAdminUser,
-      requestedStatus: req.body.status,
-      finalStatus: lectureData.status 
-    });
     
     logger.info('Creating lecture with data:', lectureData);
     const lecture = new Lecture(lectureData);
@@ -1861,13 +1849,9 @@ app.post('/api/lectures', authenticateToken, async (req, res) => {
       });
     }
     
-    // Get approval settings
-    const approvalSettings = await Settings.findOne({ key: 'approvalSettings' });
-    const needsApproval = approvalSettings?.value?.lecture !== false; // Default to true if setting not found
-    
-    // Only allow admin/super_admin to explicitly set status, otherwise use approval settings
+    // Lectures are always automatically approved
     const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
-    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : (needsApproval ? 'pending' : 'approved');
+    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : 'approved';
     
     // Parse date from DD.MM.YYYY format if needed
     let parsedDate = req.body.date;
@@ -1894,14 +1878,6 @@ app.post('/api/lectures', authenticateToken, async (req, res) => {
       status: finalStatus,
       createdBy: req.user.id
     };
-    
-    logger.info('Using approval settings:', { 
-      needsApproval,
-      setting: approvalSettings?.value?.lecture,
-      isAdminUser,
-      requestedStatus: req.body.status,
-      finalStatus: lectureData.status 
-    });
     
     logger.info('Creating lecture with data:', lectureData);
     const lecture = new Lecture(lectureData);
@@ -1970,7 +1946,7 @@ app.post('/api/lectures/public', async (req, res) => {
       shortDescription: req.body.shortDescription || '',
       description: req.body.description || '',
       image: req.body.image || '/uploads/images/predavanjeslika.jpg', // Default image
-      status: 'pending', // Always pending for public submissions
+      status: 'approved', // Always approved for lectures
       createdBy: null // No user associated with public submissions
     };
     

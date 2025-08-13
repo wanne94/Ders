@@ -66,7 +66,6 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
 
   // Counts for badges
   const [counts, setCounts] = useState({
-    pendingLectures: 0,
     pendingDaije: 0,
     pendingOrganizations: 0,
     pendingSuggestions: 0,
@@ -174,7 +173,6 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
 
       // Calculate counts with safety checks
       const newCounts = {
-        pendingLectures: (newData.lectures || []).filter(l => l.status === 'pending').length,
         pendingDaije: (newData.daije || []).filter(d => d.status === 'pending').length,
         pendingOrganizations: (newData.organizations || []).filter(o => o.status === 'pending').length,
         pendingSuggestions: (newData.suggestions || []).filter(s => s.status === 'pending').length,
@@ -325,7 +323,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         title: 'Za odobrenje',
         icon: 'time-outline',
         color: COLORS.warning,
-        count: counts.pendingLectures + counts.pendingDaije + counts.pendingOrganizations,
+        count: counts.pendingDaije + counts.pendingOrganizations,
         badge: true
       },
       {
@@ -491,17 +489,15 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         type = 'user';
         break;
       case 'za-odobrenje':
-        // Show only PENDING items in approval section
-        const pendingLectures = (data.lectures || []).filter(l => l.status === 'pending').map(l => ({ ...l, type: 'lecture' }));
+        // Show only PENDING items in approval section (lectures no longer need approval)
         const pendingDaije = (data.daije || []).filter(d => d.status === 'pending').map(d => ({ ...d, type: 'daija' }));
         const pendingOrgs = (data.organizations || []).filter(o => o.status === 'pending').map(o => ({ ...o, type: 'organization' }));
         
-        // Apply sorting to each category separately, then combine
-        const sortedPendingLectures = sortLecturesByStatus(pendingLectures);
+        // Apply sorting to each category separately
         const sortedPendingDaije = applySorting(pendingDaije, 'daije', data.lectures || []);
         const sortedPendingOrgs = applySorting(pendingOrgs, 'organizations', data.lectures || []);
         
-        items = [...sortedPendingLectures, ...sortedPendingDaije, ...sortedPendingOrgs];
+        items = [...sortedPendingDaije, ...sortedPendingOrgs];
         type = 'mixed';
         break;
       case 'odbijeno':

@@ -109,8 +109,7 @@ const AddContentScreen = ({ onBack }) => {
           speaker: '',
           daijaId: '',
           organization: '',
-          organizationId: '',
-          status: 'pending'
+          organizationId: ''
         };
       case 'daija':
         return {

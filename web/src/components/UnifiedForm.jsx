@@ -56,8 +56,7 @@ const UnifiedForm = ({
           daijaId: '',
           organization: '',
           organizationId: '',
-          image: '',
-          status: 'pending'
+          image: ''
         };
       case 'daija':
         return {
@@ -144,8 +143,7 @@ const UnifiedForm = ({
             daijaId: data.daijaId || '',
             organization: data.organization || '',
             organizationId: data.organizationId || '',
-            image: data.image || '',
-            status: data.status || 'pending'
+            image: data.image || ''
           });
           setUseCustomSpeaker(!data.daijaId && !!data.speaker);
           setUseCustomOrganization(!data.organizationId && !!data.organization);
