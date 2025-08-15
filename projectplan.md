@@ -1,51 +1,50 @@
-# Plan za popravku produkcijskog servera ders.ba
+# Plan za popravku MongoDB Auth problema na produkciji
 
 ## Problem
-Produkcijski server ders.ba je prestao raditi nakon pokušaja dodavanja rizz projekta i izmjene nginx konfiguracije.
+API endpoints vraćaju "Command find requires authentication" grešku uprkos tome što:
+- MongoDB konekcija je uspješna (health endpoint pokazuje "database: connected")
+- Direktna konekcija sa mongoose radi
+- Lokalni development radi perfektno sa istom bazom
+
+## Analiza
+
+### Simptomi:
+1. `/api/health` - RADI ✅
+2. `/api/lectures/public` - NE RADI ❌ (auth error)
+3. MongoDB konekcija u logu pokazuje "Connected" ✅
+4. Ali query operacije zahtijevaju auth ❌
+
+### Moguci uzroci:
+1. Razlika u MongoDB driver verziji
+2. Problem sa Mongoose connection pooling
+3. Razlika u načinu kako se kreira konekcija
+4. Problem sa NODE_ENV varijablom
+5. Stari kod na produkciji koji ne koristi ispravnu konekciju
 
 ## TODO Lista
 
-### 1. ⏳ Analizirati trenutne nginx konfiguracije na produkcijskom serveru
-- SSH na produkcijski server
-- Provjeriti sve nginx konfiguracije u /etc/nginx/
-- Identificirati problematične konfiguracije
+### 1. ⏳ Analizirati MongoDB auth problem na produkciji
+- Provjeriti logove
+- Identificirati tačnu grešku
 
-### 2. ⏳ Provjeriti status servisa na produkciji
-- nginx status
-- Node.js aplikacije (PM2)
-- MongoDB status
-- Provjeriti portove i procese
+### 2. ⏳ Provjeriti razlike između lokalnog i produkcijskog koda
+- Uporediti server/index.js
+- Provjeriti database connection kod
+- Provjeriti verzije paketa
 
-### 3. ⏳ Backup trenutnih konfiguracija prije promjena
-- Backup nginx konfiguracija
-- Backup PM2 konfiguracija
-- Dokumentovati trenutno stanje
+### 3. ⏳ Identificirati uzrok auth greške
+- Testirati direktne MongoDB queries
+- Provjeriti Mongoose konfiguraciju
 
-### 4. ⏳ Popraviti nginx konfiguraciju za ders.ba
-- Vratiti ispravnu nginx konfiguraciju
-- Ukloniti rizz projekat konfiguracije koje kvare ders.ba
-- Provjeriti SSL certifikate
+### 4. ⏳ Implementirati popravku
+- Ažurirati kod ako je potrebno
+- Restartovati servise
 
-### 5. ⏳ Deployovati najnoviji kod na produkciju
-- Pushati lokalne promjene
-- Pull na produkcijskom serveru
-- Rebuild aplikacije
-
-### 6. ⏳ Restartovati servise na produkciji
-- Restart nginx
-- Restart PM2 aplikacije
-- Provjeriti da sve radi
-
-### 7. ⏳ Testirati https://ders.ba
-- Provjeriti da se web stranica učitava
-- Testirati API endpoints
-- Provjeriti funkcionalnosti
-
-### 8. ⏳ Testirati mobilnu aplikaciju
-- Provjeriti konekciju sa API-jem
-- Testirati osnovne funkcionalnosti
+### 5. ⏳ Testirati API endpoints
+- Test /api/lectures/public
+- Test /api/organizations
+- Test /api/daije
 
 ## Napomene
-- Localhost trenutno radi perfektno sa SSH tunelom na produkcijsku bazu
-- Produkcija je pokvarena zbog nginx konfiguracije
-- Potrebno je pažljivo vratiti originalne postavke za ders.ba
+- Localhost radi perfektno sa SSH tunelom
+- Produkcija ima problem samo sa query operacijama
