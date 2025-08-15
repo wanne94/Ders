@@ -159,13 +159,20 @@ if (isProduction) {
 // Uvijek servira public folder
 // Static files are now served by Next.js from web/public
 
-// In development, uploads are handled by production server (https://ders.ba)
-// This prevents local file storage and ensures consistency
-if (process.env.NODE_ENV === 'production') {
-  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-  console.log('📁 Serving uploads from server/uploads (production only)');
+// Serve uploads in both development and production
+// In development, if images don't exist locally, they'll 404 and frontend can fallback
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Also setup proxy to production server for missing images
+if (process.env.NODE_ENV === 'development') {
+  app.use('/uploads/*', (req, res, next) => {
+    // If local file doesn't exist, proxy to production
+    const imagePath = req.path;
+    res.redirect(`https://ders.ba${imagePath}`);
+  });
+  console.log('📁 Development mode: serving local uploads with fallback to production (https://ders.ba)');
 } else {
-  console.log('📁 Development mode: uploads handled by production server (https://ders.ba)');
+  console.log('📁 Production mode: serving uploads from server/uploads');
 }
 
 // Basic health check route

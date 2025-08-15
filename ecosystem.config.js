@@ -1,49 +1,40 @@
 module.exports = {
   apps: [
     {
-      name: 'ders-server',
-      script: './index.js',
-      cwd: '/var/www/ders/server',
-      instances: 1,
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '1G',
-      env: {
-        NODE_ENV: 'production',
-        PORT: 5003
-      },
-      env_production: {
-        NODE_ENV: 'production',
-        PORT: 5003
-      },
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      error_file: '/var/www/ders/logs/server-error.log',
-      out_file: '/var/www/ders/logs/server-out.log',
-      log_file: '/var/www/ders/logs/server-combined.log',
-      time: true
-    },
-    {
       name: 'ders-web',
       script: 'npm',
       args: 'start',
-      cwd: '/var/www/ders/web',
-      instances: 1,
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '1G',
+      cwd: '/root/ders.ba/web',
       env: {
         NODE_ENV: 'production',
         PORT: 3000
       },
-      env_production: {
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      error_file: '/root/logs/ders-web-error.log',
+      out_file: '/root/logs/ders-web-out.log',
+      log_file: '/root/logs/ders-web-combined.log',
+      time: true
+    },
+    {
+      name: 'ders-api',
+      script: 'index.js',
+      cwd: '/root/ders.ba/server',
+      env: {
         NODE_ENV: 'production',
-        PORT: 3000
+        PORT: 5003,
+        MONGODB_URI: 'mongodb://avdoAdmin:WanNeAvdo1994@127.0.0.1:27017/Predavanja?authSource=admin'
       },
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      error_file: '/var/www/ders/logs/web-error.log',
-      out_file: '/var/www/ders/logs/web-out.log',
-      log_file: '/var/www/ders/logs/web-combined.log',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      error_file: '/root/logs/ders-api-error.log',
+      out_file: '/root/logs/ders-api-out.log',
+      log_file: '/root/logs/ders-api-combined.log',
       time: true
     }
   ]
-}; 
+};
