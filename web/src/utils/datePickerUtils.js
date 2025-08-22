@@ -118,12 +118,17 @@ export const getTodayDateString = () => {
 
 /**
  * Safely handle DatePicker onChange event
- * CRITICAL: This function ensures dates are handled correctly regardless of timezone
+ * PRODUCTION FIX: Compensates for timezone differences between dev and production
  */
 export const handleDatePickerChange = (value) => {
-  // Extensive logging for production debugging
-  console.log('🔍 [PRODUCTION FIX] DatePicker onChange:', {
+  // Check if we're in production
+  const isProduction = typeof window !== 'undefined' && 
+    (window.location.hostname === 'ders.ba' || window.location.hostname === 'www.ders.ba');
+  
+  // Extensive logging for debugging
+  console.log('🔍 [DATE FIX] DatePicker onChange:', {
     value,
+    isProduction,
     type: typeof value,
     isDate: value instanceof Date,
     toString: value ? value.toString() : 'null',
@@ -131,38 +136,67 @@ export const handleDatePickerChange = (value) => {
     timezoneOffset: value instanceof Date ? value.getTimezoneOffset() : 'N/A',
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     hours: value instanceof Date ? value.getHours() : 'N/A',
-    minutes: value instanceof Date ? value.getMinutes() : 'N/A'
+    hostname: typeof window !== 'undefined' ? window.location.hostname : 'N/A'
   });
   
   if (!value) return '';
   
   // If it's already a Date object
   if (value instanceof Date) {
-    // CRITICAL FIX: Create a new date at noon to avoid timezone issues
-    // Even if DatePicker gives us midnight, we force it to noon
-    const year = value.getFullYear();
-    const month = value.getMonth();
-    const day = value.getDate();
+    // Get original components
+    const originalDay = value.getDate();
+    const originalMonth = value.getMonth();
+    const originalYear = value.getFullYear();
+    const originalHours = value.getHours();
     
-    // Create new date at noon (12:00) local time
-    const noonDate = new Date(year, month, day, 12, 0, 0, 0);
+    console.log('🔍 [DATE FIX] Original components:', {
+      year: originalYear,
+      month: originalMonth + 1,
+      day: originalDay,
+      hours: originalHours,
+      minutes: value.getMinutes()
+    });
     
-    // Format using the noon date
-    const formattedMonth = String(noonDate.getMonth() + 1).padStart(2, '0');
-    const formattedDay = String(noonDate.getDate()).padStart(2, '0');
-    const formatted = `${noonDate.getFullYear()}-${formattedMonth}-${formattedDay}`;
+    let correctedYear = originalYear;
+    let correctedMonth = originalMonth;
+    let correctedDay = originalDay;
     
-    console.log('📅 [PRODUCTION FIX] Date formatted:', {
+    // PRODUCTION-SPECIFIC FIX: Only compensate on production
+    // On production, if hours are 22 or 23, it means the date was shifted back
+    if (isProduction && (originalHours === 22 || originalHours === 23)) {
+      console.log('⚠️ [PRODUCTION FIX] Detected timezone shift on production! Hours are', originalHours);
+      console.log('⚠️ [PRODUCTION FIX] Adding 1 day to compensate');
+      
+      // Add one day to compensate for production timezone issue
+      const compensatedDate = new Date(originalYear, originalMonth, originalDay + 1, 12, 0, 0, 0);
+      correctedYear = compensatedDate.getFullYear();
+      correctedMonth = compensatedDate.getMonth();
+      correctedDay = compensatedDate.getDate();
+      
+      console.log('✅ [PRODUCTION FIX] Compensated date:', {
+        year: correctedYear,
+        month: correctedMonth + 1,
+        day: correctedDay
+      });
+    } else if (!isProduction) {
+      console.log('🏠 [LOCAL DEV] No compensation needed, using original date');
+    }
+    
+    // Create final date at noon with corrected components
+    const finalDate = new Date(correctedYear, correctedMonth, correctedDay, 12, 0, 0, 0);
+    
+    // Format the final date
+    const formattedMonth = String(finalDate.getMonth() + 1).padStart(2, '0');
+    const formattedDay = String(finalDate.getDate()).padStart(2, '0');
+    const formatted = `${finalDate.getFullYear()}-${formattedMonth}-${formattedDay}`;
+    
+    console.log('📅 [DATE FIX] Final result:', {
+      environment: isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
       originalDate: value.toString(),
-      originalHours: value.getHours(),
-      noonDate: noonDate.toString(),
-      noonHours: noonDate.getHours(),
-      output: formatted,
-      components: {
-        year: noonDate.getFullYear(),
-        month: noonDate.getMonth() + 1,
-        day: noonDate.getDate()
-      }
+      originalHours: originalHours,
+      wasCompensated: isProduction && (originalHours === 22 || originalHours === 23),
+      finalDate: finalDate.toString(),
+      output: formatted
     });
     
     return formatted;
@@ -172,7 +206,7 @@ export const handleDatePickerChange = (value) => {
   if (typeof value === 'string') {
     const parsed = parseLocalDateString(value);
     const formatted = formatDateToLocalString(parsed);
-    console.log('📅 [PRODUCTION FIX] String date formatted:', formatted, 'from:', value);
+    console.log('📅 [ULTIMATE FIX] String date formatted:', formatted, 'from:', value);
     return formatted;
   }
   
@@ -180,21 +214,36 @@ export const handleDatePickerChange = (value) => {
   try {
     const date = new Date(value);
     if (!isNaN(date.getTime())) {
-      // Force to noon as well
-      const noonDate = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        12, 0, 0, 0
-      );
-      const month = String(noonDate.getMonth() + 1).padStart(2, '0');
-      const day = String(noonDate.getDate()).padStart(2, '0');
-      const formatted = `${noonDate.getFullYear()}-${month}-${day}`;
-      console.log('📅 [PRODUCTION FIX] Converted date formatted:', formatted, 'from:', value);
+      // Apply same compensation logic
+      const hours = date.getHours();
+      let finalDate;
+      
+      if (hours === 22 || hours === 23) {
+        // Compensate for timezone shift
+        finalDate = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate() + 1,
+          12, 0, 0, 0
+        );
+        console.log('⚠️ [ULTIMATE FIX] Compensated converted date');
+      } else {
+        finalDate = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate(),
+          12, 0, 0, 0
+        );
+      }
+      
+      const month = String(finalDate.getMonth() + 1).padStart(2, '0');
+      const day = String(finalDate.getDate()).padStart(2, '0');
+      const formatted = `${finalDate.getFullYear()}-${month}-${day}`;
+      console.log('📅 [ULTIMATE FIX] Converted date formatted:', formatted, 'from:', value);
       return formatted;
     }
   } catch (e) {
-    console.error('[PRODUCTION FIX] Failed to parse date:', e);
+    console.error('[ULTIMATE FIX] Failed to parse date:', e);
   }
   
   return '';

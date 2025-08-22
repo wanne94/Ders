@@ -21,7 +21,7 @@ import {
     InputLabel,
     InputAdornment
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers';
+import FixedDatePicker from './FixedDatePicker';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -205,19 +205,7 @@ const UnifiedForm = ({
     setFormData(prev => ({ ...prev, title: value }));
   };
 
-  const handleDateChange = (date) => {
-    // Use utility function to safely handle date conversion
-    const formattedDate = handleDatePickerChange(date);
-    console.log('📅 Date change result:', { 
-      input: date, 
-      formatted: formattedDate 
-    });
-    
-    setFormData(prev => ({
-      ...prev,
-      date: formattedDate
-    }));
-  };
+  // handleDateChange is now handled by FixedDatePicker component
 
   // Daija-specific handlers
   const handleAddEducation = () => {
@@ -597,18 +585,13 @@ const UnifiedForm = ({
       )}
 
       {/* Date and Time */}
-      <DatePicker
-        label="Datum"
-        value={parseLocalDateString(formData.date)}
-        onChange={handleDateChange}
-        format="dd.MM.yyyy"
-        minDate={data ? null : getTodayStartOfDay()}
-        slotProps={{
-          textField: {
-            fullWidth: true,
-            margin: "normal"
-          }
+      <FixedDatePicker
+        value={formData.date}
+        onChange={(formattedDate) => {
+          console.log('📅 [UnifiedForm] Date changed to:', formattedDate);
+          setFormData(prev => ({ ...prev, date: formattedDate }));
         }}
+        isEditing={!!data}
       />
 
       <FormControl fullWidth margin="normal">

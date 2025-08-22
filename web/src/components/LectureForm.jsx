@@ -18,7 +18,7 @@ import {
     FormControlLabel,
     Checkbox
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers';
+import FixedDatePicker from './FixedDatePicker';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import axiosInstance from '../utils/axiosConfig';
 import { daijeService, udruzenjaService } from '@/services';
@@ -271,28 +271,7 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
     }
   };
 
-  const handleDateChange = (date) => {
-    // Use utility function to safely handle date conversion
-    const formattedDate = handleDatePickerChange(date);
-    
-    // Extensive production debugging
-    console.log('📅 [PRODUCTION FIX] LectureForm handleDateChange:', { 
-      input: date,
-      inputType: typeof date,
-      inputString: date ? date.toString() : 'null',
-      formatted: formattedDate,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      timestamp: new Date().toISOString()
-    });
-    
-    setFormData(prev => {
-      console.log('📅 [PRODUCTION FIX] Updating formData with date:', formattedDate);
-      return {
-        ...prev,
-        date: formattedDate
-      };
-    });
-  };
+  // handleDateChange is now handled by FixedDatePicker component
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -674,18 +653,13 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
               )}
 
               {/* Date and Time */}
-              <DatePicker
-                label="Datum"
-                value={parseLocalDateString(formData.date)}
-                onChange={handleDateChange}
-                format="dd.MM.yyyy"
-                minDate={isEditing ? null : getTodayStartOfDay()}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    margin: "normal"
-                  }
+              <FixedDatePicker
+                value={formData.date}
+                onChange={(formattedDate) => {
+                  console.log('📅 [LectureForm] Date changed to:', formattedDate);
+                  setFormData(prev => ({ ...prev, date: formattedDate }));
                 }}
+                isEditing={isEditing}
               />
 
               <FormControl fullWidth margin="normal">

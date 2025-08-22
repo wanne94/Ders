@@ -1,99 +1,62 @@
-# Plan za Definitivno Rješavanje Problema sa Datumom na Produkciji
+# KRITIČAN PROBLEM - DatePicker i dalje pokazuje prethodni dan na produkciji
 
 ## Problem
-Na produkciji (ders.ba) i dalje postoji problem - kada se odabere datum, prikazuje se prethodni dan. Problem persitira uprkos prethodnim pokušajima.
+Uprkos svim dosadašnjim pokušajima, na produkciji (ders.ba) kada se odabere datum (npr. 22.08.2025), prikazuje se prethodni dan (21.08.2025).
 
-## Analiza Problema
-Problem je vjerovatno u:
-1. DatePicker komponenta možda šalje Date objekat sa vremenom 00:00:00 
-2. Kada se taj datum konvertuje na serveru u različitoj timezone, pomjera se unazad
-3. Potrebno je osigurati da se datum UVIJEK kreira sa vremenom dovoljno kasno u danu (npr. 12:00) da ne može doći do pomjeranja
+## Analiza
+Problem je vjerovatno u MUI DatePicker komponenti koja interno koristi Date objekte. Kada DatePicker vrati vrijednost, ona je u UTC midnight što uzrokuje pomjeranje.
 
-## TODO Lista
+## NOVO RJEŠENJE - Ultimativni pristup
 
-- [x] 1. Detaljno analiziraj trenutni kod i logiranje
-  - Dodaj ekstenzivno logiranje na sve kritične točke
-  - Log na frontend kada se odabere datum
-  - Log na backend kada se prima datum
-  - Log kada se čuva u bazu
+### TODO Lista
 
-- [x] 2. Implementiraj robusnije rješenje za DatePicker
-  - Forsiraj da DatePicker uvijek vraća datum sa vremenom 12:00
-  - Dodaj eksplicitnu konverziju prije slanja na server
-  - Osiguraj da se datum šalje kao string u formatu YYYY-MM-DD
+- [ ] 1. Implementirati custom date adapter za MUI DatePicker
+  - Forsirati da DatePicker UVIJEK radi sa lokalnim datumima
+  - Override-ovati sve date metode
 
-- [x] 3. Popravi server stranu
-  - Provjeri kako server prima i parsira datum
-  - Osiguraj da parseLocalDate funkcija radi ispravno
-  - Dodaj validaciju i logiranje
+- [ ] 2. Alternativno rješenje - Dodati 1 dan na frontend
+  - Kada DatePicker vrati datum, provjeriti da li je pomjeren
+  - Ako jeste, dodati 1 dan da kompenzujemo
 
-- [x] 4. Implementiraj timezone-agnostic pristup
-  - Umjesto Date objekta, radi sa stringovima
-  - Koristi format YYYY-MM-DD kroz cijeli pipeline
-  - Konvertuj u Date samo kada je neophodno za prikaz
+- [ ] 3. Kreirati custom DatePicker wrapper
+  - Wrapper koji automatski koriguje datum
+  - Osigurati da uvijek vraća točan datum
 
-- [x] 5. Testiraj lokalno sa simulacijom produkcije
-  - Postavi lokalno vrijeme na CEST timezone
-  - Testiraj sa različitim datumima
-  - Provjeri logove
+- [ ] 4. Server-side korekcija
+  - Na serveru provjeriti timezone offset
+  - Automatski korigovati datum ako je potrebno
 
-- [x] 6. Deploy i verifikacija na produkciji
-  - Deploy promjena
-  - Provjeri logove na produkciji
-  - Testiraj funkcionalnost
+- [ ] 5. Testirati i deployovati
+  - Testirati sa različitim datumima
+  - Deploy na produkciju
 
-## Tehnički pristup
+## Hitno rješenje koje ćemo implementirati ODMAH
 
-### Opcija 1: String-based pristup
-- Nikad ne koristiti Date objekte za transport
-- Uvijek raditi sa YYYY-MM-DD stringovima
-- DatePicker samo za UI, odmah konvertovati u string
-
-### Opcija 2: Eksplicitno postavljanje vremena
-- Svaki put kada se kreira Date, postaviti sate na 12:00
-- Na serveru također postaviti na 12:00 prije čuvanja
-
-### Opcija 3: UTC normalizacija
-- Sve datume konvertovati u UTC sa fiksnim vremenom
-- Na prikazu konvertovati nazad u lokalno
+```javascript
+// Kada DatePicker vrati datum, FORSIRAJ korekciju
+const handleDateChange = (date) => {
+  if (!date) return '';
+  
+  // KRITIČNO: Uzmi lokalne komponente direktno
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+  
+  // Kreiraj novi datum sa EKSPLICITNIM satima (12:00)
+  // Ali ako je datum pomjeren, dodaj 1 dan
+  const testDate = new Date(year, month, day, 12, 0, 0);
+  
+  // Provjeri da li je datum pomjeren
+  if (testDate.getDate() !== day) {
+    // Datum je pomjeren, korigiraj ga
+    testDate.setDate(testDate.getDate() + 1);
+  }
+  
+  // Format u YYYY-MM-DD
+  const formatted = formatDateToLocalString(testDate);
+  return formatted;
+};
+```
 
 ## Review sekcija
-
-### Implementirane promjene:
-
-#### 1. Frontend (web/src/utils/datePickerUtils.js):
-- **handleDatePickerChange**: Sada UVIJEK kreira datum sa vremenom 12:00 (podne)
-- Kada DatePicker vrati Date objekat, ekstraktujemo komponente i kreiramo novi Date sa 12:00
-- Dodano ekstenzivno logiranje sa [PRODUCTION FIX] prefiksom
-- Sve datume konvertujemo u YYYY-MM-DD string format
-
-#### 2. Frontend komponente:
-- **LectureForm.jsx**: 
-  - Dodano detaljno logiranje pri odabiru datuma
-  - Logiranje podataka koji se šalju na server
-  - Defaultni datum postavljen na današnji, vrijeme na 12:00
-
-- **UnifiedForm.jsx**:
-  - Ista logika kao LectureForm
-  - Koristi handleDatePickerChange iz datePickerUtils
-  - Logiranje pri slanju na server
-
-#### 3. Backend (server/utils/dateHelpers.js):
-- **parseLocalDate**: 
-  - Uvijek postavlja vrijeme na 12:00 lokalno
-  - Dodana validacija i ekstenzivno logiranje
-  - Verifikacija da komponente datuma odgovaraju očekivanim vrijednostima
-
-#### 4. Backend rute (server/routes/lecturesRoutes.js):
-- Dodano logiranje primljenog datuma sa servera
-- Logiranje parsiranog datuma nakon obrade
-- Praćenje timezone informacija
-
-### Ključne izmjene:
-1. **Forsiranje vremena na 12:00**: Svaki put kada se kreira Date objekat, postavljamo sate na 12:00
-2. **String-based pristup**: Radimo sa YYYY-MM-DD stringovima kroz cijeli pipeline
-3. **Ekstenzivno logiranje**: Dodano na sve kritične tačke sa [PRODUCTION FIX] prefiksom
-4. **Timezone-agnostic**: Koristimo lokalne Date metode umjesto UTC konverzija
-
-### Rješenje problema:
-Problem je bio što DatePicker vraća Date objekat sa vremenom 00:00:00 (ponoć). Kada se taj datum pošalje na server koji je u drugoj timezone, dolazi do pomjeranja unazad za jedan dan. Rješenje je da uvijek postavimo vrijeme na 12:00 (podne) što osigurava da će datum ostati isti bez obzira na timezone razlike.
+(Biće popunjena nakon implementacije)
