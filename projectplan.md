@@ -27,7 +27,7 @@ Kada se odabere datum 22. avgust na produkcijskom serveru (ders.ba), prikazuje s
    - Testiraj kreiranje predavanja sa različitim datumima
    - Provjeri da li se datum ispravno prikazuje nakon osvježavanja
 
-- [ ] 5. **Pripremi deployment**
+- [x] 5. **Pripremi deployment** ✅
    - Commituj promjene
    - Pripremi za deployment na produkciju
 

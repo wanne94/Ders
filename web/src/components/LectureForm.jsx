@@ -24,6 +24,12 @@ import axiosInstance from '../utils/axiosConfig';
 import { daijeService, udruzenjaService } from '@/services';
 import { getImageUrl } from '../utils/imageUtils';
 import { uploadImage } from '../utils/uploadService';
+import { 
+  parseLocalDateString, 
+  formatDateToLocalString, 
+  getTodayStartOfDay,
+  handleDatePickerChange 
+} from '../utils/datePickerUtils';
 
 // Generate time options with 15-minute intervals
 const generateTimeOptions = () => {
@@ -266,17 +272,13 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
   };
 
   const handleDateChange = (date) => {
-    console.log('📅 Date changed:', date);
-    // Format date as YYYY-MM-DD using local date methods to avoid timezone issues
-    let formattedDate = '';
-    if (date) {
-      // Use local date methods to ensure correct date without timezone conversion
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      formattedDate = `${year}-${month}-${day}`;
-      console.log('📅 Formatted date:', formattedDate);
-    }
+    // Use utility function to safely handle date conversion
+    const formattedDate = handleDatePickerChange(date);
+    console.log('📅 Date change result:', { 
+      input: date, 
+      formatted: formattedDate 
+    });
+    
     setFormData(prev => ({
       ...prev,
       date: formattedDate
@@ -655,14 +657,10 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
               {/* Date and Time */}
               <DatePicker
                 label="Datum"
-                value={formData.date ? (() => {
-                  // Create date from YYYY-MM-DD string using local timezone
-                  const [year, month, day] = formData.date.split('-').map(Number);
-                  return new Date(year, month - 1, day, 12, 0, 0);
-                })() : null}
+                value={parseLocalDateString(formData.date)}
                 onChange={handleDateChange}
                 format="dd.MM.yyyy"
-                minDate={isEditing ? null : new Date()}
+                minDate={isEditing ? null : getTodayStartOfDay()}
                 slotProps={{
                   textField: {
                     fullWidth: true,
