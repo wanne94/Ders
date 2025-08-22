@@ -12,12 +12,21 @@ export const parseLocalDateString = (dateString) => {
   console.log('🔍 parseLocalDateString input:', dateString);
   
   // Handle ISO date strings (with 'T') by extracting just the date part
-  if (dateString.includes('T')) {
+  if (typeof dateString === 'string' && dateString.includes('T')) {
     dateString = dateString.split('T')[0];
   }
   
+  // Ensure we have a string
+  if (typeof dateString !== 'string') {
+    console.error('parseLocalDateString expects a string, got:', typeof dateString);
+    return null;
+  }
+  
   const parts = dateString.split('-');
-  if (parts.length !== 3) return null;
+  if (parts.length !== 3) {
+    console.error('Invalid date format, expected YYYY-MM-DD, got:', dateString);
+    return null;
+  }
   
   const year = parseInt(parts[0], 10);
   const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
@@ -29,22 +38,25 @@ export const parseLocalDateString = (dateString) => {
     return null;
   }
   
-  // Create date at noon local time to avoid DST and timezone issues
+  // CRITICAL: Create date at noon (12:00) local time to avoid ANY timezone issues
+  // This ensures the date doesn't shift when displayed in different timezones
   const date = new Date(year, month, day, 12, 0, 0, 0);
   
   console.log('🔍 parseLocalDateString created:', {
     input: dateString,
     output: date.toString(),
-    isoString: date.toISOString(),
+    localDateString: formatDateToLocalString(date),
     components: {
       year: date.getFullYear(),
       month: date.getMonth() + 1,
-      day: date.getDate()
+      day: date.getDate(),
+      hours: date.getHours()
     }
   });
   
   // Double-check the date is valid
   if (isNaN(date.getTime())) {
+    console.error('Invalid date created from:', dateString);
     return null;
   }
   
@@ -85,6 +97,17 @@ export const getTodayStartOfDay = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return today;
+};
+
+/**
+ * Get today's date formatted as YYYY-MM-DD string
+ */
+export const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 /**

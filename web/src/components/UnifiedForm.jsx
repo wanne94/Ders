@@ -30,6 +30,12 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import axiosInstance from '../utils/axiosConfig';
 import { getImageUrl } from '../utils/imageUtils';
 import { uploadImage } from '../utils/uploadService';
+import { 
+  getTodayDateString, 
+  parseLocalDateString, 
+  handleDatePickerChange,
+  getTodayStartOfDay 
+} from '../utils/datePickerUtils';
 
 const UnifiedForm = ({ 
   open, 
@@ -48,8 +54,8 @@ const UnifiedForm = ({
         return {
           title: '',
           description: '',
-          date: '',
-          time: '',
+          date: getTodayDateString(), // Default to today
+          time: '12:00', // Default to 12:00
           address: '',
           city: '',
           speaker: '',
@@ -200,7 +206,17 @@ const UnifiedForm = ({
   };
 
   const handleDateChange = (date) => {
-    setFormData(prev => ({ ...prev, date: date ? date.toISOString().split('T')[0] : '' }));
+    // Use utility function to safely handle date conversion
+    const formattedDate = handleDatePickerChange(date);
+    console.log('📅 Date change result:', { 
+      input: date, 
+      formatted: formattedDate 
+    });
+    
+    setFormData(prev => ({
+      ...prev,
+      date: formattedDate
+    }));
   };
 
   // Daija-specific handlers
@@ -571,10 +587,10 @@ const UnifiedForm = ({
       {/* Date and Time */}
       <DatePicker
         label="Datum"
-        value={formData.date ? new Date(formData.date) : null}
+        value={parseLocalDateString(formData.date)}
         onChange={handleDateChange}
         format="dd.MM.yyyy"
-        minDate={new Date()}
+        minDate={data ? null : getTodayStartOfDay()}
         slotProps={{
           textField: {
             fullWidth: true,

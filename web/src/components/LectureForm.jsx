@@ -27,6 +27,7 @@ import { uploadImage } from '../utils/uploadService';
 import { 
   parseLocalDateString, 
   getTodayStartOfDay,
+  getTodayDateString,
   handleDatePickerChange 
 } from '../utils/datePickerUtils';
 
@@ -150,15 +151,15 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
         setRemainingWeeks(calculateRemainingWeeks(lecture.totalWeeks, lecture.weekNumber));
       }
     } else {
-      // Reset form when not editing
+      // Reset form when not editing - set default date and time
       setFormData({
         title: '',
         daijaId: '',
         speaker: '',
         organizationId: '',
         organization: '',
-        date: '',
-        time: '',
+        date: getTodayDateString(), // Set default to today
+        time: '12:00', // Set default time to 12:00
         address: '',
         city: '',
         shortDescription: '',

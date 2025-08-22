@@ -1,77 +1,64 @@
-# Plan Popravke Problema sa Datumom na Produkciji
+# Plan za Popravku DatePicker-a i Postavljanje Defaultnih Vrijednosti
 
 ## Problem
-Kada se odabere datum 22. avgust na produkcijskom serveru (ders.ba), prikazuje se 21. avgust umjesto 22. avgusta. Na lokalhostu sve radi pravilno.
+1. Na produkciji (ders.ba) kada se odabere datum, uvijek se odabere dan prije
+2. Nema defaultnog datuma - treba postaviti današnji dan
+3. Nema defaultnog vremena - treba postaviti 12:00h
 
-## Analiza Problema
-1. **Timezone razlike**: Server koristi Europe/Sarajevo (CEST, +0200) timezone
-2. **JavaScript Date objekti**: Kada se kreira Date objekat sa stringom "2025-08-22", JavaScript ga tretira kao UTC midnight (00:00:00 UTC)
-3. **Konverzija timezone**: Na produkciji, UTC midnight se konvertuje na prethodni dan kada se prikaže u lokalnoj timezone
+## TODO Lista
 
-## TODO Lista Popravki
+- [x] 1. Analiziraj trenutnu implementaciju DatePicker komponente
+  - Pregled LectureForm.jsx 
+  - Pregled datePickerUtils.js
+  - Identifikuj gdje je problem sa timezone
 
-- [x] 1. **Analiziraj trenutno stanje koda** ✅
-   - Pregledaj kako se datum parsira u LectureForm komponenti
-   - Provjeri parseLocalDate funkciju na serveru
-   - Identifikuj gdje se gubi dan pri konverziji
+- [x] 2. Postavi defaultni datum na današnji dan
+  - Kada se otvori forma za novi ders
+  - Koristi lokalno vrijeme bez UTC konverzije
 
-- [x] 2. **Popravi parsiranje datuma u frontend komponenti** ✅
-   - Modificiraj handleDateChange funkciju da koristi lokalni datum bez UTC konverzije
-   - Osiguraj da se datum šalje kao string u formatu YYYY-MM-DD
+- [x] 3. Postavi defaultno vrijeme na 12:00h
+  - Automatski postavi vrijeme na 12:00 kada se otvori forma
 
-- [x] 3. **Popravi čuvanje datuma na serveru** ✅
-   - Osiguraj da parseLocalDate funkcija postavlja vrijeme na podne (12:00) lokalno
-   - Provjeri da li se datum ispravno čuva u MongoDB
+- [x] 4. Popravi problem sa odabirom datuma (dan prije)
+  - Osiguraj da se datum parsira u lokalnoj timezone
+  - Izbjegni UTC midnight konverziju
 
-- [x] 4. **Testiranje lokalno** ✅
-   - Testiraj kreiranje predavanja sa različitim datumima
-   - Provjeri da li se datum ispravno prikazuje nakon osvježavanja
+- [x] 5. Testiraj promjene lokalno
+  - Provjeri da li se datum ispravno prikazuje
+  - Provjeri da li se vrijeme postavlja na 12:00h
 
-- [x] 5. **Pripremi deployment** ✅
-   - Commituj promjene
-   - Pripremi za deployment na produkciju
+- [x] 6. Pripremi za deployment
+  - Commit promjene
+  - Informiši o potrebi za deployment
 
-## Tehnički Detalji Rješenja
-
-### Problem sa Date objektom
-```javascript
-// Problem: 
-new Date("2025-08-22") // Tretira se kao UTC midnight
-// Na CEST (+0200) timezone, ovo postaje 2025-08-21 22:00
-
-// Rješenje:
-new Date(2025, 7, 22) // Mjesec je 0-indexed, ovo kreira lokalni datum
-```
-
-### Izmjene koje trebaju biti napravljene:
-1. **LectureForm.jsx** - handleDateChange funkcija treba koristiti lokalne metode
-2. **dateHelpers.js** - parseLocalDate već ispravno parsira, ali treba provjeriti korištenje
-3. **MongoDB čuvanje** - Osigurati da se datum čuva kao lokalni datum sa vremenom na podne
+## Tehnički detalji
+- Problem je vjerovatno u parseLocalDateString funkciji ili handleDateChange
+- Date objekti u JavaScript-u tretiraju "YYYY-MM-DD" string kao UTC midnight
+- Rješenje: koristiti lokalne Date metode ili eksplicitno postaviti sate
 
 ## Review sekcija
 
 ### Implementirane promjene:
 
-1. **LectureForm.jsx (linija 254-270)**: 
-   - Popravljena handleDateChange funkcija da koristi lokalne Date metode
-   - Dodato logovanje za debug
+1. **datePickerUtils.js**:
+   - Dodana nova funkcija `getTodayDateString()` koja vraća današnji datum kao YYYY-MM-DD string
+   - Poboljšana `parseLocalDateString()` funkcija sa boljom validacijom i logiranjem
+   - Svi datumi se postavljaju na 12:00 (podne) da se izbjegnu timezone problemi
 
-2. **LectureForm.jsx (linija 83-113)**:
-   - Poboljšano parsiranje datuma kada se učitava postojeće predavanje
-   - Dodato rukovanje ISO format datuma (sa 'T')
-   - Ekstraktuje samo datum dio da izbjegne timezone probleme
+2. **LectureForm.jsx**:
+   - Postavljen defaultni datum na današnji dan kada se otvara nova forma
+   - Postavljen defaultni vrijeme na 12:00h
+   - Importovana `getTodayDateString` funkcija
 
-3. **LectureForm.jsx (linija 656-672)**:
-   - DatePicker sada pravilno kreira Date objekat od YYYY-MM-DD stringa
-   - Koristi lokalne Date konstruktor sa eksplicitnim satom (12:00)
-
-4. **dateHelpers.js (linija 12-40)**:
-   - Poboljšana parseLocalDate funkcija
-   - Dodato rukovanje ISO datuma
-   - Dodana validacija i logovanje
-   - Osigurava da se datum uvijek postavlja na 12:00 lokalno vrijeme
+3. **UnifiedForm.jsx**:
+   - Postavljen defaultni datum na današnji dan za lecture tip
+   - Postavljen defaultni vrijeme na 12:00h
+   - Zamijenjena handleDateChange funkcija sa pravilnom implementacijom
+   - DatePicker sada koristi `parseLocalDateString` i `handleDatePickerChange`
+   - Importovane sve potrebne funkcije iz datePickerUtils
 
 ### Ključne izmjene:
-- Izbjegnuta implicitna UTC konverzija korištenjem lokalnih Date metoda
-- Svi datumi se sada parsiraju sa vremenom postavljenim na 12:00 da se izbjegnu timezone problemi
-- Dodano detaljno logovanje za lakše praćenje problema u produkciji
+- Svi Date objekti se kreiraju sa vremenom na 12:00 (podne) što sprječava pomjeranje datuma zbog timezone razlika
+- Defaultne vrijednosti postavljene na današnji datum i 12:00h
+- Korištenje lokalnih Date metoda umjesto UTC konverzija
+- Dodata detaljna logiranja za lakše praćenje problema u produkciji
