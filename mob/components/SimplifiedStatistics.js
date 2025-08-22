@@ -8,6 +8,7 @@ import {
   Dimensions
 } from 'react-native';
 import apiClient from '../services/apiClient';
+import LoadingSkeleton from './LoadingSkeleton';
 
 const { width } = Dimensions.get('window');
 const BAR_WIDTH = (width - 60) / 12; // 12 months, with padding
@@ -92,10 +93,7 @@ const SimplifiedStatistics = () => {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Učitavanje statistika...</Text>
-        </View>
+        <LoadingSkeleton type="stats" count={1} />
       </View>
     );
   }

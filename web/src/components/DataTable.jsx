@@ -33,6 +33,7 @@ import PendingIcon from '@mui/icons-material/Pending';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import LoadingSkeleton from './LoadingSkeleton';
 
 // Optimizirana komponenta za slike - koristi background-image (nema broken icon)
 const ImageCell = memo(({ src, alt, defaultSrc }) => {
@@ -373,7 +374,8 @@ const DataTable = ({
   showActions = true,
   showStatus = true,
   showRejectionReason = false,
-  onRowClick
+  onRowClick,
+  isLoading = false
 }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [page, setPage] = useState(0);
@@ -766,6 +768,10 @@ const DataTable = ({
 
     return columns;
   }, [type, showStatus, showRejectionReason, onStatusChange]);
+
+  if (isLoading) {
+    return <LoadingSkeleton type="table" count={5} />;
+  }
 
   if (!data || data.length === 0) {
     return (

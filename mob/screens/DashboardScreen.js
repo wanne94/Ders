@@ -25,6 +25,11 @@ import { applySorting, sortLecturesByStatus } from '../utils/sortingUtils';
 import { getApiUrl } from '../config';
 import { getToken } from '../utils/authHelpers';
 import AddContentPopup from '../components/AddContentPopup';
+import DraggableList from '../components/DraggableList';
+import UndoRedoBar from '../components/UndoRedoBar';
+import AdvancedFilters from '../components/AdvancedFilters';
+import LoadingSkeleton from '../components/LoadingSkeleton';
+import useUndoRedo from '../hooks/useUndoRedo';
 import { getImageUrl } from '../utils/imageUtils';
 import { appEvents, AUTH_EVENTS } from '../utils/eventEmitter';
 
@@ -51,9 +56,10 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
   
-  // Data states
-  const [data, setData] = useState({
+  // Data states with undo/redo support
+  const initialData = {
     users: [],
     lectures: [],
     daije: [],
@@ -62,7 +68,30 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     archivedSuggestions: [],
     suggestionsCount: { total: 0, pending: 0, approved: 0, rejected: 0 },
     cancelledReports: []
-  });
+  };
+  
+  const {
+    state: data,
+    setState: setDataWithHistory,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    reset: resetHistory
+  } = useUndoRedo(initialData);
+  
+  const [undoMessage, setUndoMessage] = useState('');
+  const [showUndoBar, setShowUndoBar] = useState(false);
+  
+  // Wrapper for setData to track history
+  const setData = (newData) => {
+    if (typeof newData === 'function') {
+      const updatedData = newData(data);
+      setDataWithHistory(updatedData);
+    } else {
+      setDataWithHistory(newData);
+    }
+  };
 
   // Counts for badges
   const [counts, setCounts] = useState({
@@ -91,6 +120,15 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
   const [cancelReason, setCancelReason] = useState('');
   const [showReactivateModal, setShowReactivateModal] = useState(false);
   const [reactivateReason, setReactivateReason] = useState('');
+  
+  // Bulk selection states
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [showBulkActionsModal, setShowBulkActionsModal] = useState(false);
+  
+  // Drag & Drop states
+  const [dragMode, setDragMode] = useState(false);
+  const [reorderedItems, setReorderedItems] = useState([]);
 
   // Helper function for date formatting
   const formatDate = (dateString) => {
@@ -367,6 +405,32 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       setRejectionReason('');
     }
     setShowApprovalModal(true);
+    // Show undo bar for trackable actions
+    setShowUndoBar(true);
+  };
+
+  // Handle archive suggestion
+  const handleArchiveSuggestion = async (item) => {
+    try {
+      await suggestionsService.archiveSuggestion(item._id);
+      
+      // Update local state
+      setData(prev => ({
+        ...prev,
+        suggestions: prev.suggestions.filter(s => s._id !== item._id),
+        archivedSuggestions: [...prev.archivedSuggestions, { ...item, archived: true }]
+      }));
+      
+      // Add to undo history
+      setDataHistory(data, 'Arhiviran prijedlog');
+      setLastAction('Arhiviran prijedlog');
+      setShowUndoBar(true);
+      
+      Alert.alert('Uspjeh', 'Prijedlog je arhiviran');
+    } catch (error) {
+      console.error('Error archiving suggestion:', error);
+      Alert.alert('Greška', 'Greška pri arhiviranju prijedloga');
+    }
   };
 
   // Confirm approval action
@@ -440,27 +504,112 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     }
   };
 
-  // Filter data based on search
+  // Filter data based on search and advanced filters
   const filterData = (items, query) => {
-    if (!query.trim()) return items;
+    let filtered = items;
     
-    const lowerQuery = query.toLowerCase();
-    return items.filter(item => {
-      const searchFields = [
-        item.name,
-        item.title,
-        item.speaker,
-        item.organization,
-        item.email,
-        item.username,
-                    item.name,
-        item.lastName
-      ];
+    // Apply search query
+    if (query && query.trim()) {
+      const lowerQuery = query.toLowerCase();
+      filtered = filtered.filter(item => {
+        const searchFields = [
+          item.name,
+          item.title,
+          item.speaker,
+          item.organization,
+          item.email,
+          item.username,
+          item.firstName,
+          item.lastName,
+          item.city
+        ];
+        
+        return searchFields.some(field => 
+          field && field.toString().toLowerCase().includes(lowerQuery)
+        );
+      });
+    }
+    
+    // Apply advanced filters
+    if (Object.keys(activeFilters).length > 0) {
+      // Date filters
+      if (activeFilters.dateFrom) {
+        filtered = filtered.filter(item => {
+          if (!item.date) return false;
+          return new Date(item.date) >= new Date(activeFilters.dateFrom);
+        });
+      }
       
-      return searchFields.some(field => 
-        field && field.toString().toLowerCase().includes(lowerQuery)
-      );
-    });
+      if (activeFilters.dateTo) {
+        filtered = filtered.filter(item => {
+          if (!item.date) return false;
+          return new Date(item.date) <= new Date(activeFilters.dateTo);
+        });
+      }
+      
+      // Status filter
+      if (activeFilters.status) {
+        filtered = filtered.filter(item => item.status === activeFilters.status);
+      }
+      
+      // City filter
+      if (activeFilters.city) {
+        filtered = filtered.filter(item => item.city === activeFilters.city);
+      }
+      
+      // Organization filter
+      if (activeFilters.organization) {
+        filtered = filtered.filter(item => item.organization === activeFilters.organization);
+      }
+      
+      // Speaker filter
+      if (activeFilters.speaker) {
+        const speakerQuery = activeFilters.speaker.toLowerCase();
+        filtered = filtered.filter(item => 
+          item.speaker && item.speaker.toLowerCase().includes(speakerQuery)
+        );
+      }
+      
+      // Image filter
+      if (activeFilters.hasImage === true) {
+        filtered = filtered.filter(item => item.image);
+      }
+      
+      // Sort
+      if (activeFilters.sortBy) {
+        filtered = [...filtered].sort((a, b) => {
+          let aVal = a[activeFilters.sortBy];
+          let bVal = b[activeFilters.sortBy];
+          
+          // Handle dates
+          if (activeFilters.sortBy === 'date' || activeFilters.sortBy === 'createdAt') {
+            aVal = new Date(aVal || 0);
+            bVal = new Date(bVal || 0);
+          }
+          
+          if (activeFilters.sortOrder === 'asc') {
+            return aVal > bVal ? 1 : -1;
+          } else {
+            return aVal < bVal ? 1 : -1;
+          }
+        });
+      }
+    }
+    
+    return filtered;
+  };
+  
+  // Handle filter apply
+  const handleFiltersApply = (filters) => {
+    setActiveFilters(filters);
+    setShowFilters(false);
+  };
+  
+  // Get filter badge count
+  const getActiveFilterCount = () => {
+    return Object.keys(activeFilters).filter(
+      key => key !== 'sortBy' && key !== 'sortOrder'
+    ).length;
   };
 
   // Get current section data
@@ -636,6 +785,48 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
           </TouchableOpacity>
         )}
       </View>
+      {/* Filter button */}
+      <TouchableOpacity
+        style={[styles.filterButton, getActiveFilterCount() > 0 && styles.filterButtonActive]}
+        onPress={() => setShowFilters(true)}
+      >
+        <Ionicons 
+          name="filter" 
+          size={20} 
+          color={getActiveFilterCount() > 0 ? COLORS.white : COLORS.primary} 
+        />
+        {getActiveFilterCount() > 0 && (
+          <View style={styles.filterBadge}>
+            <Text style={styles.filterBadgeText}>{getActiveFilterCount()}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+      {/* Drag mode toggle button */}
+      {(userRole === 'admin' || userRole === 'super_admin') && (
+        <TouchableOpacity
+          style={[styles.dragButton, dragMode && styles.dragButtonActive]}
+          onPress={toggleDragMode}
+        >
+          <Ionicons 
+            name="reorder-three" 
+            size={20} 
+            color={dragMode ? COLORS.white : COLORS.primary} 
+          />
+        </TouchableOpacity>
+      )}
+      {/* Bulk mode toggle button */}
+      {(userRole === 'admin' || userRole === 'super_admin') && (
+        <TouchableOpacity
+          style={[styles.bulkButton, bulkMode && styles.bulkButtonActive]}
+          onPress={toggleBulkMode}
+        >
+          <Ionicons 
+            name={bulkMode ? "checkbox" : "checkbox-outline"} 
+            size={20} 
+            color={bulkMode ? COLORS.white : COLORS.primary} 
+          />
+        </TouchableOpacity>
+      )}
       <TouchableOpacity
         style={styles.settingsButton}
         onPress={() => setShowSettingsModal(true)}
@@ -658,16 +849,40 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     const canEdit = userRole === 'admin' || userRole === 'superadmin' || userRole === 'super_admin';
     const canDelete = userRole === 'superadmin' || userRole === 'super_admin';
     const canApprove = userRole === 'admin' || userRole === 'superadmin' || userRole === 'super_admin';
+    const isSelected = selectedItems.includes(item._id);
 
     return (
       <TouchableOpacity
-        style={styles.dataItem}
+        style={[
+          styles.dataItem,
+          bulkMode && isSelected && styles.dataItemSelected
+        ]}
         onPress={() => {
-          setSelectedItem({ ...item, type: itemType });
-          setShowItemModal(true);
+          if (bulkMode) {
+            toggleItemSelection(item._id);
+          } else {
+            setSelectedItem({ ...item, type: itemType });
+            setShowItemModal(true);
+          }
+        }}
+        onLongPress={() => {
+          if (!bulkMode) {
+            toggleBulkMode();
+            toggleItemSelection(item._id);
+          }
         }}
       >
         <View style={styles.dataItemHeader}>
+          {/* Bulk mode checkbox */}
+          {bulkMode && (
+            <View style={styles.bulkCheckbox}>
+              <Ionicons 
+                name={isSelected ? "checkbox" : "square-outline"} 
+                size={24} 
+                color={isSelected ? COLORS.primary : COLORS.gray} 
+              />
+            </View>
+          )}
           <View style={styles.dataItemTitleContainer}>
             {/* Show images for all item types that have them */}
             {((itemType === 'lecture' || activeSection === 'predavanja') || 
@@ -707,6 +922,15 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
                   <Ionicons name="close" size={16} color={COLORS.white} />
                 </TouchableOpacity>
               </>
+            )}
+            {/* Archive button for suggestions */}
+            {activeSection === 'prijedlozi' && !item.archived && (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.archiveButton]}
+                onPress={() => handleArchiveSuggestion(item)}
+              >
+                <Ionicons name="archive-outline" size={16} color={COLORS.white} />
+              </TouchableOpacity>
             )}
             {(activeSection === 'predavanja' || activeSection === 'daije' || activeSection === 'udruzenja') && (
               <>
@@ -990,6 +1214,242 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     }
   };
 
+  // Toggle bulk mode
+  const toggleBulkMode = () => {
+    setBulkMode(!bulkMode);
+    setSelectedItems([]);
+    // Disable drag mode when entering bulk mode
+    if (!bulkMode) {
+      setDragMode(false);
+    }
+  };
+  
+  // Toggle drag mode
+  const toggleDragMode = () => {
+    setDragMode(!dragMode);
+    // Disable bulk mode when entering drag mode
+    if (!dragMode) {
+      setBulkMode(false);
+      setSelectedItems([]);
+    }
+  };
+  
+  // Handle undo action
+  const handleUndo = () => {
+    const previousState = undo();
+    if (previousState) {
+      setUndoMessage('Akcija poništena');
+      setShowUndoBar(true);
+      setTimeout(() => setUndoMessage(''), 3000);
+    }
+  };
+  
+  // Handle redo action
+  const handleRedo = () => {
+    const nextState = redo();
+    if (nextState) {
+      setUndoMessage('Akcija ponovljena');
+      setShowUndoBar(true);
+      setTimeout(() => setUndoMessage(''), 3000);
+    }
+  };
+  
+  // Handle reorder of items
+  const handleReorder = async (reorderedData) => {
+    setReorderedItems(reorderedData);
+    
+    // Save new order to backend
+    try {
+      const { type } = getCurrentSectionData();
+      const orderData = reorderedData.map((item, index) => ({
+        id: item._id,
+        order: index
+      }));
+      
+      // TODO: Implement backend endpoint for saving order
+      console.log('New order:', orderData);
+      
+      // Update local state
+      switch (type) {
+        case 'lectures':
+        case 'lecture':
+          setData(prev => ({
+            ...prev,
+            lectures: reorderedData
+          }));
+          break;
+        case 'daije':
+        case 'daija':
+          setData(prev => ({
+            ...prev,
+            daije: reorderedData
+          }));
+          break;
+        case 'organizations':
+        case 'organization':
+          setData(prev => ({
+            ...prev,
+            organizations: reorderedData
+          }));
+          break;
+      }
+    } catch (error) {
+      console.error('Error saving new order:', error);
+      Alert.alert('Greška', 'Došlo je do greške prilikom spremanja redoslijeda');
+    }
+  };
+
+  // Toggle item selection in bulk mode
+  const toggleItemSelection = (itemId) => {
+    setSelectedItems(prev => {
+      if (prev.includes(itemId)) {
+        return prev.filter(id => id !== itemId);
+      } else {
+        return [...prev, itemId];
+      }
+    });
+  };
+
+  // Select all items
+  const selectAllItems = () => {
+    const { items } = getCurrentSectionData();
+    const allIds = items.map(item => item._id);
+    setSelectedItems(allIds);
+  };
+
+  // Deselect all items
+  const deselectAllItems = () => {
+    setSelectedItems([]);
+  };
+
+  // Handle bulk status change
+  const handleBulkStatusChange = async (newStatus) => {
+    if (selectedItems.length === 0) {
+      Alert.alert('Greška', 'Nema odabranih stavki');
+      return;
+    }
+
+    try {
+      const { type } = getCurrentSectionData();
+      let service;
+      
+      switch (type) {
+        case 'lectures':
+        case 'lecture':
+          service = predavanjaService;
+          break;
+        case 'daije':
+        case 'daija':
+          service = daijeService;
+          break;
+        case 'organizations':
+        case 'organization':
+          service = udruzenjaService;
+          break;
+        default:
+          Alert.alert('Greška', 'Nepoznat tip stavke');
+          return;
+      }
+
+      // Update all selected items
+      const promises = selectedItems.map(id => 
+        service.updateStatus(id, newStatus)
+      );
+      
+      await Promise.all(promises);
+      
+      Alert.alert(
+        'Uspjeh', 
+        `${selectedItems.length} stavki je uspješno ažurirano na status: ${newStatus}`
+      );
+      
+      // Reset selection and refresh data
+      setSelectedItems([]);
+      setBulkMode(false);
+      setShowBulkActionsModal(false);
+      await handleDataChange();
+      
+    } catch (error) {
+      console.error('Error bulk updating status:', error);
+      Alert.alert('Greška', 'Došlo je do greške prilikom ažuriranja statusa');
+    }
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedItems.length === 0) {
+      Alert.alert('Greška', 'Nema odabranih stavki');
+      return;
+    }
+
+    Alert.alert(
+      'Potvrda brisanja',
+      `Jeste li sigurni da želite obrisati ${selectedItems.length} odabranih stavki?`,
+      [
+        {
+          text: 'Odustani',
+          style: 'cancel'
+        },
+        {
+          text: 'Obriši',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { type } = getCurrentSectionData();
+              let service;
+              
+              switch (type) {
+                case 'lectures':
+                case 'lecture':
+                  service = predavanjaService;
+                  break;
+                case 'daije':
+                case 'daija':
+                  service = daijeService;
+                  break;
+                case 'organizations':
+                case 'organization':
+                  service = udruzenjaService;
+                  break;
+                case 'users':
+                case 'user':
+                  service = usersService;
+                  break;
+                default:
+                  Alert.alert('Greška', 'Nepoznat tip stavke');
+                  return;
+              }
+
+              // Delete all selected items
+              const promises = selectedItems.map(id => 
+                service.deleteItem ? service.deleteItem(id) : 
+                service.deleteUser ? service.deleteUser(id) :
+                Promise.reject('No delete method')
+              );
+              
+              await Promise.all(promises);
+              
+              Alert.alert(
+                'Uspjeh', 
+                `${selectedItems.length} stavki je uspješno obrisano`
+              );
+              
+              // Reset selection and refresh data
+              setSelectedItems([]);
+              setBulkMode(false);
+              setShowBulkActionsModal(false);
+              await handleDataChange();
+              
+            } catch (error) {
+              console.error('Error bulk deleting:', error);
+              Alert.alert('Greška', 'Došlo je do greške prilikom brisanja');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   // Handle reactivate lecture confirmation
   const handleReactivateConfirm = async () => {
     if (!selectedItem) {
@@ -1100,15 +1560,12 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
 
   // Render main content
   const renderContent = () => {
-    const { items } = getCurrentSectionData();
+    const { items, type } = getCurrentSectionData();
+    const canEdit = userRole === 'admin' || userRole === 'superadmin' || userRole === 'super_admin';
+    const canDelete = userRole === 'superadmin' || userRole === 'super_admin';
 
     if (isLoading) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Učitavanje...</Text>
-        </View>
-      );
+      return <LoadingSkeleton type="list" count={5} />;
     }
 
     if (items.length === 0) {
@@ -1120,6 +1577,26 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       );
     }
 
+    // Use DraggableList when in drag mode
+    if (dragMode && type !== 'mixed' && type !== 'user' && type !== 'suggestion') {
+      return (
+        <DraggableList
+          data={items}
+          onReorder={handleReorder}
+          onItemPress={(item) => {
+            setSelectedItem({ ...item, type: type === 'lectures' ? 'lecture' : type });
+            setShowItemModal(true);
+          }}
+          onEdit={canEdit ? (item) => handleEditItem(item, type === 'lectures' ? 'lecture' : type) : undefined}
+          onDelete={canDelete ? (item) => handleDeleteItem(item, type === 'lectures' ? 'lecture' : type) : undefined}
+          itemType={type === 'lectures' ? 'lecture' : type}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      );
+    }
+
+    // Use regular FlatList for normal mode, bulk mode, or unsupported sections
     return (
       <FlatList
         data={items}
@@ -2068,9 +2545,63 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     </Modal>
   );
 
+  // Render bulk actions bar
+  const renderBulkActionsBar = () => {
+    if (!bulkMode || selectedItems.length === 0) return null;
+    
+    return (
+      <View style={styles.bulkActionsBar}>
+        <View style={styles.bulkActionsLeft}>
+          <Text style={styles.bulkSelectionText}>
+            {selectedItems.length} odabrano
+          </Text>
+          <TouchableOpacity onPress={selectAllItems}>
+            <Text style={styles.bulkActionLink}>Odaberi sve</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={deselectAllItems}>
+            <Text style={styles.bulkActionLink}>Poništi odabir</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.bulkActionsRight}>
+          <TouchableOpacity
+            style={[styles.bulkActionButton, styles.bulkApproveButton]}
+            onPress={() => handleBulkStatusChange('approved')}
+          >
+            <Ionicons name="checkmark-circle" size={20} color={COLORS.white} />
+            <Text style={styles.bulkActionButtonText}>Odobri</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.bulkActionButton, styles.bulkRejectButton]}
+            onPress={() => handleBulkStatusChange('rejected')}
+          >
+            <Ionicons name="close-circle" size={20} color={COLORS.white} />
+            <Text style={styles.bulkActionButtonText}>Odbaci</Text>
+          </TouchableOpacity>
+          {(userRole === 'super_admin') && (
+            <TouchableOpacity
+              style={[styles.bulkActionButton, styles.bulkDeleteButton]}
+              onPress={handleBulkDelete}
+            >
+              <Ionicons name="trash" size={20} color={COLORS.white} />
+              <Text style={styles.bulkActionButtonText}>Obriši</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
-     
+      {/* Undo/Redo Bar */}
+      <UndoRedoBar
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        message={undoMessage}
+        visible={showUndoBar && (canUndo || canRedo)}
+      />
 
       {/* Navigation */}
       {renderNavigationHeader()}
@@ -2081,6 +2612,9 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       {/* Content */}
       {renderContent()}
 
+      {/* Bulk Actions Bar */}
+      {renderBulkActionsBar()}
+
       {/* Modals */}
       {renderItemDetailsModal()}
       {renderApprovalModal()}
@@ -2088,6 +2622,18 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       {renderEditModal()}
       {renderCancelModal()}
       {renderReactivateModal()}
+      
+      {/* Advanced Filters Modal */}
+      <AdvancedFilters
+        visible={showFilters}
+        onClose={() => setShowFilters(false)}
+        onApply={handleFiltersApply}
+        filterConfig={{
+          showStatus: activeSection !== 'korisnici',
+          showSpeaker: activeSection === 'predavanja'
+        }}
+        data={getCurrentSectionData().items}
+      />
     </View>
   );
 };
@@ -2302,6 +2848,9 @@ const styles = StyleSheet.create({
   },
   reactivateButton: {
     backgroundColor: COLORS.success,
+  },
+  archiveButton: {
+    backgroundColor: COLORS.info,
   },
   dataItemInfo: {
     marginBottom: 12,
@@ -2593,6 +3142,129 @@ const styles = StyleSheet.create({
   },
   successButton: {
     backgroundColor: COLORS.success,
+  },
+  // Bulk mode styles
+  bulkButton: {
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    marginLeft: 8,
+  },
+  bulkButtonActive: {
+    backgroundColor: COLORS.primary,
+  },
+  // Drag mode styles
+  dragButton: {
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    marginLeft: 8,
+  },
+  dragButtonActive: {
+    backgroundColor: COLORS.primary,
+  },
+  // Filter button styles
+  filterButton: {
+    position: 'relative',
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    marginLeft: 8,
+  },
+  filterButtonActive: {
+    backgroundColor: COLORS.primary,
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: COLORS.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  filterBadgeText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  dataItemSelected: {
+    backgroundColor: COLORS.primaryLight + '10',
+    borderColor: COLORS.primary,
+    borderWidth: 2,
+  },
+  bulkCheckbox: {
+    paddingRight: 12,
+    justifyContent: 'center',
+  },
+  bulkActionsBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.white,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  bulkActionsLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  bulkSelectionText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  bulkActionLink: {
+    fontSize: 12,
+    color: COLORS.primaryLight,
+    textDecorationLine: 'underline',
+  },
+  bulkActionsRight: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  bulkActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    gap: 4,
+  },
+  bulkActionButtonText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: COLORS.white,
+  },
+  bulkApproveButton: {
+    backgroundColor: COLORS.success,
+  },
+  bulkRejectButton: {
+    backgroundColor: COLORS.warning,
+  },
+  bulkDeleteButton: {
+    backgroundColor: COLORS.error,
   },
 });
 

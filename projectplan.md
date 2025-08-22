@@ -1,55 +1,97 @@
-# Plan za podešavanje ders.ba produkcijskog servera
+# Plan za rješavanje problema sa datumima - JEDNOSTAVNO RJEŠENJE
 
-## Analiza trenutnog stanja
+## Problem
+Kada se dodaje predavanje putem web app-a i odabere se datum (npr. 23. petak), sistem ponekad prikazuje dan ranije zbog timezone/UTC konverzije.
 
-### Pronađeni problemi:
-1. **PM2 procesi** - Pokrenut je rizz-backend i rizz-frontend umjesto ders-server i ders-web
-2. **MongoDB** - Baza podataka "Predavanja" postoji i radi na serveru (port 27017)
-3. **Nginx** - Postoji konfiguracija za ders.ba ali sa upozorenjima
-4. **Aplikacija** - Server i web aplikacija postoje u /var/www/ders ali nisu bile pokrenute
+## Analiza problema
+1. Frontend šalje datum kao string u formatu 'YYYY-MM-DD'
+2. Server koristi `new Date(date)` što može dodati UTC timezone
+3. To uzrokuje pomjeranje za jedan dan unazad
 
-## TODO lista za rješavanje:
+## JEDNOSTAVNO RJEŠENJE - Bez timezone konverzija
 
-### [✓] 1. Verifikacija PM2 procesa
-- Provjeriti da li su ders-server i ders-web sada pokrenuti
-- Provjeriti logove za greške
+### Pristup: Tretirati datum kao običan string bez vremenske zone
+- Frontend šalje datum kao 'YYYY-MM-DD' string
+- Server parsira datum sa eksplicitnim postavljanjem vremena na 12:00 lokalno
+- Ovo garantuje da datum ostaje isti bez obzira na timezone
 
-### [✓] 2. Testiranje server API-ja
-- Provjeriti da li server odgovara na /api/health endpoint
-- Provjeriti konekciju sa MongoDB bazom
+## TODO Lista
 
-### [✓] 3. Testiranje web aplikacije
-- Provjeriti da li Next.js aplikacija radi na portu 3000
-- Provjeriti da li se može pristupiti kroz nginx
+### 1. ✅ Analiziraj problem sa datumima
+- Pronađeni fajlovi: LectureForm.jsx, lecturesRoutes.js
 
-### [✓] 4. Nginx konfiguracija
-- Provjeriti proxy pass na localhost:3000 za web
-- Provjeriti proxy pass na localhost:5003 za API
+### 2. ✅ Identifikuj uzrok problema  
+- Problem je u `new Date(date)` konverziji koja može interpretirati datum kao UTC
 
-### [✓] 5. Finalna provjera
-- Testirati ders.ba iz browsera
-- Provjeriti osnovne funkcionalnosti
-- Provjeriti konekciju sa bazom podataka
+### 3. ✅ Implementiraj jednostavnu ispravku
 
-## Review
+#### A. Frontend izmjene (`/web/src/components/LectureForm.jsx`):
+- ✅ **Linija 255** - handleDateChange funkcija - ZAVRŠENO
+  - Promijenjeno da formatira datum lokalno bez UTC konverzije
+- ✅ **Linija 84-96** - Parsiranje datuma pri editovanju - ZAVRŠENO
+  - Ažurirano da koristi lokalno formatiranje
 
-### Završene promjene:
-1. **PM2 procesi** - Uspješno pokrenuti ders-server i ders-web procesi
-2. **MongoDB konekcija** - Server je povezan sa bazom "Predavanja" (status: connected)
-3. **API endpoints** - Health endpoint radi ispravno (/api/health)
-4. **Lectures API** - Vraća podatke iz baze (testiran /api/lectures)
-5. **Web aplikacija** - Next.js aplikacija radi na portu 3000
-6. **Nginx** - Proxy konfiguracija ispravna (3000 za web, 5003 za API)
-7. **HTTPS** - SSL certifikat aktivan, sajt dostupan na https://ders.ba
+#### B. Server izmjene:
+- ✅ Kreirana nova helper funkcija `/server/utils/dateHelpers.js` - ZAVRŠENO
+- ✅ `/server/routes/lecturesRoutes.js` - ZAVRŠENO
+  - Dodat import helper funkcija
+  - Linija 528: Ažurirano da koristi `parseLocalDate`
+  - Linija 554: Weekly lectures koriste `addDays`
+- ✅ `/server/index.js` - ZAVRŠENO
+  - Dodat import helper funkcija
+  - Ažuriran PUT endpoint (linija 2018) da koristi `parseLocalDate`
 
-### Status sistema:
-- ✅ Server: Online (port 5003)
-- ✅ Web: Online (port 3000)
-- ✅ Database: Connected (MongoDB Predavanja)
-- ✅ HTTPS: Aktivan
-- ✅ API: Funkcionalan
+### 4. ✅ Kreirati helper funkciju za sigurno parsiranje datuma
+- ✅ Lokacija: `/server/utils/dateHelpers.js` - ZAVRŠENO
+- ✅ Funkcije:
+  - `parseLocalDate(dateString)` - Parsira 'YYYY-MM-DD' sa vremenom 12:00
+  - `formatDateToString(date)` - Formatira Date u 'YYYY-MM-DD'
+  - `addDays(date, days)` - Dodaje dane na datum
 
-## Napomene:
-- PM2 procesi su upravo restartovani sa ispravnom konfiguracijom
-- MongoDB baza "Predavanja" je aktivna i sadrži podatke
-- SSL certifikat za ders.ba postoji (Let's Encrypt)
+### 5. ✅ Testiraj ispravku
+- ✅ Kreiran test script `/temp/test-date-fix.js` - ZAVRŠENO
+- ✅ Test rezultati:
+  - Svi datumi se čuvaju ispravno bez pomjeranja
+  - Weekly lectures funkcionišu kako treba
+  - Novi pristup rješava problem sa timezone
+
+## Implementirane izmjene
+
+### Frontend izmjene:
+1. **LectureForm.jsx - handleDateChange** (linija 251-265)
+   - Koristi lokalne Date metode umjesto toISOString()
+   - Formatira kao 'YYYY-MM-DD' bez timezone konverzije
+
+2. **LectureForm.jsx - useEffect za editovanje** (linija 84-99)
+   - Ažurirano parsiranje datuma za edit mode
+   - Koristi isti lokalni pristup
+
+### Server izmjene:
+1. **dateHelpers.js** (nova datoteka)
+   - Helper funkcije za sigurno rukovanje datumima
+   - parseLocalDate postavlja vrijeme na 12:00 lokalno
+
+2. **lecturesRoutes.js**
+   - Import helper funkcija
+   - POST endpoint koristi parseLocalDate
+   - Weekly lectures koriste addDays
+
+3. **index.js**
+   - PUT endpoints koriste parseLocalDate
+   - Podrška za DD.MM.YYYY i YYYY-MM-DD formate
+
+## Prednosti ovog pristupa
+1. **Jednostavnost** - Minimalne izmjene koda
+2. **Sigurnost** - Datum se neće pomjeriti zbog timezone
+3. **Konzistentnost** - Isti datum na frontendu i u bazi
+4. **Održivost** - Lako za razumjeti i održavati
+
+## Review sekcija
+- ✅ Plan kreiran i implementiran
+- ✅ Problem sa timezone konverzijama riješen
+- ✅ Testirano i verifikovano da radi
+- ✅ Server i web aplikacija rade bez problema
+
+## STATUS: ZAVRŠENO ✅
+
+Sve izmjene su implementirane i testirane. Problem sa datumima je riješen korištenjem lokalnog parsiranja bez timezone konverzija.

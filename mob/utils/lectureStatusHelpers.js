@@ -63,7 +63,7 @@ export const calculateLectureStatus = (lecture) => {
     return {
       status: 'upcoming',
       timeInfo,
-      badgeText: `Uskoro • ${timeInfo}`,
+      badgeText: timeInfo,
       badgeColor: 'green',
       timeToStart,
       lectureStartTime,
@@ -75,7 +75,7 @@ export const calculateLectureStatus = (lecture) => {
     return {
       status: 'active',
       timeInfo,
-      badgeText: `U toku • ${timeInfo}`,
+      badgeText: timeInfo,
       badgeColor: 'green',
       timeToEnd,
       lectureStartTime,
@@ -87,7 +87,7 @@ export const calculateLectureStatus = (lecture) => {
     return {
       status: 'past',
       timeInfo,
-      badgeText: `Prošlo • ${timeInfo}`,
+      badgeText: timeInfo,
       badgeColor: 'gray',
       timeSinceEnd: Math.abs(timeToEnd),
       lectureStartTime,
@@ -102,24 +102,36 @@ export const calculateLectureStatus = (lecture) => {
  * @returns {string} - Formatted time string
  */
 export const formatTimeUntilStart = (milliseconds) => {
-  const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((milliseconds % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
+  const now = new Date();
+  const lectureTime = new Date(now.getTime() + milliseconds);
   
-  if (days > 0) {
-    if (days === 1) {
-      return '1 dan';
+  // Reset hours to compare just dates
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  
+  const lectureDay = new Date(lectureTime);
+  lectureDay.setHours(0, 0, 0, 0);
+  
+  const daysDiff = Math.floor((lectureDay - todayStart) / (1000 * 60 * 60 * 24));
+  
+  const totalHours = milliseconds / (1000 * 60 * 60);
+  const hours = Math.ceil(totalHours); // Round up hours
+  
+  // If lecture is today
+  if (daysDiff === 0) {
+    if (totalHours >= 1) {
+      return `za ${hours}h`;
+    } else {
+      return 'počinje sada';
     }
-    return `${days} dana`;
-  } else if (hours > 0) {
-    if (hours === 1) {
-      return '1h';
-    }
-    return `${hours}h`;
-  } else if (minutes > 0) {
-    return `${minutes}min`;
-  } else {
-    return 'uskoro';
+  }
+  // If lecture is tomorrow
+  else if (daysDiff === 1) {
+    return 'Sutra';
+  }
+  // If lecture is 2+ days away
+  else {
+    return `za ${daysDiff} dana`;
   }
 };
 
@@ -129,15 +141,13 @@ export const formatTimeUntilStart = (milliseconds) => {
  * @returns {string} - Formatted time string
  */
 export const formatTimeUntilEnd = (milliseconds) => {
-  const hours = Math.floor(milliseconds / (1000 * 60 * 60));
-  const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
+  const totalHours = milliseconds / (1000 * 60 * 60);
+  const hours = Math.ceil(totalHours); // Round up hours
   
-  if (hours > 0) {
-    return minutes > 0 ? `završava za ${hours}h ${minutes}min` : `završava za ${hours}h`;
-  } else if (minutes > 0) {
-    return `završava za ${minutes}min`;
+  if (totalHours >= 1) {
+    return `Završava za ${hours}h`;
   } else {
-    return 'završava uskoro';
+    return 'Završava sada';
   }
 };
 
@@ -148,20 +158,22 @@ export const formatTimeUntilEnd = (milliseconds) => {
  */
 export const formatTimeSinceEnd = (milliseconds) => {
   const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((milliseconds % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const totalHours = milliseconds / (1000 * 60 * 60);
+  const hours = Math.floor(totalHours); // Round down for past time
   
   if (days > 0) {
     if (days === 1) {
       return 'prije 1 dan';
+    } else if (days < 7) {
+      return `prije ${days} dana`;
+    } else {
+      const weeks = Math.floor(days / 7);
+      return `prije ${weeks} sedmica`;
     }
-    return `prije ${days} dana`;
-  } else if (hours > 0) {
-    if (hours === 1) {
-      return 'prije 1h';
-    }
+  } else if (totalHours >= 1) {
     return `prije ${hours}h`;
   } else {
-    return 'završeno';
+    return 'upravo završeno';
   }
 };
 

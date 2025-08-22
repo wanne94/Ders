@@ -142,10 +142,8 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
 
     const { statusInfo, countdown } = displayData;
     
-    if (statusInfo.status === 'upcoming' && countdown) {
-      return `Uskoro • ${countdown.formatted}`;
-    } else if (statusInfo.status === 'active' && countdown) {
-      return `U toku • ${countdown.formatted}`;
+    if ((statusInfo.status === 'upcoming' || statusInfo.status === 'active') && countdown) {
+      return countdown.formatted;
     } else {
       return statusInfo.badgeText || 'N/A';
     }

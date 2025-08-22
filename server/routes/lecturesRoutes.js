@@ -8,6 +8,7 @@ const Daija = require('../models/Daija'); // Add Daija model
 const { authMiddleware: authenticateToken } = require('../utils/jwt');
 const { isAdminOrSuperAdmin, optionalAuth } = require('../middleware/auth');
 const { calculateLecturesStatus } = require('../utils/lectureStatus');
+const { parseLocalDate, addDays } = require('../utils/dateHelpers');
 
 // 🔧 Debug: Test if both functions are loaded correctly
 
@@ -523,7 +524,8 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // Validate date is not in the past
-    const lectureDate = new Date(date);
+    // Koristi parseLocalDate da izbjegne timezone probleme
+    const lectureDate = parseLocalDate(date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -548,8 +550,8 @@ router.post('/', authenticateToken, async (req, res) => {
       const lectures = [];
       
       for (let week = 1; week <= totalWeeks; week++) {
-        const weekDate = new Date(lectureDate);
-        weekDate.setDate(weekDate.getDate() + (week - 1) * 7);
+        // Koristi addDays umjesto direktnog manipulisanja datuma
+        const weekDate = addDays(lectureDate, (week - 1) * 7);
         
         const lectureData = {
           type,

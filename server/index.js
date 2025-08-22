@@ -29,6 +29,7 @@ const multer = require('multer');
 
 // 🔐 JWT utilities
 const { generateToken, verifyToken, authMiddleware: jwtAuthMiddleware } = require('./utils/jwt');
+const { parseLocalDate } = require('./utils/dateHelpers');
 
 // Import routes
 const usersRouter = require('./routes/users');
@@ -2014,13 +2015,17 @@ app.put('/api/lectures/:id', authenticateToken, async (req, res) => {
       });
     }
 
-    // Parse date from DD.MM.YYYY format if needed
+    // Parse date using parseLocalDate to avoid timezone issues
     let parsedDate = req.body.date;
-    if (req.body.date && typeof req.body.date === 'string' && req.body.date.includes('.')) {
-      const [day, month, year] = req.body.date.split('.');
-      parsedDate = new Date(year, month - 1, day);
-    } else if (req.body.date && typeof req.body.date === 'string') {
-      parsedDate = new Date(req.body.date);
+    if (req.body.date && typeof req.body.date === 'string') {
+      if (req.body.date.includes('.')) {
+        // Convert DD.MM.YYYY to YYYY-MM-DD format
+        const [day, month, year] = req.body.date.split('.');
+        parsedDate = parseLocalDate(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
+      } else {
+        // Assume YYYY-MM-DD format
+        parsedDate = parseLocalDate(req.body.date);
+      }
     }
 
     // Map frontend field names to model field names
@@ -2218,13 +2223,17 @@ app.patch('/api/lectures/:id', authenticateToken, async (req, res) => {
       }
     }
 
-    // Parse date from DD.MM.YYYY format if needed
+    // Parse date using parseLocalDate to avoid timezone issues
     let parsedDate = req.body.date;
-    if (req.body.date && typeof req.body.date === 'string' && req.body.date.includes('.')) {
-      const [day, month, year] = req.body.date.split('.');
-      parsedDate = new Date(year, month - 1, day);
-    } else if (req.body.date && typeof req.body.date === 'string') {
-      parsedDate = new Date(req.body.date);
+    if (req.body.date && typeof req.body.date === 'string') {
+      if (req.body.date.includes('.')) {
+        // Convert DD.MM.YYYY to YYYY-MM-DD format
+        const [day, month, year] = req.body.date.split('.');
+        parsedDate = parseLocalDate(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
+      } else {
+        // Assume YYYY-MM-DD format
+        parsedDate = parseLocalDate(req.body.date);
+      }
     }
 
     // Map frontend field names to model field names if needed

@@ -17,6 +17,8 @@ import {
   CircularProgress,
   Chip,
   InputAdornment,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -28,12 +30,17 @@ import PageLayout from '@/components/PageLayout';
 import DashSidebar from '@/components/DashSidebar';
 
 import DataTable from '@/components/DataTable';
+import DraggableDataTable from '@/components/DraggableDataTable';
 import Settings from '@/components/dashboard/Settings';
 import LectureForm from '@/components/LectureForm';
 import DaijaForm from '@/components/DaijaForm';
 import OrganizationForm from '@/components/OrganizationForm';
 import UserForm from '@/components/UserForm';
-
+import LoadingSkeleton from '@/components/LoadingSkeleton';
+import SearchBar from '@/components/SearchBar';
+import AdvancedFilters, { FilterButton } from '@/components/AdvancedFilters';
+import UndoRedoBar from '@/components/UndoRedoBar';
+import useUndoRedo from '@/hooks/useUndoRedo';
 
 import { predavanjaService, daijeService, udruzenjaService, suggestionsService, usersService, settingsService } from '@/services';
 import axiosInstance from '@/utils/axiosConfig';
@@ -266,40 +273,169 @@ const Dashboard = () => {
 
   const [searchQueries, setSearchQueries] = useState({
     lectures: '',
-    users: ''
+    users: '',
+    daije: '',
+    organizations: '',
+    suggestions: ''
   });
 
   const [activeSuggestionsSubsection, setActiveSuggestionsSubsection] = useState('aktivni');
+  
+  // Advanced filters state
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
+  
+  // Drag & Drop state
+  const [dragMode, setDragMode] = useState(false);
+  
+  // Undo/Redo state
+  const [dataHistory, setDataHistory, undoRedoControls] = useUndoRedo(null);
+  const [lastAction, setLastAction] = useState('');
 
   const fetchDataCalledRef = useRef(false);
 
   const filterData = (items, searchQuery, type) => {
-    if (!searchQuery.trim()) return items;
+    let filteredItems = [...items];
     
-    return items.filter(item => {
-      switch (type) {
-        case 'lecture':
-          return item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                 item.speaker?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                 item.organization?.toLowerCase().includes(searchQuery.toLowerCase());
-        case 'user':
-          return item.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                 item.email?.toLowerCase().includes(searchQuery.toLowerCase());
-        case 'organization':
-          return item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                 item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                 item.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                 item.city?.toLowerCase().includes(searchQuery.toLowerCase());
-        case 'suggestion':
-          return item.targetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                 item.reason?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                 item.submitterName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                 item.submitterEmail?.toLowerCase().includes(searchQuery.toLowerCase());
-        default:
-          return true;
+    // Apply search filter
+    if (searchQuery && searchQuery.trim()) {
+      filteredItems = filteredItems.filter(item => {
+        switch (type) {
+          case 'lecture':
+            return item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   item.speaker?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   item.organization?.toLowerCase().includes(searchQuery.toLowerCase());
+          case 'user':
+            return item.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   item.email?.toLowerCase().includes(searchQuery.toLowerCase());
+          case 'organization':
+            return item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   item.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   item.city?.toLowerCase().includes(searchQuery.toLowerCase());
+          case 'daija':
+            return item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+          case 'suggestion':
+            return item.targetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   item.reason?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   item.submitterName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   item.submitterEmail?.toLowerCase().includes(searchQuery.toLowerCase());
+          default:
+            return true;
+        }
+      });
+    }
+    
+    // Apply advanced filters
+    if (Object.keys(activeFilters).length > 0) {
+      // Date filters
+      if (activeFilters.dateFrom) {
+        const fromDate = new Date(activeFilters.dateFrom);
+        filteredItems = filteredItems.filter(item => {
+          const itemDate = item.date ? new Date(item.date) : null;
+          return itemDate && itemDate >= fromDate;
+        });
       }
-    });
+      
+      if (activeFilters.dateTo) {
+        const toDate = new Date(activeFilters.dateTo);
+        filteredItems = filteredItems.filter(item => {
+          const itemDate = item.date ? new Date(item.date) : null;
+          return itemDate && itemDate <= toDate;
+        });
+      }
+      
+      // Status filter
+      if (activeFilters.status) {
+        filteredItems = filteredItems.filter(item => item.status === activeFilters.status);
+      }
+      
+      // City filter
+      if (activeFilters.city) {
+        filteredItems = filteredItems.filter(item => item.city === activeFilters.city);
+      }
+      
+      // Organization filter
+      if (activeFilters.organization) {
+        filteredItems = filteredItems.filter(item => item.organization === activeFilters.organization);
+      }
+      
+      // Speaker filter
+      if (activeFilters.speaker) {
+        filteredItems = filteredItems.filter(item => item.speaker === activeFilters.speaker);
+      }
+      
+      // Has image filter
+      if (activeFilters.hasImage === true) {
+        filteredItems = filteredItems.filter(item => item.imageUrl && item.imageUrl !== '');
+      }
+      
+      // Sort
+      if (activeFilters.sortBy) {
+        filteredItems.sort((a, b) => {
+          let aVal = a[activeFilters.sortBy];
+          let bVal = b[activeFilters.sortBy];
+          
+          // Handle dates
+          if (activeFilters.sortBy === 'date' || activeFilters.sortBy === 'createdAt') {
+            aVal = new Date(aVal);
+            bVal = new Date(bVal);
+          }
+          
+          if (activeFilters.sortOrder === 'desc') {
+            return bVal > aVal ? 1 : -1;
+          } else {
+            return aVal > bVal ? 1 : -1;
+          }
+        });
+      }
+    }
+    
+    return filteredItems;
   };
+  
+  const handleApplyFilters = (filters) => {
+    setActiveFilters(filters);
+    setFiltersOpen(false);
+  };
+  
+  const handleReorder = useCallback((reorderedItems, type) => {
+    // Update local state with reordered items
+    const dataKey = type === 'daija' ? 'daije' : 
+                   type === 'organization' ? 'organizations' : 
+                   type === 'user' ? 'users' : 
+                   type === 'lecture' ? 'lectures' : type;
+    
+    setData(prev => {
+      const newData = {
+        ...prev,
+        [dataKey]: reorderedItems
+      };
+      
+      // Add to undo/redo history
+      setDataHistory(newData, `Reorganizovano ${dataKey}`);
+      setLastAction(`Reorganizovano ${dataKey}`);
+      
+      return newData;
+    });
+  }, [setDataHistory]);
+  
+  const handleUndo = useCallback(() => {
+    const action = undoRedoControls.undo();
+    if (action && dataHistory) {
+      setData(dataHistory);
+      setLastAction(`Poništeno: ${action}`);
+    }
+  }, [undoRedoControls, dataHistory]);
+  
+  const handleRedo = useCallback(() => {
+    const action = undoRedoControls.redo();
+    if (action && dataHistory) {
+      setData(dataHistory);
+      setLastAction(`Ponovljeno: ${action}`);
+    }
+  }, [undoRedoControls, dataHistory]);
 
   const handleSearchChange = (section, value) => {
     setSearchQueries(prev => ({
@@ -831,36 +967,69 @@ const Dashboard = () => {
     }
   }, [activeSection, showSnackbar]);
 
-  const renderSection = (sectionType, items, title, type = null, showRejectionReason = false) => (
-    <Box sx={{ mb: 4, width: '100%' }}>
-      <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-        {title}
-      </Typography>
-      {items.length === 0 ? (
-        <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50', width: '100%' }}>
-          <Typography color="text.secondary" variant="h6">
-            Nema {title.toLowerCase()}
+  const renderSection = (sectionType, items, title, type = null, showRejectionReason = false) => {
+    const sectionKey = type || getTypeFromSection(activeSection);
+    
+    return (
+      <Box sx={{ mb: 4, width: '100%' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+            {title}
           </Typography>
-        </Paper>
-      ) : (
-        <DataTable
-          data={items}
-          type={type || getTypeFromSection(activeSection)}
-          onEdit={isAdmin ? handleEdit : undefined}
-          onDelete={canDelete ? handleDelete : undefined}
-          onDuplicate={handleDuplicate}
-          onCancel={(type === 'lecture' || type === 'lectures') && isAdmin ? handleCancelLecture : undefined}
-          onStatusChange={isAdmin ? (item, newStatus) => handleStatusChange(item, type || getTypeFromSection(activeSection), newStatus) : undefined}
-          onBulkStatusChange={isAdmin ? handleBulkStatusChange : undefined}
-          onBulkDelete={canDelete ? handleBulkDelete : undefined}
-          hideActions={!isAdmin}
-          showActions={true}
-          showStatus={true}
-          showRejectionReason={showRejectionReason}
-        />
-      )}
-    </Box>
-  );
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={dragMode}
+                  onChange={(e) => setDragMode(e.target.checked)}
+                  size="small"
+                />
+              }
+              label="Reorganizuj"
+              sx={{ mr: 2 }}
+            />
+            <SearchBar
+              placeholder={`Pretraži ${title.toLowerCase()}...`}
+              onSearch={(value) => handleSearchChange(sectionKey, value)}
+              value={searchQueries[sectionKey] || ''}
+              fullWidth={false}
+              sx={{ width: 300 }}
+            />
+            <FilterButton
+              onClick={() => setFiltersOpen(true)}
+              activeCount={Object.keys(activeFilters).length}
+            />
+          </Box>
+        </Box>
+        
+        {items.length === 0 ? (
+          <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50', width: '100%' }}>
+            <Typography color="text.secondary" variant="h6">
+              Nema {title.toLowerCase()}
+            </Typography>
+          </Paper>
+        ) : (
+          <DraggableDataTable
+            data={items}
+            type={type || getTypeFromSection(activeSection)}
+            onEdit={isAdmin ? handleEdit : undefined}
+            onDelete={canDelete ? handleDelete : undefined}
+            onDuplicate={handleDuplicate}
+            onCancel={(type === 'lecture' || type === 'lectures') && isAdmin ? handleCancelLecture : undefined}
+            onStatusChange={isAdmin ? (item, newStatus) => handleStatusChange(item, type || getTypeFromSection(activeSection), newStatus) : undefined}
+            onBulkStatusChange={isAdmin ? handleBulkStatusChange : undefined}
+            onBulkDelete={canDelete ? handleBulkDelete : undefined}
+            onReorder={(reorderedItems) => handleReorder(reorderedItems, type || getTypeFromSection(activeSection))}
+            hideActions={!isAdmin}
+            showActions={true}
+            showStatus={true}
+            showRejectionReason={showRejectionReason}
+            dragEnabled={dragMode}
+          />
+        )}
+      </Box>
+    );
+  };
 
   const renderContent = () => {
     if (ui.isLoading) {
@@ -930,9 +1099,24 @@ const Dashboard = () => {
         const filteredUsers = filterData(data.users, searchQueries.users, 'user');
         content = (
           <Box sx={{ mb: 4, width: '100%' }}>
-            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-              Korisnici
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+              <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+                Korisnici
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <SearchBar
+                  placeholder="Pretraži korisnike..."
+                  onSearch={(value) => handleSearchChange('users', value)}
+                  value={searchQueries.users || ''}
+                  fullWidth={false}
+                  sx={{ width: 300 }}
+                />
+                <FilterButton
+                  onClick={() => setFiltersOpen(true)}
+                  activeCount={Object.keys(activeFilters).length}
+                />
+              </Box>
+            </Box>
             {filteredUsers.length === 0 ? (
               <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50', width: '100%' }}>
                 <Typography color="text.secondary" variant="h6">
@@ -940,15 +1124,17 @@ const Dashboard = () => {
                 </Typography>
               </Paper>
             ) : (
-              <DataTable
+              <DraggableDataTable
                 data={filteredUsers}
                 type="users"
                 onEdit={isAdmin ? handleEdit : undefined}
                 onDelete={canDelete ? handleDelete : undefined}
                 onBulkDelete={canDelete ? handleBulkDelete : undefined}
+                onReorder={(reorderedItems) => handleReorder(reorderedItems, 'users')}
                 hideActions={!isAdmin}
                 showActions={true}
                 showStatus={false}
+                dragEnabled={dragMode}
               />
             )}
           </Box>
@@ -1286,6 +1472,17 @@ const Dashboard = () => {
                   p: 2
                 }}>
                   {renderContent()}
+                  
+                  {/* Undo/Redo Bar */}
+                  <UndoRedoBar
+                    canUndo={undoRedoControls.canUndo}
+                    canRedo={undoRedoControls.canRedo}
+                    onUndo={handleUndo}
+                    onRedo={handleRedo}
+                    onReset={undoRedoControls.reset}
+                    lastAction={lastAction}
+                    visible={isAdmin}
+                  />
                 </Box>
               )}
             </Box>
@@ -1615,6 +1812,19 @@ const Dashboard = () => {
             showSnackbar('Korisnik uspješno ažuriran');
           }}
           user={userToEdit}
+        />
+        
+        {/* Advanced Filters Dialog */}
+        <AdvancedFilters
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          onApply={handleApplyFilters}
+          data={[...data.lectures, ...data.daije, ...data.organizations]}
+          currentFilters={activeFilters}
+          filterConfig={{
+            showStatus: true,
+            showSpeaker: activeSection === 'predavanja' || activeSection === 'za-odobrenje'
+          }}
         />
       </PageLayout>
     </ProtectedRoute>

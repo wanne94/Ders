@@ -18,6 +18,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
+    "@hello-pangea/dnd": "^18.0.1",
     "@mui/icons-material": "^6.1.10",
     "@mui/material": "^6.1.10",
     "@mui/x-date-pickers": "^7.22.0",
@@ -25,12 +26,18 @@
     "date-fns": "^2.30.0",
     "firebase": "^12.0.0",
     "formidable": "^3.5.4",
+    "framer-motion": "^12.23.12",
     "jwt-decode": "^4.0.0",
     "next": "14.2.30",
     "react": "18.2.0",
+    "react-beautiful-dnd": "^13.1.1",
     "react-dom": "18.2.0",
+    "react-intersection-observer": "^9.16.0",
+    "react-virtualized-auto-sizer": "^1.0.26",
+    "react-window": "^1.8.11",
     "recharts": "^3.1.2",
-    "sharp": "^0.34.2"
+    "sharp": "^0.34.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",

@@ -86,8 +86,11 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
         try {
           const date = new Date(lecture.date);
           if (!isNaN(date.getTime())) {
-            // Format to YYYY-MM-DD for consistency
-            parsedDate = date.toISOString().split('T')[0];
+            // Format to YYYY-MM-DD without timezone conversion
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            parsedDate = `${year}-${month}-${day}`;
           }
         } catch (error) {
           console.error('Error parsing date:', error);
@@ -250,9 +253,17 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
 
   const handleDateChange = (date) => {
     console.log('📅 Date changed:', date);
+    // Format date as YYYY-MM-DD without timezone conversion
+    let formattedDate = '';
+    if (date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      formattedDate = `${year}-${month}-${day}`;
+    }
     setFormData(prev => ({
       ...prev,
-      date: date ? date.toISOString().split('T')[0] : ''
+      date: formattedDate
     }));
   };
 
