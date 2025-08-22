@@ -9,6 +9,8 @@
 export const parseLocalDateString = (dateString) => {
   if (!dateString) return null;
   
+  console.log('🔍 parseLocalDateString input:', dateString);
+  
   // Handle ISO date strings (with 'T') by extracting just the date part
   if (dateString.includes('T')) {
     dateString = dateString.split('T')[0];
@@ -23,11 +25,23 @@ export const parseLocalDateString = (dateString) => {
   
   // Validate parsed values
   if (isNaN(year) || isNaN(month) || isNaN(day)) {
+    console.error('Invalid date parts:', { year, month, day });
     return null;
   }
   
   // Create date at noon local time to avoid DST and timezone issues
   const date = new Date(year, month, day, 12, 0, 0, 0);
+  
+  console.log('🔍 parseLocalDateString created:', {
+    input: dateString,
+    output: date.toString(),
+    isoString: date.toISOString(),
+    components: {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      day: date.getDate()
+    }
+  });
   
   // Double-check the date is valid
   if (isNaN(date.getTime())) {
@@ -39,6 +53,10 @@ export const parseLocalDateString = (dateString) => {
   if (date.getFullYear() !== year || 
       date.getMonth() !== month || 
       date.getDate() !== day) {
+    console.error('Date mismatch!', {
+      expected: { year, month: month + 1, day },
+      got: { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() }
+    });
     return null;
   }
   
@@ -74,32 +92,42 @@ export const getTodayStartOfDay = () => {
  * DatePicker might pass various formats depending on the adapter
  */
 export const handleDatePickerChange = (value) => {
-  // Log for debugging
-  console.log('DatePicker onChange value:', {
+  // Detailed logging for production debugging
+  console.log('🔍 DatePicker onChange DEBUG:', {
     value,
     type: typeof value,
     isDate: value instanceof Date,
-    toString: value ? value.toString() : 'null'
+    toString: value ? value.toString() : 'null',
+    toISOString: value instanceof Date ? value.toISOString() : 'N/A',
+    getTimezoneOffset: value instanceof Date ? value.getTimezoneOffset() : 'N/A',
+    userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'N/A',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
   });
   
   if (!value) return '';
   
   // If it's already a Date object
   if (value instanceof Date) {
-    return formatDateToLocalString(value);
+    const formatted = formatDateToLocalString(value);
+    console.log('📅 Formatted result:', formatted, 'from Date:', value.toString());
+    return formatted;
   }
   
   // If it's a string, try to parse it
   if (typeof value === 'string') {
     const parsed = parseLocalDateString(value);
-    return formatDateToLocalString(parsed);
+    const formatted = formatDateToLocalString(parsed);
+    console.log('📅 Formatted result:', formatted, 'from string:', value);
+    return formatted;
   }
   
   // For any other type, try to convert to Date
   try {
     const date = new Date(value);
     if (!isNaN(date.getTime())) {
-      return formatDateToLocalString(date);
+      const formatted = formatDateToLocalString(date);
+      console.log('📅 Formatted result:', formatted, 'from conversion:', value);
+      return formatted;
     }
   } catch (e) {
     console.error('Failed to parse date:', e);
