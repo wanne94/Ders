@@ -52,23 +52,28 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
     return Math.max(0, totalWeeks - weekNumber + 1);
   };
   
-  const [formData, setFormData] = useState({
-    title: '',
-    daijaId: '',
-    speaker: '',
-    organizationId: '',
-    organization: '',
-    date: '',
-    time: '',
-    address: '',
-    city: '',
-    shortDescription: '',
-    image: '',
-    isWeeklyLecture: false,
-    totalWeeks: 2,
-    weekNumber: null,
-    weeklySeriesId: '',
-    lecturePart: null
+  // Use lazy initialization to ensure date is calculated at runtime
+  const [formData, setFormData] = useState(() => {
+    const initialDate = getTodayDateString();
+    console.log('🚀 [LectureForm] Initializing form with default date:', initialDate);
+    return {
+      title: '',
+      daijaId: '',
+      speaker: '',
+      organizationId: '',
+      organization: '',
+      date: initialDate, // Use the logged date value
+      time: '12:00', // Set default time immediately
+      address: '',
+      city: '',
+      shortDescription: '',
+      image: '',
+      isWeeklyLecture: false,
+      totalWeeks: 2,
+      weekNumber: null,
+      weeklySeriesId: '',
+      lecturePart: null
+    };
   });
 
   const [daije, setDaije] = useState([]);

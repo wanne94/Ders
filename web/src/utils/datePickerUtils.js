@@ -113,7 +113,16 @@ export const getTodayDateString = () => {
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, '0');
   const day = String(today.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  const dateString = `${year}-${month}-${day}`;
+  
+  console.log('📅 [getTodayDateString] Generated default date:', {
+    today: today.toString(),
+    dateString: dateString,
+    environment: typeof window !== 'undefined' ? 
+      (window.location?.hostname || 'unknown') : 'server/build'
+  });
+  
+  return dateString;
 };
 
 /**
