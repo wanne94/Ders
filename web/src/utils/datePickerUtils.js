@@ -5,26 +5,28 @@
 /**
  * Parse a YYYY-MM-DD string to a Date object at noon local time
  * This avoids timezone conversion issues
+ * CRITICAL: Always creates date at 12:00 noon to prevent timezone shifts
  */
 export const parseLocalDateString = (dateString) => {
   if (!dateString) return null;
   
-  console.log('🔍 parseLocalDateString input:', dateString);
+  console.log('🔍 [PRODUCTION FIX] parseLocalDateString input:', dateString, typeof dateString);
   
   // Handle ISO date strings (with 'T') by extracting just the date part
   if (typeof dateString === 'string' && dateString.includes('T')) {
     dateString = dateString.split('T')[0];
+    console.log('🔍 [PRODUCTION FIX] Extracted date from ISO string:', dateString);
   }
   
   // Ensure we have a string
   if (typeof dateString !== 'string') {
-    console.error('parseLocalDateString expects a string, got:', typeof dateString);
+    console.error('[PRODUCTION FIX] parseLocalDateString expects a string, got:', typeof dateString);
     return null;
   }
   
   const parts = dateString.split('-');
   if (parts.length !== 3) {
-    console.error('Invalid date format, expected YYYY-MM-DD, got:', dateString);
+    console.error('[PRODUCTION FIX] Invalid date format, expected YYYY-MM-DD, got:', dateString);
     return null;
   }
   
@@ -34,38 +36,42 @@ export const parseLocalDateString = (dateString) => {
   
   // Validate parsed values
   if (isNaN(year) || isNaN(month) || isNaN(day)) {
-    console.error('Invalid date parts:', { year, month, day });
+    console.error('[PRODUCTION FIX] Invalid date parts:', { year, month, day });
     return null;
   }
   
-  // CRITICAL: Create date at noon (12:00) local time to avoid ANY timezone issues
-  // This ensures the date doesn't shift when displayed in different timezones
+  // CRITICAL FIX: Create date at noon (12:00) local time
+  // This is the KEY to avoiding timezone issues
   const date = new Date(year, month, day, 12, 0, 0, 0);
   
-  console.log('🔍 parseLocalDateString created:', {
+  // Extensive logging for production debugging
+  console.log('🔍 [PRODUCTION FIX] parseLocalDateString created:', {
     input: dateString,
-    output: date.toString(),
+    outputString: date.toString(),
+    outputISO: date.toISOString(),
     localDateString: formatDateToLocalString(date),
     components: {
       year: date.getFullYear(),
       month: date.getMonth() + 1,
       day: date.getDate(),
-      hours: date.getHours()
-    }
+      hours: date.getHours(),
+      minutes: date.getMinutes()
+    },
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezoneOffset: date.getTimezoneOffset()
   });
   
   // Double-check the date is valid
   if (isNaN(date.getTime())) {
-    console.error('Invalid date created from:', dateString);
+    console.error('[PRODUCTION FIX] Invalid date created from:', dateString);
     return null;
   }
   
   // Verify the date components match what we intended
-  // This catches cases where JavaScript "corrects" invalid dates
   if (date.getFullYear() !== year || 
       date.getMonth() !== month || 
       date.getDate() !== day) {
-    console.error('Date mismatch!', {
+    console.error('[PRODUCTION FIX] Date mismatch!', {
       expected: { year, month: month + 1, day },
       got: { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() }
     });
@@ -112,51 +118,61 @@ export const getTodayDateString = () => {
 
 /**
  * Safely handle DatePicker onChange event
- * DatePicker might pass various formats depending on the adapter
+ * CRITICAL: This function ensures dates are handled correctly regardless of timezone
  */
 export const handleDatePickerChange = (value) => {
-  // Detailed logging for production debugging
-  console.log('🔍 DatePicker onChange DEBUG:', {
+  // Extensive logging for production debugging
+  console.log('🔍 [PRODUCTION FIX] DatePicker onChange:', {
     value,
     type: typeof value,
     isDate: value instanceof Date,
     toString: value ? value.toString() : 'null',
     toISOString: value instanceof Date ? value.toISOString() : 'N/A',
-    getTimezoneOffset: value instanceof Date ? value.getTimezoneOffset() : 'N/A',
-    userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'N/A',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    timezoneOffset: value instanceof Date ? value.getTimezoneOffset() : 'N/A',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    hours: value instanceof Date ? value.getHours() : 'N/A',
+    minutes: value instanceof Date ? value.getMinutes() : 'N/A'
   });
   
   if (!value) return '';
   
   // If it's already a Date object
   if (value instanceof Date) {
-    // CRITICAL FIX: When DatePicker returns a date at midnight (00:00:00),
-    // we need to use LOCAL date methods to avoid timezone shifting
-    // The date object from DatePicker is already in local timezone
-    // So we just extract the year, month, day using local methods
+    // CRITICAL FIX: Create a new date at noon to avoid timezone issues
+    // Even if DatePicker gives us midnight, we force it to noon
     const year = value.getFullYear();
-    const month = String(value.getMonth() + 1).padStart(2, '0');
-    const day = String(value.getDate()).padStart(2, '0');
-    const formatted = `${year}-${month}-${day}`;
+    const month = value.getMonth();
+    const day = value.getDate();
     
-    console.log('📅 FIXED Formatted result:', {
-      input: value.toString(),
+    // Create new date at noon (12:00) local time
+    const noonDate = new Date(year, month, day, 12, 0, 0, 0);
+    
+    // Format using the noon date
+    const formattedMonth = String(noonDate.getMonth() + 1).padStart(2, '0');
+    const formattedDay = String(noonDate.getDate()).padStart(2, '0');
+    const formatted = `${noonDate.getFullYear()}-${formattedMonth}-${formattedDay}`;
+    
+    console.log('📅 [PRODUCTION FIX] Date formatted:', {
+      originalDate: value.toString(),
+      originalHours: value.getHours(),
+      noonDate: noonDate.toString(),
+      noonHours: noonDate.getHours(),
       output: formatted,
-      year: value.getFullYear(),
-      month: value.getMonth() + 1,
-      day: value.getDate(),
-      hours: value.getHours()
+      components: {
+        year: noonDate.getFullYear(),
+        month: noonDate.getMonth() + 1,
+        day: noonDate.getDate()
+      }
     });
     
     return formatted;
   }
   
-  // If it's a string, try to parse it
+  // If it's a string, parse it properly
   if (typeof value === 'string') {
     const parsed = parseLocalDateString(value);
     const formatted = formatDateToLocalString(parsed);
-    console.log('📅 Formatted result:', formatted, 'from string:', value);
+    console.log('📅 [PRODUCTION FIX] String date formatted:', formatted, 'from:', value);
     return formatted;
   }
   
@@ -164,16 +180,21 @@ export const handleDatePickerChange = (value) => {
   try {
     const date = new Date(value);
     if (!isNaN(date.getTime())) {
-      // Use the same local extraction method
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const formatted = `${year}-${month}-${day}`;
-      console.log('📅 Formatted result:', formatted, 'from conversion:', value);
+      // Force to noon as well
+      const noonDate = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        12, 0, 0, 0
+      );
+      const month = String(noonDate.getMonth() + 1).padStart(2, '0');
+      const day = String(noonDate.getDate()).padStart(2, '0');
+      const formatted = `${noonDate.getFullYear()}-${month}-${day}`;
+      console.log('📅 [PRODUCTION FIX] Converted date formatted:', formatted, 'from:', value);
       return formatted;
     }
   } catch (e) {
-    console.error('Failed to parse date:', e);
+    console.error('[PRODUCTION FIX] Failed to parse date:', e);
   }
   
   return '';

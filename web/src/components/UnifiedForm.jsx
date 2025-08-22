@@ -404,6 +404,18 @@ const UnifiedForm = ({
       const submitData = { ...formData, image: imagePath };
       delete submitData.imageFile; // Remove file object
 
+      // CRITICAL: Log the date being sent to server
+      if (type === 'lecture') {
+        console.log('📤 [PRODUCTION FIX] UnifiedForm sending to server:', {
+          date: submitData.date,
+          dateType: typeof submitData.date,
+          time: submitData.time,
+          fullData: submitData,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timestamp: new Date().toISOString()
+        });
+      }
+
       // Determine API endpoint and method
       let endpoint, method;
       switch (type) {

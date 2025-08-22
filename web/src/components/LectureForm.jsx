@@ -274,15 +274,24 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
   const handleDateChange = (date) => {
     // Use utility function to safely handle date conversion
     const formattedDate = handleDatePickerChange(date);
-    console.log('📅 Date change result:', { 
-      input: date, 
-      formatted: formattedDate 
+    
+    // Extensive production debugging
+    console.log('📅 [PRODUCTION FIX] LectureForm handleDateChange:', { 
+      input: date,
+      inputType: typeof date,
+      inputString: date ? date.toString() : 'null',
+      formatted: formattedDate,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timestamp: new Date().toISOString()
     });
     
-    setFormData(prev => ({
-      ...prev,
-      date: formattedDate
-    }));
+    setFormData(prev => {
+      console.log('📅 [PRODUCTION FIX] Updating formData with date:', formattedDate);
+      return {
+        ...prev,
+        date: formattedDate
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -405,6 +414,16 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
 
       // Remove imageFile from the data sent to server
       delete finalFormData.imageFile;
+      
+      // CRITICAL: Log the date being sent to server
+      console.log('📤 [PRODUCTION FIX] Sending to server:', {
+        date: finalFormData.date,
+        dateType: typeof finalFormData.date,
+        time: finalFormData.time,
+        fullData: finalFormData,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timestamp: new Date().toISOString()
+      });
       
       // Generate weeklySeriesId if converting to weekly lecture
       if (finalFormData.isWeeklyLecture && !finalFormData.weeklySeriesId) {

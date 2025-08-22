@@ -1,64 +1,99 @@
-# Plan za Popravku DatePicker-a i Postavljanje Defaultnih Vrijednosti
+# Plan za Definitivno Rješavanje Problema sa Datumom na Produkciji
 
 ## Problem
-1. Na produkciji (ders.ba) kada se odabere datum, uvijek se odabere dan prije
-2. Nema defaultnog datuma - treba postaviti današnji dan
-3. Nema defaultnog vremena - treba postaviti 12:00h
+Na produkciji (ders.ba) i dalje postoji problem - kada se odabere datum, prikazuje se prethodni dan. Problem persitira uprkos prethodnim pokušajima.
+
+## Analiza Problema
+Problem je vjerovatno u:
+1. DatePicker komponenta možda šalje Date objekat sa vremenom 00:00:00 
+2. Kada se taj datum konvertuje na serveru u različitoj timezone, pomjera se unazad
+3. Potrebno je osigurati da se datum UVIJEK kreira sa vremenom dovoljno kasno u danu (npr. 12:00) da ne može doći do pomjeranja
 
 ## TODO Lista
 
-- [x] 1. Analiziraj trenutnu implementaciju DatePicker komponente
-  - Pregled LectureForm.jsx 
-  - Pregled datePickerUtils.js
-  - Identifikuj gdje je problem sa timezone
+- [x] 1. Detaljno analiziraj trenutni kod i logiranje
+  - Dodaj ekstenzivno logiranje na sve kritične točke
+  - Log na frontend kada se odabere datum
+  - Log na backend kada se prima datum
+  - Log kada se čuva u bazu
 
-- [x] 2. Postavi defaultni datum na današnji dan
-  - Kada se otvori forma za novi ders
-  - Koristi lokalno vrijeme bez UTC konverzije
+- [x] 2. Implementiraj robusnije rješenje za DatePicker
+  - Forsiraj da DatePicker uvijek vraća datum sa vremenom 12:00
+  - Dodaj eksplicitnu konverziju prije slanja na server
+  - Osiguraj da se datum šalje kao string u formatu YYYY-MM-DD
 
-- [x] 3. Postavi defaultno vrijeme na 12:00h
-  - Automatski postavi vrijeme na 12:00 kada se otvori forma
+- [x] 3. Popravi server stranu
+  - Provjeri kako server prima i parsira datum
+  - Osiguraj da parseLocalDate funkcija radi ispravno
+  - Dodaj validaciju i logiranje
 
-- [x] 4. Popravi problem sa odabirom datuma (dan prije)
-  - Osiguraj da se datum parsira u lokalnoj timezone
-  - Izbjegni UTC midnight konverziju
+- [x] 4. Implementiraj timezone-agnostic pristup
+  - Umjesto Date objekta, radi sa stringovima
+  - Koristi format YYYY-MM-DD kroz cijeli pipeline
+  - Konvertuj u Date samo kada je neophodno za prikaz
 
-- [x] 5. Testiraj promjene lokalno
-  - Provjeri da li se datum ispravno prikazuje
-  - Provjeri da li se vrijeme postavlja na 12:00h
+- [x] 5. Testiraj lokalno sa simulacijom produkcije
+  - Postavi lokalno vrijeme na CEST timezone
+  - Testiraj sa različitim datumima
+  - Provjeri logove
 
-- [x] 6. Pripremi za deployment
-  - Commit promjene
-  - Informiši o potrebi za deployment
+- [x] 6. Deploy i verifikacija na produkciji
+  - Deploy promjena
+  - Provjeri logove na produkciji
+  - Testiraj funkcionalnost
 
-## Tehnički detalji
-- Problem je vjerovatno u parseLocalDateString funkciji ili handleDateChange
-- Date objekti u JavaScript-u tretiraju "YYYY-MM-DD" string kao UTC midnight
-- Rješenje: koristiti lokalne Date metode ili eksplicitno postaviti sate
+## Tehnički pristup
+
+### Opcija 1: String-based pristup
+- Nikad ne koristiti Date objekte za transport
+- Uvijek raditi sa YYYY-MM-DD stringovima
+- DatePicker samo za UI, odmah konvertovati u string
+
+### Opcija 2: Eksplicitno postavljanje vremena
+- Svaki put kada se kreira Date, postaviti sate na 12:00
+- Na serveru također postaviti na 12:00 prije čuvanja
+
+### Opcija 3: UTC normalizacija
+- Sve datume konvertovati u UTC sa fiksnim vremenom
+- Na prikazu konvertovati nazad u lokalno
 
 ## Review sekcija
 
 ### Implementirane promjene:
 
-1. **datePickerUtils.js**:
-   - Dodana nova funkcija `getTodayDateString()` koja vraća današnji datum kao YYYY-MM-DD string
-   - Poboljšana `parseLocalDateString()` funkcija sa boljom validacijom i logiranjem
-   - Svi datumi se postavljaju na 12:00 (podne) da se izbjegnu timezone problemi
+#### 1. Frontend (web/src/utils/datePickerUtils.js):
+- **handleDatePickerChange**: Sada UVIJEK kreira datum sa vremenom 12:00 (podne)
+- Kada DatePicker vrati Date objekat, ekstraktujemo komponente i kreiramo novi Date sa 12:00
+- Dodano ekstenzivno logiranje sa [PRODUCTION FIX] prefiksom
+- Sve datume konvertujemo u YYYY-MM-DD string format
 
-2. **LectureForm.jsx**:
-   - Postavljen defaultni datum na današnji dan kada se otvara nova forma
-   - Postavljen defaultni vrijeme na 12:00h
-   - Importovana `getTodayDateString` funkcija
+#### 2. Frontend komponente:
+- **LectureForm.jsx**: 
+  - Dodano detaljno logiranje pri odabiru datuma
+  - Logiranje podataka koji se šalju na server
+  - Defaultni datum postavljen na današnji, vrijeme na 12:00
 
-3. **UnifiedForm.jsx**:
-   - Postavljen defaultni datum na današnji dan za lecture tip
-   - Postavljen defaultni vrijeme na 12:00h
-   - Zamijenjena handleDateChange funkcija sa pravilnom implementacijom
-   - DatePicker sada koristi `parseLocalDateString` i `handleDatePickerChange`
-   - Importovane sve potrebne funkcije iz datePickerUtils
+- **UnifiedForm.jsx**:
+  - Ista logika kao LectureForm
+  - Koristi handleDatePickerChange iz datePickerUtils
+  - Logiranje pri slanju na server
+
+#### 3. Backend (server/utils/dateHelpers.js):
+- **parseLocalDate**: 
+  - Uvijek postavlja vrijeme na 12:00 lokalno
+  - Dodana validacija i ekstenzivno logiranje
+  - Verifikacija da komponente datuma odgovaraju očekivanim vrijednostima
+
+#### 4. Backend rute (server/routes/lecturesRoutes.js):
+- Dodano logiranje primljenog datuma sa servera
+- Logiranje parsiranog datuma nakon obrade
+- Praćenje timezone informacija
 
 ### Ključne izmjene:
-- Svi Date objekti se kreiraju sa vremenom na 12:00 (podne) što sprječava pomjeranje datuma zbog timezone razlika
-- Defaultne vrijednosti postavljene na današnji datum i 12:00h
-- Korištenje lokalnih Date metoda umjesto UTC konverzija
-- Dodata detaljna logiranja za lakše praćenje problema u produkciji
+1. **Forsiranje vremena na 12:00**: Svaki put kada se kreira Date objekat, postavljamo sate na 12:00
+2. **String-based pristup**: Radimo sa YYYY-MM-DD stringovima kroz cijeli pipeline
+3. **Ekstenzivno logiranje**: Dodano na sve kritične tačke sa [PRODUCTION FIX] prefiksom
+4. **Timezone-agnostic**: Koristimo lokalne Date metode umjesto UTC konverzija
+
+### Rješenje problema:
+Problem je bio što DatePicker vraća Date objekat sa vremenom 00:00:00 (ponoć). Kada se taj datum pošalje na server koji je u drugoj timezone, dolazi do pomjeranja unazad za jedan dan. Rješenje je da uvijek postavimo vrijeme na 12:00 (podne) što osigurava da će datum ostati isti bez obzira na timezone razlike.

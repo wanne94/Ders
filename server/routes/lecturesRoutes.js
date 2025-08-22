@@ -517,6 +517,16 @@ router.post('/', authenticateToken, async (req, res) => {
       totalWeeks = 2
     } = req.body;
 
+    // CRITICAL: Log received date for production debugging
+    console.log('📥 [PRODUCTION FIX] Server received:', {
+      date: date,
+      dateType: typeof date,
+      time: time,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      serverTime: new Date().toISOString(),
+      headers: req.headers
+    });
+
     // Validation
     if (!title || !address || !city || !date || !time) {
       return res.status(400).json({ 
@@ -527,6 +537,20 @@ router.post('/', authenticateToken, async (req, res) => {
     // Validate date is not in the past
     // Koristi parseLocalDate da izbjegne timezone probleme
     const lectureDate = parseLocalDate(date);
+    
+    // Log parsed date
+    console.log('📅 [PRODUCTION FIX] Server parsed date:', {
+      originalDate: date,
+      parsedDate: lectureDate,
+      parsedDateString: lectureDate ? lectureDate.toString() : 'null',
+      parsedDateISO: lectureDate ? lectureDate.toISOString() : 'null',
+      parsedComponents: lectureDate ? {
+        year: lectureDate.getFullYear(),
+        month: lectureDate.getMonth() + 1,
+        day: lectureDate.getDate(),
+        hours: lectureDate.getHours()
+      } : 'null'
+    });
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
