@@ -1,120 +1,77 @@
-# Plan za standardizaciju prikaza imena predavača sa titulama
+# Plan Popravke Problema sa Datumom na Produkciji
 
 ## Problem
-Imena predavača sa titulama se prikazuju različito na različitim mestima u aplikaciji. Trenutno postoje dve različite implementacije `formatDaijaTitle` funkcije koje rade različito.
+Kada se odabere datum 22. avgust na produkcijskom serveru (ders.ba), prikazuje se 21. avgust umjesto 22. avgusta. Na lokalhostu sve radi pravilno.
 
-## Analiza postojećeg stanja
+## Analiza Problema
+1. **Timezone razlike**: Server koristi Europe/Sarajevo (CEST, +0200) timezone
+2. **JavaScript Date objekti**: Kada se kreira Date objekat sa stringom "2025-08-22", JavaScript ga tretira kao UTC midnight (00:00:00 UTC)
+3. **Konverzija timezone**: Na produkciji, UTC midnight se konvertuje na prethodni dan kada se prikaže u lokalnoj timezone
 
-### Web verzija (`/web/src/utils/index.js`):
+## TODO Lista Popravki
+
+- [x] 1. **Analiziraj trenutno stanje koda** ✅
+   - Pregledaj kako se datum parsira u LectureForm komponenti
+   - Provjeri parseLocalDate funkciju na serveru
+   - Identifikuj gdje se gubi dan pri konverziji
+
+- [x] 2. **Popravi parsiranje datuma u frontend komponenti** ✅
+   - Modificiraj handleDateChange funkciju da koristi lokalni datum bez UTC konverzije
+   - Osiguraj da se datum šalje kao string u formatu YYYY-MM-DD
+
+- [x] 3. **Popravi čuvanje datuma na serveru** ✅
+   - Osiguraj da parseLocalDate funkcija postavlja vrijeme na podne (12:00) lokalno
+   - Provjeri da li se datum ispravno čuva u MongoDB
+
+- [x] 4. **Testiranje lokalno** ✅
+   - Testiraj kreiranje predavanja sa različitim datumima
+   - Provjeri da li se datum ispravno prikazuje nakon osvježavanja
+
+- [ ] 5. **Pripremi deployment**
+   - Commituj promjene
+   - Pripremi za deployment na produkciju
+
+## Tehnički Detalji Rješenja
+
+### Problem sa Date objektom
 ```javascript
-// Stavlja titulu pre imena, osim za "prof" koji ide posle
-if (lowercaseTitle === 'prof') {
-  return `${name}, ${lowercaseTitle}.`;
-}
-return `${lowercaseTitle}. ${name}`;
+// Problem: 
+new Date("2025-08-22") // Tretira se kao UTC midnight
+// Na CEST (+0200) timezone, ovo postaje 2025-08-21 22:00
+
+// Rješenje:
+new Date(2025, 7, 22) // Mjesec je 0-indexed, ovo kreira lokalni datum
 ```
 
-### Mobilna verzija (`/mob/utils/index.js`):
-```javascript
-// Stavlja "prof." posle imena, sve ostale titule pre imena
-if (lowercaseTitle === 'prof' || lowercaseTitle === 'prof.') {
-  return `${name} prof.`;
-}
-const formattedTitle = lowercaseTitle.endsWith('.') ? lowercaseTitle : `${lowercaseTitle}.`;
-return `${formattedTitle} ${name}`;
-```
+### Izmjene koje trebaju biti napravljene:
+1. **LectureForm.jsx** - handleDateChange funkcija treba koristiti lokalne metode
+2. **dateHelpers.js** - parseLocalDate već ispravno parsira, ali treba provjeriti korištenje
+3. **MongoDB čuvanje** - Osigurati da se datum čuva kao lokalni datum sa vremenom na podne
 
-### Backend (`/server/routes/lecturesRoutes.js`):
-```javascript
-// Jednostavno spaja titulu i ime bez formatiranja
-speaker: `${lecture.daija.title} ${lecture.daija.name}`.trim()
-```
+## Review sekcija
 
-## Mesta gde se prikazuje ime predavača:
+### Implementirane promjene:
 
-1. **Web komponente:**
-   - `/web/src/components/UniversalCard.jsx` - koristi `formatDaijaTitle`
-   - `/web/src/components/EnhancedUniversalCard.jsx` - koristi `formatDaijaTitle`
-   - `/web/src/components/DataTable.jsx` - koristi `formatDaijaTitle`
-   - `/web/pages/profile/[type]/[[...params]].js` - koristi `formatDaijaTitle`
-   - `/web/src/helpers/cardHelpers.ts` - ima svoju lokalnu implementaciju
+1. **LectureForm.jsx (linija 254-270)**: 
+   - Popravljena handleDateChange funkcija da koristi lokalne Date metode
+   - Dodato logovanje za debug
 
-2. **Mobilne komponente:**
-   - `/mob/components/UniverzalCard.js` - koristi `formatDaijaTitle`
-   - `/mob/components/UniversalProfile.js` - koristi `formatDaijaTitle`
-   - `/mob/components/forms/LectureForm.jsx` - koristi `formatDaijaTitle`
-   - `/mob/screens/DashboardScreen.js` - prikazuje `item.speaker` direktno
+2. **LectureForm.jsx (linija 83-113)**:
+   - Poboljšano parsiranje datuma kada se učitava postojeće predavanje
+   - Dodato rukovanje ISO format datuma (sa 'T')
+   - Ekstraktuje samo datum dio da izbjegne timezone probleme
 
-3. **Backend:**
-   - `/server/routes/lecturesRoutes.js` - generiše `speaker` polje kao `${title} ${name}`
+3. **LectureForm.jsx (linija 656-672)**:
+   - DatePicker sada pravilno kreira Date objekat od YYYY-MM-DD stringa
+   - Koristi lokalne Date konstruktor sa eksplicitnim satom (12:00)
 
-## TODO lista:
+4. **dateHelpers.js (linija 12-40)**:
+   - Poboljšana parseLocalDate funkcija
+   - Dodato rukovanje ISO datuma
+   - Dodana validacija i logovanje
+   - Osigurava da se datum uvijek postavlja na 12:00 lokalno vrijeme
 
-### 1. Definisanje jedinstvenog standarda formatiranja [✅]
-- Odlučiti koji format koristiti (predlog: sve titule pre imena sa tačkom, npr. "dr. Ime Prezime", "prof. dr. Ime Prezime")
-
-### 2. Kreiranje jedinstvene utility funkcije [✅]
-- Kreirati novu standardizovanu `formatDaijaTitle` funkciju u `/server/utils/` folderu koja će se koristiti na backend-u
-
-### 3. Ažuriranje backend logike [✅]
-- Ažurirati `/server/routes/lecturesRoutes.js` da koristi novu utility funkciju
-- Osigurati da se `speaker` polje uvek generiše na isti način
-
-### 4. Ažuriranje web utility funkcije [✅]
-- Ažurirati `/web/src/utils/index.js` sa standardizovanom logikom
-- Ukloniti lokalnu implementaciju iz `/web/src/helpers/cardHelpers.ts`
-
-### 5. Ažuriranje mobilne utility funkcije [✅]
-- Ažurirati `/mob/utils/index.js` sa standardizovanom logikom
-
-### 6. Testiranje svih komponenti [✅]
-- Proveriti prikaz imena na svim mestima u web aplikaciji
-- Proveriti prikaz imena na svim mestima u mobilnoj aplikaciji
-- Proveriti API odgovore
-
-### 7. Ažuriranje postojećih podataka u bazi (po potrebi) [ ]
-- Ako postoje sačuvana imena sa titulama u bazi, ažurirati ih
-
-## Predloženi standard formatiranja:
-- Titula "prof." ide POSLE imena sa zapetom
-- Sve ostale titule idu PRE imena
-- Titule se pišu malim slovima sa tačkom na kraju
-- Format za prof: `[ime], prof.`
-- Format za ostale: `[titula]. [ime]`
-- Primeri:
-  - "dr. Marko Marković"
-  - "prof. dr. Ana Anić"
-  - "mr. Petar Petrović"
-  - "Jasmin Durić, prof."
-  - "Milica Milić, prof."
-
-## Review:
-
-### Implementirane izmene:
-
-1. **Kreirana jedinstvena utility funkcija** (`/server/utils/formatHelpers.js`):
-   - Standardizovana logika za formatiranje imena sa titulama
-   - Titula "prof." ide posle imena sa zapetom
-   - Sve ostale titule idu pre imena
-   - Podrška za kombinovane titule (npr. "prof. dr.")
-
-2. **Ažurirani fajlovi**:
-   - `/server/routes/lecturesRoutes.js` - koristi novu utility funkciju
-   - `/web/src/utils/index.js` - ažurirana sa istom logikom
-   - `/mob/utils/index.js` - ažurirana sa istom logikom
-   - `/web/src/helpers/cardHelpers.ts` - uklonjena lokalna implementacija
-
-3. **Testiranje**:
-   - Kreiran test fajl `/temp/test-daija-formatting.js`
-   - Svi test slučajevi prolaze (100% success rate)
-   - Verifikovano da funkcija radi konzistentno na svim platformama
-
-### Primeri formatiranja:
-- "Jasmin Durić, prof." (prof ide posle)
-- "dr. Marko Marković" (dr ide pre)
-- "dr. Ana Anić, prof." (kombinovane titule)
-- "mr. Petar Petrović" (mr ide pre)
-
-### Status: ZAVRŠENO ✅
-
-Sve komponente sada koriste isti standard formatiranja imena predavača sa titulama.
+### Ključne izmjene:
+- Izbjegnuta implicitna UTC konverzija korištenjem lokalnih Date metoda
+- Svi datumi se sada parsiraju sa vremenom postavljenim na 12:00 da se izbjegnu timezone problemi
+- Dodano detaljno logovanje za lakše praćenje problema u produkciji

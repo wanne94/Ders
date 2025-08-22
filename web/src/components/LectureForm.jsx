@@ -84,14 +84,28 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
       let parsedDate = '';
       if (lecture.date) {
         try {
-          const date = new Date(lecture.date);
-          if (!isNaN(date.getTime())) {
-            // Format to YYYY-MM-DD without timezone conversion
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            parsedDate = `${year}-${month}-${day}`;
+          // Create date object ensuring local timezone interpretation
+          const dateStr = lecture.date;
+          let date;
+          
+          // If date string is in ISO format (contains 'T'), parse it properly
+          if (dateStr.includes('T')) {
+            // ISO string - extract just the date part to avoid timezone issues
+            parsedDate = dateStr.split('T')[0];
+          } else if (dateStr.includes('-')) {
+            // Already in YYYY-MM-DD format
+            parsedDate = dateStr;
+          } else {
+            // Fallback: create Date object and use local methods
+            date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              parsedDate = `${year}-${month}-${day}`;
+            }
           }
+          console.log('📅 Parsed date for editing:', parsedDate, 'from:', dateStr);
         } catch (error) {
           console.error('Error parsing date:', error);
           parsedDate = lecture.date; // Fallback to original value
@@ -253,13 +267,15 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
 
   const handleDateChange = (date) => {
     console.log('📅 Date changed:', date);
-    // Format date as YYYY-MM-DD without timezone conversion
+    // Format date as YYYY-MM-DD using local date methods to avoid timezone issues
     let formattedDate = '';
     if (date) {
+      // Use local date methods to ensure correct date without timezone conversion
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
       formattedDate = `${year}-${month}-${day}`;
+      console.log('📅 Formatted date:', formattedDate);
     }
     setFormData(prev => ({
       ...prev,
@@ -639,7 +655,11 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
               {/* Date and Time */}
               <DatePicker
                 label="Datum"
-                value={formData.date ? new Date(formData.date) : null}
+                value={formData.date ? (() => {
+                  // Create date from YYYY-MM-DD string using local timezone
+                  const [year, month, day] = formData.date.split('-').map(Number);
+                  return new Date(year, month - 1, day, 12, 0, 0);
+                })() : null}
                 onChange={handleDateChange}
                 format="dd.MM.yyyy"
                 minDate={isEditing ? null : new Date()}

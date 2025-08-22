@@ -12,12 +12,31 @@
 function parseLocalDate(dateString) {
   if (!dateString) return null;
   
+  // Handle ISO date strings (with 'T') by extracting just the date part
+  if (dateString.includes('T')) {
+    dateString = dateString.split('T')[0];
+  }
+  
   // Parsira 'YYYY-MM-DD' format
   const [year, month, day] = dateString.split('-').map(Number);
   
+  // Validate parsed values
+  if (!year || !month || !day) {
+    console.error('Invalid date format:', dateString);
+    return null;
+  }
+  
   // Kreira datum sa eksplicitnim vremenom 12:00 lokalno
   // Ovo osigurava da datum ostaje isti bez obzira na timezone
-  return new Date(year, month - 1, day, 12, 0, 0, 0);
+  const date = new Date(year, month - 1, day, 12, 0, 0, 0);
+  
+  console.log('📅 parseLocalDate:', {
+    input: dateString,
+    output: date.toISOString(),
+    localString: date.toString()
+  });
+  
+  return date;
 }
 
 /**
