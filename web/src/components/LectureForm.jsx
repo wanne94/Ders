@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import {
     Dialog,
@@ -52,29 +52,28 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
     return Math.max(0, totalWeeks - weekNumber + 1);
   };
   
-  // Use lazy initialization to ensure date is calculated at runtime
-  const [formData, setFormData] = useState(() => {
-    const initialDate = getTodayDateString();
-    console.log('🚀 [LectureForm] Initializing form with default date:', initialDate);
-    return {
-      title: '',
-      daijaId: '',
-      speaker: '',
-      organizationId: '',
-      organization: '',
-      date: initialDate, // Use the logged date value
-      time: '12:00', // Set default time immediately
-      address: '',
-      city: '',
-      shortDescription: '',
-      image: '',
-      isWeeklyLecture: false,
-      totalWeeks: 2,
-      weekNumber: null,
-      weeklySeriesId: '',
-      lecturePart: null
-    };
+  // Initialize without date - will be set in useEffect to avoid SSR issues
+  const [formData, setFormData] = useState({
+    title: '',
+    daijaId: '',
+    speaker: '',
+    organizationId: '',
+    organization: '',
+    date: '', // Will be set in useEffect
+    time: '', // Will be set in useEffect
+    address: '',
+    city: '',
+    shortDescription: '',
+    image: '',
+    isWeeklyLecture: false,
+    totalWeeks: 2,
+    weekNumber: null,
+    weeklySeriesId: '',
+    lecturePart: null
   });
+  
+  // Track if defaults have been set
+  const defaultsSet = useRef(false);
 
   const [daije, setDaije] = useState([]);
   const [organizations, setOrganizations] = useState([]);
@@ -87,6 +86,32 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
 
   // Check if organization is selected (disable address/city fields)
   const isOrganizationSelected = Boolean(formData.organizationId && !useCustomOrganization);
+  
+  // Set default date and time on client side only
+  useEffect(() => {
+    // Only set defaults if form is open, not editing, and defaults haven't been set yet
+    if (open && !lecture && !defaultsSet.current) {
+      const todayString = getTodayDateString();
+      console.log('🎯 [LectureForm] Setting client-side defaults:', {
+        date: todayString,
+        time: '12:00',
+        environment: typeof window !== 'undefined' ? window.location.hostname : 'server'
+      });
+      
+      setFormData(prev => ({
+        ...prev,
+        date: todayString,
+        time: '12:00'
+      }));
+      
+      defaultsSet.current = true;
+    }
+    
+    // Reset the flag when dialog closes
+    if (!open) {
+      defaultsSet.current = false;
+    }
+  }, [open, lecture]);
 
   // Populate form data when editing
   useEffect(() => {
@@ -155,16 +180,17 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
       if (lecture.isWeeklyLecture && lecture.weekNumber && lecture.totalWeeks) {
         setRemainingWeeks(calculateRemainingWeeks(lecture.totalWeeks, lecture.weekNumber));
       }
-    } else {
-      // Reset form when not editing - set default date and time
+    } else if (!open) {
+      // Only reset form when dialog is closed
+      // Default date and time are set in the other useEffect
       setFormData({
         title: '',
         daijaId: '',
         speaker: '',
         organizationId: '',
         organization: '',
-        date: getTodayDateString(), // Set default to today
-        time: '12:00', // Set default time to 12:00
+        date: '', // Will be set when dialog opens
+        time: '', // Will be set when dialog opens
         address: '',
         city: '',
         shortDescription: '',
