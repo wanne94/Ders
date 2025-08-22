@@ -1,13 +1,15 @@
-// Text formatting utilities
-export const toTitleCase = (str) => {
-  if (!str) return '';
-  return str.toLowerCase().replace(/\w\S*/g, (txt) => 
-    txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
-  );
-};
-
-// Daija title formatting utility
-export const formatDaijaTitle = (name, title) => {
+/**
+ * Utility function to format Daija name with title
+ * Rules:
+ * - Title "prof." goes AFTER the name with comma
+ * - All other titles go BEFORE the name
+ * - Titles are lowercase with dot at the end
+ * 
+ * @param {string} name - The name of the daija
+ * @param {string} title - The title (e.g., "prof", "dr", "mr", etc.)
+ * @returns {string} - Formatted name with title
+ */
+function formatDaijaTitle(name, title) {
   // If no name, return empty string
   if (!name) return '';
   
@@ -39,4 +41,8 @@ export const formatDaijaTitle = (name, title) => {
   
   // All other titles go before the name
   return `${titleWithDot} ${name}`;
+}
+
+module.exports = {
+  formatDaijaTitle
 };

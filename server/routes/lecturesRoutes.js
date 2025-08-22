@@ -9,6 +9,7 @@ const { authMiddleware: authenticateToken } = require('../utils/jwt');
 const { isAdminOrSuperAdmin, optionalAuth } = require('../middleware/auth');
 const { calculateLecturesStatus } = require('../utils/lectureStatus');
 const { parseLocalDate, addDays } = require('../utils/dateHelpers');
+const { formatDaijaTitle } = require('../utils/formatHelpers');
 
 // 🔧 Debug: Test if both functions are loaded correctly
 
@@ -201,8 +202,8 @@ router.get('/public', async (req, res) => {
       // Use Object.assign to ensure all properties are copied
       transformedLectures[i] = Object.assign({}, lecture, {
         daijaId: lecture.daija ? lecture.daija._id : null,
-        speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
-          ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
+        speaker: lecture.daija && lecture.daija.name 
+          ? formatDaijaTitle(lecture.daija.name, lecture.daija.title)
           : lecture.speaker,
         // Explicitly include weekly lecture fields
         isWeeklyLecture: lecture.isWeeklyLecture,
@@ -383,8 +384,8 @@ router.get('/public/with-status', async (req, res) => {
     const transformedLectures = lectures.map(lecture => ({
       ...lecture,
       daijaId: lecture.daija ? lecture.daija._id : null,
-      speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
-        ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
+      speaker: lecture.daija && lecture.daija.name 
+        ? formatDaijaTitle(lecture.daija.name, lecture.daija.title)
         : lecture.speaker || 'Nepoznat predavač',
       // Explicitly include weekly lecture fields
       isWeeklyLecture: lecture.isWeeklyLecture,
@@ -784,8 +785,8 @@ router.get('/daija/:daijaId', async (req, res) => {
     const transformedLectures = lectures.map(lecture => ({
       ...lecture.toObject(),
       daijaId: lecture.daija?._id || lecture.daija || null,
-      speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
-        ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
+      speaker: lecture.daija && lecture.daija.name 
+        ? formatDaijaTitle(lecture.daija.name, lecture.daija.title)
         : lecture.speaker || 'Nepoznat predavač'
     }));
     
@@ -828,8 +829,8 @@ router.get('/admin/cancellation-reports', authenticateToken, isAdminOrSuperAdmin
 
     // Format the response
     const formattedLectures = await Promise.all(lectures.map(async (lecture) => {
-      const speaker = lecture.daija && lecture.daija.title && lecture.daija.name 
-        ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
+      const speaker = lecture.daija && lecture.daija.name 
+        ? formatDaijaTitle(lecture.daija.name, lecture.daija.title)
         : lecture.speaker || 'Nepoznat predavač';
 
       return {
@@ -912,8 +913,8 @@ router.get('/', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
     const transformedLectures = lectures.map(lecture => ({
       ...lecture.toObject(),
       daijaId: lecture.daija?._id || lecture.daija || null,
-      speaker: lecture.daija && lecture.daija.title && lecture.daija.name 
-        ? `${lecture.daija.title} ${lecture.daija.name}`.trim()
+      speaker: lecture.daija && lecture.daija.name 
+        ? formatDaijaTitle(lecture.daija.name, lecture.daija.title)
         : lecture.speaker || 'Nepoznat predavač'
     }));
     
@@ -1039,7 +1040,7 @@ router.get('/weekly-series/:seriesId', async (req, res) => {
         time: lecture.time,
         status: lecture.status,
         isCancelled: lecture.isCancelled,
-        speaker: lecture.daija ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim() : lecture.speaker,
+        speaker: lecture.daija ? formatDaijaTitle(lecture.daija.name, lecture.daija.title) : lecture.speaker,
         organization: lecture.organizationId?.name || lecture.organization,
         address: lecture.address,
         city: lecture.city

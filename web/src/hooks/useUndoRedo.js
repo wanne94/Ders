@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 
 const useUndoRedo = (initialState) => {
   const [state, setState] = useState(initialState);
-  const [history, setHistory] = useState([initialState]);
+  const [history, setHistory] = useState([{ state: initialState, description: 'Initial state' }]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const set = useCallback((newState, actionDescription = '') => {
@@ -38,7 +38,7 @@ const useUndoRedo = (initialState) => {
   }, [currentIndex, history]);
 
   const reset = useCallback(() => {
-    setHistory([initialState]);
+    setHistory([{ state: initialState, description: 'Initial state' }]);
     setCurrentIndex(0);
     setState(initialState);
   }, [initialState]);
@@ -55,7 +55,7 @@ const useUndoRedo = (initialState) => {
       reset,
       canUndo,
       canRedo,
-      history: history.map(h => h.description || 'Action'),
+      history: history.map(h => h && h.description ? h.description : 'Action'),
       currentIndex
     }
   ];

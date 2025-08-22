@@ -1,5 +1,6 @@
 // Card helper functions for formatting data for web app
 import { getImageUrl } from '../utils/imageUtils';
+import { formatDaijaTitle } from '../utils';
 
 export interface InfoItem {
   icon: string;
@@ -131,20 +132,9 @@ export const formatDaijaCard = (daija: any, lectureCount?: number): CardData => 
     return daija?.name || '';
   };
 
-  const formatDaijaTitle = (daija: any) => {
-    const title = daija?.title || '';
-    
-    if (title.toLowerCase() === 'prof' || title.toLowerCase() === 'prof.') {
-      return 'prof.';
-    } else if (title) {
-      return title.includes('.') ? title : `${title}.`;
-    }
-    return '';
-  };
-
   return {
-    title: formatDaijaName(daija).toUpperCase(),
-    subtitle: formatDaijaTitle(daija),
+    title: formatDaijaTitle(daija?.name, daija?.title).toUpperCase(),
+    subtitle: '',
     imageUrl: getImageUrl(daija.image) || getDefaultImage('daija'),
     infoItems
   };

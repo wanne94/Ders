@@ -1831,4 +1831,9 @@ const Dashboard = () => {
   );
 };
 
+// Dashboard is a protected route, skip static generation
+Dashboard.getInitialProps = () => {
+  return {};
+}
+
 export default Dashboard; 

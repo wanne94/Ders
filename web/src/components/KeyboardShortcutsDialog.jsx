@@ -86,7 +86,7 @@ const KeyboardShortcutsDialog = ({ open, onClose, shortcuts = {} }) => {
       </DialogTitle>
       
       <DialogContent dividers>
-        {Object.entries(categories).map(([category, categoryShortcuts]) => (
+        {categories && Object.entries(categories).map(([category, categoryShortcuts]) => (
           categoryShortcuts.length > 0 && (
             <Box key={category} sx={{ mb: 3 }}>
               <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold', textTransform: 'capitalize' }}>
@@ -102,14 +102,14 @@ const KeyboardShortcutsDialog = ({ open, onClose, shortcuts = {} }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {categoryShortcuts.map((shortcut) => (
+                    {categoryShortcuts?.map((shortcut) => (
                       <TableRow key={shortcut.key}>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             {formatKey(shortcut.key)}
                           </Box>
                         </TableCell>
-                        <TableCell>{shortcut.description || shortcut.key}</TableCell>
+                        <TableCell>{shortcut?.description || shortcut?.key || ''}</TableCell>
                         <TableCell align="center">
                           {shortcut.icon && (
                             <Typography variant="h6">{shortcut.icon}</Typography>

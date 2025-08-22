@@ -132,7 +132,7 @@ const DashSidebar = ({
           GLAVNI MENI
         </Typography>
         <List sx={{ pt: 1 }}>
-          {mainMenuItems.map((item) => (
+          {mainMenuItems?.filter(item => item).map((item) => (
             <ListItem disablePadding key={item.id} sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => !item.disabled && onSectionChange(item.id)}
@@ -164,7 +164,7 @@ const DashSidebar = ({
                 </ListItemIcon>
                 <ListItemText 
                   primary={item.text}
-                  secondary={item.description}
+                  secondary={item?.description || ''}
                   primaryTypographyProps={{
                     fontWeight: activeSection === item.id ? 'bold' : 'medium',
                     fontSize: '0.875rem'
@@ -194,7 +194,7 @@ const DashSidebar = ({
           ODOBRAVANJE
         </Typography>
         <List sx={{ pt: 1 }}>
-          {approvalMenuItems.map((item) => (
+          {approvalMenuItems?.filter(item => item).map((item) => (
             <ListItem disablePadding key={item.id} sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => !item.disabled && onSectionChange(item.id)}
@@ -226,7 +226,7 @@ const DashSidebar = ({
                 </ListItemIcon>
                 <ListItemText 
                   primary={item.text}
-                  secondary={item.description}
+                  secondary={item?.description || ''}
                   primaryTypographyProps={{
                     fontWeight: activeSection === item.id ? 'bold' : 'medium',
                     fontSize: '0.875rem'
