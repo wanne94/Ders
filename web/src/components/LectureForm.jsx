@@ -26,7 +26,6 @@ import { getImageUrl } from '../utils/imageUtils';
 import { uploadImage } from '../utils/uploadService';
 import { 
   parseLocalDateString, 
-  formatDateToLocalString, 
   getTodayStartOfDay,
   handleDatePickerChange 
 } from '../utils/datePickerUtils';

@@ -108,8 +108,24 @@ export const handleDatePickerChange = (value) => {
   
   // If it's already a Date object
   if (value instanceof Date) {
-    const formatted = formatDateToLocalString(value);
-    console.log('📅 Formatted result:', formatted, 'from Date:', value.toString());
+    // CRITICAL FIX: When DatePicker returns a date at midnight (00:00:00),
+    // we need to use LOCAL date methods to avoid timezone shifting
+    // The date object from DatePicker is already in local timezone
+    // So we just extract the year, month, day using local methods
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    const formatted = `${year}-${month}-${day}`;
+    
+    console.log('📅 FIXED Formatted result:', {
+      input: value.toString(),
+      output: formatted,
+      year: value.getFullYear(),
+      month: value.getMonth() + 1,
+      day: value.getDate(),
+      hours: value.getHours()
+    });
+    
     return formatted;
   }
   
@@ -125,7 +141,11 @@ export const handleDatePickerChange = (value) => {
   try {
     const date = new Date(value);
     if (!isNaN(date.getTime())) {
-      const formatted = formatDateToLocalString(date);
+      // Use the same local extraction method
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const formatted = `${year}-${month}-${day}`;
       console.log('📅 Formatted result:', formatted, 'from conversion:', value);
       return formatted;
     }
