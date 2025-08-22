@@ -18,7 +18,7 @@ import {
     FormControlLabel,
     Checkbox
 } from '@mui/material';
-import ProductionDatePicker from './ProductionDatePicker';
+import SimpleDatePicker from './SimpleDatePicker';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import axiosInstance from '../utils/axiosConfig';
 import { daijeService, udruzenjaService } from '@/services';
@@ -302,7 +302,7 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
     }
   };
 
-  // handleDateChange is now handled by ProductionDatePicker component
+  // handleDateChange is now handled by SimpleDatePicker component
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -684,7 +684,7 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
               )}
 
               {/* Date and Time */}
-              <ProductionDatePicker
+              <SimpleDatePicker
                 value={formData.date}
                 onChange={(formattedDate) => {
                   console.log('📅 [LectureForm] Date changed to:', formattedDate);

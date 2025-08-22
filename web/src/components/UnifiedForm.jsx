@@ -21,7 +21,7 @@ import {
     InputLabel,
     InputAdornment
 } from '@mui/material';
-import ProductionDatePicker from './ProductionDatePicker';
+import SimpleDatePicker from './SimpleDatePicker';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -232,7 +232,7 @@ const UnifiedForm = ({
     setFormData(prev => ({ ...prev, title: value }));
   };
 
-  // handleDateChange is now handled by ProductionDatePicker component
+  // handleDateChange is now handled by SimpleDatePicker component
 
   // Daija-specific handlers
   const handleAddEducation = () => {
@@ -612,7 +612,7 @@ const UnifiedForm = ({
       )}
 
       {/* Date and Time */}
-      <ProductionDatePicker
+      <SimpleDatePicker
         value={formData.date}
         onChange={(formattedDate) => {
           console.log('📅 [UnifiedForm] Date changed to:', formattedDate);
