@@ -130,25 +130,19 @@ export const getTodayDateString = () => {
  * PRODUCTION FIX: Compensates for timezone differences between dev and production
  */
 export const handleDatePickerChange = (value) => {
-  // Check if we're in production
-  const isProduction = typeof window !== 'undefined' && 
-    (window.location.hostname === 'ders.ba' || window.location.hostname === 'www.ders.ba');
+  if (!value) return '';
   
   // Extensive logging for debugging
   console.log('🔍 [DATE FIX] DatePicker onChange:', {
     value,
-    isProduction,
     type: typeof value,
     isDate: value instanceof Date,
     toString: value ? value.toString() : 'null',
     toISOString: value instanceof Date ? value.toISOString() : 'N/A',
     timezoneOffset: value instanceof Date ? value.getTimezoneOffset() : 'N/A',
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    hours: value instanceof Date ? value.getHours() : 'N/A',
-    hostname: typeof window !== 'undefined' ? window.location.hostname : 'N/A'
+    hours: value instanceof Date ? value.getHours() : 'N/A'
   });
-  
-  if (!value) return '';
   
   // If it's already a Date object
   if (value instanceof Date) {
@@ -166,29 +160,35 @@ export const handleDatePickerChange = (value) => {
       minutes: value.getMinutes()
     });
     
+    // SMART DETECTION: Check if date appears to be shifted
+    // If hours are 22, 23, or 0, 1, 2 it's likely a timezone issue
+    const isLikelyShifted = originalHours <= 2 || originalHours >= 22;
+    
     let correctedYear = originalYear;
     let correctedMonth = originalMonth;
     let correctedDay = originalDay;
     
-    // PRODUCTION-SPECIFIC FIX: Only compensate on production
-    // On production, if hours are 22 or 23, it means the date was shifted back
-    if (isProduction && (originalHours === 22 || originalHours === 23)) {
-      console.log('⚠️ [PRODUCTION FIX] Detected timezone shift on production! Hours are', originalHours);
-      console.log('⚠️ [PRODUCTION FIX] Adding 1 day to compensate');
+    if (isLikelyShifted) {
+      console.log('⚠️ [TIMEZONE FIX] Detected potential timezone shift! Hours:', originalHours);
       
-      // Add one day to compensate for production timezone issue
-      const compensatedDate = new Date(originalYear, originalMonth, originalDay + 1, 12, 0, 0, 0);
-      correctedYear = compensatedDate.getFullYear();
-      correctedMonth = compensatedDate.getMonth();
-      correctedDay = compensatedDate.getDate();
-      
-      console.log('✅ [PRODUCTION FIX] Compensated date:', {
-        year: correctedYear,
-        month: correctedMonth + 1,
-        day: correctedDay
-      });
-    } else if (!isProduction) {
-      console.log('🏠 [LOCAL DEV] No compensation needed, using original date');
+      // If early morning hours (0-2), the date is likely correct but time is wrong
+      // If late evening hours (22-23), the date was shifted back one day
+      if (originalHours >= 22) {
+        console.log('⚠️ [TIMEZONE FIX] Late evening hours detected - adding 1 day');
+        const compensatedDate = new Date(originalYear, originalMonth, originalDay + 1, 12, 0, 0, 0);
+        correctedYear = compensatedDate.getFullYear();
+        correctedMonth = compensatedDate.getMonth();
+        correctedDay = compensatedDate.getDate();
+        
+        console.log('✅ [TIMEZONE FIX] Compensation applied:', {
+          original: `${originalYear}-${originalMonth + 1}-${originalDay}`,
+          corrected: `${correctedYear}-${correctedMonth + 1}-${correctedDay}`
+        });
+      } else {
+        console.log('ℹ️ [TIMEZONE FIX] Early morning hours - using date as-is');
+      }
+    } else {
+      console.log('✅ [DATE OK] No timezone shift detected');
     }
     
     // Create final date at noon with corrected components
@@ -200,10 +200,9 @@ export const handleDatePickerChange = (value) => {
     const formatted = `${finalDate.getFullYear()}-${formattedMonth}-${formattedDay}`;
     
     console.log('📅 [DATE FIX] Final result:', {
-      environment: isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
       originalDate: value.toString(),
       originalHours: originalHours,
-      wasCompensated: isProduction && (originalHours === 22 || originalHours === 23),
+      wasCompensated: isLikelyShifted && originalHours >= 22,
       finalDate: finalDate.toString(),
       output: formatted
     });

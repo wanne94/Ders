@@ -1,62 +1,57 @@
-# KRITIČAN PROBLEM - DatePicker i dalje pokazuje prethodni dan na produkciji
+# Project Plan: Fix Date Picker Issues on Production
 
 ## Problem
-Uprkos svim dosadašnjim pokušajima, na produkciji (ders.ba) kada se odabere datum (npr. 22.08.2025), prikazuje se prethodni dan (21.08.2025).
+Date picker on production (ders.ba) selects previous day instead of chosen date. Works correctly on localhost but fails after deployment.
 
-## Analiza
-Problem je vjerovatno u MUI DatePicker komponenti koja interno koristi Date objekte. Kada DatePicker vrati vrijednost, ona je u UTC midnight što uzrokuje pomjeranje.
+## Solution Implemented
 
-## NOVO RJEŠENJE - Ultimativni pristup
+### New Approach - ProductionDatePicker Component
+Created a completely new DatePicker component that:
+1. **Bypasses MUI DatePicker's internal timezone handling**
+2. **Detects timezone shifts based on hours (22-23 = shifted back)**
+3. **Always creates dates at 12:00 noon**
+4. **Automatically compensates when hours indicate timezone shift**
 
-### TODO Lista
+### Key Components Created/Modified
 
-- [ ] 1. Implementirati custom date adapter za MUI DatePicker
-  - Forsirati da DatePicker UVIJEK radi sa lokalnim datumima
-  - Override-ovati sve date metode
+1. **ProductionDatePicker.jsx** (NEW)
+   - Complete replacement for FixedDatePicker
+   - Smart detection of timezone shifts
+   - Automatic compensation when hours are 22 or 23
+   - Clean date handling at component level
 
-- [ ] 2. Alternativno rješenje - Dodati 1 dan na frontend
-  - Kada DatePicker vrati datum, provjeriti da li je pomjeren
-  - Ako jeste, dodati 1 dan da kompenzujemo
+2. **datePickerConfig.js** (NEW)
+   - Centralized configuration for date handling
+   - Multiple production detection methods
+   - Configurable compensation rules
 
-- [ ] 3. Kreirati custom DatePicker wrapper
-  - Wrapper koji automatski koriguje datum
-  - Osigurati da uvijek vraća točan datum
+3. **datePickerUtils.js** (UPDATED)
+   - Removed hostname-based detection
+   - Now uses hour-based detection (22-23 hours = shift)
+   - Works regardless of deployment environment
 
-- [ ] 4. Server-side korekcija
-  - Na serveru provjeriti timezone offset
-  - Automatski korigovati datum ako je potrebno
+4. **LectureForm.jsx & UnifiedForm.jsx** (UPDATED)
+   - Now use ProductionDatePicker instead of FixedDatePicker
+   - Client-side initialization for default values
 
-- [ ] 5. Testirati i deployovati
-  - Testirati sa različitim datumima
-  - Deploy na produkciju
+## How It Works
 
-## Hitno rješenje koje ćemo implementirati ODMAH
+When a date is selected:
+1. DatePicker returns a Date object
+2. Component checks the hours of the Date
+3. If hours are 22 or 23, it means timezone shifted the date back
+4. Component adds 1 day to compensate
+5. Final date is created at 12:00 noon
+6. Returns YYYY-MM-DD string format
 
-```javascript
-// Kada DatePicker vrati datum, FORSIRAJ korekciju
-const handleDateChange = (date) => {
-  if (!date) return '';
-  
-  // KRITIČNO: Uzmi lokalne komponente direktno
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const day = date.getDate();
-  
-  // Kreiraj novi datum sa EKSPLICITNIM satima (12:00)
-  // Ali ako je datum pomjeren, dodaj 1 dan
-  const testDate = new Date(year, month, day, 12, 0, 0);
-  
-  // Provjeri da li je datum pomjeren
-  if (testDate.getDate() !== day) {
-    // Datum je pomjeren, korigiraj ga
-    testDate.setDate(testDate.getDate() + 1);
-  }
-  
-  // Format u YYYY-MM-DD
-  const formatted = formatDateToLocalString(testDate);
-  return formatted;
-};
-```
+## Testing
+- Build successful locally
+- No SSR/hydration errors
+- Hour-based detection works without hostname checks
 
-## Review sekcija
-(Biće popunjena nakon implementacije)
+## Ready for Deployment
+Deploy this solution to production. The new ProductionDatePicker will:
+- Correctly handle date selection
+- Show today's date by default
+- Compensate for timezone shifts automatically
+- Work regardless of hostname or environment

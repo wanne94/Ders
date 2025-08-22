@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import {
     Dialog,
@@ -21,7 +21,7 @@ import {
     InputLabel,
     InputAdornment
 } from '@mui/material';
-import FixedDatePicker from './FixedDatePicker';
+import ProductionDatePicker from './ProductionDatePicker';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -54,8 +54,8 @@ const UnifiedForm = ({
         return {
           title: '',
           description: '',
-          date: getTodayDateString(), // Default to today
-          time: '12:00', // Default to 12:00
+          date: '', // Will be set in useEffect to avoid SSR issues
+          time: '', // Will be set in useEffect to avoid SSR issues
           address: '',
           city: '',
           speaker: '',
@@ -97,6 +97,7 @@ const UnifiedForm = ({
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const defaultsSet = useRef(false);
 
   // Lecture-specific states
   const [useCustomSpeaker, setUseCustomSpeaker] = useState(false);
@@ -117,6 +118,32 @@ const UnifiedForm = ({
     '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
     '20:00', '20:30', '21:00', '21:30', '22:00'
   ];
+
+  // Set default date and time on client side only
+  useEffect(() => {
+    // Only set defaults for new lectures (not editing) and when dialog opens
+    if (open && !data && !defaultsSet.current && type === 'lecture') {
+      const todayString = getTodayDateString();
+      console.log('🎯 [UnifiedForm] Setting client-side defaults:', {
+        date: todayString,
+        time: '12:00',
+        environment: typeof window !== 'undefined' ? window.location.hostname : 'server'
+      });
+      
+      setFormData(prev => ({
+        ...prev,
+        date: todayString,
+        time: '12:00'
+      }));
+      
+      defaultsSet.current = true;
+    }
+    
+    // Reset the flag when dialog closes
+    if (!open) {
+      defaultsSet.current = false;
+    }
+  }, [open, data, type]);
 
   // Populate form data when editing
   useEffect(() => {
@@ -205,7 +232,7 @@ const UnifiedForm = ({
     setFormData(prev => ({ ...prev, title: value }));
   };
 
-  // handleDateChange is now handled by FixedDatePicker component
+  // handleDateChange is now handled by ProductionDatePicker component
 
   // Daija-specific handlers
   const handleAddEducation = () => {
@@ -585,7 +612,7 @@ const UnifiedForm = ({
       )}
 
       {/* Date and Time */}
-      <FixedDatePicker
+      <ProductionDatePicker
         value={formData.date}
         onChange={(formattedDate) => {
           console.log('📅 [UnifiedForm] Date changed to:', formattedDate);
