@@ -1,13 +1,6 @@
 import React from 'react';
-import {
-  Breadcrumbs as MuiBreadcrumbs,
-  Link,
-  Typography,
-  Box,
-  Chip
-} from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import HomeIcon from '@mui/icons-material/Home';
+import { ChevronRight, Home } from 'lucide-react';
+import { Badge } from './ui/badge';
 import { useRouter } from 'next/router';
 
 const Breadcrumbs = ({ items = [], current, showHome = true }) => {
@@ -20,72 +13,61 @@ const Breadcrumbs = ({ items = [], current, showHome = true }) => {
   };
 
   return (
-    <Box sx={{ mb: 2 }}>
-      <MuiBreadcrumbs
-        separator={<NavigateNextIcon fontSize="small" />}
-        aria-label="breadcrumb"
-      >
+    <nav className="mb-4">
+      <ol className="flex items-center space-x-2 text-sm">
         {showHome && (
-          <Link
-            underline="hover"
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              cursor: 'pointer',
-              '&:hover': {
-                color: 'primary.main'
-              }
-            }}
-            color="inherit"
-            onClick={() => handleClick('/')}
-          >
-            <HomeIcon sx={{ mr: 0.5 }} fontSize="small" />
-            Početna
-          </Link>
+          <>
+            <li>
+              <button
+                onClick={() => handleClick('/')}
+                className="flex items-center text-gray-600 hover:text-primary transition-colors"
+              >
+                <Home className="h-4 w-4 mr-1" />
+                Početna
+              </button>
+            </li>
+            <ChevronRight className="h-4 w-4 text-gray-400" />
+          </>
         )}
         
         {items.map((item, index) => (
-          <Link
-            key={index}
-            underline="hover"
-            color="inherit"
-            sx={{ 
-              cursor: 'pointer',
-              '&:hover': {
-                color: 'primary.main'
-              }
-            }}
-            onClick={() => handleClick(item.path)}
-          >
-            {item.icon && (
-              <Box component="span" sx={{ mr: 0.5, display: 'inline-flex', verticalAlign: 'middle' }}>
-                {item.icon}
-              </Box>
+          <React.Fragment key={index}>
+            <li>
+              <button
+                onClick={() => handleClick(item.path)}
+                className="flex items-center text-gray-600 hover:text-primary transition-colors"
+              >
+                {item.icon && (
+                  <span className="mr-1 inline-flex">
+                    {item.icon}
+                  </span>
+                )}
+                {item.label}
+              </button>
+            </li>
+            {(index < items.length - 1 || current) && (
+              <ChevronRight className="h-4 w-4 text-gray-400" />
             )}
-            {item.label}
-          </Link>
+          </React.Fragment>
         ))}
         
         {current && (
-          <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
+          <li className="flex items-center text-gray-900 font-medium">
             {current.icon && (
-              <Box component="span" sx={{ mr: 0.5, display: 'inline-flex' }}>
+              <span className="mr-1 inline-flex">
                 {current.icon}
-              </Box>
+              </span>
             )}
             {current.label}
             {current.count !== undefined && (
-              <Chip 
-                label={current.count} 
-                size="small" 
-                sx={{ ml: 1 }}
-                color="primary"
-              />
+              <Badge className="ml-2" variant="default">
+                {current.count}
+              </Badge>
             )}
-          </Typography>
+          </li>
         )}
-      </MuiBreadcrumbs>
-    </Box>
+      </ol>
+    </nav>
   );
 };
 

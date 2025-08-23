@@ -1,35 +1,26 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { cn } from '@/lib/utils';
 
 const ROLE_CONFIG = {
-  user: { label: 'K', bg: '#BDBDBD', color: '#fff' },
-  admin: { label: 'A', bg: '#4CAF50', color: '#fff' },
-  'super admin': { label: 'SA', bg: '#800000', color: '#fff' },
-  'super_admin': { label: 'SA', bg: '#800000', color: '#fff' },
+  user: { label: 'K', className: 'bg-gray-400 text-white' },
+  admin: { label: 'A', className: 'bg-green-500 text-white' },
+  'super admin': { label: 'SA', className: 'bg-[#800000] text-white' },
+  'super_admin': { label: 'SA', className: 'bg-[#800000] text-white' },
 };
 
 export default function RoleBadge({ role }) {
   const key = role?.toLowerCase() || 'user';
-  const { label, bg, color } = ROLE_CONFIG[key] || ROLE_CONFIG.user;
+  const { label, className } = ROLE_CONFIG[key] || ROLE_CONFIG.user;
 
   return (
-    <Box
-      component="span"
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minWidth: 32,
-        height: 32,
-        borderRadius: 1,        // theme.spacing(1) = 8px
-        bgcolor: bg,
-        color,
-        fontWeight: 'bold',
-        fontSize: '0.875rem',
-        textTransform: 'uppercase',
-      }}
+    <span
+      className={cn(
+        "inline-flex items-center justify-center min-w-[32px] h-8 rounded px-2",
+        "font-bold text-sm uppercase",
+        className
+      )}
     >
       {label}
-    </Box>
+    </span>
   );
-} 
+}

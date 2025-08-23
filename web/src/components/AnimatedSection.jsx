@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box } from '@mui/material';
 
 const AnimatedSection = ({ 
   children, 
@@ -45,11 +44,9 @@ const AnimatedSection = ({
           duration: duration,
           ease: [0.4, 0, 0.2, 1] // Material Design easing
         }}
-        style={{ width: '100%' }}
+        className="w-full"
       >
-        <Box sx={{ width: '100%' }}>
-          {children}
-        </Box>
+        {children}
       </motion.div>
     </AnimatePresence>
   );

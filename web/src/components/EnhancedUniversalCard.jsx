@@ -1,26 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
-import {
-    Card,
-    CardContent,
-    Typography,
-    Box,
-    CardActionArea,
-    Chip
-} from '@mui/material';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import LocationCityIcon from '@mui/icons-material/LocationCity';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import PersonIcon from '@mui/icons-material/Person';
-import BusinessIcon from '@mui/icons-material/Business';
-import SchoolIcon from '@mui/icons-material/School';
-import ClassIcon from '@mui/icons-material/Class';
+import { Card, CardContent } from './ui/card';
+import { Badge } from './ui/badge';
+import { MapPin, Building2, Clock, Calendar, User, Briefcase, GraduationCap, BookOpen } from 'lucide-react';
 import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrganizationSlug } from '../utils/dataHelpers';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
 import { formatDaijaTitle } from '../utils';
 import { useLectureStatusWithCountdown } from '../hooks/useLectureStatus';
+import CancelledOverlay from './CancelledOverlay';
 
 const EnhancedUniversalCard = React.memo(({ data }) => {
   const router = useRouter();
@@ -56,7 +44,7 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
           type: 'lecture',
           title: data.title?.toUpperCase() || '',
           image: data.image || getDefaultLectureImage(),
-          imageStyle: { borderRadius: '8px' },
+          imageStyle: 'rounded-lg',
           isPastLecture,
           statusInfo,
           countdown: lectureStatus.countdown,
@@ -64,14 +52,14 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
           isUpcoming: lectureStatus.isUpcoming,
           infoItems: [
             data.daija && typeof data.daija === 'object' 
-              ? { icon: <PersonIcon />, text: formatDaijaTitle(data.daija.name, data.daija.title) }
-              : data.speaker ? { icon: <PersonIcon />, text: data.speaker }
+              ? { icon: User, text: formatDaijaTitle(data.daija.name, data.daija.title) }
+              : data.speaker ? { icon: User, text: data.speaker }
               : null,
-            data.organization && { icon: <BusinessIcon />, text: data.organization },
-            data.date && { icon: <CalendarTodayIcon />, text: formatDateWithDay(data.date) },
-            data.time && { icon: <AccessTimeIcon />, text: data.time },
-            data.address && { icon: <LocationOnIcon />, text: data.address },
-            data.city && { icon: <LocationCityIcon />, text: data.city }
+            data.organization && { icon: Briefcase, text: data.organization },
+            data.date && { icon: Calendar, text: formatDateWithDay(data.date) },
+            data.time && { icon: Clock, text: data.time },
+            data.address && { icon: MapPin, text: data.address },
+            data.city && { icon: Building2, text: data.city }
           ].filter(Boolean),
           onClick: () => {
             const slug = generateLectureSlug(data);
@@ -85,12 +73,12 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
           title: formatDaijaTitle(data.name, data.title),
           titlePrefix: null,
           image: data.image || getDefaultDaijaImage(),
-          imageStyle: { borderRadius: '50%' },
+          imageStyle: 'rounded-full',
           infoItems: [
-            data.specialization && { icon: <SchoolIcon />, text: data.specialization },
-            data.city && { icon: <LocationCityIcon />, text: data.city },
+            data.specialization && { icon: GraduationCap, text: data.specialization },
+            data.city && { icon: Building2, text: data.city },
             data.lectureCount !== undefined && { 
-              icon: <ClassIcon />, 
+              icon: BookOpen, 
               text: `Broj predavanja: ${data.lectureCount || 0}`,           
             }
           ].filter(Boolean),
@@ -105,11 +93,15 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
           type: 'organization',
           title: data.name,
           image: data.image || getDefaultOrganizationImage(),
-          imageStyle: { borderRadius: '8px' },
+          imageStyle: 'rounded-lg',
           infoItems: [
-            data.shortDescription && { icon: <BusinessIcon />, text: data.shortDescription },
-            data.address && { icon: <LocationOnIcon />, text: data.address },
-            data.city && { icon: <LocationCityIcon />, text: data.city }
+            data.shortDescription && { icon: Briefcase, text: data.shortDescription },
+            data.address && { icon: MapPin, text: data.address },
+            data.city && { icon: Building2, text: data.city },
+            data.lectureCount !== undefined && { 
+              icon: BookOpen, 
+              text: `Broj predavanja: ${data.lectureCount || 0}`,           
+            }
           ].filter(Boolean),
           onClick: () => {
             const slug = generateOrganizationSlug(data);
@@ -134,270 +126,109 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
      getDefaultOrganizationImage()) : 
     getImageUrl(displayData.image);
 
-  // Enhanced badge text with countdown
-  const getEnhancedBadgeText = () => {
-    if (displayData.type !== 'lecture' || !displayData.statusInfo) {
-      return 'N/A';
-    }
-
-    const { statusInfo, countdown } = displayData;
-    
-    if ((statusInfo.status === 'upcoming' || statusInfo.status === 'active') && countdown) {
-      return countdown.formatted;
-    } else {
-      return statusInfo.badgeText || 'N/A';
+  const getBadgeColor = (color) => {
+    switch(color) {
+      case 'green': return 'bg-green-50 text-green-600 border-green-200';
+      case 'yellow': return 'bg-yellow-50 text-yellow-600 border-yellow-200';
+      case 'red': return 'bg-red-50 text-red-600 border-red-200';
+      case 'gray': return 'bg-gray-50 text-gray-600 border-gray-200';
+      default: return 'bg-gray-50 text-gray-600 border-gray-200';
     }
   };
 
   return (
     <Card 
-      sx={{ 
-        height: '100%',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: 3,
-          transition: 'all 0.2s ease-in-out'
-        }
-      }}
+      className="h-full w-full flex flex-col relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer"
+      onClick={displayData.onClick}
     >
-      {/* Enhanced Status badge for lectures with countdown */}
+      {/* Live indicator for lectures */}
+      {displayData.type === 'lecture' && displayData.isLive && (
+        <div className="absolute top-3 left-3 z-10">
+          <Badge className="bg-red-500 text-white font-medium text-xs px-2 py-0.5 animate-pulse border border-red-400 pointer-events-none">
+            UŽIVO
+          </Badge>
+        </div>
+      )}
+
+      {/* Countdown for upcoming lectures */}
+      {displayData.type === 'lecture' && displayData.isUpcoming && displayData.countdown && (
+        <div className="absolute top-3 left-3 z-10">
+          <Badge className="bg-blue-50 text-blue-600 font-medium text-xs px-2 py-0.5 border border-blue-200 pointer-events-none">
+            {displayData.countdown}
+          </Badge>
+        </div>
+      )}
+
+      {/* Enhanced Status badge for lectures */}
       {displayData.type === 'lecture' && displayData.statusInfo && (
-        <Chip
-          label={getEnhancedBadgeText()}
-          size="small"
-          sx={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            zIndex: 1,
-            background: 
-              displayData.statusInfo.badgeColor === 'green' ? 
-                'linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%)' :
-              displayData.statusInfo.badgeColor === 'yellow' ? 
-                'linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%)' :
-              displayData.statusInfo.badgeColor === 'red' ? 
-                'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' :
-                'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)',
-            color: 
-              displayData.statusInfo.badgeColor === 'green' ? '#1b5e20' :
-              displayData.statusInfo.badgeColor === 'yellow' ? '#e65100' :
-              displayData.statusInfo.badgeColor === 'red' ? '#b71c1c' :
-              '#424242',
-            border: 
-              displayData.statusInfo.badgeColor === 'green' ? '1px solid #4caf50' :
-              displayData.statusInfo.badgeColor === 'yellow' ? '1px solid #ff9800' :
-              displayData.statusInfo.badgeColor === 'red' ? '1px solid #f44336' :
-              '1px solid #bdbdbd',
-            boxShadow: 
-              displayData.statusInfo.badgeColor === 'green' ? '0 2px 4px rgba(76, 175, 80, 0.2)' :
-              displayData.statusInfo.badgeColor === 'yellow' ? '0 2px 4px rgba(255, 152, 0, 0.2)' :
-              displayData.statusInfo.badgeColor === 'red' ? '0 2px 4px rgba(244, 67, 54, 0.2)' :
-              '0 2px 4px rgba(0, 0, 0, 0.1)',
-            fontWeight: 'bold',
-            fontSize: '0.75rem',
-            maxWidth: '180px',
-            height: 'auto',
-            whiteSpace: 'normal',
-            '@media (max-width: 480px)': {
-              maxWidth: '140px',
-              fontSize: '0.7rem'
-            },
-            borderRadius: '12px',
-            backdropFilter: 'blur(10px)',
-            // Add animation for live updates
-            animation: displayData.isLive ? 'pulse 2s infinite' : 'none',
-            transform: 'translateZ(0)', // Enable hardware acceleration
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&:hover': {
-              transform: 'scale(1.05) translateZ(0)',
-              boxShadow: 
-                displayData.statusInfo.badgeColor === 'green' ? '0 4px 12px rgba(76, 175, 80, 0.3)' :
-                displayData.statusInfo.badgeColor === 'yellow' ? '0 4px 12px rgba(255, 152, 0, 0.3)' :
-                displayData.statusInfo.badgeColor === 'red' ? '0 4px 12px rgba(244, 67, 54, 0.3)' :
-                '0 4px 12px rgba(0, 0, 0, 0.15)',
-            },
-            '& .MuiChip-label': {
-              paddingLeft: '8px',
-              paddingRight: '8px',
-              paddingTop: '5px',
-              paddingBottom: '5px',
-              lineHeight: '1.2',
-              textAlign: 'center',
-              fontWeight: '600',
-              letterSpacing: '0.02em',
-              textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
-            },
-            '@keyframes pulse': {
-              '0%': {
-                opacity: 1,
-              },
-              '50%': {
-                opacity: 0.8,
-              },
-              '100%': {
-                opacity: 1,
-              },
-            }
-          }}
-        />
+        <div className="absolute top-3 right-3 z-10">
+          <Badge 
+            className={`${getBadgeColor(displayData.statusInfo.badgeColor)} font-medium text-xs px-2 py-0.5 max-w-[160px] whitespace-normal text-center border pointer-events-none`}
+          >
+            {displayData.statusInfo.badgeText || 'N/A'}
+          </Badge>
+        </div>
       )}
       
-      <CardActionArea onClick={displayData.onClick} sx={{ height: '100%' }}>
-        <CardContent sx={{ height: '100%', p: 2 }}>
-          <Box sx={{ display: 'flex', height: '100%' }}>
-            {/* Left side - Information */}
-            <Box sx={{ flex: 1, pr: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              {/* Title prefix (for daija titles) */}
-              {displayData.titlePrefix && (
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    fontSize: '12px',
-                    color: 'text.secondary',
-                    mb: 0.5,
-                  }}
-                >
-                  {displayData.titlePrefix}
-                </Typography>
-              )}
+      <CardContent className="h-full p-4 flex flex-col overflow-hidden">
+        {/* Title section for lectures - full width */}
+        {displayData.type === 'lecture' && (
+          <>
+            <h2 className="text-base font-bold mb-2 mt-6 text-left w-full text-gray-900 truncate">
+              {displayData.title}
+              {data.lecturePart && ` (dio ${data.lecturePart}.)`}
+            </h2>
+            <div className="border-b border-gray-200 mb-2" />
+          </>
+        )}
 
-              {/* Main title */}
-              <Typography 
-                variant="h6" 
-                component="h2" 
-                sx={{
-                  fontSize: '18px',
-                  fontWeight: displayData.type === 'lecture' ? 'bold' : 600,
-                  mb: 0.5,
-                  lineHeight: 1.2,
-                  overflow: 'hidden',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  textAlign: displayData.type === 'lecture' ? 'left' : 'inherit',
-                }}
-              >
+        <div className="flex h-full flex-1 gap-3">
+          {/* Left side - Information */}
+          <div className="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
+            {/* Main title for non-lecture types */}
+            {displayData.type !== 'lecture' && (
+              <h2 className="text-base font-semibold mb-2 text-left text-gray-900 truncate">
                 {displayData.title}
-              </Typography>
+                {data.lecturePart && ` (dio ${data.lecturePart}.)`}
+              </h2>
+            )}
 
-              {/* Live indicator for active lectures */}
-              {displayData.isLive && (
-                <Box sx={{ mb: 1 }}>
-                  <Chip
-                    label="🔴 UŽIVO"
-                    size="small"
-                    sx={{
-                      background: 'linear-gradient(135deg, #ff1744 0%, #d50000 100%)',
-                      color: 'white',
-                      fontWeight: 'bold',
-                      fontSize: '0.7rem',
-                      borderRadius: '8px',
-                      boxShadow: '0 2px 8px rgba(255, 23, 68, 0.4)',
-                      animation: 'livePulse 1.5s infinite',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
-                      '& .MuiChip-label': {
-                        fontWeight: '700',
-                        letterSpacing: '0.05em',
-                        textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
-                      },
-                      '@keyframes livePulse': {
-                        '0%': {
-                          boxShadow: '0 2px 8px rgba(255, 23, 68, 0.4)',
-                          transform: 'scale(1)'
-                        },
-                        '50%': {
-                          boxShadow: '0 4px 16px rgba(255, 23, 68, 0.7)',
-                          transform: 'scale(1.02)'
-                        },
-                        '100%': {
-                          boxShadow: '0 2px 8px rgba(255, 23, 68, 0.4)',
-                          transform: 'scale(1)'
-                        }
-                      }
-                    }}
-                  />
-                </Box>
-              )}
-
-              {/* Info items */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                {displayData.infoItems.map((item, index) => (
-                  <Box 
-                    key={index} 
-                    sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 0.8 
-                    }}
-                  >
-                    <Box sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center' }}>
-                      {React.cloneElement(item.icon, { sx: { fontSize: '16px' } })}
-                    </Box>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        fontSize: '13px',
-                        color: 'text.secondary',
-                        overflow: 'hidden',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                      }}
-                    >
+            {/* Info items */}
+            <div className="flex flex-col gap-1.5">
+              {displayData.infoItems.slice(0, 5).map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div key={index} className="flex items-center gap-2">
+                    <Icon className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                    <span className="text-sm text-gray-600 line-clamp-1 text-left leading-relaxed">
                       {item.text}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-            </Box>
+          {/* Right side - Image */}
+          <div className="w-28 h-36 flex-shrink-0 relative self-center">
+            <div className={`w-full h-full relative overflow-hidden shadow-sm ${displayData.imageStyle}`}>
+              <Image
+                src={imageUrl}
+                alt={displayData.title}
+                fill
+                sizes="112px"
+                className="object-cover object-top"
+                onError={handleImageError}
+              />
+            </div>
+          </div>
+        </div>
 
-            {/* Right side - Image */}
-            <Box 
-              sx={{
-                width: '100px',
-                height: '100%',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Box
-                sx={{
-                  width: '100px',
-                  height: displayData.type === 'lecture' ? '130px' : '100px',
-                  overflow: 'hidden',
-                  borderRadius: displayData.imageStyle?.borderRadius || '0',
-                  bgcolor: 'background.default',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <Image
-                  src={imageUrl}
-                  alt={displayData.title}
-                  width={300}
-                  height={200}
-                  onError={handleImageError}
-                  style={{ 
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
-                />
-              </Box>
-            </Box>
-
-          </Box>
-        </CardContent>
-      </CardActionArea>
+        {/* Cancelled overlay for lectures */}
+        {displayData.type === 'lecture' && data.cancelled && (
+          <CancelledOverlay show={true} />
+        )}
+      </CardContent>
     </Card>
   );
 });

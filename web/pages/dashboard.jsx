@@ -32,9 +32,9 @@ import DashSidebar from '@/components/DashSidebar';
 import DataTable from '@/components/DataTable';
 import DraggableDataTable from '@/components/DraggableDataTable';
 import Settings from '@/components/dashboard/Settings';
-import LectureForm from '@/components/LectureForm';
-import DaijaForm from '@/components/DaijaForm';
-import OrganizationForm from '@/components/OrganizationForm';
+import LectureFormNew from '@/components/LectureFormNew';
+import UnifiedFormNew from '@/components/UnifiedFormNew';
+// OrganizationForm is now part of UnifiedFormNew
 import UserForm from '@/components/UserForm';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 import SearchBar from '@/components/SearchBar';
@@ -1700,7 +1700,7 @@ const Dashboard = () => {
         </Dialog>
 
         {/* Edit Lecture Dialog */}
-        <LectureForm
+        <LectureFormNew
           open={editLectureDialogOpen}
           onClose={() => setEditLectureDialogOpen(false)}
           onSuccess={(updatedLecture) => {
@@ -1714,7 +1714,6 @@ const Dashboard = () => {
             showSnackbar('Predavanje uspješno ažurirano');
           }}
           lecture={lectureToEdit}
-          approvalEnabled={approvalSettings.lecture}
         />
 
         {/* Duplicate Count Dialog */}
@@ -1762,7 +1761,8 @@ const Dashboard = () => {
         </Dialog>
 
         {/* Edit Daija Dialog */}
-        <DaijaForm
+        <UnifiedFormNew
+          type="daija"
           open={editDaijaDialogOpen}
           onClose={() => setEditDaijaDialogOpen(false)}
           onSuccess={(updatedDaija) => {
@@ -1775,12 +1775,13 @@ const Dashboard = () => {
             setEditDaijaDialogOpen(false);
             showSnackbar('Daija uspješno ažurirana');
           }}
-          daija={daijaToEdit}
+          data={daijaToEdit}
           approvalEnabled={approvalSettings.daija}
         />
 
         {/* Edit Organization Dialog */}
-        <OrganizationForm
+        <UnifiedFormNew
+          type="organization"
           open={editOrganizationDialogOpen}
           onClose={() => setEditOrganizationDialogOpen(false)}
           onSuccess={(updatedOrganization) => {
@@ -1793,7 +1794,7 @@ const Dashboard = () => {
             setEditOrganizationDialogOpen(false);
             showSnackbar('Udruženje uspješno ažurirano');
           }}
-          organization={organizationToEdit}
+          data={organizationToEdit}
           approvalEnabled={approvalSettings.organization}
         />
 

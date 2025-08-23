@@ -1,41 +1,51 @@
 import { useState, useMemo, memo, useEffect, useCallback } from 'react';
 import { formatDaijaTitle } from '../utils';
 import {
-    Box,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    IconButton, Chip,
-    Typography, MenuItem,
-    TablePagination,
-    Menu,
-    ListItemIcon,
-    ListItemText,
-    TableSortLabel,
-    Checkbox,
-    Toolbar,
-    Tooltip
-} from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './ui/table';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Checkbox } from './ui/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from './ui/pagination';
+import { Skeleton } from './ui/skeleton';
+import {
+  Edit,
+  Trash2,
+  MoreVertical,
+  Copy,
+  X,
+  Archive,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Check,
+  ChevronUp,
+  ChevronDown
+} from 'lucide-react';
 import RoleBadge from './RoleBadge.jsx';
 import { getValue as getValueHelper, formatDate } from '@/utils/dataHelpers.js';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils.js';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import PendingIcon from '@mui/icons-material/Pending';
-import ArchiveIcon from '@mui/icons-material/Archive';
-import CheckIcon from '@mui/icons-material/Check';
-import CloseIcon from '@mui/icons-material/Close';
 import LoadingSkeleton from './LoadingSkeleton';
 
-// Optimizirana komponenta za slike - koristi background-image (nema broken icon)
+// Optimizirana komponenta za slike
 const ImageCell = memo(({ src, alt, defaultSrc }) => {
   const [imageSrc, setImageSrc] = useState(getImageUrl(src) || defaultSrc);
   const [hasError, setHasError] = useState(false);
@@ -53,18 +63,11 @@ const ImageCell = memo(({ src, alt, defaultSrc }) => {
   };
   
   return (
-    <Box
-      component="img"
+    <img
       src={imageSrc}
       alt={alt}
       onError={handleError}
-      sx={{
-        width: 50,
-        height: 50,
-        objectFit: 'cover',
-        borderRadius: 1,
-        border: '1px solid #e0e0e0'
-      }}
+      className="w-12 h-12 object-cover rounded border border-gray-200"
     />
   );
 });
@@ -72,112 +75,68 @@ ImageCell.displayName = 'ImageCell';
 
 // Komponenta za akcije sa dropdown menijem
 const ActionsMenu = memo(({ item, type, onEdit, onDelete, onDuplicate, onCancel, onArchive }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
-  
   console.log('ActionsMenu - type:', type, 'onCancel:', !!onCancel);
-
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
 
   const handleEdit = () => {
     onEdit(item, type);
-    handleClose();
   };
 
   const handleDelete = () => {
     onDelete(item, type);
-    handleClose();
   };
 
   const handleDuplicate = () => {
     onDuplicate(item, type);
-    handleClose();
   };
 
   const handleArchive = () => {
     onArchive(item);
-    handleClose();
   };
 
   const handleCancel = () => {
     onCancel(item);
-    handleClose();
   };
 
   return (
-    <>
-      <IconButton
-        size="small"
-        onClick={handleClick}
-        sx={{ 
-          '&:hover': { 
-            backgroundColor: 'rgba(0, 0, 0, 0.04)' 
-          }
-        }}
-      >
-        <MoreVertIcon />
-      </IconButton>
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-      >
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
         {onEdit && (
-          <MenuItem onClick={handleEdit}>
-            <ListItemIcon>
-              <EditIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Uredi</ListItemText>
-          </MenuItem>
+          <DropdownMenuItem onClick={handleEdit}>
+            <Edit className="mr-2 h-4 w-4" />
+            Uredi
+          </DropdownMenuItem>
         )}
         {onDuplicate && type !== 'users' && type !== 'suggestion' && (
-          <MenuItem onClick={handleDuplicate}>
-            <ListItemIcon>
-              <ContentCopyIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Dupliraj</ListItemText>
-          </MenuItem>
+          <DropdownMenuItem onClick={handleDuplicate}>
+            <Copy className="mr-2 h-4 w-4" />
+            Dupliraj
+          </DropdownMenuItem>
         )}
         {onCancel && (type === 'lecture' || type === 'lectures') && (
-          <MenuItem onClick={handleCancel}>
-            <ListItemIcon>
-              <CancelIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Otkaži</ListItemText>
-          </MenuItem>
+          <DropdownMenuItem onClick={handleCancel}>
+            <XCircle className="mr-2 h-4 w-4" />
+            Otkaži
+          </DropdownMenuItem>
         )}
         {onArchive && type === 'suggestion' && (
-          <MenuItem onClick={handleArchive}>
-            <ListItemIcon>
-              <ArchiveIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Arhiviraj</ListItemText>
-          </MenuItem>
+          <DropdownMenuItem onClick={handleArchive}>
+            <Archive className="mr-2 h-4 w-4" />
+            Arhiviraj
+          </DropdownMenuItem>
         )}
         {onDelete && (
-          <MenuItem onClick={handleDelete}>
-            <ListItemIcon>
-              <DeleteIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Obriši</ListItemText>
-          </MenuItem>
+          <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+            <Trash2 className="mr-2 h-4 w-4" />
+            Obriši
+          </DropdownMenuItem>
         )}
-      </Menu>
-    </>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 });
 ActionsMenu.displayName = 'ActionsMenu';
@@ -203,8 +162,8 @@ const TableRowMemo = memo(({
   
   const handleRowClick = (event) => {
     // Don't trigger row click if clicking on checkbox or actions
-    if (event.target.closest('.MuiCheckbox-root') || 
-        event.target.closest('.MuiIconButton-root') ||
+    if (event.target.closest('[role="checkbox"]') || 
+        event.target.closest('button') ||
         event.target.closest('[role="button"]')) {
       return;
     }
@@ -217,26 +176,19 @@ const TableRowMemo = memo(({
   return (
     <TableRow 
       key={itemId} 
-      selected={isSelected}
+      className={`${isSelected ? 'bg-blue-50' : ''} ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
       onClick={handleRowClick}
-      sx={{ 
-        cursor: onRowClick ? 'pointer' : 'default',
-        '&:hover': onRowClick ? {
-          backgroundColor: 'rgba(0, 0, 0, 0.04)'
-        } : {}
-      }}
     >
       {showSelection && (
-        <TableCell padding="checkbox">
+        <TableCell className="w-12">
           <Checkbox
             checked={isSelected}
-            onChange={() => onSelectItem(itemId)}
-            color="primary"
+            onCheckedChange={() => onSelectItem(itemId)}
           />
         </TableCell>
       )}
       {columns.map((column) => (
-        <TableCell key={column.id} sx={{ cursor: onRowClick ? 'pointer' : 'default' }}>
+        <TableCell key={column.id} className={onRowClick ? 'cursor-pointer' : ''}>
           {column.getValue(item)}
         </TableCell>
       ))}
@@ -266,23 +218,12 @@ const BulkActionsToolbar = memo(({
   onClearSelection, 
   type 
 }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-  
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-  
   const handleBulkAction = (action, value = null) => {
     if (action === 'status' && value) {
       onBulkStatusChange(selectedItems, value, type);
     } else if (action === 'delete') {
       onBulkDelete(selectedItems, type);
     }
-    handleMenuClose();
   };
 
   if (!selectedItems || selectedItems.length === 0) {
@@ -290,71 +231,55 @@ const BulkActionsToolbar = memo(({
   }
 
   return (
-    <Toolbar
-      sx={{
-        pl: { sm: 2 },
-        pr: { xs: 1, sm: 1 },
-        bgcolor: 'rgba(25, 118, 210, 0.08)',
-        borderRadius: 1,
-        mb: 1
-      }}
-    >
-      <Typography
-        sx={{ flex: '1 1 100%' }}
-        color="inherit"
-        variant="subtitle1"
-        component="div"
-      >
+    <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg mb-2">
+      <span className="text-sm font-medium">
         {selectedItems.length} odabrano
-      </Typography>
+      </span>
       
-      {type !== 'users' && onBulkStatusChange && (
-        <Tooltip title="Promijeni status">
-          <IconButton onClick={handleMenuOpen}>
-            <CheckIcon />
-          </IconButton>
-        </Tooltip>
-      )}
-      
-      {onBulkDelete && (
-        <Tooltip title="Obriši odabrane">
-          <IconButton onClick={() => handleBulkAction('delete')}>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      )}
-      
-      <Tooltip title="Očisti odabir">
-        <IconButton onClick={onClearSelection}>
-          <CloseIcon />
-        </IconButton>
-      </Tooltip>
-
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={() => handleBulkAction('status', 'approved')}>
-          <ListItemIcon>
-            <CheckCircleIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Odobri odabrane</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => handleBulkAction('status', 'pending')}>
-          <ListItemIcon>
-            <PendingIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Stavi na čekanje</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => handleBulkAction('status', 'rejected')}>
-          <ListItemIcon>
-            <CloseIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Odbaci odabrane</ListItemText>
-        </MenuItem>
-      </Menu>
-    </Toolbar>
+      <div className="flex items-center gap-2">
+        {type !== 'users' && onBulkStatusChange && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Check className="h-4 w-4 mr-2" />
+                Status
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => handleBulkAction('status', 'approved')}>
+                <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                Odobri odabrane
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkAction('status', 'pending')}>
+                <Clock className="mr-2 h-4 w-4 text-yellow-600" />
+                Stavi na čekanje
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkAction('status', 'rejected')}>
+                <XCircle className="mr-2 h-4 w-4 text-red-600" />
+                Odbaci odabrane
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        
+        {onBulkDelete && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => handleBulkAction('delete')}
+            className="text-red-600 hover:text-red-700"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Obriši
+          </Button>
+        )}
+        
+        <Button variant="outline" size="sm" onClick={onClearSelection}>
+          <X className="h-4 w-4 mr-2" />
+          Očisti
+        </Button>
+      </div>
+    </div>
   );
 });
 BulkActionsToolbar.displayName = 'BulkActionsToolbar';
@@ -418,8 +343,8 @@ const DataTable = ({
     setSortConfig({ key, direction });
   };
 
-  const handleSelectAll = (event) => {
-    if (event.target.checked) {
+  const handleSelectAll = (checked) => {
+    if (checked) {
       const newSelected = data.map((item) => item._id || item.id);
       setSelectedItems(newSelected);
     } else {
@@ -455,6 +380,22 @@ const DataTable = ({
   const isAllSelected = data.length > 0 && selectedItems.length === data.length;
   const isIndeterminate = selectedItems.length > 0 && selectedItems.length < data.length;
 
+  const sortedData = useMemo(() => {
+    return data.slice().sort((a, b) => {
+      if (!sortConfig.key) return 0;
+      
+      const aValue = getValueHelper(a, sortConfig.key);
+      const bValue = getValueHelper(b, sortConfig.key);
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [data, sortConfig]);
 
   const getColumns = useMemo(() => {
     // Status icons with actions
@@ -463,75 +404,63 @@ const DataTable = ({
       
       const currentStatus = item.status || 'pending';
       return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
             {/* Current status indicator */}
-            <Chip
-              size="small"
-              label={
-                currentStatus === 'approved' ? 'Odobreno' :
-                currentStatus === 'pending' ? 'Na čekanju' :
-                currentStatus === 'rejected' ? 'Odbačeno' :
-                currentStatus === 'cancelled' ? 'Otkazano' : 'Nepoznato'
-              }
-              color={
+            <Badge
+              variant={
                 currentStatus === 'approved' ? 'success' :
                 currentStatus === 'pending' ? 'warning' :
-                currentStatus === 'rejected' ? 'error' :
-                currentStatus === 'cancelled' ? 'error' : 'default'
+                currentStatus === 'rejected' ? 'destructive' :
+                currentStatus === 'cancelled' ? 'destructive' : 'secondary'
               }
-              sx={{ minWidth: 80 }}
-            />
+            >
+              {currentStatus === 'approved' ? 'Odobreno' :
+               currentStatus === 'pending' ? 'Na čekanju' :
+               currentStatus === 'rejected' ? 'Odbačeno' :
+               currentStatus === 'cancelled' ? 'Otkazano' : 'Nepoznato'}
+            </Badge>
             
             {/* Action buttons */}
-            <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <div className="flex gap-1">
               {currentStatus !== 'approved' && (
-                <Tooltip title="Odobri">
-                  <IconButton
-                    size="small"
-                    onClick={() => onStatusChange(item, 'approved')}
-                    sx={{ 
-                      color: 'success.main',
-                      '&:hover': { bgcolor: 'success.light', color: 'white' }
-                    }}
-                  >
-                    <CheckCircleIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onStatusChange(item, 'approved')}
+                  className="h-7 w-7 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                  title="Odobri"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                </Button>
               )}
               
               {currentStatus !== 'rejected' && (
-                <Tooltip title="Odbaci">
-                  <IconButton
-                    size="small"
-                    onClick={() => onStatusChange(item, 'rejected')}
-                    sx={{ 
-                      color: 'error.main',
-                      '&:hover': { bgcolor: 'error.light', color: 'white' }
-                    }}
-                  >
-                    <CancelIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onStatusChange(item, 'rejected')}
+                  className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  title="Odbaci"
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
               )}
               
               {currentStatus !== 'pending' && (
-                <Tooltip title="Stavi na čekanje">
-                  <IconButton
-                    size="small"
-                    onClick={() => onStatusChange(item, 'pending')}
-                    sx={{ 
-                      color: 'warning.main',
-                      '&:hover': { bgcolor: 'warning.light', color: 'white' }
-                    }}
-                  >
-                    <PendingIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onStatusChange(item, 'pending')}
+                  className="h-7 w-7 p-0 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                  title="Stavi na čekanje"
+                >
+                  <Clock className="h-4 w-4" />
+                </Button>
               )}
-            </Box>
-          </Box>
-        </Box>
+            </div>
+          </div>
+        </div>
       );
     };
 
@@ -715,11 +644,9 @@ const DataTable = ({
             label: 'Broj prijava', 
             sortable: true, 
             getValue: (item) => (
-              <Chip
-                label={`${item.reportCount}/3`}
-                color={item.reportCount >= 3 ? 'error' : 'warning'}
-                size="small"
-              />
+              <Badge variant={item.reportCount >= 3 ? 'destructive' : 'warning'}>
+                {`${item.reportCount}/3`}
+              </Badge>
             )
           }
         ];
@@ -744,21 +671,12 @@ const DataTable = ({
             const reason = item.rejectionReason;
             const maxLength = 50;
             return (
-              <Tooltip title={reason} arrow>
-                <Box sx={{ 
-                  bgcolor: 'error.light', 
-                  color: 'error.contrastText',
-                  p: 1, 
-                  borderRadius: 1,
-                  fontSize: '0.75rem',
-                  maxWidth: 200,
-                  cursor: 'help'
-                }}>
-                  <Typography variant="caption">
-                    {reason.length > maxLength ? reason.substring(0, maxLength) + '...' : reason}
-                  </Typography>
-                </Box>
-              </Tooltip>
+              <div 
+                className="bg-red-100 text-red-900 p-2 rounded text-xs max-w-[200px] cursor-help"
+                title={reason}
+              >
+                {reason.length > maxLength ? reason.substring(0, maxLength) + '...' : reason}
+              </div>
             );
           }
           return '-';
@@ -775,16 +693,21 @@ const DataTable = ({
 
   if (!data || data.length === 0) {
     return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Typography variant="body1" color="text.secondary">
-          Nema dostupnih podataka
-        </Typography>
-      </Box>
+      <div className="text-center py-8">
+        <p className="text-gray-500">Nema dostupnih podataka</p>
+      </div>
     );
   }
 
+  const paginatedData = sortedData.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
+  const totalPages = Math.ceil(data.length / rowsPerPage);
+
   return (
-    <Box>
+    <div>
       <BulkActionsToolbar
         selectedItems={selectedItems}
         onBulkStatusChange={onBulkStatusChange}
@@ -793,95 +716,139 @@ const DataTable = ({
         type={type}
       />
       
-      <TableContainer component={Paper} sx={{ mt: 1, borderRadius: 0, boxShadow: 'none', width: '100%' }}>
+      <div className="rounded-lg border bg-white">
         <Table>
-          <TableHead>
+          <TableHeader>
             <TableRow>
-              <TableCell padding="checkbox">
+              <TableHead className="w-12">
                 <Checkbox
-                  indeterminate={isIndeterminate}
                   checked={isAllSelected}
-                  onChange={handleSelectAll}
-                  color="primary"
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all"
+                  className={isIndeterminate ? 'opacity-50' : ''}
                 />
-              </TableCell>
+              </TableHead>
               {getColumns.map((column) => (
-                <TableCell key={column.id}>
+                <TableHead key={column.id}>
                   {column.sortable ? (
-                    <TableSortLabel
-                      active={sortConfig.key === (column.sortKey || column.id)}
-                      direction={sortConfig.key === (column.sortKey || column.id) ? sortConfig.direction : 'asc'}
+                    <Button
+                      variant="ghost"
                       onClick={() => handleSort(column.sortKey || column.id)}
+                      className="h-auto p-0 font-medium hover:bg-transparent"
                     >
                       {column.label}
-                    </TableSortLabel>
+                      {sortConfig.key === (column.sortKey || column.id) && (
+                        sortConfig.direction === 'asc' ? 
+                          <ChevronUp className="ml-2 h-4 w-4" /> : 
+                          <ChevronDown className="ml-2 h-4 w-4" />
+                      )}
+                    </Button>
                   ) : (
                     column.label
                   )}
-                </TableCell>
+                </TableHead>
               ))}
               {showActions && !hideActions && (onEdit || onDelete || onDuplicate || onCancel || onArchive) && (
-                <TableCell>Akcije</TableCell>
+                <TableHead>Akcije</TableHead>
               )}
             </TableRow>
-          </TableHead>
+          </TableHeader>
           <TableBody>
-            {data
-              .slice()
-              .sort((a, b) => {
-                if (!sortConfig.key) return 0;
-                
-                const aValue = getValueHelper(a, sortConfig.key);
-                const bValue = getValueHelper(b, sortConfig.key);
-                
-                if (aValue < bValue) {
-                  return sortConfig.direction === 'asc' ? -1 : 1;
-                }
-                if (aValue > bValue) {
-                  return sortConfig.direction === 'asc' ? 1 : -1;
-                }
-                return 0;
-              })
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((item) => (
-                <TableRowMemo
-                  key={item._id || item.id}
-                  item={item}
-                  columns={getColumns}
-                  hideActions={hideActions}
-                  showActions={showActions}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onDuplicate={onDuplicate}
-                  onCancel={onCancel}
-                  onArchive={onArchive}
-                  type={type}
-                  isSelected={isSelected(item._id || item.id)}
-                  onSelectItem={handleSelectItem}
-                  showSelection={true}
-                  onRowClick={onRowClick}
-                />
-              ))}
+            {paginatedData.map((item) => (
+              <TableRowMemo
+                key={item._id || item.id}
+                item={item}
+                columns={getColumns}
+                hideActions={hideActions}
+                showActions={showActions}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onDuplicate={onDuplicate}
+                onCancel={onCancel}
+                onArchive={onArchive}
+                type={type}
+                isSelected={isSelected(item._id || item.id)}
+                onSelectItem={handleSelectItem}
+                showSelection={true}
+                onRowClick={onRowClick}
+              />
+            ))}
           </TableBody>
         </Table>
-      </TableContainer>
+      </div>
       
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        component="div"
-        count={data.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={(event, newPage) => setPage(newPage)}
-        onRowsPerPageChange={(event) => {
-          setRowsPerPage(parseInt(event.target.value, 10));
-          setPage(0);
-        }}
-        labelRowsPerPage="Redova po stranici:"
-        labelDisplayedRows={({ from, to, count }) => `${from}-${to} od ${count}`}
-      />
-    </Box>
+      {/* Pagination */}
+      <div className="flex items-center justify-between px-2 py-4">
+        <div className="flex items-center space-x-2">
+          <p className="text-sm text-gray-700">
+            Redova po stranici:
+          </p>
+          <select
+            value={rowsPerPage}
+            onChange={(e) => {
+              setRowsPerPage(Number(e.target.value));
+              setPage(0);
+            }}
+            className="rounded border border-gray-300 px-3 py-1 text-sm"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+          </select>
+          <p className="text-sm text-gray-700">
+            {page * rowsPerPage + 1}-{Math.min((page + 1) * rowsPerPage, data.length)} od {data.length}
+          </p>
+        </div>
+        
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setPage(Math.max(0, page - 1))}
+                className={page === 0 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            
+            {[...Array(Math.min(5, totalPages))].map((_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i;
+              } else if (page < 3) {
+                pageNum = i;
+              } else if (page > totalPages - 4) {
+                pageNum = totalPages - 5 + i;
+              } else {
+                pageNum = page - 2 + i;
+              }
+              
+              if (pageNum >= 0 && pageNum < totalPages) {
+                return (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      onClick={() => setPage(pageNum)}
+                      isActive={page === pageNum}
+                      className="cursor-pointer"
+                    >
+                      {pageNum + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              }
+              return null;
+            })}
+            
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                className={page === totalPages - 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    </div>
   );
 };
 
-export default DataTable; 
+export default DataTable;

@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { Button, Menu, MenuItem, Box, Typography, Divider } from '@mui/material';
-import ShareIcon from '@mui/icons-material/Share';
-import MessageIcon from '@mui/icons-material/Message';
-import SendIcon from '@mui/icons-material/Send';
-import FacebookIcon from '@mui/icons-material/Facebook';
-import TwitterIcon from '@mui/icons-material/Twitter';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import { Share2, MessageCircle, Send, Facebook, Twitter, Copy, MoreHorizontal } from 'lucide-react';
+import { Button } from './ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 
 const ShareButton = ({ lecture, profileData, type }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
   const [copied, setCopied] = useState(false);
-  const open = Boolean(anchorEl);
 
   // Use lecture prop for backward compatibility, or profileData for new implementation
   const data = lecture || profileData;
@@ -49,47 +49,38 @@ const ShareButton = ({ lecture, profileData, type }) => {
   const shareOptions = [
     {
       name: 'WhatsApp',
-      icon: MessageIcon,
-      color: '#25D366',
+      icon: MessageCircle,
+      color: 'text-green-500',
       url: `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`
     },
     {
       name: 'Viber',
-      icon: MessageIcon,
-      color: '#665CAC',
+      icon: MessageCircle,
+      color: 'text-purple-500',
       url: `viber://forward?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`
     },
     {
       name: 'Telegram',
-      icon: SendIcon,
-      color: '#0088cc',
+      icon: Send,
+      color: 'text-blue-500',
       url: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`
     },
     {
       name: 'Facebook',
-      icon: FacebookIcon,
-      color: '#1877F2',
+      icon: Facebook,
+      color: 'text-blue-600',
       url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
     },
     {
       name: 'Twitter',
-      icon: TwitterIcon,
-      color: '#1DA1F2',
+      icon: Twitter,
+      color: 'text-sky-500',
       url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`
     }
   ];
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
   const handleShare = (url) => {
     window.open(url, '_blank', 'width=600,height=400');
-    handleClose();
   };
 
   const handleCopyLink = async () => {
@@ -97,7 +88,6 @@ const ShareButton = ({ lecture, profileData, type }) => {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      handleClose();
     } catch (err) {
       console.error('Failed to copy link:', err);
     }
@@ -129,7 +119,6 @@ const ShareButton = ({ lecture, profileData, type }) => {
             // Provjeri da li može da dijeli fajlove
             if (navigator.canShare(shareDataWithImage)) {
               await navigator.share(shareDataWithImage);
-              handleClose();
               return;
             }
           } catch (imageError) {
@@ -139,7 +128,6 @@ const ShareButton = ({ lecture, profileData, type }) => {
         
         // Fallback na obično dijeljenje bez slike
         await navigator.share(shareData);
-        handleClose();
       } catch (err) {
         console.error('Error sharing:', err);
       }
@@ -147,97 +135,51 @@ const ShareButton = ({ lecture, profileData, type }) => {
   };
 
   return (
-    <Box>
-      <Button
-        variant="outlined"
-        startIcon={<ShareIcon />}
-        onClick={handleClick}
-        sx={{
-          borderColor: 'rgba(255, 255, 255, 0.3)',
-          color: 'white',
-          borderRadius: 3,
-          px: 3,
-          py: 1.5,
-          fontSize: '0.95rem',
-          fontWeight: 500,
-          textTransform: 'none',
-          transition: 'all 0.2s ease',
-          backdropFilter: 'blur(10px)',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          '&:hover': {
-            borderColor: 'rgba(255, 255, 255, 0.5)',
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            transform: 'translateY(-1px)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
-          }
-        }}
-      >
-        Podijeli
-      </Button>
-
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        PaperProps={{
-          sx: {
-            mt: 1,
-            minWidth: 250,
-            borderRadius: 3,
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-            border: '1px solid rgba(0, 0, 0, 0.05)',
-            '& .MuiMenuItem-root': {
-              px: 2,
-              py: 1.5,
-              borderRadius: 2,
-              mx: 1,
-              my: 0.5,
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.04)'
-              }
-            }
-          }
-        }}
-      >
-        <Box sx={{ px: 2, py: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-            {profileType === 'organization' ? 'Podijeli udruženje' : profileType === 'daija' ? 'Podijeli daiju' : 'Podijeli predavanje'}
-          </Typography>
-        </Box>
-        
-        <Divider sx={{ mx: 1, mb: 1 }} />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          className="border-white/30 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 hover:border-white/50 hover:-translate-y-0.5 transition-all duration-200"
+        >
+          <Share2 className="mr-2 h-4 w-4" />
+          Podijeli
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56">
+        <DropdownMenuLabel>
+          {profileType === 'organization' ? 'Podijeli udruženje' : profileType === 'daija' ? 'Podijeli daiju' : 'Podijeli predavanje'}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
         
         {shareOptions.map((option) => {
           const Icon = option.icon;
           return (
-            <MenuItem
+            <DropdownMenuItem
               key={option.name}
               onClick={() => handleShare(option.url)}
-              sx={{ gap: 2 }}
+              className="cursor-pointer"
             >
-              <Icon sx={{ fontSize: 20, color: option.color }} />
-              <Typography variant="body2">{option.name}</Typography>
-            </MenuItem>
+              <Icon className={`mr-2 h-4 w-4 ${option.color}`} />
+              <span>{option.name}</span>
+            </DropdownMenuItem>
           );
         })}
 
-        <Divider sx={{ mx: 1, my: 1 }} />
+        <DropdownMenuSeparator />
 
         {typeof navigator !== 'undefined' && navigator.share && (
-          <MenuItem onClick={handleNativeShare} sx={{ gap: 2 }}>
-            <MoreHorizIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
-            <Typography variant="body2">Više opcija</Typography>
-          </MenuItem>
+          <DropdownMenuItem onClick={handleNativeShare} className="cursor-pointer">
+            <MoreHorizontal className="mr-2 h-4 w-4" />
+            <span>Više opcija</span>
+          </DropdownMenuItem>
         )}
 
-        <MenuItem onClick={handleCopyLink} sx={{ gap: 2 }}>
-          <ContentCopyIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
-          <Typography variant="body2">
-            {copied ? 'Kopirano!' : 'Kopiraj link'}
-          </Typography>
-        </MenuItem>
-      </Menu>
-    </Box>
+        <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer">
+          <Copy className="mr-2 h-4 w-4" />
+          <span>{copied ? 'Kopirano!' : 'Kopiraj link'}</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

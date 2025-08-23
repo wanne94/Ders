@@ -21,7 +21,7 @@ import {
     InputLabel,
     InputAdornment
 } from '@mui/material';
-import SimpleDatePicker from './SimpleDatePicker';
+import { DatePickerFixed } from '@/components/ui/date-picker-fixed';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -612,13 +612,14 @@ const UnifiedForm = ({
       )}
 
       {/* Date and Time */}
-      <SimpleDatePicker
+      <DatePickerFixed
         value={formData.date}
         onChange={(formattedDate) => {
           console.log('📅 [UnifiedForm] Date changed to:', formattedDate);
           setFormData(prev => ({ ...prev, date: formattedDate }));
         }}
         isEditing={!!data}
+        placeholder="Datum"
       />
 
       <FormControl fullWidth margin="normal">

@@ -1,29 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import {
-  Box,
-  Paper,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  IconButton,
-  Tooltip,
-  Checkbox,
-  Chip,
-  Switch,
-  FormControlLabel,
-  Typography
-} from '@mui/material';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CancelIcon from '@mui/icons-material/Cancel';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import BlockIcon from '@mui/icons-material/Block';
+} from './ui/table';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Checkbox } from './ui/checkbox';
+import { Switch } from './ui/switch';
+import {
+  GripVertical,
+  Edit,
+  Trash2,
+  Copy,
+  X,
+  Eye,
+  Ban
+} from 'lucide-react';
 
 const DraggableDataTable = ({
   data = [],
@@ -64,8 +61,8 @@ const DraggableDataTable = ({
     }
   };
 
-  const handleSelectAll = (event) => {
-    if (event.target.checked) {
+  const handleSelectAll = (checked) => {
+    if (checked) {
       setSelectedItems(localData.map(item => item._id));
     } else {
       setSelectedItems([]);
@@ -80,18 +77,18 @@ const DraggableDataTable = ({
     );
   };
 
-  const getStatusColor = (status) => {
+  const getStatusVariant = (status) => {
     switch (status) {
       case 'approved':
         return 'success';
       case 'pending':
         return 'warning';
       case 'rejected':
-        return 'error';
+        return 'destructive';
       case 'cancelled':
-        return 'default';
+        return 'secondary';
       default:
-        return 'default';
+        return 'secondary';
     }
   };
 
@@ -114,18 +111,19 @@ const DraggableDataTable = ({
     const headers = [];
     
     if (isDragMode) {
-      headers.push(<TableCell key="drag" width={50}></TableCell>);
+      headers.push(<TableHead key="drag" className="w-12"></TableHead>);
     }
     
     if (showActions) {
       headers.push(
-        <TableCell key="select" padding="checkbox">
+        <TableHead key="select" className="w-12">
           <Checkbox
-            indeterminate={selectedItems.length > 0 && selectedItems.length < localData.length}
             checked={localData.length > 0 && selectedItems.length === localData.length}
-            onChange={handleSelectAll}
+            onCheckedChange={handleSelectAll}
+            aria-label="Select all"
+            className={selectedItems.length > 0 && selectedItems.length < localData.length ? 'opacity-50' : ''}
           />
-        </TableCell>
+        </TableHead>
       );
     }
 
@@ -134,50 +132,50 @@ const DraggableDataTable = ({
       case 'lecture':
       case 'lectures':
         headers.push(
-          <TableCell key="title">Naslov</TableCell>,
-          <TableCell key="speaker">Predavač</TableCell>,
-          <TableCell key="date">Datum</TableCell>,
-          <TableCell key="organization">Organizacija</TableCell>
+          <TableHead key="title">Naslov</TableHead>,
+          <TableHead key="speaker">Predavač</TableHead>,
+          <TableHead key="date">Datum</TableHead>,
+          <TableHead key="organization">Organizacija</TableHead>
         );
         break;
       case 'daija':
       case 'daije':
         headers.push(
-          <TableCell key="title">Ime</TableCell>,
-          <TableCell key="description">Opis</TableCell>,
-          <TableCell key="createdAt">Kreiran</TableCell>
+          <TableHead key="title">Ime</TableHead>,
+          <TableHead key="description">Opis</TableHead>,
+          <TableHead key="createdAt">Kreiran</TableHead>
         );
         break;
       case 'organization':
       case 'organizations':
         headers.push(
-          <TableCell key="name">Naziv</TableCell>,
-          <TableCell key="city">Grad</TableCell>,
-          <TableCell key="address">Adresa</TableCell>
+          <TableHead key="name">Naziv</TableHead>,
+          <TableHead key="city">Grad</TableHead>,
+          <TableHead key="address">Adresa</TableHead>
         );
         break;
       case 'user':
       case 'users':
         headers.push(
-          <TableCell key="username">Korisničko ime</TableCell>,
-          <TableCell key="email">Email</TableCell>,
-          <TableCell key="role">Uloga</TableCell>
+          <TableHead key="username">Korisničko ime</TableHead>,
+          <TableHead key="email">Email</TableHead>,
+          <TableHead key="role">Uloga</TableHead>
         );
         break;
       default:
-        headers.push(<TableCell key="info">Informacije</TableCell>);
+        headers.push(<TableHead key="info">Informacije</TableHead>);
     }
 
     if (showStatus) {
-      headers.push(<TableCell key="status" align="center">Status</TableCell>);
+      headers.push(<TableHead key="status" className="text-center">Status</TableHead>);
     }
 
     if (showRejectionReason) {
-      headers.push(<TableCell key="reason">Razlog odbijanja</TableCell>);
+      headers.push(<TableHead key="reason">Razlog odbijanja</TableHead>);
     }
 
     if (showActions && !hideActions) {
-      headers.push(<TableCell key="actions" align="right">Akcije</TableCell>);
+      headers.push(<TableHead key="actions" className="text-right">Akcije</TableHead>);
     }
 
     return headers;
@@ -188,18 +186,18 @@ const DraggableDataTable = ({
 
     if (isDragMode) {
       cells.push(
-        <TableCell key="drag">
-          <DragIndicatorIcon color="action" />
+        <TableCell key="drag" className="w-12">
+          <GripVertical className="h-5 w-5 text-gray-400" />
         </TableCell>
       );
     }
 
     if (showActions) {
       cells.push(
-        <TableCell key="select" padding="checkbox">
+        <TableCell key="select" className="w-12">
           <Checkbox
             checked={selectedItems.includes(item._id)}
-            onChange={() => handleSelectItem(item._id)}
+            onCheckedChange={() => handleSelectItem(item._id)}
           />
         </TableCell>
       );
@@ -244,11 +242,11 @@ const DraggableDataTable = ({
           <TableCell key="username">{item.username}</TableCell>,
           <TableCell key="email">{item.email}</TableCell>,
           <TableCell key="role">
-            <Chip 
-              label={item.role} 
-              size="small" 
-              color={item.role === 'super_admin' ? 'error' : item.role === 'admin' ? 'warning' : 'default'}
-            />
+            <Badge 
+              variant={item.role === 'super_admin' ? 'destructive' : item.role === 'admin' ? 'warning' : 'secondary'}
+            >
+              {item.role}
+            </Badge>
           </TableCell>
         );
         break;
@@ -260,12 +258,10 @@ const DraggableDataTable = ({
 
     if (showStatus && item.status) {
       cells.push(
-        <TableCell key="status" align="center">
-          <Chip
-            label={getStatusText(item.status)}
-            color={getStatusColor(item.status)}
-            size="small"
-          />
+        <TableCell key="status" className="text-center">
+          <Badge variant={getStatusVariant(item.status)}>
+            {getStatusText(item.status)}
+          </Badge>
         </TableCell>
       );
     }
@@ -278,59 +274,75 @@ const DraggableDataTable = ({
 
     if (showActions && !hideActions) {
       cells.push(
-        <TableCell key="actions" align="right">
-          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+        <TableCell key="actions" className="text-right">
+          <div className="flex gap-1 justify-end">
             {onEdit && (
-              <Tooltip title="Uredi">
-                <IconButton size="small" onClick={() => onEdit(item, type)}>
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onEdit(item, type)}
+                title="Uredi"
+                className="h-8 w-8 p-0"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
             )}
             {onDuplicate && (
-              <Tooltip title="Dupliciraj">
-                <IconButton size="small" onClick={() => onDuplicate(item, type)}>
-                  <ContentCopyIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onDuplicate(item, type)}
+                title="Dupliciraj"
+                className="h-8 w-8 p-0"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
             )}
             {onCancel && item.status !== 'cancelled' && (
-              <Tooltip title="Otkaži">
-                <IconButton size="small" onClick={() => onCancel(item)}>
-                  <CancelIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onCancel(item)}
+                title="Otkaži"
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             )}
             {onStatusChange && item.status === 'pending' && (
               <>
-                <Tooltip title="Odobri">
-                  <IconButton 
-                    size="small" 
-                    color="success"
-                    onClick={() => onStatusChange(item, type, 'approved')}
-                  >
-                    <VisibilityIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Odbij">
-                  <IconButton 
-                    size="small" 
-                    color="error"
-                    onClick={() => onStatusChange(item, type, 'rejected')}
-                  >
-                    <BlockIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onStatusChange(item, type, 'approved')}
+                  title="Odobri"
+                  className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onStatusChange(item, type, 'rejected')}
+                  title="Odbij"
+                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                >
+                  <Ban className="h-4 w-4" />
+                </Button>
               </>
             )}
             {onDelete && (
-              <Tooltip title="Obriši">
-                <IconButton size="small" color="error" onClick={() => onDelete(item, type)}>
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onDelete(item, type)}
+                title="Obriši"
+                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             )}
-          </Box>
+          </div>
         </TableCell>
       );
     }
@@ -341,104 +353,106 @@ const DraggableDataTable = ({
   if (!isDragMode) {
     // Regular table without drag & drop
     return (
-      <Box>
-        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={isDragMode}
-                onChange={(e) => setIsDragMode(e.target.checked)}
-              />
-            }
-            label="Način reorganizacije"
-          />
-        </Box>
+      <div>
+        <div className="mb-4 flex justify-end">
+          <label className="flex items-center gap-2">
+            <Switch
+              checked={isDragMode}
+              onCheckedChange={setIsDragMode}
+            />
+            <span className="text-sm">Način reorganizacije</span>
+          </label>
+        </div>
         
-        <TableContainer component={Paper}>
+        <div className="rounded-lg border bg-white">
           <Table>
-            <TableHead>
+            <TableHeader>
               <TableRow>{renderTableHeaders()}</TableRow>
-            </TableHead>
+            </TableHeader>
             <TableBody>
               {localData.map((item, index) => (
-                <TableRow key={item._id} hover>
+                <TableRow key={item._id} className="hover:bg-gray-50">
                   {renderTableRow(item, index)}
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+        </div>
 
         {selectedItems.length > 0 && (
-          <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
-            <Typography variant="body2">
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+            <p className="text-sm font-medium mb-2">
               {selectedItems.length} stavki selektovano
-            </Typography>
-            <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+            </p>
+            <div className="flex gap-2">
               {onBulkStatusChange && (
                 <>
-                  <IconButton 
-                    size="small" 
-                    color="success"
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => onBulkStatusChange(selectedItems, 'approved')}
+                    className="text-green-600 hover:text-green-700"
                   >
-                    <VisibilityIcon />
-                  </IconButton>
-                  <IconButton 
-                    size="small" 
-                    color="error"
+                    <Eye className="h-4 w-4 mr-2" />
+                    Odobri
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => onBulkStatusChange(selectedItems, 'rejected')}
+                    className="text-red-600 hover:text-red-700"
                   >
-                    <BlockIcon />
-                  </IconButton>
+                    <Ban className="h-4 w-4 mr-2" />
+                    Odbij
+                  </Button>
                 </>
               )}
               {onBulkDelete && (
-                <IconButton 
-                  size="small" 
-                  color="error"
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => onBulkDelete(selectedItems)}
+                  className="text-red-600 hover:text-red-700"
                 >
-                  <DeleteIcon />
-                </IconButton>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Obriši
+                </Button>
               )}
-            </Box>
-          </Box>
+            </div>
+          </div>
         )}
-      </Box>
+      </div>
     );
   }
 
   // Drag & Drop mode
   return (
-    <Box>
-      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="body2" color="text.secondary">
+    <div>
+      <div className="mb-4 flex justify-between items-center">
+        <p className="text-sm text-gray-600">
           Povucite stavke da promijenite redoslijed
-        </Typography>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={isDragMode}
-              onChange={(e) => setIsDragMode(e.target.checked)}
-            />
-          }
-          label="Način reorganizacije"
-        />
-      </Box>
+        </p>
+        <label className="flex items-center gap-2">
+          <Switch
+            checked={isDragMode}
+            onCheckedChange={setIsDragMode}
+          />
+          <span className="text-sm">Način reorganizacije</span>
+        </label>
+      </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="table">
           {(provided) => (
-            <TableContainer 
-              component={Paper}
+            <div 
+              className="rounded-lg border bg-white"
               {...provided.droppableProps}
               ref={provided.innerRef}
             >
               <Table>
-                <TableHead>
+                <TableHeader>
                   <TableRow>{renderTableHeaders()}</TableRow>
-                </TableHead>
+                </TableHeader>
                 <TableBody>
                   {localData.map((item, index) => (
                     <Draggable key={item._id} draggableId={item._id} index={index}>
@@ -447,9 +461,9 @@ const DraggableDataTable = ({
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
-                          hover
-                          sx={{
-                            backgroundColor: snapshot.isDragging ? 'action.hover' : 'inherit',
+                          className={`hover:bg-gray-50 ${snapshot.isDragging ? 'bg-gray-100 shadow-lg' : ''}`}
+                          style={{
+                            ...provided.draggableProps.style,
                             ...(snapshot.isDragging && {
                               display: 'table',
                               tableLayout: 'fixed',
@@ -465,11 +479,11 @@ const DraggableDataTable = ({
                   {provided.placeholder}
                 </TableBody>
               </Table>
-            </TableContainer>
+            </div>
           )}
         </Droppable>
       </DragDropContext>
-    </Box>
+    </div>
   );
 };
 

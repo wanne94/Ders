@@ -1,51 +1,60 @@
 import { useState, useEffect } from 'react';
-import {
-    AppBar,
-    Toolbar,
-    Button,
-    Box,
-    Drawer,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
-    IconButton,
-    Divider,
-    Typography,
-    useMediaQuery,
-    useTheme,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Tooltip,
-    Slide,
-    Menu,
-    MenuItem
-} from '@mui/material';
 import { useRouter } from 'next/router';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import AddIcon from '@mui/icons-material/Add';
-import LoginIcon from '@mui/icons-material/Login';
-import LogoutIcon from '@mui/icons-material/Logout';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
-import BusinessIcon from '@mui/icons-material/Business';
-import PersonIcon from '@mui/icons-material/Person';
-import LightbulbIcon from '@mui/icons-material/Lightbulb';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { Button } from './ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from './ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from './ui/navigation-menu';
+import {
+  BookOpen,
+  Plus,
+  LogIn,
+  LogOut,
+  LayoutDashboard,
+  Menu,
+  X,
+  Building2,
+  User,
+  Lightbulb,
+  UserCircle,
+  ChevronDown
+} from 'lucide-react';
 import LogoCircle from './LogoCircle.jsx';
-import LectureForm from './LectureForm.jsx';
-import DaijaForm from './DaijaForm.jsx';
-import OrganizationForm from './OrganizationForm.jsx';
+import LectureFormNew from './LectureFormNew.jsx';
+import UnifiedFormNew from './UnifiedFormNew.jsx';
 import SuggestionForm from './SuggestionForm.jsx';
 import { menuItems, adminMenuItems } from '@/config/menuItems';
 import { clearAllData, getToken, getUserData } from '@/utils/authHelpers';
+import { cn } from '@/lib/utils';
 
 const Navigation = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isLectureModalOpen, setIsLectureModalOpen] = useState(false);
@@ -57,25 +66,17 @@ const Navigation = () => {
   const [suggestionFormOpen, setSuggestionFormOpen] = useState(false);
   const [showNavigation, setShowNavigation] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [addMenuAnchor, setAddMenuAnchor] = useState(null);
-  const [mobileAddMenuOpen, setMobileAddMenuOpen] = useState(false);
-  const [accountMenuAnchor, setAccountMenuAnchor] = useState(null);
 
   // Scroll handler za skrivanje/prikazivanje navigacije
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      // Prikaži navigaciju ako je na vrhu stranice
       if (currentScrollY < 10) {
         setShowNavigation(true);
-      }
-      // Skrij navigaciju ako skroluje dole
-      else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setShowNavigation(false);
-      }
-      // Prikaži navigaciju ako skroluje gore
-      else if (currentScrollY < lastScrollY) {
+      } else if (currentScrollY < lastScrollY) {
         setShowNavigation(true);
       }
       
@@ -88,12 +89,6 @@ const Navigation = () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, [lastScrollY]);
-
-  // Add logging for menu items
-  useEffect(() => {
-    console.log('Menu Items:', menuItems);
-    console.log('Admin Menu Items:', adminMenuItems);
-  }, []);
 
   useEffect(() => {
     const token = getToken();
@@ -148,668 +143,289 @@ const Navigation = () => {
     setSuggestionFormOpen(true);
   };
 
-  const handleAddMenuClick = (event) => {
-    setAddMenuAnchor(event.currentTarget);
+  const navigateToRoute = (path) => {
+    router.push(path);
+    setDrawerOpen(false);
   };
 
-  const handleAddMenuClose = () => {
-    setAddMenuAnchor(null);
-  };
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
-  const handleAddLectureFromMenu = () => {
-    handleAddMenuClose();
-    handleAddLectureClick();
-  };
-
-  const handleAddDaijaFromMenu = () => {
-    handleAddMenuClose();
-    handleAddDaijaClick();
-  };
-
-  const handleAddOrganizationFromMenu = () => {
-    handleAddMenuClose();
-    handleAddOrganizationClick();
-  };
-
-  const handleSuggestionFromMenu = () => {
-    handleAddMenuClose();
-    setSuggestionFormOpen(true);
-  };
-
-  const handleSuggestionSuccess = () => {
-    setSuggestionFormOpen(false);
-    
-    // Pošaljemo custom event da se dashboard osveži
-    const event = new CustomEvent('suggestionCreated', {
-      detail: { timestamp: Date.now() }
-    });
-    window.dispatchEvent(event);
-  };
-
-  const handleMobileAddMenuToggle = () => {
-    setMobileAddMenuOpen(!mobileAddMenuOpen);
-  };
-
-  const handleProfileClick = () => {
-    router.push('/profile');
-    setDrawerOpen(false); // Zatvori drawer ako je otvoren
-  };
-
-  // Account menu handlers
-  const handleAccountMenuClick = (event) => {
-    setAccountMenuAnchor(event.currentTarget);
-  };
-
-  const handleAccountMenuClose = () => {
-    setAccountMenuAnchor(null);
-  };
-
-  const handleProfileFromAccountMenu = () => {
-    handleAccountMenuClose();
-    router.push('/profile');
-  };
-
-  const handleLogoutFromAccountMenu = () => {
-    handleAccountMenuClose();
-    handleLogout();
-  };
-
-  const renderMobileDrawer = () => (
-    <Drawer
-      anchor="right"
-      open={drawerOpen}
-      onClose={() => {
-        setDrawerOpen(false);
-        setMobileAddMenuOpen(false);
-      }}
-      sx={{
-        '& .MuiDrawer-paper': {
-          width: 280,
-          boxSizing: 'border-box',
-          backgroundColor: 'primary.main',
-          color: 'white',
-          zIndex: (theme) => theme.zIndex.drawer + 2
-        }
-      }}
-    >
-      <Box sx={{ pt: 8 }}>
-        {/* Logo removed since it's now in the header */}
-      </Box>
-      
-      {/* Osnovni meni */}
-      <List>
-        {menuItems.map((item, index) => {
-          const IconComponent = item.icon;
-          return (
-            <ListItem
-              key={item.text || `menu-${index}`}
-              button
-              onClick={() => {
-                setDrawerOpen(false);
-                router.push(item.path);
-              }}
-              sx={{
-                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                color: 'white',
-                py: 1.5,
-                px: 2
-              }}
-            >
-              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                <IconComponent sx={{ fontSize: '1.2rem' }} />
-              </ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItem>
-          );
-        })}
-      </List>
-
-      <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-      
-      {/* Korisnički meni */}
-      <Box sx={{ px: 2, py: 1 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'white' }}>
-          Korisnički meni
-        </Typography>
-      </Box>
-      <List sx={{ py: 0 }}>
-        {/* Dodaj kao glavna stavka */}
-        <ListItem
-          button
-          onClick={handleMobileAddMenuToggle}
-          sx={{
-            '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-            color: 'white',
-            py: 1.5,
-            px: 2
-          }}
-        >
-          <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-            <AddIcon sx={{ fontSize: '1.2rem' }} />
-          </ListItemIcon>
-          <ListItemText primary="Dodaj" />
-          <IconButton sx={{ color: 'white', p: 0 }}>
-            {mobileAddMenuOpen ? <CloseIcon sx={{ fontSize: '1rem' }} /> : <MenuIcon sx={{ fontSize: '1rem' }} />}
-          </IconButton>
-        </ListItem>
-        
-        {/* Opcije za dodavanje - prikazane samo kada je meni otvoren */}
-        {mobileAddMenuOpen && (
-          <>
-            <ListItem
-              button
-              onClick={() => {
-                handleAddLectureFromMenu();
-                setDrawerOpen(false);
-                setMobileAddMenuOpen(false);
-              }}
-              sx={{
-                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                color: 'white',
-                py: 1.5,
-                px: 2,
-                pl: 6 // Uvučeno da izgleda kao sub-opcija
-              }}
-            >
-              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                <MenuBookIcon sx={{ fontSize: '1.2rem' }} />
-              </ListItemIcon>
-              <ListItemText primary="Dodaj ders" />
-            </ListItem>
-            
-            <ListItem
-              button
-              onClick={() => {
-                handleAddDaijaFromMenu();
-                setDrawerOpen(false);
-                setMobileAddMenuOpen(false);
-              }}
-              sx={{
-                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                color: 'white',
-                py: 1.5,
-                px: 2,
-                pl: 6 // Uvučeno da izgleda kao sub-opcija
-              }}
-            >
-              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                <PersonIcon sx={{ fontSize: '1.2rem' }} />
-              </ListItemIcon>
-              <ListItemText primary="Dodaj daiiju" />
-            </ListItem>
-            
-            <ListItem
-              button
-              onClick={() => {
-                handleAddOrganizationFromMenu();
-                setDrawerOpen(false);
-                setMobileAddMenuOpen(false);
-              }}
-              sx={{
-                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                color: 'white',
-                py: 1.5,
-                px: 2,
-                pl: 6 // Uvučeno da izgleda kao sub-opcija
-              }}
-            >
-              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                <BusinessIcon sx={{ fontSize: '1.2rem' }} />
-              </ListItemIcon>
-              <ListItemText primary="Dodaj udruženje" />
-            </ListItem>
-          </>
-        )}
-        
-        {/* Predloži izmjenu kao zasebna stavka */}
-        <ListItem
-          button
-          onClick={() => {
-            handleSuggestionFromMenu();
-            setDrawerOpen(false);
-          }}
-          sx={{
-            '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-            color: 'white',
-            py: 1.5,
-            px: 2
-          }}
-        >
-          <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-            <LightbulbIcon sx={{ fontSize: '1.2rem' }} />
-          </ListItemIcon>
-          <ListItemText primary="Predloži izmjenu" />
-        </ListItem>
-      </List>
-
-      {/* Admin meni - samo za administratore */}
-      {isLoggedIn && (user?.role === 'admin' || user?.role === 'super_admin') && (
-        <>
-          <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-          <Box sx={{ px: 2, py: 1 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'white' }}>
-              Admin meni
-            </Typography>
-          </Box>
-          <List sx={{ py: 0 }}>
-            <ListItem
-              button
-              onClick={() => {
-                setDrawerOpen(false);
-                router.push('/dashboard');
-              }}
-              sx={{
-                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                color: 'white',
-                py: 1.5,
-                px: 2
-              }}
-            >
-              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                <DashboardIcon sx={{ fontSize: '1.2rem' }} />
-              </ListItemIcon>
-              <ListItemText primary="Dashboard" />
-            </ListItem>
-            {/* Uklonili smo "Korisnici" - samo Dashboard ostaje */}
-          </List>
-        </>
-      )}
-
-      {/* Profil i Odjavi se na dnu menija */}
-      {isLoggedIn && (
-        <>
-          <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', mt: 2 }} />
-          <List sx={{ py: 0 }}>
-            <ListItem
-              button
-              onClick={handleProfileClick}
-              sx={{
-                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                color: 'white',
-                py: 1.5,
-                px: 2
-              }}
-            >
-              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                <PersonIcon sx={{ fontSize: '1.2rem' }} />
-              </ListItemIcon>
-              <ListItemText primary="Profil" />
-            </ListItem>
-            <ListItem
-              button
-              onClick={() => {
-                handleLogout();
-                setDrawerOpen(false);
-              }}
-              sx={{
-                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                color: 'white',
-                py: 1.5,
-                px: 2
-              }}
-            >
-              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                <LogoutIcon sx={{ fontSize: '1.2rem' }} />
-              </ListItemIcon>
-              <ListItemText primary="Odjavi se" />
-            </ListItem>
-          </List>
-        </>
-      )}
-
-      {/* Prijavi se za nelogirane korisnike */}
-      {!isLoggedIn && (
-        <>
-          <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', mt: 2 }} />
-          <List sx={{ py: 0 }}>
-            <ListItem
-              button
-              onClick={() => {
-                router.push('/auth');
-                setDrawerOpen(false);
-              }}
-              sx={{
-                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
-                color: 'white',
-                py: 1.5,
-                px: 2
-              }}
-            >
-              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                <LoginIcon sx={{ fontSize: '1.2rem' }} />
-              </ListItemIcon>
-              <ListItemText primary="Prijavi se" />
-            </ListItem>
-          </List>
-        </>
-      )}
-    </Drawer>
-  );
-
-  const renderDesktopHeader = () => (
-    <AppBar position="fixed" sx={{ 
-      zIndex: (theme) => theme.zIndex.drawer + 1
-    }}>
-      <Toolbar>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box 
-            onClick={() => router.push('/')}
-            sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-          >
-            <LogoCircle />
-          </Box>
-          {/* Osnovni meni */}
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {menuItems.map((item, index) => {
-              const IconComponent = item.icon;
-              return (
-                <Button
-                  key={item.text || index}
-                  color="inherit"
-                  startIcon={<IconComponent />}
-                  onClick={() => router.push(item.path)}
-                  sx={{ padding: '6px 8px', color: 'white' }}
-                >
-                  {item.text}
-                </Button>
-              );
-            })}
-          </Box>
-        </Box>
-
-        <Box sx={{ display: 'flex', gap: 2, flexGrow: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
-          {/* Korisnički meni */}
-          {isLoggedIn ? (
-            <>
-              {/* Dodaj dropdown - za sve korisnike */}
-              <Button
-                color="inherit"
-                startIcon={<AddIcon />}
-                onClick={handleAddMenuClick}
-                sx={{ padding: '6px 8px', color: 'white' }}
-              >
-                Dodaj
-              </Button>
-              {/* Menu moved outside AppBar */}
-
-              {/* Bulb ikona za prijedloge */}
-              <Tooltip title="Predloži izmjenu" arrow>
-                <IconButton
-                  color="inherit"
-                  onClick={handleSuggestionFromMenu}
-                  sx={{ color: 'white' }}
-                >
-                  <LightbulbIcon />
-                </IconButton>
-              </Tooltip>
-              
-              {/* Admin meni - samo Dashboard */}
-              {(user?.role === 'admin' || user?.role === 'super_admin') && (
-                <>
-                  <Box sx={{ height: '24px', width: '1px', backgroundColor: 'rgba(255,255,255,0.3)', mx: 1 }} />
-                  <Button
-                    color="inherit"
-                    startIcon={<DashboardIcon />}
-                    onClick={() => router.push('/dashboard')}
-                    sx={{ padding: '6px 8px', color: 'white' }}
-                  >
-                    Dashboard
-                  </Button>
-                </>
-              )}
-              
-              {/* Account menu icon */}
-              <Tooltip title={user?.username || 'Nalog'} arrow>
-                <IconButton
-                  color="inherit"
-                  onClick={handleAccountMenuClick}
-                  sx={{ color: 'white' }}
-                >
-                  <AccountCircleIcon sx={{ fontSize: '2rem' }} />
-                </IconButton>
-              </Tooltip>
-            </>
-          ) : (
-            <>
-              {/* Dodaj dropdown - za nelogirane */}
-              <Button
-                color="inherit"
-                startIcon={<AddIcon />}
-                onClick={handleAddMenuClick}
-                sx={{ padding: '6px 8px', color: 'white' }}
-              >
-                Dodaj
-              </Button>
-              {/* Menu moved outside AppBar */}
-
-              {/* Bulb ikona za prijedloge */}
-              <Tooltip title="Predloži izmjenu" arrow>
-                <IconButton
-                  color="inherit"
-                  onClick={handleSuggestionFromMenu}
-                  sx={{ color: 'white' }}
-                >
-                  <LightbulbIcon />
-                </IconButton>
-              </Tooltip>
-
-              {/* Prijavi se */}
-              <Button
-                color="inherit"
-                startIcon={<LoginIcon />}
-                onClick={() => router.push('/auth')}
-                sx={{ padding: '6px 8px', color: 'white' }}
-              >
-                Prijavi se
-              </Button>
-            </>
-          )}
-        </Box>
-      </Toolbar>
-    </AppBar>
-  );
+  const mobileMenuItems = [
+    ...menuItems,
+    ...(isAdmin ? adminMenuItems : []),
+    ...(isLoggedIn && [
+      {
+        label: 'Dodaj predavanje',
+        path: '#',
+        icon: <BookOpen className="h-5 w-5" />,
+        onClick: handleAddLectureClick
+      },
+      {
+        label: 'Dodaj daiju',
+        path: '#',
+        icon: <User className="h-5 w-5" />,
+        onClick: handleAddDaijaClick
+      },
+      {
+        label: 'Dodaj udruženje',
+        path: '#',
+        icon: <Building2 className="h-5 w-5" />,
+        onClick: handleAddOrganizationClick
+      }
+    ] || []),
+    {
+      label: 'Prijedlozi',
+      path: '#',
+      icon: <Lightbulb className="h-5 w-5" />,
+      onClick: handleSuggestionClick
+    }
+  ];
 
   return (
     <>
-      {isMobile ? (
-        <>
-          <Slide appear={false} direction="down" in={showNavigation}>
-            <AppBar position="fixed" sx={{ 
-              zIndex: (theme) => theme.zIndex.drawer + 1,
-              transition: 'transform 0.3s ease-in-out'
-            }}>
-              <Toolbar sx={{ justifyContent: 'space-between' }}>
-                <Box 
-                  onClick={() => router.push('/')}
-                  sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+      {/* Navigation Bar */}
+      <nav className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-[#022C43] text-white shadow-lg transition-transform duration-300",
+        !showNavigation && "-translate-y-full"
+      )}>
+        <div className="container mx-auto">
+          <div className="flex items-center justify-between h-16 px-4 lg:px-8">
+            {/* Logo */}
+            <div 
+              className="flex items-center cursor-pointer"
+              onClick={() => router.push('/')}
+            >
+              <LogoCircle />
+            </div>
+
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center flex-1 justify-between">
+              {/* Main Menu Items - levo */}
+              <div className="flex items-center space-x-2">
+                {menuItems.map((item) => (
+                  <Button
+                    key={item.path}
+                    variant="ghost"
+                    onClick={() => navigateToRoute(item.path)}
+                    className="flex items-center gap-2 text-white hover:bg-white/10 hover:text-white"
+                  >
+                    {item.icon}
+                    {item.label}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Right side items */}
+              <div className="flex items-center space-x-4">
+                {/* Admin Dashboard */}
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => router.push('/dashboard')}
+                    className="flex items-center gap-2 text-white hover:bg-white/10 hover:text-white"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </Button>
+                )}
+
+                {/* Add Dropdown */}
+                {isLoggedIn && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="secondary" className="flex items-center gap-2 bg-white text-[#022C43] hover:bg-gray-100">
+                        <Plus className="h-4 w-4" />
+                        Dodaj
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={handleAddLectureClick}>
+                        <BookOpen className="mr-2 h-4 w-4" />
+                        Dodaj predavanje
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleAddDaijaClick}>
+                        <User className="mr-2 h-4 w-4" />
+                        Dodaj daiju
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleAddOrganizationClick}>
+                        <Building2 className="mr-2 h-4 w-4" />
+                        Dodaj udruženje
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+
+                {/* Suggestion Button */}
+                <Button
+                  onClick={handleSuggestionClick}
+                  className="flex items-center gap-2 bg-white text-[#022C43] hover:bg-gray-100 font-medium"
                 >
-                  <LogoCircle />
-                </Box>
-                <IconButton
-                  color="inherit"
-                  aria-label={drawerOpen ? "close menu" : "open drawer"}
-                  edge="end"
-                  onClick={() => setDrawerOpen(!drawerOpen)}
-                  sx={{ color: 'white' }}
-                >
-                  {drawerOpen ? <CloseIcon /> : <MenuIcon />}
-                </IconButton>
-              </Toolbar>
-            </AppBar>
-          </Slide>
-          {renderMobileDrawer()}
-        </>
-      ) : (
-        renderDesktopHeader()
-      )}
-      <LectureForm
-        open={isLectureModalOpen}
-        onClose={() => setIsLectureModalOpen(false)}
-        onSuccess={(newLecture) => {
-          // Just close the modal, no need to refresh data
-        }}
-      />
+                  <Lightbulb className="h-4 w-4" />
+                  Prijedlozi
+                </Button>
 
-      <DaijaForm
-        open={isDaijaModalOpen}
-        onClose={() => setIsDaijaModalOpen(false)}
-        onSuccess={(newDaija) => {
-          // Just close the modal, no need to refresh data
-        }}
-      />
+                {/* User Account */}
+                {isLoggedIn ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="flex items-center gap-2 text-white hover:bg-white/10 hover:text-white">
+                        <UserCircle className="h-5 w-5" />
+                        {user?.username || user?.email}
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => router.push('/profile')}>
+                        <UserCircle className="mr-2 h-4 w-4" />
+                        Profil
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Odjavi se
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Button 
+                    onClick={() => router.push('/auth')}
+                    className="flex items-center gap-2 bg-white text-[#022C43] hover:bg-gray-100"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Prijavi se
+                  </Button>
+                )}
+              </div>
+            </div>
 
-      <OrganizationForm
-        open={isOrganizationModalOpen}
-        onClose={() => setIsOrganizationModalOpen(false)}
-        onSuccess={(newOrganization) => {
-          // Just close the modal, success message is shown by OrganizationForm
-        }}
-      />
+            {/* Mobile Menu Button */}
+            <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="lg:hidden text-white hover:bg-white/10">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[280px] sm:w-[350px]">
+                <SheetHeader>
+                  <SheetTitle>Meni</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 flex flex-col space-y-2">
+                  {mobileMenuItems.map((item, index) => (
+                    <Button
+                      key={index}
+                      variant="ghost"
+                      className="justify-start"
+                      onClick={item.onClick || (() => navigateToRoute(item.path))}
+                    >
+                      {item.icon}
+                      <span className="ml-2">{item.label}</span>
+                    </Button>
+                  ))}
+                  
+                  <div className="border-t pt-4 mt-4">
+                    {isLoggedIn ? (
+                      <>
+                        <div className="px-2 py-2 text-sm text-gray-600">
+                          {user?.username || user?.email}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          className="justify-start w-full"
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="h-5 w-5" />
+                          <span className="ml-2">Odjavi se</span>
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="default"
+                        className="justify-start w-full"
+                        onClick={() => {
+                          setDrawerOpen(false);
+                          router.push('/auth');
+                        }}
+                      >
+                        <LogIn className="h-5 w-5" />
+                        <span className="ml-2">Prijavi se</span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+      </nav>
 
-      <SuggestionForm
-        open={suggestionFormOpen}
-        onClose={() => setSuggestionFormOpen(false)}
-        onSuccess={handleSuggestionSuccess}
-      />
+      {/* Spacer for fixed navigation */}
+      <div className="h-16" />
 
-      {/* Dialog za nelogirane korisnike */}
-      <Dialog
-        open={authPromptOpen}
-        onClose={handleAuthPromptClose}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          <Typography variant="h5" component="div" sx={{ fontWeight: 'bold' }}>
-            Prijavite se da biste dodali predavanje
-          </Typography>
-        </DialogTitle>
+      {/* Auth Prompt Dialog */}
+      <Dialog open={authPromptOpen} onOpenChange={setAuthPromptOpen}>
         <DialogContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            Da biste mogli dodati predavanje, potrebno je da se prijavite.
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Ako nemate nalog, jednostavno se registrujte.
-          </Typography>
+          <DialogHeader>
+            <DialogTitle>Prijava potrebna</DialogTitle>
+            <DialogDescription>
+              Morate biti prijavljeni da biste dodali novi sadržaj. Želite li se prijaviti sada?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleAuthPromptClose}>
+              Otkaži
+            </Button>
+            <Button onClick={() => handleGoToAuth()}>
+              Prijavi se
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 1 }}>
-          <Button 
-            onClick={handleAuthPromptClose}
-            color="inherit"
-          >
-            Otkaži
-          </Button>
-          <Button 
-            onClick={() => handleGoToAuth('register')}
-            variant="outlined"
-            sx={{ mr: 1 }}
-          >
-            Registruj se
-          </Button>
-          <Button 
-            onClick={() => handleGoToAuth('login')}
-            variant="contained"
-          >
-            Prijavi se
-          </Button>
-        </DialogActions>
       </Dialog>
 
-      {/* Menu component moved here for better z-index handling */}
-      <Menu
-        anchorEl={addMenuAnchor}
-        open={Boolean(addMenuAnchor)}
-        onClose={handleAddMenuClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'left',
-        }}
-        MenuListProps={{
-          sx: {
-            backgroundColor: 'primary.main',
-            color: 'white',
-            minWidth: '180px'
-          }
-        }}
-        sx={{
-          zIndex: 10000,
-          '& .MuiPaper-root': {
-            backgroundColor: 'primary.main',
-            color: 'white',
-            minWidth: '180px',
-            zIndex: 10000
-          }
-        }}
-      >
-        <MenuItem onClick={handleAddLectureFromMenu} sx={{ color: 'white' }}>
-          <ListItemIcon sx={{ color: 'white' }}>
-            <MenuBookIcon />
-          </ListItemIcon>
-          <ListItemText primary="Dodaj ders" />
-        </MenuItem>
-        <MenuItem onClick={handleAddDaijaFromMenu} sx={{ color: 'white' }}>
-          <ListItemIcon sx={{ color: 'white' }}>
-            <PersonIcon />
-          </ListItemIcon>
-          <ListItemText primary="Dodaj daiiju" />
-        </MenuItem>
-        <MenuItem onClick={handleAddOrganizationFromMenu} sx={{ color: 'white' }}>
-          <ListItemIcon sx={{ color: 'white' }}>
-            <BusinessIcon />
-          </ListItemIcon>
-          <ListItemText primary="Dodaj udruženje" />
-        </MenuItem>
-      </Menu>
+      {/* Forms */}
+      {isLectureModalOpen && (
+        <LectureFormNew
+          open={isLectureModalOpen}
+          onClose={() => setIsLectureModalOpen(false)}
+          onSuccess={() => {
+            setIsLectureModalOpen(false);
+            router.push('/');
+          }}
+        />
+      )}
 
-      {/* Account Menu */}
-      <Menu
-        anchorEl={accountMenuAnchor}
-        open={Boolean(accountMenuAnchor)}
-        onClose={handleAccountMenuClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'left',
-        }}
-        MenuListProps={{
-          sx: {
-            backgroundColor: 'primary.main',
-            color: 'white',
-            minWidth: '180px'
-          }
-        }}
-        sx={{
-          zIndex: 10000,
-          '& .MuiPaper-root': {
-            backgroundColor: 'primary.main',
-            color: 'white',
-            minWidth: '180px',
-            zIndex: 10000
-          }
-        }}
-      >
-        <MenuItem onClick={handleProfileFromAccountMenu} sx={{ color: 'white' }}>
-          <ListItemIcon sx={{ color: 'white' }}>
-            <PersonIcon />
-          </ListItemIcon>
-          <ListItemText primary="Profil" />
-        </MenuItem>
-        <MenuItem onClick={handleLogoutFromAccountMenu} sx={{ color: 'white' }}>
-          <ListItemIcon sx={{ color: 'white' }}>
-            <LogoutIcon />
-          </ListItemIcon>
-          <ListItemText primary="Odjavi se" />
-        </MenuItem>
-      </Menu>
+      {isDaijaModalOpen && (
+        <UnifiedFormNew
+          type="daija"
+          open={isDaijaModalOpen}
+          onClose={() => setIsDaijaModalOpen(false)}
+          onSuccess={() => {
+            setIsDaijaModalOpen(false);
+            router.push('/daije');
+          }}
+        />
+      )}
+
+      {isOrganizationModalOpen && (
+        <UnifiedFormNew
+          type="organization"
+          open={isOrganizationModalOpen}
+          onClose={() => setIsOrganizationModalOpen(false)}
+          onSuccess={() => {
+            setIsOrganizationModalOpen(false);
+            router.push('/organizations');
+          }}
+        />
+      )}
+
+      {suggestionFormOpen && (
+        <SuggestionForm
+          open={suggestionFormOpen}
+          onClose={() => setSuggestionFormOpen(false)}
+        />
+      )}
     </>
   );
 };
 
-export default Navigation; 
+export default Navigation;

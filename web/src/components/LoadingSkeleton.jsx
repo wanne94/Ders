@@ -1,114 +1,105 @@
 import React from 'react';
-import { Box, Skeleton, Card, CardContent, Stack, Grid } from '@mui/material';
+import { Skeleton } from './ui/skeleton';
+import { Card, CardContent } from './ui/card';
 
 const LoadingSkeleton = ({ type = 'list', count = 5 }) => {
   const renderListItem = () => (
-    <Card sx={{ mb: 2 }}>
-      <CardContent>
-        <Box display="flex" alignItems="flex-start" gap={2}>
-          <Skeleton variant="rectangular" width={80} height={80} sx={{ borderRadius: 1 }} />
-          <Box flex={1}>
-            <Skeleton variant="text" width="70%" height={24} sx={{ mb: 1 }} />
-            <Skeleton variant="text" width="50%" height={20} sx={{ mb: 1 }} />
-            <Stack direction="row" spacing={1} mt={2}>
-              <Skeleton variant="rectangular" width={80} height={24} sx={{ borderRadius: 10 }} />
-              <Skeleton variant="rectangular" width={80} height={24} sx={{ borderRadius: 10 }} />
-            </Stack>
-          </Box>
-        </Box>
+    <Card className="mb-4">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-4">
+          <Skeleton className="w-20 h-20 rounded" />
+          <div className="flex-1">
+            <Skeleton className="h-6 w-3/4 mb-2" />
+            <Skeleton className="h-5 w-1/2 mb-2" />
+            <div className="flex gap-2 mt-4">
+              <Skeleton className="h-6 w-20 rounded-full" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
 
   const renderCardItem = () => (
-    <Grid item xs={12} sm={6} md={4}>
+    <div className="col-span-12 sm:col-span-6 md:col-span-4">
       <Card>
-        <Skeleton variant="rectangular" height={200} />
-        <CardContent>
-          <Skeleton variant="text" width="80%" height={28} sx={{ mb: 1 }} />
-          <Skeleton variant="text" width="100%" height={20} sx={{ mb: 0.5 }} />
-          <Skeleton variant="text" width="60%" height={20} sx={{ mb: 2 }} />
-          <Stack direction="row" spacing={1} justifyContent="space-between">
-            <Skeleton variant="rectangular" width="45%" height={36} sx={{ borderRadius: 1 }} />
-            <Skeleton variant="rectangular" width="45%" height={36} sx={{ borderRadius: 1 }} />
-          </Stack>
+        <Skeleton className="h-48 w-full rounded-t-lg" />
+        <CardContent className="p-4">
+          <Skeleton className="h-7 w-4/5 mb-2" />
+          <Skeleton className="h-5 w-full mb-1" />
+          <Skeleton className="h-5 w-3/5 mb-4" />
+          <div className="flex justify-between gap-2">
+            <Skeleton className="h-9 w-[45%] rounded" />
+            <Skeleton className="h-9 w-[45%] rounded" />
+          </div>
         </CardContent>
       </Card>
-    </Grid>
+    </div>
   );
 
   const renderTableRow = () => (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        p: 2,
-        borderBottom: '1px solid #e0e0e0',
-        gap: 2
-      }}
-    >
-      <Skeleton variant="circular" width={40} height={40} />
-      <Box flex={1}>
-        <Skeleton variant="text" width="30%" height={20} />
-      </Box>
-      <Skeleton variant="text" width="15%" height={20} />
-      <Skeleton variant="text" width="15%" height={20} />
-      <Stack direction="row" spacing={1}>
-        <Skeleton variant="circular" width={32} height={32} />
-        <Skeleton variant="circular" width={32} height={32} />
-      </Stack>
-    </Box>
+    <div className="flex items-center p-4 border-b gap-4">
+      <Skeleton className="w-10 h-10 rounded-full" />
+      <div className="flex-1">
+        <Skeleton className="h-5 w-1/3" />
+      </div>
+      <Skeleton className="h-5 w-[15%]" />
+      <Skeleton className="h-5 w-[15%]" />
+      <div className="flex gap-2">
+        <Skeleton className="w-8 h-8 rounded-full" />
+        <Skeleton className="w-8 h-8 rounded-full" />
+      </div>
+    </div>
   );
 
   const renderStatsSkeleton = () => (
     <Card>
-      <CardContent>
-        <Box textAlign="center" mb={3}>
-          <Skeleton variant="text" width="60%" height={32} sx={{ margin: '0 auto', mb: 1 }} />
-          <Skeleton variant="text" width="40%" height={20} sx={{ margin: '0 auto' }} />
-        </Box>
+      <CardContent className="p-6">
+        <div className="text-center mb-6">
+          <Skeleton className="h-8 w-3/5 mx-auto mb-2" />
+          <Skeleton className="h-5 w-2/5 mx-auto" />
+        </div>
         
-        <Box display="flex" justifyContent="space-between" alignItems="flex-end" height={200} mb={3}>
+        <div className="flex justify-between items-end h-48 mb-6">
           {[...Array(12)].map((_, index) => (
-            <Box key={index} width="7%" display="flex" flexDirection="column" alignItems="center">
+            <div key={index} className="w-[7%] flex flex-col items-center">
               <Skeleton 
-                variant="rectangular" 
-                width="100%" 
-                height={Math.random() * 150 + 50}
-                sx={{ mb: 1 }}
+                className="w-full mb-2"
+                style={{ height: Math.random() * 150 + 50 }}
               />
-              <Skeleton variant="text" width="100%" height={16} />
-            </Box>
+              <Skeleton className="h-4 w-full" />
+            </div>
           ))}
-        </Box>
+        </div>
         
-        <Box textAlign="center">
-          <Skeleton variant="rectangular" width={250} height={40} sx={{ margin: '0 auto', borderRadius: 2 }} />
-        </Box>
+        <div className="text-center">
+          <Skeleton className="h-10 w-64 mx-auto rounded-md" />
+        </div>
       </CardContent>
     </Card>
   );
 
   const renderDetailsSkeleton = () => (
     <Card>
-      <Skeleton variant="rectangular" height={300} />
-      <CardContent>
-        <Skeleton variant="text" width="75%" height={36} sx={{ mb: 1 }} />
-        <Skeleton variant="text" width="50%" height={24} sx={{ mb: 3 }} />
+      <Skeleton className="h-72 w-full rounded-t-lg" />
+      <CardContent className="p-6">
+        <Skeleton className="h-9 w-3/4 mb-2" />
+        <Skeleton className="h-6 w-1/2 mb-6" />
         
-        <Stack spacing={2}>
+        <div className="space-y-4">
           {[...Array(4)].map((_, index) => (
-            <Box key={index}>
-              <Skeleton variant="text" width={100} height={16} sx={{ mb: 0.5 }} />
-              <Skeleton variant="text" width="70%" height={20} />
-            </Box>
+            <div key={index}>
+              <Skeleton className="h-4 w-24 mb-1" />
+              <Skeleton className="h-5 w-3/4" />
+            </div>
           ))}
-        </Stack>
+        </div>
         
-        <Stack direction="row" spacing={2} mt={4}>
-          <Skeleton variant="rectangular" width={120} height={40} sx={{ borderRadius: 1 }} />
-          <Skeleton variant="rectangular" width={120} height={40} sx={{ borderRadius: 1 }} />
-        </Stack>
+        <div className="flex gap-4 mt-8">
+          <Skeleton className="h-10 w-32 rounded" />
+          <Skeleton className="h-10 w-32 rounded" />
+        </div>
       </CardContent>
     </Card>
   );
@@ -117,13 +108,13 @@ const LoadingSkeleton = ({ type = 'list', count = 5 }) => {
     switch (type) {
       case 'card':
         return (
-          <Grid container spacing={3}>
+          <div className="grid grid-cols-12 gap-6">
             {[...Array(count)].map((_, index) => (
               <React.Fragment key={index}>
                 {renderCardItem()}
               </React.Fragment>
             ))}
-          </Grid>
+          </div>
         );
       
       case 'table':
@@ -158,9 +149,9 @@ const LoadingSkeleton = ({ type = 'list', count = 5 }) => {
   };
 
   return (
-    <Box sx={{ width: '100%', p: 2 }}>
+    <div className="w-full p-4">
       {renderSkeleton()}
-    </Box>
+    </div>
   );
 };
 

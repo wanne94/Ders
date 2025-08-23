@@ -1,5 +1,4 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
 
 const CancelledOverlay = ({ 
   show = false, 
@@ -8,91 +7,31 @@ const CancelledOverlay = ({
 }) => {
   if (!show) return null;
 
-  const diagonalStyles = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 2,
-    pointerEvents: 'none',
-    overflow: 'hidden',
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      width: '200%',
-      height: '40px',
-      backgroundColor: '#f44336', // Material red
-      transform: 'translate(-50%, -50%) rotate(-45deg)',
-      transformOrigin: 'center',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-      zIndex: 1
-    },
-    '&::after': {
-      content: `"${text}"`,
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%) rotate(-45deg)',
-      color: 'white',
-      fontWeight: 'bold',
-      fontSize: '14px',
-      letterSpacing: '1.5px',
-      textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-      zIndex: 2,
-      whiteSpace: 'nowrap',
-      '@media (max-width: 600px)': {
-        fontSize: '12px',
-        letterSpacing: '1px'
-      },
-      '@media (max-width: 400px)': {
-        fontSize: '11px',
-        letterSpacing: '0.5px'
-      }
-    }
-  };
-
-  const fullOverlayStyles = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-    pointerEvents: 'none'
-  };
+  if (variant === 'diagonal') {
+    return (
+      <div
+        className="absolute inset-0 z-10 pointer-events-none overflow-hidden"
+        role="img"
+        aria-label={`Predavanje je ${text.toLowerCase()}`}
+      >
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-45 w-[200%] h-12 bg-red-500 shadow-lg" />
+        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-45 text-white font-extrabold text-base tracking-wider whitespace-nowrap drop-shadow-lg">
+          {text}
+        </span>
+      </div>
+    );
+  }
 
   return (
-    <Box
-      sx={variant === 'diagonal' ? diagonalStyles : fullOverlayStyles}
+    <div
+      className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 pointer-events-none"
       role="img"
       aria-label={`Predavanje je ${text.toLowerCase()}`}
     >
-      {variant === 'full' && (
-        <Typography
-          variant="h6"
-          sx={{
-            color: 'white',
-            fontWeight: 'bold',
-            textAlign: 'center',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-            fontSize: {
-              xs: '0.875rem',
-              sm: '1rem',
-              md: '1.25rem'
-            }
-          }}
-        >
-          {text}
-        </Typography>
-      )}
-    </Box>
+      <h6 className="text-white font-extrabold text-center text-base sm:text-lg md:text-2xl drop-shadow-lg">
+        {text}
+      </h6>
+    </div>
   );
 };
 

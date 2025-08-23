@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
@@ -77,115 +77,16 @@ const lightTheme = createTheme({
   },
 });
 
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#4A9FCD',
-      light: '#6BB5DB',
-      dark: '#3689B3',
-    },
-    secondary: {
-      main: '#ff6090',
-      light: '#ff8fb3',
-      dark: '#dc004e',
-    },
-    background: {
-      default: '#0f1419',
-      paper: '#1a1f2e',
-    },
-    text: {
-      primary: '#e2e8f0',
-      secondary: '#a0aec0',
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontWeight: 700,
-    },
-    h2: {
-      fontWeight: 700,
-    },
-    h3: {
-      fontWeight: 600,
-    },
-    h4: {
-      fontWeight: 600,
-    },
-    h5: {
-      fontWeight: 600,
-    },
-    h6: {
-      fontWeight: 600,
-    },
-  },
-  shape: {
-    borderRadius: 8,
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          fontWeight: 500,
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          backgroundImage: 'none',
-          backgroundColor: '#1a1f2e',
-        },
-      },
-    },
-    MuiTableCell: {
-      styleOverrides: {
-        root: {
-          borderColor: '#2d3748',
-        },
-      },
-    },
-    MuiDivider: {
-      styleOverrides: {
-        root: {
-          borderColor: '#2d3748',
-        },
-      },
-    },
-  },
-});
-
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // Load theme preference from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
-    } else if (savedTheme === 'light') {
-      setIsDarkMode(false);
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkMode(prefersDark);
-    }
-  }, []);
-
-  // Save theme preference to localStorage
-  useEffect(() => {
-    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
-
-  const toggleTheme = () => {
-    setIsDarkMode(prev => !prev);
-  };
+  // Always use light mode
+  const isDarkMode = false;
+  
+  // No-op function since we don't toggle themes anymore
+  const toggleTheme = () => {};
 
   const theme = useMemo(() => {
-    return isDarkMode ? darkTheme : lightTheme;
-  }, [isDarkMode]);
+    return lightTheme;
+  }, []);
 
   const value = {
     isDarkMode,

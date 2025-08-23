@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Image from 'next/image';
@@ -202,21 +202,21 @@ const QuickActions = () => {
     {
       title: 'Dersovi',
       description: 'Pregledajte sva dostupna predavanja',
-      icon: SchoolIcon,
+      icon: <SchoolIcon />,
       color: 'success',
       path: '/lectures'
     },
     {
       title: 'Udruženja',
       description: 'Istražite udruženja i njihove aktivnosti',
-      icon: BusinessIcon,
+      icon: <BusinessIcon />,
       color: 'info',
       path: '/organizations'
     },
     {
       title: 'Daije',
       description: 'Upoznajte naše daije',
-      icon: PersonIcon,
+      icon: <PersonIcon />,
       color: 'warning',
       path: '/daije'
     }
@@ -247,7 +247,7 @@ const QuickActions = () => {
             >
               <CardContent sx={{ flexGrow: 1, textAlign: 'center', p: 3 }}>
                 <Box sx={{ color: `${action.color}.main`, mb: 2 }}>
-                  <action.icon sx={{ fontSize: 40 }} />
+                  {React.cloneElement(action.icon, { sx: { fontSize: 40 } })}
                 </Box>
                 <Typography variant="h6" component="h3" gutterBottom>
                   {action.title}
@@ -283,22 +283,22 @@ const BenefitsSection = () => {
 
   const benefits = [
     {
-      icon: CheckCircleIcon,
+      icon: <CheckCircleIcon />,
       title: 'Dodavanje sadržaja',
       description: 'Registrirani korisnici mogu objavljivati nova predavanja, kao i predlagati daije i udruženja za dodavanje na platformu.'
     },
     {
-      icon: StarIcon,
+      icon: <StarIcon />,
       title: 'Doprinos znanju i sticanje sevapa',
       description: 'Svako korisno predavanje koje podijeliš može nekome koristiti – a za to ti se piše nagrada kod Allaha. "Ko uputi na dobro, ima nagradu kao i onaj koji to dobro čini." (Muslim)'
     },
     {
-      icon: BookmarkIcon,
+      icon: <BookmarkIcon />,
       title: 'Predlaganje izmjena postojećih informacija',
       description: 'Ako primijetiš netačne ili zastarjele podatke, možeš predložiti izmjene koje će biti pregledane od strane admin tima.'
     },
     {
-      icon: EventIcon,
+      icon: <EventIcon />,
       title: 'Mogućnost da postaneš dio admin tima',
       description: 'Registracijom imaš priliku da, kada se ukaže potreba, postaneš dio tima koji aktivno uređuje i razvija platformu.'
     }
@@ -399,7 +399,7 @@ const BenefitsSection = () => {
                     height: 60
                   }}
                 >
-                  <benefit.icon sx={{ fontSize: 28, color: 'white' }} />
+                  {React.cloneElement(benefit.icon, { sx: { fontSize: 28, color: 'white' } })}
                 </Box>
                 <Box>
                   <Typography 

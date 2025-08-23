@@ -1,17 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  CircularProgress,
-  Alert,
-  Pagination,
-} from '@mui/material';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { LecturesGrid } from './GridLayout';
 import UniversalCard from './UniversalCard';
 import { predavanjaService } from '@/services';
 import { safeApiCall, normalizeToArray } from '../utils/dataHelpers';
-
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 const RelatedLectures = ({ 
   currentLectureId, 
@@ -129,13 +130,42 @@ const RelatedLectures = ({
     fetchLectures();
   }, [type, currentLectureId, organizationId, daijaId, page, fetchLectures]);
 
-  const handlePageChange = (event, value) => {
-    setPage(value);
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
     // Scroll to top of related lectures section
     const element = document.getElementById('related-lectures');
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  };
+
+  // Render pagination numbers
+  const renderPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink
+            onClick={() => handlePageChange(i)}
+            isActive={page === i}
+            className={page === i ? 'bg-[#022C43] text-white hover:bg-[#055A87] hover:text-white' : 'cursor-pointer'}
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    return items;
   };
 
   // Don't render if no lectures (except for daija profiles which should always show)
@@ -144,55 +174,41 @@ const RelatedLectures = ({
   }
 
   return (
-    <Box id="related-lectures">
+    <div id="related-lectures">
       {/* Show section with background and title for all types */}
       {(
-        <Box sx={{ py: { xs: 4, md: 6 }, backgroundColor: '#f8f9fa' }}>
-          <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
-              <Typography 
-                variant="h4" 
-                component="h2" 
-                sx={{ 
-                  fontWeight: 600,
-                  color: '#022C43',
-                  textAlign: { xs: 'center', md: 'left' }
-                }}
-              >
+        <div className="py-8 md:py-12 bg-gray-50">
+          <div className="container mx-auto px-4 sm:px-6 md:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl md:text-3xl font-semibold text-[#022C43] text-center md:text-left">
                 {getTitle()}
-              </Typography>
+              </h2>
               {!isLoading && totalPages > 1 && (
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    color: '#666',
-                    fontWeight: 500,
-                    display: { xs: 'none', sm: 'block' }
-                  }}
-                >
+                <p className="text-sm text-gray-600 font-medium hidden sm:block">
                   Stranica {page} od {totalPages}
-                </Typography>
+                </p>
               )}
-            </Box>
-          </Container>
-        </Box>
+            </div>
+          </div>
+        </div>
       )}
       
       {/* Content container */}
-      <Box sx={{ backgroundColor: '#f8f9fa' }}>
-        <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
+      <div className="bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6 md:px-8">
 
         {/* Loading State */}
         {isLoading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress size={60} />
-          </Box>
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-12 w-12 animate-spin text-[#022C43]" />
+          </div>
         )}
 
         {/* Error State */}
         {error && (
-          <Alert severity="error" sx={{ mb: 4 }}>
-            {error}
+          <Alert variant="destructive" className="mb-8">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
@@ -207,56 +223,57 @@ const RelatedLectures = ({
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
-                <Pagination
-                  count={totalPages}
-                  page={page}
-                  onChange={handlePageChange}
-                  color="primary"
-                  size="large"
-                  sx={{
-                    '& .MuiPaginationItem-root': {
-                      borderRadius: 2,
-                      fontWeight: 500,
-                    },
-                    '& .MuiPaginationItem-page.Mui-selected': {
-                      backgroundColor: '#022C43',
-                      color: 'white',
-                      '&:hover': {
-                        backgroundColor: '#055A87',
-                      }
-                    }
-                  }}
-                />
-              </Box>
+              <div className="mt-12 pb-8">
+                <Pagination>
+                  <PaginationContent>
+                    {page > 1 && (
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => handlePageChange(page - 1)}
+                          className="cursor-pointer"
+                        />
+                      </PaginationItem>
+                    )}
+                    {renderPaginationItems()}
+                    {page < totalPages && (
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => handlePageChange(page + 1)}
+                          className="cursor-pointer"
+                        />
+                      </PaginationItem>
+                    )}
+                  </PaginationContent>
+                </Pagination>
+              </div>
             )}
           </>
         )}
 
         {/* Empty State */}
         {!isLoading && !error && lectures.length === 0 && (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+          <div className="text-center py-16">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
               {type === 'lecture' 
                 ? 'Nema drugih dostupnih predavanja' 
                 : type === 'daija'
                 ? 'Nema najavljenih predavanja'
                 : 'Nema organizovanih predavanja'
               }
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+            </h3>
+            <p className="text-sm text-gray-600">
               {type === 'lecture' 
                 ? 'Trenutno je ovo jedino dostupno predavanje.' 
                 : type === 'daija'
                 ? 'Ovaj daija trenutno nema najavljena predavanja.'
                 : 'Ova organizacija još uvijek nije organizovala predavanja.'
               }
-            </Typography>
-          </Box>
+            </p>
+          </div>
         )}
-        </Container>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

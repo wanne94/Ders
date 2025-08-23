@@ -1788,13 +1788,29 @@ app.post('/api/lectures', authenticateToken, async (req, res) => {
     const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
     const finalStatus = (isAdminUser && req.body.status) ? req.body.status : 'approved';
     
-    // Parse date from DD.MM.YYYY format if needed
+    // Parse date from YYYY-MM-DD format (sent from frontend)
     let parsedDate = req.body.date;
-    if (typeof req.body.date === 'string' && req.body.date.includes('.')) {
-      const [day, month, year] = req.body.date.split('.');
-      parsedDate = new Date(year, month - 1, day);
-    } else if (typeof req.body.date === 'string') {
-      parsedDate = new Date(req.body.date);
+    if (typeof req.body.date === 'string') {
+      // Support both YYYY-MM-DD and DD.MM.YYYY formats
+      if (req.body.date.includes('-')) {
+        // YYYY-MM-DD format from our DatePickerFixed
+        const [year, month, day] = req.body.date.split('-');
+        // Create date at noon UTC to avoid timezone issues
+        parsedDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0));
+      } else if (req.body.date.includes('.')) {
+        // DD.MM.YYYY format (legacy support)
+        const [day, month, year] = req.body.date.split('.');
+        parsedDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0));
+      } else {
+        // Fallback for other formats
+        parsedDate = new Date(req.body.date);
+      }
+      
+      logger.info('Date parsing:', {
+        input: req.body.date,
+        parsed: parsedDate.toISOString(),
+        localString: parsedDate.toLocaleDateString('en-GB')
+      });
     }
 
     let lectureData = {
@@ -1861,13 +1877,29 @@ app.post('/api/lectures', authenticateToken, async (req, res) => {
     const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
     const finalStatus = (isAdminUser && req.body.status) ? req.body.status : 'approved';
     
-    // Parse date from DD.MM.YYYY format if needed
+    // Parse date from YYYY-MM-DD format (sent from frontend)
     let parsedDate = req.body.date;
-    if (typeof req.body.date === 'string' && req.body.date.includes('.')) {
-      const [day, month, year] = req.body.date.split('.');
-      parsedDate = new Date(year, month - 1, day);
-    } else if (typeof req.body.date === 'string') {
-      parsedDate = new Date(req.body.date);
+    if (typeof req.body.date === 'string') {
+      // Support both YYYY-MM-DD and DD.MM.YYYY formats
+      if (req.body.date.includes('-')) {
+        // YYYY-MM-DD format from our DatePickerFixed
+        const [year, month, day] = req.body.date.split('-');
+        // Create date at noon UTC to avoid timezone issues
+        parsedDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0));
+      } else if (req.body.date.includes('.')) {
+        // DD.MM.YYYY format (legacy support)
+        const [day, month, year] = req.body.date.split('.');
+        parsedDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0));
+      } else {
+        // Fallback for other formats
+        parsedDate = new Date(req.body.date);
+      }
+      
+      logger.info('Date parsing:', {
+        input: req.body.date,
+        parsed: parsedDate.toISOString(),
+        localString: parsedDate.toLocaleDateString('en-GB')
+      });
     }
 
     let lectureData = {
@@ -1931,13 +1963,29 @@ app.post('/api/lectures/public', async (req, res) => {
       });
     }
     
-    // Parse date from DD.MM.YYYY format if needed
+    // Parse date from YYYY-MM-DD format (sent from frontend)
     let parsedDate = req.body.date;
-    if (typeof req.body.date === 'string' && req.body.date.includes('.')) {
-      const [day, month, year] = req.body.date.split('.');
-      parsedDate = new Date(year, month - 1, day);
-    } else if (typeof req.body.date === 'string') {
-      parsedDate = new Date(req.body.date);
+    if (typeof req.body.date === 'string') {
+      // Support both YYYY-MM-DD and DD.MM.YYYY formats
+      if (req.body.date.includes('-')) {
+        // YYYY-MM-DD format from our DatePickerFixed
+        const [year, month, day] = req.body.date.split('-');
+        // Create date at noon UTC to avoid timezone issues
+        parsedDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0));
+      } else if (req.body.date.includes('.')) {
+        // DD.MM.YYYY format (legacy support)
+        const [day, month, year] = req.body.date.split('.');
+        parsedDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0));
+      } else {
+        // Fallback for other formats
+        parsedDate = new Date(req.body.date);
+      }
+      
+      logger.info('Date parsing:', {
+        input: req.body.date,
+        parsed: parsedDate.toISOString(),
+        localString: parsedDate.toLocaleDateString('en-GB')
+      });
     }
 
     // Public submissions always go to pending status for approval

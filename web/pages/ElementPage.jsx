@@ -21,9 +21,8 @@ import { jwtDecode } from 'jwt-decode';
 import PageLayout from '@/components/PageLayout';
 import UniversalCard from '@/components/UniversalCard';
 import SkeletonGrid from '@/components/SkeletonGrid';
-import LectureForm from '@/components/LectureForm';
-import DaijaForm from '@/components/DaijaForm';
-import OrganizationForm from '@/components/OrganizationForm';
+import LectureFormNew from '@/components/LectureFormNew';
+import UnifiedFormNew from '@/components/UnifiedFormNew';
 import LecturesSection from '@/components/LecturesSection';
 import { safeApiCall, normalizeToArray } from '@/utils/dataHelpers';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
@@ -317,7 +316,7 @@ const ElementPage = ({ type }) => {
     switch (type) {
       case 'lectures':
         return (
-          <LectureForm
+          <LectureFormNew
             open={isFormOpen}
             onClose={handleFormClose}
             onSuccess={handleFormSuccess}
@@ -325,7 +324,8 @@ const ElementPage = ({ type }) => {
         );
       case 'daije':
         return (
-          <DaijaForm
+          <UnifiedFormNew
+            type="daija"
             open={isFormOpen}
             onClose={handleFormClose}
             onSuccess={handleFormSuccess}
@@ -333,7 +333,8 @@ const ElementPage = ({ type }) => {
         );
       case 'organizations':
         return (
-          <OrganizationForm
+          <UnifiedFormNew
+            type="organization"
             open={isFormOpen}
             onClose={handleFormClose}
             onSuccess={handleFormSuccess}

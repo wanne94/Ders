@@ -1,33 +1,39 @@
-import HomeIcon from '@mui/icons-material/Home';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import BusinessIcon from '@mui/icons-material/Business';
-import PersonIcon from '@mui/icons-material/Person';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import PeopleIcon from '@mui/icons-material/People';
-import SettingsIcon from '@mui/icons-material/Settings';
-import AddIcon from '@mui/icons-material/Add';
-import LightbulbIcon from '@mui/icons-material/Lightbulb';
+import { 
+  Home, 
+  BookOpen, 
+  Building2, 
+  User, 
+  LayoutDashboard, 
+  Users, 
+  Settings, 
+  Plus, 
+  Lightbulb 
+} from 'lucide-react';
 
 // Osnovni meni stavke (uvek vidljive)
 export const menuItems = [
   {
+    label: 'Početna',
     text: 'Početna',
-    icon: HomeIcon,
+    icon: <Home className="h-5 w-5" />,
     path: '/'
   },
   {
+    label: 'Dersovi',
     text: 'Dersovi',
-    icon: MenuBookIcon,
+    icon: <BookOpen className="h-5 w-5" />,
     path: '/lectures'
   },
   {
+    label: 'Udruženja',
     text: 'Udruženja',
-    icon: BusinessIcon,
+    icon: <Building2 className="h-5 w-5" />,
     path: '/organizations'
   },
   {
+    label: 'Daije',
     text: 'Daije',
-    icon: PersonIcon,
+    icon: <User className="h-5 w-5" />,
     path: '/daije'
   }
 ];
@@ -35,19 +41,22 @@ export const menuItems = [
 // Korisnički meni - opcije za dodavanje sadržaja
 export const userMenuItems = [
   {
+    label: 'Dodaj',
     text: 'Dodaj',
-    icon: AddIcon,
+    icon: <Plus className="h-5 w-5" />,
     path: '#',
     isDropdown: true,
     subItems: [
       {
+        label: 'Dodaj ders',
         text: 'Dodaj ders',
-        icon: MenuBookIcon,
+        icon: <BookOpen className="h-5 w-5" />,
         action: 'add-lecture'
       },
       {
+        label: 'Predloži izmjenu',
         text: 'Predloži izmjenu',
-        icon: LightbulbIcon,
+        icon: <Lightbulb className="h-5 w-5" />,
         action: 'suggest-change'
       }
     ]
@@ -57,18 +66,21 @@ export const userMenuItems = [
 // Admin meni - samo za administratore
 export const adminMenuItems = [
   {
+    label: 'Dashboard',
     text: 'Dashboard',
-    icon: DashboardIcon,
+    icon: <LayoutDashboard className="h-5 w-5" />,
     path: '/dashboard'
   },
   {
+    label: 'Korisnici',
     text: 'Korisnici',
-    icon: PeopleIcon,
+    icon: <Users className="h-5 w-5" />,
     path: '/users'
   },
   {
+    label: 'Postavke',
     text: 'Postavke',
-    icon: SettingsIcon,
+    icon: <Settings className="h-5 w-5" />,
     path: '/settings'
   }
 ];
@@ -81,4 +93,4 @@ export const getAllMenuItems = (userRole) => {
 export const getMenuItemByPath = (path) => {
   const allItems = [...menuItems, ...adminMenuItems];
   return allItems.find(item => item.path === path);
-}; 
+};

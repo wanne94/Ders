@@ -18,7 +18,7 @@ import {
     FormControlLabel,
     Checkbox
 } from '@mui/material';
-import SimpleDatePicker from './SimpleDatePicker';
+import { DatePickerFixed } from '@/components/ui/date-picker-fixed';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import axiosInstance from '../utils/axiosConfig';
 import { daijeService, udruzenjaService } from '@/services';
@@ -684,13 +684,14 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
               )}
 
               {/* Date and Time */}
-              <SimpleDatePicker
+              <DatePickerFixed
                 value={formData.date}
                 onChange={(formattedDate) => {
                   console.log('📅 [LectureForm] Date changed to:', formattedDate);
                   setFormData(prev => ({ ...prev, date: formattedDate }));
                 }}
                 isEditing={isEditing}
+                placeholder="Datum"
               />
 
               <FormControl fullWidth margin="normal">

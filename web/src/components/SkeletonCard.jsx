@@ -1,132 +1,73 @@
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  Box,
-  Skeleton
-} from '@mui/material';
+import { Card, CardContent } from './ui/card';
+import { Skeleton } from './ui/skeleton';
 
 const SkeletonCard = React.memo(({ type = 'lecture' }) => {
   return (
-    <Card 
-      sx={{ 
-        height: '100%',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        animation: 'pulse 1.5s ease-in-out infinite alternate',
-        '@keyframes pulse': {
-          '0%': {
-            opacity: 0.6,
-          },
-          '100%': {
-            opacity: 1,
-          },
-        }
-      }}
-    >
-      <CardContent sx={{ height: '100%', p: 2 }}>
-        <Box sx={{ display: 'flex', height: '100%' }}>
+    <Card className="h-full w-full flex flex-col relative animate-pulse">
+      <CardContent className="h-full p-4">
+        <div className="flex h-full">
           {/* Left side - Information skeleton */}
-          <Box sx={{ flex: 1, pr: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div className="flex-1 pr-4 flex flex-col justify-center">
             
             {/* Title skeleton */}
-            <Skeleton 
-              variant="text" 
-              sx={{ 
-                fontSize: { xs: '16px', sm: '18px' },
-                mb: 1,
-                width: '80%'
-              }}
-            />
+            <Skeleton className="h-5 w-4/5 mb-2" />
             
             {/* Second line of title for longer titles */}
-            <Skeleton 
-              variant="text" 
-              sx={{ 
-                fontSize: { xs: '16px', sm: '18px' },
-                mb: 2,
-                width: '60%'
-              }}
-            />
+            <Skeleton className="h-5 w-3/5 mb-4" />
 
             {/* Info items skeleton */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <div className="flex flex-col gap-2">
               {/* First info item */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                <Skeleton variant="circular" width={16} height={16} />
-                <Skeleton variant="text" sx={{ fontSize: '13px', width: '70%' }} />
-              </Box>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-4 w-[70%]" />
+              </div>
               
               {/* Second info item */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                <Skeleton variant="circular" width={16} height={16} />
-                <Skeleton variant="text" sx={{ fontSize: '13px', width: '50%' }} />
-              </Box>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
               
               {/* Third info item - conditional based on type */}
               {type === 'lecture' && (
                 <>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                    <Skeleton variant="circular" width={16} height={16} />
-                    <Skeleton variant="text" sx={{ fontSize: '13px', width: '60%' }} />
-                  </Box>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-4 rounded-full" />
+                    <Skeleton className="h-4 w-3/5" />
+                  </div>
                   
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                    <Skeleton variant="circular" width={16} height={16} />
-                    <Skeleton variant="text" sx={{ fontSize: '13px', width: '40%' }} />
-                  </Box>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-4 rounded-full" />
+                    <Skeleton className="h-4 w-2/5" />
+                  </div>
                 </>
               )}
               
               {type === 'daija' && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                  <Skeleton variant="circular" width={16} height={16} />
-                  <Skeleton variant="text" sx={{ fontSize: '13px', width: '65%' }} />
-                </Box>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-4 rounded-full" />
+                  <Skeleton className="h-4 w-[65%]" />
+                </div>
               )}
-            </Box>
+            </div>
 
-          </Box>
+          </div>
 
           {/* Right side - Image skeleton */}
-          <Box 
-            sx={{
-              width: { xs: '80px', sm: '100px' },
-              height: '100%',
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
+          <div className="w-20 sm:w-24 h-full flex-shrink-0 flex items-center justify-center">
             <Skeleton
-              variant={type === 'daija' ? 'circular' : 'rectangular'}
-              width={100}
-              height={type === 'lecture' ? 130 : 100}
-              sx={{
-                borderRadius: type === 'daija' ? '50%' : '8px'
-              }}
+              className={`w-24 ${type === 'daija' ? 'h-24 rounded-full' : 'h-32 rounded-lg'}`}
             />
-          </Box>
+          </div>
 
-        </Box>
+        </div>
       </CardContent>
       
       {/* Status badge skeleton for lectures */}
       {type === 'lecture' && (
-        <Skeleton
-          variant="rounded"
-          sx={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            width: 80,
-            height: 24,
-            borderRadius: '12px'
-          }}
-        />
+        <Skeleton className="absolute top-2 right-2 w-20 h-6 rounded-full" />
       )}
     </Card>
   );

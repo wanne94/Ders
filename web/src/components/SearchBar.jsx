@@ -1,14 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import {
-  TextField,
-  InputAdornment,
-  IconButton,
-  Box,
-  Chip,
-  useTheme
-} from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import ClearIcon from '@mui/icons-material/Clear';
+import { Search, X } from 'lucide-react';
+import { Input } from './ui/input';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 import { debounce } from 'lodash';
 
 const SearchBar = ({ 
@@ -17,10 +11,9 @@ const SearchBar = ({
   fullWidth = true,
   showResultCount = false,
   resultCount = 0,
-  sx = {}
+  className = ""
 }) => {
   const [searchValue, setSearchValue] = useState('');
-  const theme = useTheme();
 
   // Debounced search handler
   const debouncedSearch = useMemo(
@@ -58,71 +51,37 @@ const SearchBar = ({
   }, [searchValue, onSearch, debouncedSearch]);
 
   return (
-    <Box 
-      sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 1,
-        ...sx 
-      }}
-    >
-      <TextField
-        fullWidth={fullWidth}
-        variant="outlined"
-        size="small"
-        placeholder={placeholder}
-        value={searchValue}
-        onChange={handleSearchChange}
-        onKeyPress={handleKeyPress}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon color="action" />
-            </InputAdornment>
-          ),
-          endAdornment: searchValue && (
-            <InputAdornment position="end">
-              <IconButton
-                size="small"
-                onClick={handleClear}
-                edge="end"
-              >
-                <ClearIcon />
-              </IconButton>
-            </InputAdornment>
-          ),
-          sx: {
-            backgroundColor: theme.palette.background.paper,
-            '&:hover': {
-              backgroundColor: theme.palette.action.hover,
-            },
-            '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: theme.palette.divider,
-            },
-            '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: theme.palette.primary.main,
-            },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: theme.palette.primary.main,
-            },
-          }
-        }}
-        sx={{
-          '& .MuiInputBase-input': {
-            py: 1,
-          }
-        }}
-      />
+    <div className={`flex items-center gap-2 ${fullWidth ? 'w-full' : ''} ${className}`}>
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder={placeholder}
+          value={searchValue}
+          onChange={handleSearchChange}
+          onKeyPress={handleKeyPress}
+          className="pl-9 pr-9"
+        />
+        {searchValue && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 p-0"
+            onClick={handleClear}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Clear search</span>
+          </Button>
+        )}
+      </div>
       
       {showResultCount && searchValue && (
-        <Chip
-          label={`${resultCount} rezultata`}
-          size="small"
-          color="primary"
-          variant="outlined"
-        />
+        <Badge variant="outline" className="whitespace-nowrap">
+          {resultCount} rezultata
+        </Badge>
       )}
-    </Box>
+    </div>
   );
 };
 
