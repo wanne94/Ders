@@ -42,6 +42,9 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
   const [useCustomSpeaker, setUseCustomSpeaker] = useState(false);
   const [useCustomOrganization, setUseCustomOrganization] = useState(false);
   const [showWeeklyOptions, setShowWeeklyOptions] = useState(false);
+  const [existingImages, setExistingImages] = useState([]);
+  const [showExistingImages, setShowExistingImages] = useState(false);
+  const [selectedExistingImage, setSelectedExistingImage] = useState(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -108,13 +111,14 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
     }
   }, [existingLecture]);
 
-  // Fetch daije and organizations
+  // Fetch daije, organizations and existing images
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [daijeResponse, orgsResponse] = await Promise.all([
+        const [daijeResponse, orgsResponse, imagesResponse] = await Promise.all([
           daijeService.getAllDaije(),
-          udruzenjaService.getAllUdruzenja()
+          udruzenjaService.getAllUdruzenja(),
+          axiosInstance.get('/existing-images')
         ]);
         
         if (daijeResponse) {
@@ -124,6 +128,10 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
         if (orgsResponse) {
           console.log('🏢 [LectureFormNew] Fetched', orgsResponse.length, 'organizations');
           setOrganizations(Array.isArray(orgsResponse) ? orgsResponse : []);
+        }
+        if (imagesResponse?.data?.images) {
+          console.log('🖼️ [LectureFormNew] Fetched', imagesResponse.data.images.length, 'existing images');
+          setExistingImages(imagesResponse.data.images);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -262,6 +270,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
   const isOrganizationSelected = Boolean(formData.organizationId && !useCustomOrganization);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -289,60 +298,74 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
           {/* Image Upload */}
           <div className="space-y-2">
             <Label>Slika predavanja</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              <input
-                ref={fileInputRef}
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageChange}
-              />
-              <label htmlFor="image-upload" className="cursor-pointer block">
-                {imagePreview ? (
-                  <div className="space-y-2">
-                    <div className="relative inline-block">
-                      <Image
-                        src={imagePreview}
-                        alt="Pregled"
-                        width={400}
-                        height={200}
-                        className="max-w-full max-h-[200px] rounded object-contain mx-auto"
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setImageFile(null);
-                          setImagePreview(null);
-                          setFormData(prev => ({ ...prev, image: null }));
-                        }}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <CloudUpload className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-500">
-                        Kliknite za promjenu slike
-                      </span>
-                    </div>
+            
+            {/* Image preview if selected */}
+            {imagePreview && (
+              <div className="mb-4 relative inline-block">
+                <Image
+                  src={imagePreview}
+                  alt="Pregled"
+                  width={400}
+                  height={200}
+                  className="max-w-full max-h-[200px] rounded object-contain"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageFile(null);
+                    setImagePreview(null);
+                    setSelectedExistingImage(null);
+                    setFormData(prev => ({ ...prev, image: null }));
+                  }}
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-2 gap-4">
+              {/* Upload new image */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+                <input
+                  ref={fileInputRef}
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                <label htmlFor="image-upload" className="cursor-pointer block">
+                  <CloudUpload className="h-10 w-10 mx-auto text-gray-400 mb-2" />
+                  <div className="text-sm font-medium text-gray-700">
+                    Dodaj novu sliku
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    <CloudUpload className="h-12 w-12 mx-auto text-gray-400" />
-                    <div className="text-gray-600">
-                      Kliknite za dodavanje slike
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      ili prevucite sliku ovdje
-                    </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Kliknite ili prevucite
                   </div>
-                )}
-              </label>
+                </label>
+              </div>
+              
+              {/* Select existing image */}
+              <div 
+                className="border-2 border-solid border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer"
+                onClick={() => setShowExistingImages(!showExistingImages)}
+              >
+                <div className="h-10 w-10 mx-auto mb-2 flex items-center justify-center">
+                  <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="text-sm font-medium text-gray-700">
+                  Odaberi postojeću
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Iz galerije slika
+                </div>
+              </div>
             </div>
+            
+            
             <div className="bg-gray-50 rounded-md p-3 text-sm text-gray-600">
               📋 Automatska optimizacija:
               <div className="mt-1">
@@ -529,8 +552,26 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
                   <SelectValue placeholder="Odaberi vrijeme" />
                 </SelectTrigger>
                 <SelectContent>
-                  {['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', 
-                    '17:00', '18:00', '19:00', '20:00', '21:00'].map(time => (
+                  {[
+                    '06:00', '06:15', '06:30', '06:45',
+                    '07:00', '07:15', '07:30', '07:45',
+                    '08:00', '08:15', '08:30', '08:45',
+                    '09:00', '09:15', '09:30', '09:45',
+                    '10:00', '10:15', '10:30', '10:45',
+                    '11:00', '11:15', '11:30', '11:45',
+                    '12:00', '12:15', '12:30', '12:45',
+                    '13:00', '13:15', '13:30', '13:45',
+                    '14:00', '14:15', '14:30', '14:45',
+                    '15:00', '15:15', '15:30', '15:45',
+                    '16:00', '16:15', '16:30', '16:45',
+                    '17:00', '17:15', '17:30', '17:45',
+                    '18:00', '18:15', '18:30', '18:45',
+                    '19:00', '19:15', '19:30', '19:45',
+                    '20:00', '20:15', '20:30', '20:45',
+                    '21:00', '21:15', '21:30', '21:45',
+                    '22:00', '22:15', '22:30', '22:45',
+                    '23:00', '23:15', '23:30', '23:45'
+                  ].map(time => (
                     <SelectItem key={time} value={time}>
                       {time}
                     </SelectItem>
@@ -627,6 +668,157 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
         </form>
       </DialogContent>
     </Dialog>
+    
+    {/* Existing Images Modal */}
+    <Dialog open={showExistingImages} onOpenChange={setShowExistingImages}>
+      <DialogContent className="max-w-4xl max-h-[80vh]">
+        <DialogHeader>
+          <DialogTitle>Odaberite postojeću sliku</DialogTitle>
+          <DialogDescription>
+            Kliknite na sliku koju želite koristiti za predavanje
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="overflow-y-auto max-h-[60vh] p-4">
+          {existingImages.length > 0 ? (
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {existingImages.map((img, index) => (
+                <div
+                  key={index}
+                  className="relative cursor-pointer group"
+                  onClick={() => {
+                    setSelectedExistingImage(img.url);
+                    const imageUrl = img.url.startsWith('http') ? img.url : getImageUrl(img.url);
+                    setImagePreview(imageUrl);
+                    setFormData(prev => ({ ...prev, image: img.url }));
+                    setImageFile(null);
+                    setShowExistingImages(false);
+                  }}
+                >
+                  <div className={`border-2 rounded-lg overflow-hidden transition-all ${
+                    selectedExistingImage === img.url 
+                      ? 'border-blue-500 ring-2 ring-blue-200' 
+                      : 'border-gray-200 hover:border-blue-400'
+                  }`}>
+                    <Image
+                      src={img.url.startsWith('http') ? img.url : getImageUrl(img.url)}
+                      alt={img.name}
+                      width={200}
+                      height={150}
+                      className="w-full h-32 object-cover"
+                    />
+                    <div className="p-2 bg-white">
+                      <p className="text-xs text-gray-600 truncate">{img.name}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Overlay on hover */}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity rounded-lg pointer-events-none" />
+                  
+                  {/* Check mark for selected */}
+                  {selectedExistingImage === img.url && (
+                    <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p className="mt-2 text-sm text-gray-500">Nema dostupnih slika</p>
+            </div>
+          )}
+        </div>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowExistingImages(false)}>
+            Zatvori
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    
+    {/* Existing Images Modal */}
+    <Dialog open={showExistingImages} onOpenChange={setShowExistingImages}>
+      <DialogContent className="max-w-4xl max-h-[80vh]">
+        <DialogHeader>
+          <DialogTitle>Odaberite postojeću sliku</DialogTitle>
+          <DialogDescription>
+            Kliknite na sliku koju želite koristiti za predavanje
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="overflow-y-auto max-h-[60vh] p-4">
+          {existingImages.length > 0 ? (
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {existingImages.map((img, index) => (
+                <div
+                  key={index}
+                  className="relative cursor-pointer group"
+                  onClick={() => {
+                    setSelectedExistingImage(img.url);
+                    const imageUrl = img.url.startsWith('http') ? img.url : getImageUrl(img.url);
+                    setImagePreview(imageUrl);
+                    setFormData(prev => ({ ...prev, image: img.url }));
+                    setImageFile(null);
+                    setShowExistingImages(false);
+                  }}
+                >
+                  <div className={`border-2 rounded-lg overflow-hidden transition-all ${
+                    selectedExistingImage === img.url 
+                      ? 'border-blue-500 ring-2 ring-blue-200' 
+                      : 'border-gray-200 hover:border-blue-400'
+                  }`}>
+                    <Image
+                      src={img.url.startsWith('http') ? img.url : getImageUrl(img.url)}
+                      alt={img.name}
+                      width={200}
+                      height={150}
+                      className="w-full h-32 object-cover"
+                    />
+                    <div className="p-2 bg-white">
+                      <p className="text-xs text-gray-600 truncate">{img.name}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Overlay on hover */}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity rounded-lg pointer-events-none" />
+                  
+                  {/* Check mark for selected */}
+                  {selectedExistingImage === img.url && (
+                    <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p className="mt-2 text-sm text-gray-500">Nema dostupnih slika</p>
+            </div>
+          )}
+        </div>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowExistingImages(false)}>
+            Zatvori
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 

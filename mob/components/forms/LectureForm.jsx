@@ -34,6 +34,7 @@ import Toast from '../Toast';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImage, getImageUrl } from '../../utils/imageUtils';
 import { isAuthenticated as checkIsAuthenticated } from '../../utils/authHelpers';
+import axiosInstance from '../../utils/axiosConfig';
 
 const COLORS = {
   primary: '#022C43',
@@ -83,26 +84,36 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // Generate time options with 15-minute intervals (same as web version)
-  const generateTimeOptions = () => {
-    const times = [{ label: 'Odaberite vrijeme', value: '' }];
-    for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        times.push({ label: timeString, value: timeString });
-      }
-    }
-    return times;
-  };
-
-  const timeOptions = generateTimeOptions();
+  // Hardcoded time options with 15-minute intervals (same as web version)
+  const timeOptions = [
+    { label: 'Odaberite vrijeme', value: '' },
+    { label: '06:00', value: '06:00' }, { label: '06:15', value: '06:15' }, { label: '06:30', value: '06:30' }, { label: '06:45', value: '06:45' },
+    { label: '07:00', value: '07:00' }, { label: '07:15', value: '07:15' }, { label: '07:30', value: '07:30' }, { label: '07:45', value: '07:45' },
+    { label: '08:00', value: '08:00' }, { label: '08:15', value: '08:15' }, { label: '08:30', value: '08:30' }, { label: '08:45', value: '08:45' },
+    { label: '09:00', value: '09:00' }, { label: '09:15', value: '09:15' }, { label: '09:30', value: '09:30' }, { label: '09:45', value: '09:45' },
+    { label: '10:00', value: '10:00' }, { label: '10:15', value: '10:15' }, { label: '10:30', value: '10:30' }, { label: '10:45', value: '10:45' },
+    { label: '11:00', value: '11:00' }, { label: '11:15', value: '11:15' }, { label: '11:30', value: '11:30' }, { label: '11:45', value: '11:45' },
+    { label: '12:00', value: '12:00' }, { label: '12:15', value: '12:15' }, { label: '12:30', value: '12:30' }, { label: '12:45', value: '12:45' },
+    { label: '13:00', value: '13:00' }, { label: '13:15', value: '13:15' }, { label: '13:30', value: '13:30' }, { label: '13:45', value: '13:45' },
+    { label: '14:00', value: '14:00' }, { label: '14:15', value: '14:15' }, { label: '14:30', value: '14:30' }, { label: '14:45', value: '14:45' },
+    { label: '15:00', value: '15:00' }, { label: '15:15', value: '15:15' }, { label: '15:30', value: '15:30' }, { label: '15:45', value: '15:45' },
+    { label: '16:00', value: '16:00' }, { label: '16:15', value: '16:15' }, { label: '16:30', value: '16:30' }, { label: '16:45', value: '16:45' },
+    { label: '17:00', value: '17:00' }, { label: '17:15', value: '17:15' }, { label: '17:30', value: '17:30' }, { label: '17:45', value: '17:45' },
+    { label: '18:00', value: '18:00' }, { label: '18:15', value: '18:15' }, { label: '18:30', value: '18:30' }, { label: '18:45', value: '18:45' },
+    { label: '19:00', value: '19:00' }, { label: '19:15', value: '19:15' }, { label: '19:30', value: '19:30' }, { label: '19:45', value: '19:45' },
+    { label: '20:00', value: '20:00' }, { label: '20:15', value: '20:15' }, { label: '20:30', value: '20:30' }, { label: '20:45', value: '20:45' },
+    { label: '21:00', value: '21:00' }, { label: '21:15', value: '21:15' }, { label: '21:30', value: '21:30' }, { label: '21:45', value: '21:45' },
+    { label: '22:00', value: '22:00' }, { label: '22:15', value: '22:15' }, { label: '22:30', value: '22:30' }, { label: '22:45', value: '22:45' },
+    { label: '23:00', value: '23:00' }, { label: '23:15', value: '23:15' }, { label: '23:30', value: '23:30' }, { label: '23:45', value: '23:45' }
+  ];
 
   const loadData = async () => {
     try {
-      const [daijeResponse, organizationsResponse, allLecturesResponse] = await Promise.all([
+      const [daijeResponse, organizationsResponse, allLecturesResponse, imagesResponse] = await Promise.all([
         daijeService.getAllDaije(),
         udruzenjaService.getAllUdruzenja(),
-        predavanjaService.getAllPredavanja()
+        predavanjaService.getAllPredavanja(),
+        axiosInstance.get('/existing-images')
       ]);
       
       // Debug logs removed - data loading working correctly
@@ -115,6 +126,12 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       // Apply centralized sorting - lecturers and associations with upcoming lectures first
       const sortedDaije = sortLecturers(approvedDaije, allLectures);
       const sortedOrganizations = sortAssociations(approvedOrganizations, allLectures);
+      
+      // Load existing images
+      if (imagesResponse?.data?.images) {
+        console.log('Fetched existing images:', imagesResponse.data.images.length);
+        setExistingImages(imagesResponse.data.images);
+      }
       
       setDaije(sortedDaije);
       setOrganizations(sortedOrganizations);
@@ -593,7 +610,17 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
 
   const removeImage = () => {
     setImageUri(null);
+    setSelectedExistingImage(null);
     handleInputChange('image', '');
+  };
+  
+  const selectExistingImage = (image) => {
+    setSelectedExistingImage(image.url);
+    // Check if it's already a full URL
+    const imageUrl = image.url.startsWith('http') ? image.url : getImageUrl(image.url);
+    setImageUri(imageUrl);
+    handleInputChange('image', image.url);
+    setShowExistingImages(false);
   };
 
   return (
@@ -805,6 +832,52 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         type={toast.type}
         onHide={hideToast}
       />
+      
+      {/* Existing Images Modal */}
+      <Modal
+        visible={showExistingImages}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowExistingImages(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Odaberite sliku</Text>
+              <TouchableOpacity onPress={() => setShowExistingImages(false)}>
+                <Ionicons name="close" size={24} color={COLORS.primary} />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.imageGrid}>
+              {existingImages.length > 0 ? (
+                <View style={styles.imageGridContainer}>
+                  {existingImages.map((img, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.gridImageItem,
+                        selectedExistingImage === img.url && styles.selectedImage
+                      ]}
+                      onPress={() => selectExistingImage(img)}
+                    >
+                      <Image
+                        source={{ uri: img.url.startsWith('http') ? img.url : getImageUrl(img.url) }}
+                        style={styles.gridImage}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>Nema dostupnih slika</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -1085,6 +1158,90 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   disabledText: {
+    color: COLORS.gray,
+  },
+  imageOptionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  imageOptionButton: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    borderRadius: 8,
+    borderStyle: 'dashed',
+    padding: 20,
+    alignItems: 'center',
+  },
+  imageOptionContent: {
+    alignItems: 'center',
+  },
+  imageOptionText: {
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  imageOptionSubtext: {
+    marginTop: 4,
+    fontSize: 12,
+    color: COLORS.gray,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  imageGrid: {
+    padding: 16,
+  },
+  imageGridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  gridImageItem: {
+    width: '30%',
+    aspectRatio: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedImage: {
+    borderColor: COLORS.primary,
+  },
+  gridImage: {
+    width: '100%',
+    height: '100%',
+  },
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontSize: 16,
     color: COLORS.gray,
   },
   weeksInputContainer: {

@@ -234,6 +234,7 @@ app.get('/api/health', (req, res) => {
 
 // Use upload routes
 app.use('/api/upload-image', require('./routes/uploadImage'));
+app.use('/api/existing-images', require('./routes/existingImages'));
 
 // API routes
 app.use('/api', express.json());

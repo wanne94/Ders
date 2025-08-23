@@ -1,38 +1,78 @@
-# Plan za implementaciju 15-minutnih intervala za vrijeme predavanja
+# Plan implementacije - Dodavanje 15-minutnih intervala za vrijeme predavanja
 
-## Analiza postojećeg stanja
-- ✅ Web verzija već ima implementirane 15-minutne intervale (generateTimeOptions funkcija)
-- ⚠️ Mobilna verzija ima ručno definirane opcije samo od 12:00 do 23:45
+## Problem
+U formi za dodavanje predavanja (LectureFormNew.jsx), trenutno je dostupno samo odabiranje vremena po satima (10:00, 11:00, 12:00, itd.). Potrebno je dodati mogućnost odabira vremena sa intervalima od 15 minuta.
 
-## TODO Lista
+## Lokacija koda
+- Fajl: `/web/src/components/LectureFormNew.jsx`
+- Linija: 520-540 (Select komponenta za vrijeme)
 
-### 1. [x] Provjeri da li web verzija ispravno radi sa 15-minutnim intervalima
-- Testirati da li dropdown pokazuje sve opcije (00:00, 00:15, 00:30... do 23:45)
-- Provjeriti da li se vrijeme ispravno čuva u bazi
+## Trenutno stanje
+```jsx
+<Select>
+  <SelectContent>
+    {['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', 
+      '17:00', '18:00', '19:00', '20:00', '21:00'].map(time => (
+      <SelectItem key={time} value={time}>
+        {time}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+```
 
-### 2. [x] Ažuriraj mobilnu verziju da koristi sve 24-satne opcije sa 15-minutnim intervalima
-- Zamijeni ručno definirane opcije sa generateTimeOptions funkcijom
-- Osiguraj da mobilna verzija ima sve opcije od 00:00 do 23:45
+## Plan implementacije
 
-### 3. [x] Testiranje funkcionalnosti
-- Kreirati novo predavanje sa različitim vremenima (npr. 15:15, 15:30, 15:45)
-- Provjeriti da li se prikazuju ispravno na listi predavanja
-- Provjeriti da li edit forma ispravno učitava postojeće vrijeme
+### TODO Lista:
 
-## Napomene
-- Web verzija već ima implementiranu funkcionalnost
-- Samo treba osigurati konzistentnost između web i mobilne verzije
+- [x] 1. Kreirati hardkodovanu listu vremena sa 15-minutnim intervalima
+  - Vremena od 06:00 do 23:45
+  - Format: HH:MM (npr. 06:00, 06:15, 06:30, 06:45, 07:00...)
 
-## Review
+- [x] 2. Zamijeniti postojeću listu vremena u web aplikaciji
+  - Uklonjena postojeća lista sa samo satima
+  - Dodana nova hardkodovana lista sa 15-minutnim intervalima
 
-### Sažetak promjena:
-- ✅ Web verzija već je imala implementiranu `generateTimeOptions` funkciju koja generiše sve vremenske opcije od 00:00 do 23:45 sa 15-minutnim intervalima
-- ✅ Mobilna verzija je ažurirana da koristi istu `generateTimeOptions` funkciju umjesto ručno definiranih opcija
-- ✅ Sada obje verzije (web i mob) imaju identične vremenske opcije - 96 opcija (4 po satu × 24 sata)
-- ✅ Korisnici mogu birati vrijeme sa preciznošću od 15 minuta (npr. 15:00, 15:15, 15:30, 15:45)
+- [x] 3. Ažurirati mobilnu aplikaciju sa istom listom vremena
+  - Zamijenjena generateTimeOptions funkcija sa hardkodovanom listom
+  - Osigurana konzistentnost između web i mobilne aplikacije
 
-### Tehnički detalji:
-- Promjena u fajlu: `/home/avdo/Ders/mob/components/forms/LectureForm.jsx`
-- Uklonjena ručno definirana lista od 88 vremenskih opcija
-- Dodana `generateTimeOptions` funkcija identična web verziji
-- Funkcija koristi nested loop za generisanje svih kombinacija sati (0-23) i minuta (0, 15, 30, 45)
+## Implementacijski detalji
+
+### Funkcija za generisanje vremena:
+```javascript
+const generateTimeOptions = () => {
+  const times = [];
+  for (let hour = 6; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      times.push(time);
+    }
+  }
+  return times;
+};
+```
+
+### Prednosti ovog pristupa:
+- Jednostavna implementacija
+- Minimalne izmjene postojećeg koda
+- Fleksibilnost za buduće promjene (npr. drugačiji intervali)
+- Nema uticaja na postojeću funkcionalnost
+
+## Review sekcija
+
+### Sažetak implementiranih promjena:
+1. **Web aplikacija** (`/web/src/components/LectureFormNew.jsx`):
+   - Zamijenjena lista vremena koja je imala samo pune sate (10:00, 11:00, itd.)
+   - Dodana hardkodovana lista sa 72 vremenske opcije (od 06:00 do 23:45 sa 15-minutnim intervalima)
+
+2. **Mobilna aplikacija** (`/mob/components/forms/LectureForm.jsx`):
+   - Uklonjena generateTimeOptions funkcija
+   - Dodana identična hardkodovana lista kao u web aplikaciji
+   - Osigurana potpuna konzistentnost između platformi
+
+### Promjene na visokom nivou:
+- Korisnici sada mogu birati vrijeme sa preciznošću od 15 minuta
+- Dostupna vremena: 06:00, 06:15, 06:30, 06:45, 07:00... sve do 23:45
+- Ukupno 72 vremenske opcije (18 sati × 4 opcije po satu)
+- Isti korisnički doživljaj na web i mobilnoj aplikaciji
