@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
-import { Share2, MessageCircle, Send, Facebook, Twitter, Copy, MoreHorizontal } from 'lucide-react';
+import { MessageCircle, Send, Facebook, Twitter, Copy, MoreHorizontal } from 'lucide-react';
 import { Button } from './ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu';
 
 const ShareButton = ({ lecture, profileData, type }) => {
   const [copied, setCopied] = useState(false);
@@ -34,11 +26,34 @@ const ShareButton = ({ lecture, profileData, type }) => {
   const getShareText = () => {
     switch (profileType) {
       case 'organization':
-        return `${data.name}${data.address || data.city ? `\n📍 ${[data.address, data.city].filter(Boolean).join(', ')}` : ''}`;
+        return `🕌 ${data.name}${data.address || data.city ? `\n📍 ${[data.address, data.city].filter(Boolean).join(', ')}` : ''}${data.phone ? `\n☎️ ${data.phone}` : ''}`;
       case 'daija':
-        return `${data.title || ''}. ${data.name || ''}`.trim();
+        return `👤 ${data.title || ''}. ${data.name || ''}${data.organization ? `\n🕌 ${data.organization}` : ''}`.trim();
       default:
-        return `${data.title}\n📅 ${new Date(data.date).toLocaleDateString('sr-RS')} u ${data.time}\n📍 ${data.address}, ${data.city}`;
+        // For lectures - more detailed info
+        const lectureDate = new Date(data.date);
+        const formattedDate = lectureDate.toLocaleDateString('sr-RS', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+        
+        let shareText = `📚 ${data.title}\n`;
+        shareText += `📅 ${formattedDate} u ${data.time}\n`;
+        shareText += `📍 ${data.address}, ${data.city}\n`;
+        
+        if (data.daijaName) {
+          shareText += `👤 Predavač: ${data.daijaTitle ? `${data.daijaTitle} ` : ''}${data.daijaName}\n`;
+        }
+        
+        if (data.organizationName) {
+          shareText += `🕌 Organizator: ${data.organizationName}\n`;
+        }
+        
+        shareText += `\n🔗 Više informacija:`;
+        
+        return shareText;
     }
   };
 
@@ -69,7 +84,7 @@ const ShareButton = ({ lecture, profileData, type }) => {
       name: 'Facebook',
       icon: Facebook,
       color: 'text-blue-600',
-      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
+      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`
     },
     {
       name: 'Twitter',
@@ -135,51 +150,45 @@ const ShareButton = ({ lecture, profileData, type }) => {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          className="border-white/30 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 hover:border-white/50 hover:-translate-y-0.5 transition-all duration-200"
+    <div className="flex flex-wrap gap-2">
+      {/* Share platform buttons */}
+      {shareOptions.map((option) => {
+        const Icon = option.icon;
+        return (
+          <button
+            key={option.name}
+            onClick={() => handleShare(option.url)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/20 backdrop-blur-md hover:bg-white/30 text-white border border-white/30 transition-all duration-200"
+            aria-label={`Podijeli na ${option.name}`}
+          >
+            <Icon className={`h-4 w-4`} />
+            <span className="text-sm font-medium">{option.name}</span>
+          </button>
+        );
+      })}
+      
+      {/* Copy link button */}
+      <button
+        onClick={handleCopyLink}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/20 backdrop-blur-md hover:bg-white/30 text-white border border-white/30 transition-all duration-200"
+        aria-label="Kopiraj link"
+      >
+        <Copy className={`h-4 w-4 ${copied ? 'text-green-300' : ''}`} />
+        <span className="text-sm font-medium">{copied ? 'Kopirano!' : 'Kopiraj link'}</span>
+      </button>
+      
+      {/* More options (native share) */}
+      {typeof navigator !== 'undefined' && navigator.share && (
+        <button
+          onClick={handleNativeShare}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/20 backdrop-blur-md hover:bg-white/30 text-white border border-white/30 transition-all duration-200"
+          aria-label="Više opcija dijeljenja"
         >
-          <Share2 className="mr-2 h-4 w-4" />
-          Podijeli
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>
-          {profileType === 'organization' ? 'Podijeli udruženje' : profileType === 'daija' ? 'Podijeli daiju' : 'Podijeli predavanje'}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        
-        {shareOptions.map((option) => {
-          const Icon = option.icon;
-          return (
-            <DropdownMenuItem
-              key={option.name}
-              onClick={() => handleShare(option.url)}
-              className="cursor-pointer"
-            >
-              <Icon className={`mr-2 h-4 w-4 ${option.color}`} />
-              <span>{option.name}</span>
-            </DropdownMenuItem>
-          );
-        })}
-
-        <DropdownMenuSeparator />
-
-        {typeof navigator !== 'undefined' && navigator.share && (
-          <DropdownMenuItem onClick={handleNativeShare} className="cursor-pointer">
-            <MoreHorizontal className="mr-2 h-4 w-4" />
-            <span>Više opcija</span>
-          </DropdownMenuItem>
-        )}
-
-        <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer">
-          <Copy className="mr-2 h-4 w-4" />
-          <span>{copied ? 'Kopirano!' : 'Kopiraj link'}</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <MoreHorizontal className="h-4 w-4" />
+          <span className="text-sm font-medium">Više opcija</span>
+        </button>
+      )}
+    </div>
   );
 };
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import {
@@ -14,16 +14,26 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Checkbox,
+  Paper,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { jwtDecode } from 'jwt-decode';
 import PageLayout from '@/components/PageLayout';
+import ContentContainer from '@/components/ContentContainer';
 import UniversalCard from '@/components/UniversalCard';
+import SelectableCard from '@/components/SelectableCard';
 import SkeletonGrid from '@/components/SkeletonGrid';
 import LectureFormNew from '@/components/LectureFormNew';
 import UnifiedFormNew from '@/components/UnifiedFormNew';
 import LecturesSection from '@/components/LecturesSection';
+import BulkActionsToolbar from '@/components/BulkActionsToolbar';
 import { safeApiCall, normalizeToArray } from '@/utils/dataHelpers';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
 import { useDebounce } from '@/utils/useDebounce';
@@ -43,14 +53,17 @@ const ElementPage = ({ type }) => {
     searchTerm: '',
     page: 1,
     isFormOpen: false,
-    statusFilter: 'all' // 'all', 'active', 'cancelled'
+    statusFilter: 'all', // 'all', 'active', 'cancelled'
+    selectedItems: [],
+    isAllSelected: false,
+    isAdmin: false
   });
   
   const itemsPerPage = 20;
   const debouncedSearchTerm = useDebounce(state.searchTerm, 300);
   
   // Destructure for easier access
-  const { items, isLoading, error, searchTerm, page, isFormOpen, statusFilter } = state;
+  const { items, isLoading, error, searchTerm, page, isFormOpen, statusFilter, selectedItems, isAllSelected, isAdmin } = state;
 
   // Memoized configuration based on type
   const config = useMemo(() => {
@@ -87,17 +100,18 @@ const ElementPage = ({ type }) => {
           console.log('🔍 [ElementPage] Fetching ALL lectures (same as dashboard)');
           // Check if user is admin
           const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-          let isAdmin = false;
+          let isAdminUser = false;
           if (token) {
             try {
               const decodedUser = jwtDecode(token);
-              isAdmin = decodedUser.role === 'admin' || decodedUser.role === 'super_admin';
+              isAdminUser = decodedUser.role === 'admin' || decodedUser.role === 'super_admin';
+              setState(prev => ({ ...prev, isAdmin: isAdminUser }));
             } catch (e) {
               console.error('Error decoding token:', e);
             }
           }
           
-          if (isAdmin) {
+          if (isAdminUser) {
             // For admin users, use admin endpoint (same as dashboard)
             response = await safeApiCall(() => predavanjaService.getAllPredavanjaForAdmin(), []);
             console.log('📊 [ElementPage] Admin: Received ALL lectures:', response.length);
@@ -311,6 +325,127 @@ const ElementPage = ({ type }) => {
     fetchData();
   }, [fetchData]);
 
+  // Bulk selection handlers
+  const handleSelectItem = useCallback((itemId) => {
+    setState(prev => {
+      const newSelectedItems = prev.selectedItems.includes(itemId)
+        ? prev.selectedItems.filter(id => id !== itemId)
+        : [...prev.selectedItems, itemId];
+      
+      return {
+        ...prev,
+        selectedItems: newSelectedItems,
+        isAllSelected: false
+      };
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    setState(prev => {
+      if (prev.isAllSelected) {
+        return { ...prev, selectedItems: [], isAllSelected: false };
+      } else {
+        const currentPageIds = currentItems.map(item => item._id);
+        return { ...prev, selectedItems: currentPageIds, isAllSelected: true };
+      }
+    });
+  }, [currentItems]);
+
+  const clearSelection = useCallback(() => {
+    setState(prev => ({ ...prev, selectedItems: [], isAllSelected: false }));
+  }, []);
+
+  // Bulk action handlers
+  const handleBulkApprove = useCallback(async () => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true }));
+      
+      let response;
+      switch(type) {
+        case 'lectures':
+          response = await predavanjaService.bulkApprove(selectedItems);
+          break;
+        case 'daije':
+          response = await daijeService.bulkApprove(selectedItems);
+          break;
+        case 'organizations':
+          response = await udruzenjaService.bulkApprove(selectedItems);
+          break;
+      }
+      
+      clearSelection();
+      fetchData(); // Refresh data
+      
+      // Show success message
+      alert(response.message || 'Successfully approved items');
+    } catch (error) {
+      console.error('Bulk approve error:', error);
+      alert('Error approving items');
+    } finally {
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
+  }, [selectedItems, type, clearSelection, fetchData]);
+
+  const handleBulkReject = useCallback(async () => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true }));
+      
+      let response;
+      switch(type) {
+        case 'lectures':
+          response = await predavanjaService.bulkReject(selectedItems);
+          break;
+        case 'daije':
+          response = await daijeService.bulkReject(selectedItems);
+          break;
+        case 'organizations':
+          response = await udruzenjaService.bulkReject(selectedItems);
+          break;
+      }
+      
+      clearSelection();
+      fetchData(); // Refresh data
+      
+      // Show success message
+      alert(response.message || 'Successfully rejected items');
+    } catch (error) {
+      console.error('Bulk reject error:', error);
+      alert('Error rejecting items');
+    } finally {
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
+  }, [selectedItems, type, clearSelection, fetchData]);
+
+  const handleBulkDelete = useCallback(async () => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true }));
+      
+      let response;
+      switch(type) {
+        case 'lectures':
+          response = await predavanjaService.bulkDelete(selectedItems);
+          break;
+        case 'daije':
+          response = await daijeService.bulkDelete(selectedItems);
+          break;
+        case 'organizations':
+          response = await udruzenjaService.bulkDelete(selectedItems);
+          break;
+      }
+      
+      clearSelection();
+      fetchData(); // Refresh data
+      
+      // Show success message
+      alert(response.message || 'Successfully deleted items');
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      alert('Error deleting items');
+    } finally {
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
+  }, [selectedItems, type, clearSelection, fetchData]);
+
   // Get the appropriate form component based on type
   const getFormComponent = () => {
     switch (type) {
@@ -391,15 +526,41 @@ const ElementPage = ({ type }) => {
         )}
       </Head>
       <PageLayout sx={{ paddingTop: '20px' }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {config.title}
-        </Typography>
-      </Box>
+        <ContentContainer>
+          {/* Header */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+              {config.title}
+            </Typography>
+          </Box>
+
+          {/* Bulk Actions Toolbar for Admin */}
+          {isAdmin && (
+            <BulkActionsToolbar
+              selectedCount={selectedItems.length}
+              onApprove={handleBulkApprove}
+              onReject={handleBulkReject}
+              onDelete={handleBulkDelete}
+              onClear={clearSelection}
+              type={type}
+            />
+          )}
 
       {/* Search and Add Button */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 4, flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+        {/* Select All Checkbox for Admin */}
+        {isAdmin && currentItems.length > 0 && (
+          <Box display="flex" alignItems="center">
+            <Checkbox
+              checked={isAllSelected}
+              indeterminate={selectedItems.length > 0 && selectedItems.length < currentItems.length}
+              onChange={handleSelectAll}
+            />
+            <Typography variant="body2">
+              Selektuj sve
+            </Typography>
+          </Box>
+        )}
         <TextField
           fullWidth={type !== 'lectures'}
           variant="outlined"
@@ -481,7 +642,12 @@ const ElementPage = ({ type }) => {
               <DaijeGrid>
                 {currentItems.map((item) => (
                   <Box key={item._id} sx={{ height: '200px' }}>
-                    <UniversalCard data={item} />
+                    <SelectableCard 
+                      data={item}
+                      isSelected={selectedItems.includes(item._id)}
+                      onSelect={handleSelectItem}
+                      isAdmin={isAdmin}
+                    />
                   </Box>
                 ))}
               </DaijeGrid>
@@ -490,7 +656,12 @@ const ElementPage = ({ type }) => {
               <OrganizationsGrid>
                 {currentItems.map((item) => (
                   <Box key={item._id} sx={{ height: '200px' }}>
-                    <UniversalCard data={item} />
+                    <SelectableCard 
+                      data={item}
+                      isSelected={selectedItems.includes(item._id)}
+                      onSelect={handleSelectItem}
+                      isAdmin={isAdmin}
+                    />
                   </Box>
                 ))}
               </OrganizationsGrid>
@@ -514,6 +685,7 @@ const ElementPage = ({ type }) => {
 
       {/* Form Dialog */}
       {getFormComponent()}
+        </ContentContainer>
       </PageLayout>
     </>
   );

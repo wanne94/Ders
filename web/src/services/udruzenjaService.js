@@ -48,6 +48,22 @@ const udruzenjaService = {
 
     const response = await apiClient.patch(`${ENV.API_ENDPOINTS.UDRUZENJA}/${id}`, payload);
     return response;
+  },
+
+  // Bulk operations
+  bulkApprove: async (ids) => {
+    const response = await apiClient.post(`${ENV.API_ENDPOINTS.UDRUZENJA}/bulk/approve`, { ids });
+    return response;
+  },
+
+  bulkReject: async (ids) => {
+    const response = await apiClient.post(`${ENV.API_ENDPOINTS.UDRUZENJA}/bulk/reject`, { ids });
+    return response;
+  },
+
+  bulkDelete: async (ids) => {
+    const response = await apiClient.post(`${ENV.API_ENDPOINTS.UDRUZENJA}/bulk/delete`, { ids });
+    return response;
   }
 };
 

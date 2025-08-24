@@ -168,7 +168,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 if (process.env.NODE_ENV === 'development') {
   app.use('/uploads/*', (req, res, next) => {
     // If local file doesn't exist, proxy to production
-    const imagePath = req.path;
+    const imagePath = req.originalUrl;
     res.redirect(`https://ders.ba${imagePath}`);
   });
   console.log('📁 Development mode: serving local uploads with fallback to production (https://ders.ba)');
@@ -2376,6 +2376,73 @@ app.get('/api/daije/with-active-lectures', async (req, res) => {
   }
 });
 
+// Bulk operations for daije (Admin only)
+app.post('/api/daije/bulk/approve', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'IDs are required' });
+    }
+    
+    const result = await Daija.updateMany(
+      { _id: { $in: ids } },
+      { $set: { status: 'approved' } }
+    );
+    
+    res.json({
+      message: `Successfully approved ${result.modifiedCount} daije`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    logger.error('Bulk approve daije error:', error);
+    res.status(500).json({ message: 'Error approving daije', error: error.message });
+  }
+});
+
+app.post('/api/daije/bulk/reject', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'IDs are required' });
+    }
+    
+    const result = await Daija.updateMany(
+      { _id: { $in: ids } },
+      { $set: { status: 'rejected' } }
+    );
+    
+    res.json({
+      message: `Successfully rejected ${result.modifiedCount} daije`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    logger.error('Bulk reject daije error:', error);
+    res.status(500).json({ message: 'Error rejecting daije', error: error.message });
+  }
+});
+
+app.post('/api/daije/bulk/delete', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'IDs are required' });
+    }
+    
+    const result = await Daija.deleteMany({ _id: { $in: ids } });
+    
+    res.json({
+      message: `Successfully deleted ${result.deletedCount} daije`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    logger.error('Bulk delete daije error:', error);
+    res.status(500).json({ message: 'Error deleting daije', error: error.message });
+  }
+});
+
 // Get all daije
 app.get('/api/daije', async (req, res) => {
   try {
@@ -2647,6 +2714,73 @@ app.delete('/api/daije/:id', authenticateToken, isAdminOrSuperAdmin, async (req,
 });
 
 // Organization Routes
+// Bulk operations for organizations (Admin only)
+app.post('/api/organizations/bulk/approve', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'IDs are required' });
+    }
+    
+    const result = await Organization.updateMany(
+      { _id: { $in: ids } },
+      { $set: { status: 'approved' } }
+    );
+    
+    res.json({
+      message: `Successfully approved ${result.modifiedCount} organizations`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    logger.error('Bulk approve organizations error:', error);
+    res.status(500).json({ message: 'Error approving organizations', error: error.message });
+  }
+});
+
+app.post('/api/organizations/bulk/reject', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'IDs are required' });
+    }
+    
+    const result = await Organization.updateMany(
+      { _id: { $in: ids } },
+      { $set: { status: 'rejected' } }
+    );
+    
+    res.json({
+      message: `Successfully rejected ${result.modifiedCount} organizations`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    logger.error('Bulk reject organizations error:', error);
+    res.status(500).json({ message: 'Error rejecting organizations', error: error.message });
+  }
+});
+
+app.post('/api/organizations/bulk/delete', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'IDs are required' });
+    }
+    
+    const result = await Organization.deleteMany({ _id: { $in: ids } });
+    
+    res.json({
+      message: `Successfully deleted ${result.deletedCount} organizations`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    logger.error('Bulk delete organizations error:', error);
+    res.status(500).json({ message: 'Error deleting organizations', error: error.message });
+  }
+});
+
 // Get all organizations
 app.get('/api/organizations', async (req, res) => {
   try {

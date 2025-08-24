@@ -124,7 +124,7 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
     (displayData.type === 'lecture' ? getDefaultLectureImage() :
      displayData.type === 'daija' ? getDefaultDaijaImage() :
      getDefaultOrganizationImage()) : 
-    getImageUrl(displayData.image);
+    getImageUrl(displayData.image, displayData.type);
 
   const getBadgeColor = (color) => {
     switch(color) {

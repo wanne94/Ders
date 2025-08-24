@@ -50,6 +50,22 @@ const daijeService = {
 
     const response = await apiClient.patch(`${ENV.API_ENDPOINTS.DAIJE}/${id}`, payload);
     return response;
+  },
+
+  // Bulk operations
+  bulkApprove: async (ids) => {
+    const response = await apiClient.post(`${ENV.API_ENDPOINTS.DAIJE}/bulk/approve`, { ids });
+    return response;
+  },
+
+  bulkReject: async (ids) => {
+    const response = await apiClient.post(`${ENV.API_ENDPOINTS.DAIJE}/bulk/reject`, { ids });
+    return response;
+  },
+
+  bulkDelete: async (ids) => {
+    const response = await apiClient.post(`${ENV.API_ENDPOINTS.DAIJE}/bulk/delete`, { ids });
+    return response;
   }
 };
 

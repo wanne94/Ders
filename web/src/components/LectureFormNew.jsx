@@ -181,8 +181,49 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    
+    // Validacija obaveznih polja
+    const missingFields = [];
+    
+    if (!formData.title.trim()) {
+      missingFields.push('Naslov predavanja');
+    }
+    
+    if (!useCustomSpeaker && !formData.daijaId) {
+      missingFields.push('Daija');
+    } else if (useCustomSpeaker && !formData.speaker.trim()) {
+      missingFields.push('Ime predavača');
+    }
+    
+    if (!useCustomOrganization && !formData.organizationId) {
+      missingFields.push('Organizator');
+    } else if (useCustomOrganization && !formData.organization.trim()) {
+      missingFields.push('Naziv organizacije');
+    }
+    
+    if (!formData.date) {
+      missingFields.push('Datum');
+    }
+    
+    if (!formData.time.trim()) {
+      missingFields.push('Vrijeme');
+    }
+    
+    if (!formData.address.trim()) {
+      missingFields.push('Adresa');
+    }
+    
+    if (!formData.city.trim()) {
+      missingFields.push('Grad');
+    }
+    
+    if (missingFields.length > 0) {
+      setError(`Molimo popunite sljedeća polja: ${missingFields.join(', ')}`);
+      return;
+    }
+    
+    setLoading(true);
     
     try {
       let imageUrl = formData.image;
@@ -190,8 +231,14 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
       // Upload image if new one selected
       if (imageFile) {
         try {
-          const uploadedUrl = await uploadImage(imageFile);
-          imageUrl = uploadedUrl;
+          const uploadResult = await uploadImage(imageFile);
+          // uploadImage returns an object with { success, path, ... }
+          if (uploadResult && uploadResult.path) {
+            imageUrl = uploadResult.path;
+            console.log('Image uploaded successfully:', imageUrl);
+          } else {
+            throw new Error('Upload result missing path');
+          }
         } catch (uploadError) {
           console.error('Error uploading image:', uploadError);
           setError('Greška pri učitavanju slike');
@@ -212,9 +259,9 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
       
       let response;
       if (isEditMode && existingLecture) {
-        response = await axiosInstance.put(`/api/lectures/${existingLecture._id}`, dataToSend);
+        response = await axiosInstance.put(`/lectures/${existingLecture._id}`, dataToSend);
       } else {
-        response = await axiosInstance.post('/api/lectures', dataToSend);
+        response = await axiosInstance.post('/lectures', dataToSend);
       }
       
       setSuccess(true);
@@ -463,18 +510,17 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
 
           {/* Organization Selection */}
           <div className="space-y-2">
-            <Label htmlFor="organization">Udruženje</Label>
+            <Label htmlFor="organization">Organizator *</Label>
             {!useCustomOrganization ? (
               <Combobox
                 options={[
-                  { value: 'none', label: 'Bez udruženja' },
                   ...organizations.map(org => ({
                     value: org._id,
                     label: org.name
                   })),
                   { value: 'custom', label: 'Unesi prilagođeni naziv...' }
                 ]}
-                value={formData.organizationId || 'none'}
+                value={formData.organizationId}
                 onValueChange={(value) => {
                   if (value === 'custom') {
                     setUseCustomOrganization(true);
@@ -484,13 +530,6 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
                       organization: '',
                       address: '',
                       city: ''
-                    }));
-                  } else if (value === 'none') {
-                    setUseCustomOrganization(false);
-                    setFormData(prev => ({
-                      ...prev,
-                      organizationId: '',
-                      organization: ''
                     }));
                   } else {
                     setUseCustomOrganization(false);
@@ -504,9 +543,9 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
                     }));
                   }
                 }}
-                placeholder="Odaberi ili pretraži udruženje..."
-                searchPlaceholder="Pretraži udruženja..."
-                emptyText="Nema pronađenih udruženja"
+                placeholder="Odaberi ili pretraži organizatora..."
+                searchPlaceholder="Pretraži organizatore..."
+                emptyText="Nema pronađenih organizatora"
               />
             ) : null}
           </div>
@@ -514,13 +553,13 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
           {/* Custom Organization Input */}
           {useCustomOrganization && (
             <div className="space-y-2">
-              <Label htmlFor="customOrganization">Naziv udruženja</Label>
+              <Label htmlFor="customOrganization">Naziv organizatora</Label>
               <Input
                 id="customOrganization"
                 name="organization"
                 value={formData.organization}
                 onChange={handleChange}
-                placeholder="Unesite naziv udruženja..."
+                placeholder="Unesite naziv organizatora..."
                 required={useCustomOrganization}
               />
             </div>
@@ -594,7 +633,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
             />
             {isOrganizationSelected && (
               <span className="text-sm text-gray-500">
-                Adresa se automatski popunjava iz odabranog udruženja
+                Adresa se automatski popunjava iz odabranog organizatora
               </span>
             )}
           </div>
@@ -611,7 +650,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
             />
             {isOrganizationSelected && (
               <span className="text-sm text-gray-500">
-                Mjesto se automatski popunjava iz odabranog udruženja
+                Mjesto se automatski popunjava iz odabranog organizatora
               </span>
             )}
           </div>
@@ -666,81 +705,6 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
-    
-    {/* Existing Images Modal */}
-    <Dialog open={showExistingImages} onOpenChange={setShowExistingImages}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle>Odaberite postojeću sliku</DialogTitle>
-          <DialogDescription>
-            Kliknite na sliku koju želite koristiti za predavanje
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="overflow-y-auto max-h-[60vh] p-4">
-          {existingImages.length > 0 ? (
-            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {existingImages.map((img, index) => (
-                <div
-                  key={index}
-                  className="relative cursor-pointer group"
-                  onClick={() => {
-                    setSelectedExistingImage(img.url);
-                    const imageUrl = img.url.startsWith('http') ? img.url : getImageUrl(img.url);
-                    setImagePreview(imageUrl);
-                    setFormData(prev => ({ ...prev, image: img.url }));
-                    setImageFile(null);
-                    setShowExistingImages(false);
-                  }}
-                >
-                  <div className={`border-2 rounded-lg overflow-hidden transition-all ${
-                    selectedExistingImage === img.url 
-                      ? 'border-blue-500 ring-2 ring-blue-200' 
-                      : 'border-gray-200 hover:border-blue-400'
-                  }`}>
-                    <Image
-                      src={img.url.startsWith('http') ? img.url : getImageUrl(img.url)}
-                      alt={img.name}
-                      width={200}
-                      height={150}
-                      className="w-full h-32 object-cover"
-                    />
-                    <div className="p-2 bg-white">
-                      <p className="text-xs text-gray-600 truncate">{img.name}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Overlay on hover */}
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity rounded-lg pointer-events-none" />
-                  
-                  {/* Check mark for selected */}
-                  {selectedExistingImage === img.url && (
-                    <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <p className="mt-2 text-sm text-gray-500">Nema dostupnih slika</p>
-            </div>
-          )}
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setShowExistingImages(false)}>
-            Zatvori
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
     

@@ -30,14 +30,14 @@ export default function Document() {
         <meta property="og:site_name" content="Ders" />
         <meta property="og:title" content="Ders - Platforma za praćenje predavanja" />
         <meta property="og:description" content="Pronađite najnovija predavanja, pratite omiljene daije i organizacije na jednom mjestu." />
-        <meta property="og:image" content="/uploads/android-chrome-512x512.png" />
+        <meta property="og:image" content="https://ders.ba/uploads/android-chrome-512x512.png" />
         <meta property="og:locale" content="bs_BA" />
         
         {/* Twitter Card Meta Tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Ders - Platforma za praćenje predavanja" />
         <meta name="twitter:description" content="Pronađite najnovija predavanja, pratite omiljene daije i organizacije na jednom mjestu." />
-        <meta name="twitter:image" content="/uploads/android-chrome-512x512.png" />
+        <meta name="twitter:image" content="https://ders.ba/uploads/android-chrome-512x512.png" />
         
         {/* Google Analytics */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-2PXHZSFM8R"></script>
@@ -52,11 +52,11 @@ export default function Document() {
           }}
         />
         
-        <link rel="icon" type="image/png" sizes="192x192" href="/uploads/android-chrome-192x192.png" />
-        <link rel="icon" type="image/png" sizes="512x512" href="/uploads/android-chrome-192x192.png" />
-        <link rel="shortcut icon" href="/uploads/favicon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="https://ders.ba/uploads/android-chrome-192x192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="https://ders.ba/uploads/android-chrome-512x512.png" />
+        <link rel="shortcut icon" href="https://ders.ba/uploads/favicon.png" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" sizes="192x192" href="/uploads/android-chrome-192x192.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="https://ders.ba/uploads/android-chrome-192x192.png" />
         
         {/* Structured Data - JSON-LD */}
         <script

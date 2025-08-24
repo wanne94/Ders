@@ -66,22 +66,10 @@ export const userMenuItems = [
 // Admin meni - samo za administratore
 export const adminMenuItems = [
   {
-    label: 'Dashboard',
-    text: 'Dashboard',
+    label: 'Admin Panel',
+    text: 'Admin Panel',
     icon: <LayoutDashboard className="h-5 w-5" />,
-    path: '/dashboard'
-  },
-  {
-    label: 'Korisnici',
-    text: 'Korisnici',
-    icon: <Users className="h-5 w-5" />,
-    path: '/users'
-  },
-  {
-    label: 'Postavke',
-    text: 'Postavke',
-    icon: <Settings className="h-5 w-5" />,
-    path: '/settings'
+    path: '/admin'
   }
 ];
 

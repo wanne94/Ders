@@ -66,6 +66,7 @@ const Navigation = () => {
   const [suggestionFormOpen, setSuggestionFormOpen] = useState(false);
   const [showNavigation, setShowNavigation] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Scroll handler za skrivanje/prikazivanje navigacije
   useEffect(() => {
@@ -144,8 +145,16 @@ const Navigation = () => {
   };
 
   const navigateToRoute = (path) => {
+    if (isNavigating) return;
+    
+    setIsNavigating(true);
     router.push(path);
     setDrawerOpen(false);
+    
+    // Reset navigation lock after a short delay
+    setTimeout(() => {
+      setIsNavigating(false);
+    }, 500);
   };
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
@@ -193,7 +202,11 @@ const Navigation = () => {
             {/* Logo */}
             <div 
               className="flex items-center cursor-pointer"
-              onClick={() => router.push('/')}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                navigateToRoute('/');
+              }}
             >
               <LogoCircle />
             </div>
@@ -206,7 +219,12 @@ const Navigation = () => {
                   <Button
                     key={item.path}
                     variant="ghost"
-                    onClick={() => navigateToRoute(item.path)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      navigateToRoute(item.path);
+                    }}
+                    disabled={isNavigating}
                     className="flex items-center gap-2 text-white hover:bg-white/10 hover:text-white"
                   >
                     {item.icon}
@@ -221,7 +239,12 @@ const Navigation = () => {
                 {isAdmin && (
                   <Button
                     variant="ghost"
-                    onClick={() => router.push('/dashboard')}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      navigateToRoute('/dashboard');
+                    }}
+                    disabled={isNavigating}
                     className="flex items-center gap-2 text-white hover:bg-white/10 hover:text-white"
                   >
                     <LayoutDashboard className="h-4 w-4" />
@@ -316,7 +339,16 @@ const Navigation = () => {
                       key={index}
                       variant="ghost"
                       className="justify-start"
-                      onClick={item.onClick || (() => navigateToRoute(item.path))}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (item.onClick) {
+                          item.onClick();
+                        } else {
+                          navigateToRoute(item.path);
+                        }
+                      }}
+                      disabled={isNavigating}
                     >
                       {item.icon}
                       <span className="ml-2">{item.label}</span>

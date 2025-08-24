@@ -28,9 +28,25 @@ export function Combobox({
   disabled = false
 }) {
   const [open, setOpen] = React.useState(false)
+  const [search, setSearch] = React.useState("")
+  
+  // Filter options based on search
+  const filteredOptions = React.useMemo(() => {
+    if (!search) return options
+    
+    const searchLower = search.toLowerCase()
+    return options.filter(option => 
+      option.label.toLowerCase().includes(searchLower)
+    )
+  }, [options, search])
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(newOpen) => {
+      setOpen(newOpen)
+      if (!newOpen) {
+        setSearch("")
+      }
+    }}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -46,16 +62,20 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-[300px] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder={searchPlaceholder} 
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandEmpty>{emptyText}</CommandEmpty>
           <CommandGroup className="max-h-[400px] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-            {options.map((option) => (
+            {filteredOptions.map((option) => (
               <CommandItem
                 key={option.value}
-                value={option.value}
-                onSelect={(currentValue) => {
-                  onValueChange(currentValue === value ? "" : currentValue)
+                value={option.label}
+                onSelect={() => {
+                  onValueChange(option.value === value ? "" : option.value)
                   setOpen(false)
                 }}
               >

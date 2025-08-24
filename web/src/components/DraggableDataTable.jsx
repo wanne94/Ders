@@ -21,6 +21,8 @@ import {
   Eye,
   Ban
 } from 'lucide-react';
+import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
+import { formatDaijaTitle } from '@/utils';
 
 const DraggableDataTable = ({
   data = [],
@@ -42,6 +44,8 @@ const DraggableDataTable = ({
   const [localData, setLocalData] = useState(data);
   const [selectedItems, setSelectedItems] = useState([]);
   const [isDragMode, setIsDragMode] = useState(dragEnabled);
+  const [hoveredImage, setHoveredImage] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     setLocalData(data);
@@ -132,15 +136,18 @@ const DraggableDataTable = ({
       case 'lecture':
       case 'lectures':
         headers.push(
+          <TableHead key="image" className="w-16">Slika</TableHead>,
           <TableHead key="title">Naslov</TableHead>,
           <TableHead key="speaker">Predavač</TableHead>,
           <TableHead key="date">Datum</TableHead>,
+          <TableHead key="time">Vrijeme</TableHead>,
           <TableHead key="organization">Organizacija</TableHead>
         );
         break;
       case 'daija':
       case 'daije':
         headers.push(
+          <TableHead key="image" className="w-16">Slika</TableHead>,
           <TableHead key="title">Ime</TableHead>,
           <TableHead key="description">Opis</TableHead>,
           <TableHead key="createdAt">Kreiran</TableHead>
@@ -149,6 +156,7 @@ const DraggableDataTable = ({
       case 'organization':
       case 'organizations':
         headers.push(
+          <TableHead key="image" className="w-16">Slika</TableHead>,
           <TableHead key="name">Naziv</TableHead>,
           <TableHead key="city">Grad</TableHead>,
           <TableHead key="address">Adresa</TableHead>
@@ -207,18 +215,79 @@ const DraggableDataTable = ({
     switch (type) {
       case 'lecture':
       case 'lectures':
+        const formatDate = (dateString) => {
+          if (!dateString) return '-';
+          const date = new Date(dateString);
+          const day = date.getDate();
+          const month = date.getMonth() + 1;
+          const year = date.getFullYear();
+          return `${day}.${month}.${year}`;
+        };
+        
         cells.push(
-          <TableCell key="title">{item.title}</TableCell>,
-          <TableCell key="speaker">{item.speaker}</TableCell>,
-          <TableCell key="date">
-            {item.date ? new Date(item.date).toLocaleDateString('bs-BA') : '-'}
+          <TableCell key="image" className="w-16">
+            <div 
+              className="relative"
+              onMouseEnter={(e) => {
+                setHoveredImage(getImageUrl(item.image) || getDefaultLectureImage());
+                setMousePosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseMove={(e) => {
+                setMousePosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredImage(null)}
+            >
+              <img 
+                src={getImageUrl(item.image) || getDefaultLectureImage()} 
+                alt={item.title} 
+                className="w-12 h-12 rounded-lg object-cover cursor-pointer"
+                onError={(e) => { 
+                  e.target.src = getDefaultLectureImage();
+                }}
+              />
+            </div>
           </TableCell>,
+          <TableCell key="title">
+            <div className="max-w-xs truncate" title={item.title}>
+              {item.title}
+            </div>
+          </TableCell>,
+          <TableCell key="speaker">
+            {item.daija && typeof item.daija === 'object' 
+              ? formatDaijaTitle(item.daija.name, item.daija.title)
+              : item.speaker || '-'
+            }
+          </TableCell>,
+          <TableCell key="date">{formatDate(item.date)}</TableCell>,
+          <TableCell key="time">{item.time || '-'}</TableCell>,
           <TableCell key="organization">{item.organization || '-'}</TableCell>
         );
         break;
       case 'daija':
       case 'daije':
         cells.push(
+          <TableCell key="image" className="w-16">
+            <div 
+              className="relative"
+              onMouseEnter={(e) => {
+                setHoveredImage(getImageUrl(item.image) || getDefaultDaijaImage());
+                setMousePosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseMove={(e) => {
+                setMousePosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredImage(null)}
+            >
+              <img 
+                src={getImageUrl(item.image) || getDefaultDaijaImage()} 
+                alt={item.title || item.name} 
+                className="w-12 h-12 rounded-full object-cover cursor-pointer"
+                onError={(e) => { 
+                  e.target.src = getDefaultDaijaImage();
+                }}
+              />
+            </div>
+          </TableCell>,
           <TableCell key="title">{item.title || item.name}</TableCell>,
           <TableCell key="description">
             {item.description ? item.description.substring(0, 100) + '...' : '-'}
@@ -231,6 +300,28 @@ const DraggableDataTable = ({
       case 'organization':
       case 'organizations':
         cells.push(
+          <TableCell key="image" className="w-16">
+            <div 
+              className="relative"
+              onMouseEnter={(e) => {
+                setHoveredImage(getImageUrl(item.image) || getDefaultOrganizationImage());
+                setMousePosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseMove={(e) => {
+                setMousePosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredImage(null)}
+            >
+              <img 
+                src={getImageUrl(item.image) || getDefaultOrganizationImage()} 
+                alt={item.name} 
+                className="w-12 h-12 rounded-lg object-cover cursor-pointer"
+                onError={(e) => { 
+                  e.target.src = getDefaultOrganizationImage();
+                }}
+              />
+            </div>
+          </TableCell>,
           <TableCell key="name">{item.name}</TableCell>,
           <TableCell key="city">{item.city || '-'}</TableCell>,
           <TableCell key="address">{item.address || '-'}</TableCell>
@@ -353,6 +444,7 @@ const DraggableDataTable = ({
   if (!isDragMode) {
     // Regular table without drag & drop
     return (
+      <>
       <div>
         <div className="mb-4 flex justify-end">
           <label className="flex items-center gap-2">
@@ -422,6 +514,32 @@ const DraggableDataTable = ({
           </div>
         )}
       </div>
+      
+      {/* Image Preview on Hover */}
+      {hoveredImage && (
+        <div
+          className="fixed z-50 pointer-events-none"
+          style={{
+            left: `${Math.min(mousePosition.x + 20, window.innerWidth - 620)}px`,
+            top: `${Math.max(mousePosition.y - 400, 10)}px`,
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-2xl p-3 border-2 border-gray-300">
+            <img
+              src={hoveredImage}
+              alt="Preview"
+              className="object-contain rounded"
+              style={{ 
+                maxWidth: '600px', 
+                maxHeight: '600px',
+                width: 'auto',
+                height: 'auto'
+              }}
+            />
+          </div>
+        </div>
+      )}
+      </>
     );
   }
 
@@ -483,6 +601,31 @@ const DraggableDataTable = ({
           )}
         </Droppable>
       </DragDropContext>
+      
+      {/* Image Preview on Hover */}
+      {hoveredImage && (
+        <div
+          className="fixed z-50 pointer-events-none"
+          style={{
+            left: `${Math.min(mousePosition.x + 20, window.innerWidth - 620)}px`,
+            top: `${Math.max(mousePosition.y - 400, 10)}px`,
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-2xl p-3 border-2 border-gray-300">
+            <img
+              src={hoveredImage}
+              alt="Preview"
+              className="object-contain rounded"
+              style={{ 
+                maxWidth: '600px', 
+                maxHeight: '600px',
+                width: 'auto',
+                height: 'auto'
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

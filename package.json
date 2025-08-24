@@ -4,9 +4,10 @@
   "description": "DERS.BA Web Application",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"./start-tunnel.sh\" \"cd server && npm run dev\" \"cd web && npm run dev\"",
+    "dev": "concurrently --kill-others-on-fail --kill-others --handle-input \"./start-tunnel.sh\" \"cd server && npm run dev\" \"cd web && npm run dev\"",
     "dev:server": "concurrently \"./start-tunnel.sh\" \"cd server && npm run dev\"",
     "dev:web": "cd web && npm run dev",
+    "stop": "pkill -f 'npm run dev' || killall node nodemon || true",
     "build": "cd web && npm run build",
     "start": "cd web && npm start",
     "lint": "next lint",

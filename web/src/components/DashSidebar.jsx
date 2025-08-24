@@ -38,6 +38,7 @@ const DashSidebar = ({
   userRole
 }) => {
   const router = useRouter();
+  const [isChangingSection, setIsChangingSection] = React.useState(false);
 
   const mainMenuItems = [
     { id: 'predavanja', text: 'Dersovi', icon: <EventIcon />, description: 'Upravljanje predavanjima' },
@@ -135,9 +136,17 @@ const DashSidebar = ({
           {mainMenuItems?.filter(item => item).map((item) => (
             <ListItem disablePadding key={item.id} sx={{ mb: 0.5 }}>
               <ListItemButton
-                onClick={() => !item.disabled && onSectionChange(item.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!item.disabled && !isChangingSection && onSectionChange) {
+                    setIsChangingSection(true);
+                    onSectionChange(item.id);
+                    setTimeout(() => setIsChangingSection(false), 500);
+                  }
+                }}
                 selected={activeSection === item.id}
-                disabled={item.disabled}
+                disabled={item.disabled || isChangingSection}
                 sx={{
                   borderRadius: 2,
                   mx: 1,
@@ -197,9 +206,17 @@ const DashSidebar = ({
           {approvalMenuItems?.filter(item => item).map((item) => (
             <ListItem disablePadding key={item.id} sx={{ mb: 0.5 }}>
               <ListItemButton
-                onClick={() => !item.disabled && onSectionChange(item.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!item.disabled && !isChangingSection && onSectionChange) {
+                    setIsChangingSection(true);
+                    onSectionChange(item.id);
+                    setTimeout(() => setIsChangingSection(false), 500);
+                  }
+                }}
                 selected={activeSection === item.id}
-                disabled={item.disabled}
+                disabled={item.disabled || isChangingSection}
                 sx={{
                   borderRadius: 2,
                   mx: 1,
@@ -262,8 +279,17 @@ const DashSidebar = ({
         <List>
           <ListItem disablePadding>
             <ListItemButton
-              onClick={() => onSectionChange('postavke')}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!isChangingSection && onSectionChange) {
+                  setIsChangingSection(true);
+                  onSectionChange('postavke');
+                  setTimeout(() => setIsChangingSection(false), 500);
+                }
+              }}
               selected={activeSection === 'postavke'}
+              disabled={isChangingSection}
               sx={{
                 borderRadius: 2,
                 mx: 1,

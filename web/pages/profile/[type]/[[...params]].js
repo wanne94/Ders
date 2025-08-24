@@ -1,36 +1,59 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Container,
-  Grid,
-  Typography,
-  Paper,
-  Modal,
-  IconButton,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
   Pagination,
-  Chip,
-  Menu,
-  MenuItem,
-} from '@mui/material';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import PersonIcon from '@mui/icons-material/Person';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import FacebookIcon from '@mui/icons-material/Facebook';
-import InstagramIcon from '@mui/icons-material/Instagram';
-import TelegramIcon from '@mui/icons-material/Telegram';
-import ChatIcon from '@mui/icons-material/Chat';
-import DescriptionIcon from '@mui/icons-material/Description';
-import BusinessIcon from '@mui/icons-material/Business';
-import DirectionsIcon from '@mui/icons-material/Directions';
-import CloseIcon from '@mui/icons-material/Close';
-import EventIcon from '@mui/icons-material/Event';
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
+  MapPin,
+  Calendar,
+  Clock,
+  User,
+  ArrowLeft,
+  Facebook,
+  Instagram,
+  MessageCircle,
+  FileText,
+  Building,
+  Navigation,
+  X,
+  CalendarDays,
+  Loader2,
+  Send,
+  Users,
+  Info,
+  Phone,
+  Mail,
+  Globe,
+  BookOpen,
+  Award,
+  Heart,
+  Star,
+  TrendingUp,
+  Activity,
+  BarChart3,
+  Share2,
+  Eye,
+  Hash,
+} from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import ContentContainer from '@/components/ContentContainer';
 import ShareButton from '@/components/ShareButton';
@@ -45,6 +68,7 @@ import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOr
 import { formatDaijaTitle, generateSlug } from '@/utils';
 import { safeApiCall, normalizeToArray } from '@/utils/dataHelpers';
 import { downloadICS, addToGoogleCalendar } from '@/utils/calendarUtils';
+import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
 
 const ProfilePage = () => {
   const router = useRouter();
@@ -65,6 +89,10 @@ const ProfilePage = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const lecturesPerPage = 10;
+  
+  // Other upcoming lectures state (for display below hero)
+  const [upcomingLectures, setUpcomingLectures] = useState([]);
+  const [upcomingLoading, setUpcomingLoading] = useState(true);
   
   // Calendar dropdown state
   const [calendarAnchorEl, setCalendarAnchorEl] = useState(null);
@@ -101,70 +129,176 @@ const ProfilePage = () => {
     fetchProfile();
   }, [type, id]);
 
-  // Fetch related lectures
+  // Fetch related lectures for organizations and daijes
   useEffect(() => {
-    if (!type || !id || !profile) return;
+    if (!type || !id || type === 'lecture') return;
+    if (!profile) return; // Wait for profile to load first
     
     const fetchRelatedLectures = async () => {
       try {
         setRelatedLoading(true);
         setRelatedError(null);
-
-        let response;
-        let allLectures = [];
-
-        if (type === 'lecture') {
-          // Get all lectures from homepage and exclude current one
-          response = await safeApiCall(() => predavanjaService.getAllPredavanja(), []);
-          allLectures = normalizeToArray(response);
-          // Filter out current lecture
-          allLectures = allLectures.filter(lecture => lecture._id !== id);
-        } else if (type === 'organization') {
-          // Get lectures by organization
-          response = await safeApiCall(() => predavanjaService.getAllPredavanja(), []);
-          const allLecturesData = normalizeToArray(response);
-          allLectures = allLecturesData.filter(lecture => 
-            lecture.organizationId === id || 
-            (profile.name && lecture.organization && lecture.organization.includes(profile.name))
+        
+        let lectures = [];
+        if (type === 'organization') {
+          lectures = await safeApiCall(
+            () => predavanjaService.getPredavanjaByOrganization(id),  // Wrap in arrow function
+            []
           );
         } else if (type === 'daija') {
-          // Get lectures by daija
-          response = await safeApiCall(() => predavanjaService.getAllPredavanja(), []);
-          const allLecturesData = normalizeToArray(response);
-          allLectures = allLecturesData.filter(lecture => {
-            const matchById = lecture.daija && (lecture.daija._id === id || lecture.daija === id || lecture.daijaId === id);
-            const matchByName = profile.name && lecture.speaker && lecture.speaker.includes(profile.name);
-            return matchById || matchByName;
-          });
+          lectures = await safeApiCall(
+            () => predavanjaService.getPredavanjaBySpeaker(id),  // Wrap in arrow function
+            []
+          );
         }
-
-        // Add type field to all lectures
-        const lecturesWithType = allLectures.map(lecture => ({
-          ...lecture,
-          type: 'Predavanje'
-        }));
-
-        // Calculate pagination
-        const totalLectures = lecturesWithType.length;
-        const calculatedTotalPages = Math.ceil(totalLectures / lecturesPerPage);
-        setTotalPages(calculatedTotalPages);
-
-        // Get lectures for current page
-        const startIndex = (page - 1) * lecturesPerPage;
-        const endIndex = startIndex + lecturesPerPage;
-        const currentPageLectures = lecturesWithType.slice(startIndex, endIndex);
-
-        setRelatedLectures(currentPageLectures);
-      } catch (error) {
-        console.error('Error fetching related lectures:', error);
-        setRelatedError('Greška pri dohvaćanju povezanih predavanja');
+        
+        // Normalize to array and sort by date
+        lectures = normalizeToArray(lectures);
+        lectures.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        setRelatedLectures(lectures);
+        setTotalPages(Math.ceil(lectures.length / lecturesPerPage));
+      } catch (err) {
+        console.error('Error fetching related lectures:', err);
+        setRelatedError('Greška pri učitavanju povezanih predavanja');
       } finally {
         setRelatedLoading(false);
       }
     };
-
+    
     fetchRelatedLectures();
-  }, [type, id, profile, page]);
+  }, [type, id, profile]);
+  
+  // Fetch upcoming lectures for all profile types
+  useEffect(() => {
+    const fetchUpcomingLectures = async () => {
+      try {
+        setUpcomingLoading(true);
+        
+        // Get all lectures - same as home page
+        const allLectures = await predavanjaService.getAllPredavanja(1, 100, 'all');
+        
+        // Normalize lectures - handle both array and object responses
+        let normalized = [];
+        if (Array.isArray(allLectures)) {
+          normalized = allLectures;
+        } else if (allLectures && allLectures.data) {
+          normalized = Array.isArray(allLectures.data) ? allLectures.data : [];
+        } else if (allLectures && typeof allLectures === 'object') {
+          normalized = Object.values(allLectures);
+        }
+        
+        // Filter only approved lectures and exclude based on profile type
+        const approvedLectures = normalized.filter(lecture => {
+          // Must be approved
+          if (lecture.status !== 'approved') return false;
+          
+          // If we're viewing a lecture profile, exclude the current lecture
+          if (type === 'lecture' && profile && lecture._id === profile._id) {
+            return false;
+          }
+          
+          // If we're viewing a daija profile, exclude lectures by this daija
+          if (type === 'daija' && profile) {
+            // Check if lecture is by this daija
+            if (lecture.daijaName === profile.name || 
+                lecture.speaker === profile.name ||
+                (lecture.daija && typeof lecture.daija === 'object' && lecture.daija._id === profile._id) ||
+                lecture.daija === profile._id) {
+              return false;
+            }
+          }
+          
+          // If we're viewing an organization profile, exclude lectures by this organization
+          if (type === 'organization' && profile) {
+            // Check if lecture is by this organization
+            if (lecture.organizationName === profile.name ||
+                (lecture.organization && typeof lecture.organization === 'object' && lecture.organization._id === profile._id) ||
+                (lecture.organizationId && typeof lecture.organizationId === 'object' && lecture.organizationId._id === profile._id) ||
+                lecture.organization === profile._id ||
+                lecture.organizationId === profile._id) {
+              return false;
+            }
+          }
+          
+          return true;
+        });
+        
+        // Sort using the same logic as home page (U toku -> Uskoro -> Prošlo)
+        const sorted = sortLecturesByStatus(approvedLectures);
+        
+        // Take first 10 for display
+        const forDisplay = sorted.slice(0, 10);
+        
+        setUpcomingLectures(forDisplay);
+      } catch (err) {
+        console.error('Error fetching upcoming lectures:', err);
+        setUpcomingLectures([]); // Set empty array on error
+      } finally {
+        setUpcomingLoading(false);
+      }
+    };
+    
+    fetchUpcomingLectures();
+  }, [type, profile]);
+
+  const getTitle = () => {
+    if (!profile) return '';
+    
+    if (type === 'daija') {
+      return formatDaijaTitle(profile.name, profile.title);
+    } else if (type === 'lecture') {
+      return profile.title || 'Predavanje';
+    } else if (type === 'organization') {
+      return profile.name || 'Organizacija';
+    }
+    return '';
+  };
+
+  const getDefaultImage = () => {
+    if (type === 'daija') return getDefaultDaijaImage();
+    if (type === 'organization') return getDefaultOrganizationImage();
+    return getDefaultLectureImage();
+  };
+
+  // Get back button path based on profile type
+  const getBackPath = () => {
+    if (type === 'daija') return '/daije';
+    if (type === 'organization') return '/udruzenja';
+    return '/';
+  };
+
+  const getBackText = () => {
+    if (type === 'daija') return 'Nazad na daije';
+    if (type === 'organization') return 'Nazad na udruženja';
+    return 'Nazad na predavanja';
+  };
+
+  // Calendar functions
+  const handleCalendarClick = (event) => {
+    setCalendarAnchorEl(event.currentTarget);
+  };
+
+  const handleCalendarClose = () => {
+    setCalendarAnchorEl(null);
+  };
+
+  const handleAddToCalendar = (method) => {
+    handleCalendarClose();
+    
+    if (method === 'google') {
+      addToGoogleCalendar(profile);
+    } else if (method === 'ics') {
+      downloadICS(profile);
+    }
+  };
+
+  // Paginated lectures for display
+  const getPaginatedLectures = () => {
+    const startIndex = (page - 1) * lecturesPerPage;
+    const endIndex = startIndex + lecturesPerPage;
+    return relatedLectures.slice(startIndex, endIndex);
+  };
 
   const handlePageChange = (event, value) => {
     setPage(value);
@@ -175,71 +309,12 @@ const ProfilePage = () => {
     }
   };
 
-  const getBackPath = () => {
-    if (type === 'daija') return '/daije';
-    if (type === 'organization') return '/organizations';
-    return '/lectures';
-  };
-
-  const getBackText = () => {
-    if (type === 'daija') return 'Nazad na sve daije';
-    if (type === 'organization') return 'Nazad na sva udruženja';
-    return 'Nazad na sva predavanja';
-  };
-
-  const getTitle = () => {
-    if (type === 'daija') {
-      return formatDaijaTitle(profile.name, profile.title);
-    }
-    if (type === 'organization') {
-      return profile.name;
-    }
-    // For lectures, add part number if exists
-    let title = profile.title;
-    if (type === 'lecture' && profile.lecturePart) {
-      title += ` (dio ${profile.lecturePart}.)`;
-    }
-    return title;
-  };
-
-  const getDefaultImage = () => {
-    if (type === 'daija') return getDefaultDaijaImage();
-    if (type === 'organization') return getDefaultOrganizationImage();
-    return getDefaultLectureImage();
-  };
-
-  const handleCalendarClick = (event) => {
-    setCalendarAnchorEl(event.currentTarget);
-  };
-
-  const handleCalendarClose = () => {
-    setCalendarAnchorEl(null);
-  };
-
-  const handleDownloadICS = () => {
-    if (profile && type === 'lecture') {
-      downloadICS(profile);
-      handleCalendarClose();
-    }
-  };
-
-  const handleAddToGoogleCalendar = () => {
-    if (profile && type === 'lecture') {
-      addToGoogleCalendar(profile);
-      handleCalendarClose();
-    }
-  };
-
-  const getRelatedTitle = () => {
-    if (type === 'lecture') return 'Ostali najavljeni dersovi';
-    if (type === 'organization') return 'Najavljeni dersovi';
-    if (type === 'daija') return 'Najavljeni dersovi';
-    return 'Najavljeni dersovi';
-  };
-
-  const openLocation = () => {
+  // Function to open directions
+  const openDirections = () => {
     const address = [profile.address, profile.city].filter(Boolean).join(', ');
     const encoded = encodeURIComponent(address);
+    
+    // Check if on mobile to open in app
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
@@ -268,17 +343,18 @@ const ProfilePage = () => {
   if (error) {
     return (
       <PageLayout>
-        <ContentContainer sx={{ py: 4 }}>
-          <Alert severity="error" sx={{ mb: 4 }}>
-            {error}
-          </Alert>
-          <Button 
-            variant="contained" 
-            startIcon={<ArrowBackIcon />} 
-            onClick={() => router.push(getBackPath())}
-          >
-            {getBackText()}
-          </Button>
+        <ContentContainer>
+          <div className="py-4">
+            <Alert className="mb-4" variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <Button 
+              onClick={() => router.push(getBackPath())}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {getBackText()}
+            </Button>
+          </div>
         </ContentContainer>
       </PageLayout>
     );
@@ -287,17 +363,18 @@ const ProfilePage = () => {
   if (!profile) {
     return (
       <PageLayout>
-        <ContentContainer sx={{ py: 4 }}>
-          <Alert severity="warning" sx={{ mb: 4 }}>
-            Profil nije pronađen
-          </Alert>
-          <Button 
-            variant="contained" 
-            startIcon={<ArrowBackIcon />} 
-            onClick={() => router.push(getBackPath())}
-          >
-            {getBackText()}
-          </Button>
+        <ContentContainer>
+          <div className="py-4">
+            <Alert className="mb-4">
+              <AlertDescription>Profil nije pronađen</AlertDescription>
+            </Alert>
+            <Button 
+              onClick={() => router.push(getBackPath())}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {getBackText()}
+            </Button>
+          </div>
         </ContentContainer>
       </PageLayout>
     );
@@ -326,9 +403,37 @@ const ProfilePage = () => {
     if (type === 'daija') {
       return profile.bio || `Profil daije ${profile.name}. Pronađite predavanja i informacije.`;
     } else if (type === 'lecture') {
-      return profile.description || `${profile.title} - Predavanje`;
+      // Create detailed description for lectures
+      const date = new Date(profile.date);
+      const formattedDate = date.toLocaleDateString('sr-RS', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      
+      let description = `📚 ${profile.title}`;
+      description += ` | 📅 ${formattedDate} u ${profile.time}`;
+      description += ` | 📍 ${profile.address}, ${profile.city}`;
+      
+      if (profile.daijaName) {
+        description += ` | 👤 Predavač: ${profile.daijaTitle ? `${profile.daijaTitle} ` : ''}${profile.daijaName}`;
+      }
+      
+      if (profile.organizationName) {
+        description += ` | 🕌 ${profile.organizationName}`;
+      }
+      
+      return description;
     } else if (type === 'organization') {
-      return profile.description || `${profile.name} - Islamska organizacija`;
+      let description = profile.description || `${profile.name} - Islamska organizacija`;
+      if (profile.address || profile.city) {
+        description += ` | 📍 ${[profile.address, profile.city].filter(Boolean).join(', ')}`;
+      }
+      if (profile.phone) {
+        description += ` | ☎️ ${profile.phone}`;
+      }
+      return description;
     }
     return '';
   };
@@ -343,12 +448,6 @@ const ProfilePage = () => {
       return `https://ders.ba/daija/${slug}`;
     }
     
-    // For organization profiles, use short URL
-    if (type === 'organization' && profile?.name) {
-      const slug = generateSlug(profile.name);
-      return `https://ders.ba/udruzenje/${slug}`;
-    }
-    
     // For lecture profiles, use short URL
     if (type === 'lecture' && profile?.title) {
       const slug = generateSlug(profile.title);
@@ -358,6 +457,20 @@ const ProfilePage = () => {
     return `https://ders.ba/profile/${type}/${id}`;
   };
 
+  // Get days until lecture
+  const getDaysUntilLecture = () => {
+    if (!profile.date) return null;
+    const lectureDate = new Date(profile.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    lectureDate.setHours(0, 0, 0, 0);
+    const diffTime = lectureDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const daysUntil = type === 'lecture' ? getDaysUntilLecture() : null;
+
   return (
     <>
       <Head>
@@ -366,715 +479,675 @@ const ProfilePage = () => {
         <link rel="canonical" href={getCanonicalUrl()} />
         {profile && (
           <>
+            {/* Open Graph tags for better social sharing */}
             <meta property="og:title" content={getPageTitle()} />
             <meta property="og:description" content={getPageDescription()} />
             <meta property="og:url" content={getCanonicalUrl()} />
-            {profile.image && <meta property="og:image" content={getImageUrl(profile.image)} />}
+            <meta property="og:type" content={type === 'lecture' ? 'event' : 'profile'} />
+            <meta property="og:site_name" content="Ders.ba - Islamska predavanja" />
+            <meta property="og:image" content={profile.image ? getImageUrl(profile.image) : getImageUrl(getDefaultImage())} />
+            <meta property="og:image:secure_url" content={profile.image ? getImageUrl(profile.image) : getImageUrl(getDefaultImage())} />
+            <meta property="og:image:type" content="image/jpeg" />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+            
+            {/* Additional Open Graph tags for lectures */}
+            {type === 'lecture' && (
+              <>
+                <meta property="og:image:alt" content={`${profile.title} - Predavanje`} />
+                <meta property="event:start_time" content={new Date(profile.date).toISOString()} />
+                {profile.address && <meta property="og:locality" content={profile.city} />}
+                {profile.organizationName && <meta property="og:see_also" content={profile.organizationName} />}
+              </>
+            )}
+            
+            {/* Twitter Card tags */}
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content={getPageTitle()} />
+            <meta name="twitter:description" content={getPageDescription()} />
+            <meta name="twitter:image" content={profile.image ? getImageUrl(profile.image) : getImageUrl(getDefaultImage())} />
+            
+            {/* Additional meta tags for rich snippets */}
+            {type === 'lecture' && (
+              <>
+                <meta itemProp="name" content={profile.title} />
+                <meta itemProp="description" content={getPageDescription()} />
+                <meta itemProp="startDate" content={new Date(profile.date).toISOString()} />
+                <meta itemProp="endDate" content={new Date(profile.date).toISOString()} />
+                <meta itemProp="location" content={`${profile.address}, ${profile.city}`} />
+                {profile.daijaName && <meta itemProp="performer" content={profile.daijaName} />}
+                {profile.organizationName && <meta itemProp="organizer" content={profile.organizationName} />}
+              </>
+            )}
           </>
         )}
       </Head>
       <PageLayout>
-        <ContentContainer sx={{ py: 4 }}>
-        {/* Back Button */}
-        <Box sx={{ mb: 3 }}>
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            onClick={() => router.push(getBackPath())}
-            sx={{ mb: 2 }}
-          >
-            {getBackText()}
-          </Button>
-        </Box>
+        <ContentContainer>
+          <div className="py-4">
+            {/* Back Button */}
+            <div className="mb-4">
+              <Button
+                variant="outline"
+                onClick={() => router.push(getBackPath())}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {getBackText()}
+              </Button>
+            </div>
 
-        {/* Hero Section */}
-        <Paper 
-          elevation={0}
-          sx={{ 
-            background: 'linear-gradient(135deg, #022C43 0%, #055A87 100%)',
-            color: 'white',
-            borderRadius: 4,
-            overflow: 'hidden',
-            mb: 4,
-            position: 'relative'
-          }}
-        >
-          <ContentContainer>
-            <Grid container spacing={4} alignItems="stretch" sx={{ py: { xs: 4, sm: 6 } }}>
-              {/* Profile Image - Left Column */}
-              <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Box
-                  onClick={() => setImageModalOpen(true)}
-                  sx={{
-                    position: 'relative',
-                    width: '100%',
-                    height: { xs: '40vh', md: '100%' },
-                    borderRadius: type === 'daija' ? '50%' : 4,
-                    overflow: 'hidden',
-                    border: '6px solid rgba(255, 255, 255, 0.2)',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      transform: 'scale(1.02)',
-                      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'
-                    }
-                  }}
-                >
-                  <Box
-                    component="img"
-                    src={getImageUrl(profile.image) || getDefaultImage()}
-                    alt={profile.title || profile.name}
-                    sx={{ 
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      display: 'block'
-                    }}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = getDefaultImage();
-                    }}
-                  />
-                  {/* Cancellation Overlay for lectures */}
-                  {type === 'lecture' && (
-                    <CancelledOverlay 
-                      show={profile.isCancelled || profile.status === 'cancelled'}
-                      text="OTKAZANO"
-                      variant="diagonal"
-                    />
-                  )}
-                </Box>
-              </Grid>
-
-              {/* Profile Info - Right Column */}
-              <Grid item xs={12} md={8}>
-                <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-                  <Typography 
-                    variant="h2" 
-                    component="h1" 
-                    gutterBottom
-                    sx={{ 
-                      fontWeight: type === 'lecture' ? 'bold' : 300,
-                      fontSize: { xs: '2rem', md: '3rem' },
-                      letterSpacing: '-0.02em',
-                      mb: 2,
-                      textTransform: type === 'lecture' ? 'uppercase' : 'none'
-                    }}
-                  >
-                    {getTitle()}
-                  </Typography>
-
-                  {/* Weekly lecture badge */}
-                  {type === 'lecture' && profile.isWeeklyLecture && (
-                    <Box sx={{ mb: 2 }}>
-                      <Chip
-                        label="Sedmično predavanje"
-                        size="medium"
-                        sx={{
-                          backgroundColor: '#e3f2fd',
-                          color: '#1565c0',
-                          fontWeight: 'bold',
-                          fontSize: '0.85rem',
-                          px: 2,
-                          py: 0.5,
-                          height: 'auto',
-                          '& .MuiChip-label': {
-                            px: 1,
-                            py: 0.5
-                          }
-                        }}
-                      />
-                    </Box>
-                  )}
-
-                  {/* Meta Information */}
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 3 }}>
-                    {/* Date */}
-                    {type === 'lecture' && profile.date && (
-                      <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        color: 'white',
-                        borderRadius: 3,
-                        px: { xs: 2, sm: 2.5 },
-                        py: { xs: 1, sm: 1.2 },
-                        fontSize: { xs: '0.85rem', sm: '0.9rem' },
-                        fontWeight: 500,
-                        backdropFilter: 'blur(10px)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      }}>
-                        <CalendarTodayIcon sx={{ fontSize: 18 }} />
-                        <span>{formatDateWithDay(profile.date)}</span>
-                      </Box>
-                    )}
-
-                    {/* Time */}
-                    {type === 'lecture' && profile.time && (
-                      <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        color: 'white',
-                        borderRadius: 3,
-                        px: { xs: 2, sm: 2.5 },
-                        py: { xs: 1, sm: 1.2 },
-                        fontSize: { xs: '0.85rem', sm: '0.9rem' },
-                        fontWeight: 500,
-                        backdropFilter: 'blur(10px)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      }}>
-                        <AccessTimeIcon sx={{ fontSize: 18 }} />
-                        <span>{profile.time}</span>
-                      </Box>
-                    )}
-                    
-                    {/* Speaker */}
-                    {type === 'lecture' && profile.speaker && (
-                      <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        color: 'white',
-                        borderRadius: 3,
-                        px: { xs: 2, sm: 2.5 },
-                        py: { xs: 1, sm: 1.2 },
-                        fontSize: { xs: '0.85rem', sm: '0.9rem' },
-                        fontWeight: 500,
-                        backdropFilter: 'blur(10px)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      }}>
-                        <PersonIcon sx={{ fontSize: 18 }} />
-                        <span>{profile.speaker}</span>
-                      </Box>
-                    )}
-
-                    {/* Organization */}
-                    {type === 'lecture' && profile.organization && (
-                      <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        color: 'white',
-                        borderRadius: 3,
-                        px: { xs: 2, sm: 2.5 },
-                        py: { xs: 1, sm: 1.2 },
-                        fontSize: { xs: '0.85rem', sm: '0.9rem' },
-                        fontWeight: 500,
-                        backdropFilter: 'blur(10px)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      }}>
-                        <BusinessIcon sx={{ fontSize: 18 }} />
-                        <span>{profile.organization}</span>
-                      </Box>
-                    )}
-                    
-                    {/* Location */}
-                    {(profile.address || profile.city) && (
-                      <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        color: 'white',
-                        borderRadius: 3,
-                        px: { xs: 2, sm: 2.5 },
-                        py: { xs: 1, sm: 1.2 },
-                        fontSize: { xs: '0.85rem', sm: '0.9rem' },
-                        fontWeight: 500,
-                        backdropFilter: 'blur(10px)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      }}>
-                        <LocationOnIcon sx={{ fontSize: 18 }} />
-                        <span>{[profile.address, profile.city].filter(Boolean).join(', ')}</span>
-                      </Box>
-                    )}
-                  </Box>
-
-                  {/* Cancellation Notice */}
-                  {type === 'lecture' && (profile.isCancelled || profile.status === 'cancelled') && (
-                    <Box sx={{
-                      border: '2px solid #f44336',
-                      backgroundColor: 'rgba(244, 67, 54, 0.1)',
-                      borderRadius: 3,
-                      px: { xs: 2.5, sm: 3 },
-                      py: { xs: 2, sm: 2.5 },
-                      mb: 3,
-                      backdropFilter: 'blur(10px)',
-                    }}>
-                      <Typography variant="h6" sx={{ 
-                        color: '#f44336', 
-                        fontWeight: 'bold',
-                        textAlign: 'center',
-                        mb: 1,
-                        textTransform: 'uppercase',
-                        letterSpacing: 1.5
-                      }}>
-                        ❌ PREDAVANJE JE OTKAZANO
-                      </Typography>
-                      {profile.cancellationReason && (
-                        <Typography variant="body2" sx={{
-                          color: 'rgba(255, 255, 255, 0.9)',
-                          textAlign: 'center',
-                          fontSize: '0.95rem'
-                        }}>
-                          Razlog: {profile.cancellationReason}
-                        </Typography>
-                      )}
-                      {profile.cancelledAt && (
-                        <Typography variant="body2" sx={{
-                          color: 'rgba(255, 255, 255, 0.7)',
-                          textAlign: 'center',
-                          fontSize: '0.85rem',
-                          mt: 1
-                        }}>
-                          Otkazano: {new Date(profile.cancelledAt).toLocaleDateString('bs-BA')}
-                        </Typography>
-                      )}
-                    </Box>
-                  )}
-
-                  {/* Description */}
-                  {(profile.description || profile.biography) && (
-                    <Box sx={{
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
-                      color: 'white',
-                      borderRadius: 3,
-                      px: { xs: 2.5, sm: 3 },
-                      py: { xs: 2, sm: 2.5 },
-                      mb: 3,
-                      backdropFilter: 'blur(10px)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-                        <DescriptionIcon sx={{ fontSize: 20 }} />
-                        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
-                          {type === 'organization' ? 'O udruženju' : type === 'daija' ? 'Biografija' : 'Opis predavanja'}
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" sx={{
-                        fontSize: '0.95rem',
-                        lineHeight: 1.7,
-                        opacity: 0.95,
-                      }}>
-                        {profile.description || profile.biography}
-                      </Typography>
-                    </Box>
-                  )}
-
-                  {/* Social Media Links */}
-                  {type === 'organization' && (profile.facebook || profile.instagram || profile.telegram || profile.viber) && (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 3 }}>
-                      {profile.facebook && (
-                        <Button
-                          variant="outlined"
-                          startIcon={<FacebookIcon />}
-                          href={profile.facebook}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                            color: 'white',
-                            borderRadius: 3,
-                            px: 2.5,
-                            py: 1.2,
-                            fontSize: '0.9rem',
-                            fontWeight: 500,
-                            textTransform: 'none',
-                            backdropFilter: 'blur(10px)',
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            '&:hover': {
-                              borderColor: 'rgba(255, 255, 255, 0.5)',
-                              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            }
-                          }}
-                        >
-                          Facebook
-                        </Button>
-                      )}
-                      {profile.instagram && (
-                        <Button
-                          variant="outlined"
-                          startIcon={<InstagramIcon />}
-                          href={profile.instagram}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                            color: 'white',
-                            borderRadius: 3,
-                            px: 2.5,
-                            py: 1.2,
-                            fontSize: '0.9rem',
-                            fontWeight: 500,
-                            textTransform: 'none',
-                            backdropFilter: 'blur(10px)',
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            '&:hover': {
-                              borderColor: 'rgba(255, 255, 255, 0.5)',
-                              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            }
-                          }}
-                        >
-                          Instagram
-                        </Button>
-                      )}
-                      {profile.telegram && (
-                        <Button
-                          variant="outlined"
-                          startIcon={<TelegramIcon />}
-                          href={profile.telegram}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                            color: 'white',
-                            borderRadius: 3,
-                            px: 2.5,
-                            py: 1.2,
-                            fontSize: '0.9rem',
-                            fontWeight: 500,
-                            textTransform: 'none',
-                            backdropFilter: 'blur(10px)',
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            '&:hover': {
-                              borderColor: 'rgba(255, 255, 255, 0.5)',
-                              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            }
-                          }}
-                        >
-                          Telegram
-                        </Button>
-                      )}
-                      {profile.viber && (
-                        <Button
-                          variant="outlined"
-                          startIcon={<ChatIcon />}
-                          href={profile.viber}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                            color: 'white',
-                            borderRadius: 3,
-                            px: 2.5,
-                            py: 1.2,
-                            fontSize: '0.9rem',
-                            fontWeight: 500,
-                            textTransform: 'none',
-                            backdropFilter: 'blur(10px)',
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            '&:hover': {
-                              borderColor: 'rgba(255, 255, 255, 0.5)',
-                              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            }
-                          }}
-                        >
-                          Viber
-                        </Button>
-                      )}
-                    </Box>
-                  )}
-
-                  {/* Action Buttons */}
-                  <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                    {/* Location Button */}
-                    {(type === 'lecture' || type === 'organization') && (profile.address || profile.city) && (
-                      <Button
-                        variant="outlined"
-                        startIcon={<DirectionsIcon />}
-                        onClick={openLocation}
-                        sx={{
-                          borderColor: 'rgba(255, 255, 255, 0.3)',
-                          color: 'white',
-                          borderRadius: 3,
-                          px: 3,
-                          py: 1.5,
-                          fontSize: '0.95rem',
-                          fontWeight: 500,
-                          textTransform: 'none',
-                          transition: 'all 0.2s ease',
-                          backdropFilter: 'blur(10px)',
-                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                          '&:hover': {
-                            borderColor: 'rgba(255, 255, 255, 0.5)',
-                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            transform: 'translateY(-1px)',
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
-                          }
-                        }}
+            {/* Hero Section with Enhanced Layout */}
+            <div className="bg-gradient-to-br from-[#022C43] to-[#055A87] text-white rounded-2xl overflow-hidden mb-6 relative">
+              {/* Decorative Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/20 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
+              </div>
+              
+              <ContentContainer>
+                <div className="relative z-10 py-8">
+                  {/* Main Content Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Left Column - Image and Quick Info */}
+                    <div className="lg:col-span-4">
+                      {/* Profile Image */}
+                      <div
+                        onClick={() => setImageModalOpen(true)}
+                        className={`
+                          relative w-full ${type === 'lecture' ? 'h-full min-h-[400px]' : 'aspect-square'} max-w-sm mx-auto lg:max-w-none
+                          ${type === 'daija' ? 'rounded-full' : 'rounded-2xl'}
+                          overflow-hidden border-4 border-white/20 shadow-2xl
+                          transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:shadow-3xl
+                          group
+                        `}
                       >
-                        Lokacija
-                      </Button>
-                    )}
-                    
-                    {/* Share Button */}
-                    <ShareButton profileData={profile} type={type} />
-                    
-                    {/* Add to Calendar Button - samo za predavanja koja nisu otkazana */}
-                    {type === 'lecture' && profile && !profile.isCancelled && profile.date && (
-                      <>
-                        <Button
-                          variant="outlined"
-                          startIcon={<EventIcon />}
-                          onClick={handleCalendarClick}
-                          sx={{
-                            borderColor: 'rgba(255, 255, 255, 0.5)',
-                            color: 'white',
-                            borderRadius: 3,
-                            px: 3,
-                            py: 1.5,
-                            fontSize: '0.95rem',
-                            fontWeight: 500,
-                            textTransform: 'none',
-                            transition: 'all 0.2s ease',
-                            backdropFilter: 'blur(10px)',
-                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                            '&:hover': {
-                              borderColor: 'white',
-                              backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                              transform: 'translateY(-1px)',
-                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                            }
-                          }}
-                        >
-                          Dodaj u kalendar
-                        </Button>
-                        <Menu
-                          anchorEl={calendarAnchorEl}
-                          open={calendarOpen}
-                          onClose={handleCalendarClose}
-                          anchorOrigin={{
-                            vertical: 'bottom',
-                            horizontal: 'left',
-                          }}
-                          transformOrigin={{
-                            vertical: 'top',
-                            horizontal: 'left',
-                          }}
-                        >
-                          <MenuItem onClick={handleDownloadICS}>
-                            <EventIcon sx={{ mr: 1 }} />
-                            Preuzmi .ics fajl
-                          </MenuItem>
-                          <MenuItem onClick={handleAddToGoogleCalendar}>
-                            <EventIcon sx={{ mr: 1 }} />
-                            Dodaj u Google kalendar
-                          </MenuItem>
-                        </Menu>
-                      </>
-                    )}
-                    
-                    {/* Cancellation Report Button - u istoj liniji sa ostalim dugmadima */}
-                    {type === 'lecture' && profile && !profile.isCancelled && (
-                      <Box sx={{
-                        '& .MuiButton-root': {
-                          backgroundColor: 'rgba(255, 152, 0, 0.15)', // Narandžasta pozadina
-                          borderColor: 'rgba(255, 152, 0, 0.6)',      // Narandžasti border  
-                          color: '#ff9800',                           // Narandžasta boja teksta
-                          borderRadius: 3,
-                          px: 3,
-                          py: 1.5,
-                          fontSize: '0.95rem',
-                          fontWeight: 500,
-                          textTransform: 'none',
-                          transition: 'all 0.2s ease',
-                          backdropFilter: 'blur(10px)',
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 152, 0, 0.25)',
-                            borderColor: 'rgba(255, 152, 0, 0.8)',
-                            color: '#f57c00',
-                            transform: 'translateY(-1px)',
-                            boxShadow: '0 4px 12px rgba(255, 152, 0, 0.3)'
-                          }
-                        }
-                      }}>
-                        <CancellationReportButton 
-                          lectureId={profile._id}
-                          lectureTitle={profile.title}
-                          variant="outlined"
-                          size="medium"
-                          onReportSuccess={(data) => {
-                            // Optional: Refresh profile data nakon uspješne prijave
-                            console.log('Cancellation reported successfully:', data);
+                        <img
+                          src={getImageUrl(profile.image) || getDefaultImage()}
+                          alt={profile.title || profile.name}
+                          className={`w-full ${type === 'lecture' ? 'h-full object-contain bg-black/5' : 'h-full object-cover'}`}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = getDefaultImage();
                           }}
                         />
-                      </Box>
-                    )}
-                  </Box>
-                </Box>
-              </Grid>
-            </Grid>
-          </ContentContainer>
-        </Paper>
-      </ContentContainer>
+                        {/* Overlay on hover */}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                          <Eye className="h-12 w-12 text-white" />
+                        </div>
+                        {/* Cancellation Overlay for lectures */}
+                        {type === 'lecture' && (
+                          <CancelledOverlay 
+                            show={profile.isCancelled || profile.status === 'cancelled'}
+                            text="OTKAZANO"
+                            variant="diagonal"
+                          />
+                        )}
+                      </div>
 
-      {/* Related Lectures Section */}
-      <Box id="related-lectures" sx={{ py: { xs: 4, md: 6 }, backgroundColor: '#f8f9fa' }}>
-        <ContentContainer>
-          {/* Section Title */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
-            <Typography 
-              variant="h4" 
-              component="h2" 
-              sx={{ 
-                fontWeight: 600,
-                color: '#022C43',
-                textAlign: { xs: 'center', md: 'left' }
-              }}
-            >
-              {getRelatedTitle()}
-            </Typography>
-            {!relatedLoading && totalPages > 1 && (
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  color: '#666',
-                  fontWeight: 500,
-                  display: { xs: 'none', sm: 'block' }
-                }}
-              >
-                Stranica {page} od {totalPages}
-              </Typography>
+                    </div>
+
+                    {/* Middle and Right Column - Main Info */}
+                    <div className="lg:col-span-8">
+                      {/* Title and Statistics Row */}
+                      <div className="mb-6">
+                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                          {/* Title and Badges */}
+                          <div className="flex-1">
+                            <h1 className={`
+                              font-${type === 'lecture' ? 'bold' : 'medium'} 
+                              text-3xl md:text-5xl tracking-tight mb-3
+                              ${type === 'lecture' ? 'uppercase' : ''}
+                            `}>
+                              {getTitle()}
+                            </h1>
+
+                            {/* Badges */}
+                            <div className="flex flex-wrap gap-2">
+                          {type === 'lecture' && profile.isWeeklyLecture && (
+                            <Badge className="bg-blue-500/20 text-blue-100 border-blue-400/30 px-3 py-1">
+                              <CalendarDays className="h-3 w-3 mr-1" />
+                              Sedmično predavanje
+                            </Badge>
+                          )}
+                          {type === 'daija' && profile.title && (
+                            <Badge className="bg-purple-500/20 text-purple-100 border-purple-400/30 px-3 py-1">
+                              <Award className="h-3 w-3 mr-1" />
+                              {profile.title}
+                            </Badge>
+                          )}
+                          {type === 'organization' && (
+                            <Badge className="bg-green-500/20 text-green-100 border-green-400/30 px-3 py-1">
+                              <Users className="h-3 w-3 mr-1" />
+                              Islamsko udruženje
+                            </Badge>
+                          )}
+                            </div>
+                          </div>
+
+                          {/* Statistics Cards - For daija and organization profiles */}
+                          {type !== 'lecture' && (
+                            <div className="flex gap-3">
+                              {/* Number of lectures */}
+                              {relatedLectures.length > 0 && (
+                                <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
+                                  <CardContent className="p-4 text-center">
+                                    {type === 'organization' ? (
+                                      <Activity className="h-6 w-6 mx-auto mb-2 text-blue-300" />
+                                    ) : (
+                                      <BookOpen className="h-6 w-6 mx-auto mb-2 text-purple-300" />
+                                    )}
+                                    <div className="text-2xl font-bold">{relatedLectures.length}</div>
+                                    <div className="text-xs opacity-80">Predavanja</div>
+                                  </CardContent>
+                                </Card>
+                              )}
+
+                              {/* Views if available */}
+                              {profile.views && (
+                                <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
+                                  <CardContent className="p-4 text-center">
+                                    <Eye className="h-6 w-6 mx-auto mb-2 text-yellow-300" />
+                                    <div className="text-2xl font-bold">{profile.views || 0}</div>
+                                    <div className="text-xs opacity-80">Pregleda</div>
+                                  </CardContent>
+                                </Card>
+                              )}
+
+                              {/* Rating if available */}
+                              {profile.rating && (
+                                <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
+                                  <CardContent className="p-4 text-center">
+                                    <Star className="h-6 w-6 mx-auto mb-2 text-yellow-300" />
+                                    <div className="text-2xl font-bold">{profile.rating}</div>
+                                    <div className="text-xs opacity-80">Ocjena</div>
+                                  </CardContent>
+                                </Card>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Cancellation Notice */}
+                      {type === 'lecture' && (profile.isCancelled || profile.status === 'cancelled') && (
+                        <Alert className="mb-6 bg-red-500/20 border-red-500/50 text-white">
+                          <X className="h-5 w-5" />
+                          <AlertDescription className="ml-2">
+                            <strong>PREDAVANJE JE OTKAZANO</strong>
+                            {profile.cancellationReason && (
+                              <span className="block mt-1">Razlog: {profile.cancellationReason}</span>
+                            )}
+                            {profile.cancelledAt && (
+                              <span className="block text-sm opacity-80 mt-1">
+                                Otkazano: {new Date(profile.cancelledAt).toLocaleDateString('bs-BA')}
+                              </span>
+                            )}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      {/* Information Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        {/* Date & Time Card */}
+                        {type === 'lecture' && (profile.date || profile.time) && (
+                          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-white text-sm font-medium flex items-center gap-2">
+                                <CalendarDays className="h-4 w-4" />
+                                Termin
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-white space-y-2">
+                              {profile.date && (
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4 opacity-70" />
+                                  <span className="text-lg font-medium">{formatDateWithDay(profile.date)}</span>
+                                </div>
+                              )}
+                              {profile.time && (
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4 opacity-70" />
+                                  <span className="text-lg font-medium">{profile.time}</span>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* Location Card */}
+                        {(profile.address || profile.city) && (
+                          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-white text-sm font-medium flex items-center gap-2">
+                                <MapPin className="h-4 w-4" />
+                                Lokacija
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-white">
+                              <div className="text-lg font-medium">
+                                {profile.address && <div>{profile.address}</div>}
+                                {profile.city && <div className="text-base opacity-90">{profile.city}</div>}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* Speaker Card */}
+                        {type === 'lecture' && (profile.speaker || profile.daijaName || profile.daija) && (
+                          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-white text-sm font-medium flex items-center gap-2">
+                                <User className="h-4 w-4" />
+                                Predavač
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-white">
+                              {profile.daija && typeof profile.daija === 'object' && profile.daija._id ? (
+                                <Link href={`/profile/daija/${profile.daija._id}`}>
+                                  <div className="text-lg font-medium hover:underline cursor-pointer transition-all hover:text-blue-200">
+                                    {formatDaijaTitle(profile.daija.name, profile.daija.title)}
+                                  </div>
+                                </Link>
+                              ) : (
+                                <div className="text-lg font-medium">
+                                  {profile.daijaTitle && profile.daijaName 
+                                    ? `${profile.daijaTitle} ${profile.daijaName}`
+                                    : profile.daijaName || profile.speaker || ''}
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* Organization Card */}
+                        {type === 'lecture' && (profile.organization || profile.organizationName || profile.organizationId) && (
+                          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-white text-sm font-medium flex items-center gap-2">
+                                <Building className="h-4 w-4" />
+                                Organizator
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-white">
+                              {((profile.organizationId && typeof profile.organizationId === 'object' && profile.organizationId._id) ||
+                                (profile.organization && typeof profile.organization === 'object' && profile.organization._id)) ? (
+                                <Link href={`/profile/organization/${
+                                  profile.organizationId?._id || profile.organization?._id
+                                }`}>
+                                  <div className="text-lg font-medium hover:underline cursor-pointer transition-all hover:text-blue-200">
+                                    {profile.organizationId?.name || profile.organization?.name}
+                                  </div>
+                                </Link>
+                              ) : (
+                                <div className="text-lg font-medium">
+                                  {profile.organizationName || profile.organization || ''}
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* Contact Card for Organizations */}
+                        {type === 'organization' && (profile.phone || profile.email || profile.website) && (
+                          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-white text-sm font-medium flex items-center gap-2">
+                                <Phone className="h-4 w-4" />
+                                Kontakt
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-white space-y-2">
+                              {profile.phone && (
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4 opacity-70" />
+                                  <span>{profile.phone}</span>
+                                </div>
+                              )}
+                              {profile.email && (
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-4 w-4 opacity-70" />
+                                  <span>{profile.email}</span>
+                                </div>
+                              )}
+                              {profile.website && (
+                                <div className="flex items-center gap-2">
+                                  <Globe className="h-4 w-4 opacity-70" />
+                                  <a href={profile.website} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                    {profile.website.replace(/^https?:\/\//, '')}
+                                  </a>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+
+                      {/* Description */}
+                      {(profile.description || profile.biography) && (
+                        <Card className="bg-white/10 backdrop-blur-md border-white/20 mb-6">
+                          <CardHeader>
+                            <CardTitle className="text-white flex items-center gap-2">
+                              <FileText className="h-5 w-5" />
+                              {type === 'organization' ? 'O udruženju' : type === 'daija' ? 'Biografija' : 'Opis predavanja'}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                              {profile.description || profile.biography}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Share Section */}
+                      <Card className="bg-white/10 backdrop-blur-md border-white/20 mb-6">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-white text-sm font-medium flex items-center gap-2">
+                            <Share2 className="h-4 w-4" />
+                            Podijeli da se i drugi okoriste
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ShareButton profileData={profile} type={type} />
+                        </CardContent>
+                      </Card>
+
+                      {/* Social Media Links */}
+                      {type === 'organization' && (profile.facebook || profile.instagram || profile.telegram || profile.viber) && (
+                        <div className="mb-6">
+                          <h3 className="text-white/80 text-sm font-medium mb-3">Društvene mreže</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {profile.facebook && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="border-white/30 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 hover:border-white/50"
+                              >
+                                <a href={profile.facebook} target="_blank" rel="noopener noreferrer">
+                                  <Facebook className="mr-2 h-4 w-4" />
+                                  Facebook
+                                </a>
+                              </Button>
+                            )}
+                            {profile.instagram && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="border-white/30 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 hover:border-white/50"
+                              >
+                                <a href={profile.instagram} target="_blank" rel="noopener noreferrer">
+                                  <Instagram className="mr-2 h-4 w-4" />
+                                  Instagram
+                                </a>
+                              </Button>
+                            )}
+                            {profile.telegram && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="border-white/30 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 hover:border-white/50"
+                              >
+                                <a href={profile.telegram} target="_blank" rel="noopener noreferrer">
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Telegram
+                                </a>
+                              </Button>
+                            )}
+                            {profile.viber && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="border-white/30 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 hover:border-white/50"
+                              >
+                                <a href={profile.viber} target="_blank" rel="noopener noreferrer">
+                                  <MessageCircle className="mr-2 h-4 w-4" />
+                                  Viber
+                                </a>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap gap-2">
+                        {/* Navigation Button */}
+                        {(profile.address || profile.city) && (
+                          <Button
+                            onClick={openDirections}
+                            className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white border-white/30"
+                          >
+                            <Navigation className="mr-2 h-4 w-4" />
+                            Navigacija
+                          </Button>
+                        )}
+                        
+                        {/* Add to Calendar Button */}
+                        {type === 'lecture' && profile.date && !(profile.isCancelled || profile.status === 'cancelled') && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="border-white/30 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 hover:border-white/50"
+                              >
+                                <CalendarDays className="mr-2 h-4 w-4" />
+                                Dodaj u kalendar
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem onClick={() => handleAddToCalendar('google')}>
+                                Google Calendar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleAddToCalendar('ics')}>
+                                Preuzmi ICS fajl
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                        
+                        {/* Report Cancellation Button */}
+                        {type === 'lecture' && (
+                          <CancellationReportButton lecture={profile} />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ContentContainer>
+            </div>
+
+            {/* Daija's/Organization's Upcoming Lectures Section */}
+            {type === 'daija' && relatedLectures.length > 0 && (
+              <div id="daija-lectures" className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Najavljeni dersovi ovog daije</h2>
+                
+                {relatedLoading ? (
+                  <SkeletonGrid />
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                      {/* Show all lectures for this daija */}
+                      {relatedLectures
+                        .slice(0, 10)
+                        .map((lecture) => (
+                          <UniversalCard
+                            key={lecture._id}
+                            data={{
+                              ...lecture,
+                              type: 'Predavanje'
+                            }}
+                          />
+                        ))}
+                    </div>
+                  </>
+                )}
+              </div>
             )}
-          </Box>
 
-          {/* Loading State */}
-          {relatedLoading && (
-            <SkeletonGrid count={8} type="lecture" />
-          )}
+            {/* Organization's Upcoming Lectures Section */}
+            {type === 'organization' && relatedLectures.length > 0 && (
+              <div id="organization-lectures" className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Najavljeni dersovi ovog udruženja</h2>
+                
+                {relatedLoading ? (
+                  <SkeletonGrid />
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                      {/* Show all lectures for this organization */}
+                      {relatedLectures
+                        .slice(0, 10)
+                        .map((lecture) => (
+                          <UniversalCard
+                            key={lecture._id}
+                            data={{
+                              ...lecture,
+                              type: 'Predavanje'
+                            }}
+                          />
+                        ))}
+                    </div>
+                    
+                  </>
+                )}
+              </div>
+            )}
 
-          {/* Error State */}
-          {relatedError && (
-            <Alert severity="error" sx={{ mb: 4 }}>
-              {relatedError}
-            </Alert>
-          )}
-
-          {/* Lectures Grid */}
-          {!relatedLoading && !relatedError && relatedLectures.length > 0 && (
-            <>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    sm: 'repeat(2, 1fr)',
-                    md: 'repeat(3, 1fr)',
-                    lg: 'repeat(4, 1fr)',
-                    xl: 'repeat(5, 1fr)'
-                  },
-                  gap: { xs: 2, sm: 2.5, md: 3 },
-                  width: '100%'
-                }}
-              >
-                {relatedLectures.map((lecture) => (
-                  <UniversalCard key={lecture._id} data={lecture} />
-                ))}
-              </Box>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
-                  <Pagination
-                    count={totalPages}
-                    page={page}
-                    onChange={handlePageChange}
-                    color="primary"
-                    size="large"
-                    sx={{
-                      '& .MuiPaginationItem-root': {
-                        borderRadius: 2,
-                        fontWeight: 500,
-                      },
-                      '& .MuiPaginationItem-page.Mui-selected': {
-                        backgroundColor: '#022C43',
-                        color: 'white',
-                        '&:hover': {
-                          backgroundColor: '#055A87',
-                        }
-                      }
-                    }}
-                  />
-                </Box>
+            {/* Other Upcoming Lectures Section - Always show */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Ostali najavljeni dersovi</h2>
+              
+              {upcomingLoading ? (
+                // Show skeleton loaders while loading
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {Array.from({ length: 10 }).map((_, index) => (
+                    <Skeleton key={index} className="h-64 rounded-lg" />
+                  ))}
+                </div>
+              ) : upcomingLectures.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {upcomingLectures.map((lecture) => (
+                      <UniversalCard
+                        key={lecture._id}
+                        data={{
+                          ...lecture,
+                          type: 'Predavanje'
+                        }}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Show More Button if there are 10 lectures */}
+                  {upcomingLectures.length >= 10 && (
+                    <div className="mt-6 text-center">
+                      <Button
+                        variant="outline"
+                        onClick={() => router.push('/')}
+                        className="hover:scale-105 transition-transform"
+                      >
+                        Prikaži sve dersove
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                // Show message when no lectures available
+                <Card className="p-8 text-center border-dashed">
+                  <CardContent>
+                    <CalendarDays className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-gray-500">Trenutno nema najavljenih dersova</p>
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push('/')}
+                      className="mt-4"
+                    >
+                      Vrati se na početnu
+                    </Button>
+                  </CardContent>
+                </Card>
               )}
-            </>
-          )}
+            </div>
 
-          {/* Empty State */}
-          {!relatedLoading && !relatedError && relatedLectures.length === 0 && (
-            <Box sx={{ textAlign: 'center', py: 8 }}>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                {type === 'lecture' 
-                  ? 'Nema drugih dostupnih predavanja' 
-                  : type === 'daija'
-                  ? 'Nema najavljenih predavanja'
-                  : 'Nema organizovanih predavanja'
-                }
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {type === 'lecture' 
-                  ? 'Trenutno je ovo jedino dostupno predavanje.' 
-                  : type === 'daija'
-                  ? 'Ovaj daija trenutno nema najavljena predavanja.'
-                  : 'Ova organizacija još uvijek nije organizovala predavanja.'
-                }
-              </Typography>
-            </Box>
-          )}
+            {/* Additional Information Section */}
+            {type === 'lecture' && (profile.topics || profile.requirements || profile.targetAudience) && (
+              <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                {profile.topics && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Hash className="h-5 w-5 text-blue-500" />
+                        Teme
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {profile.topics.split(',').map((topic, index) => (
+                          <Badge key={index} variant="secondary">
+                            {topic.trim()}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {profile.requirements && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Info className="h-5 w-5 text-green-500" />
+                        Zahtjevi
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">{profile.requirements}</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {profile.targetAudience && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Users className="h-5 w-5 text-purple-500" />
+                        Ciljna grupa
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">{profile.targetAudience}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+
+          </div>
         </ContentContainer>
-      </Box>
 
-      {/* Image Modal */}
-      <Modal
-        open={imageModalOpen}
-        onClose={() => setImageModalOpen(false)}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'rgba(0, 0, 0, 0.9)'
-        }}
-      >
-        <Box sx={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}>
-          <IconButton
-            onClick={() => setImageModalOpen(false)}
-            sx={{
-              position: 'absolute',
-              top: -40,
-              right: -40,
-              color: 'white',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.2)'
-              }
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-          <Box
-            component="img"
-            src={getImageUrl(profile?.image) || getDefaultImage()}
-            alt={profile?.title || profile?.name}
-            sx={{
-              maxWidth: '100%',
-              maxHeight: '90vh',
-              objectFit: 'contain',
-              borderRadius: 2,
-              boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)'
-            }}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = getDefaultImage();
-            }}
-          />
-        </Box>
-      </Modal>
+        {/* Image Modal */}
+        <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>{getTitle()}</DialogTitle>
+            </DialogHeader>
+            <div className="relative">
+              <img
+                src={getImageUrl(profile.image) || getDefaultImage()}
+                alt={profile.title || profile.name}
+                className="w-full h-auto rounded-lg"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = getDefaultImage();
+                }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       </PageLayout>
     </>
   );

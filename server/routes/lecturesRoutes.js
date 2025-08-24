@@ -13,6 +13,73 @@ const { formatDaijaTitle } = require('../utils/formatHelpers');
 
 // 🔧 Debug: Test if both functions are loaded correctly
 
+// Bulk operations endpoints (Admin only)
+router.post('/bulk/approve', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'IDs are required' });
+    }
+    
+    const result = await Lecture.updateMany(
+      { _id: { $in: ids } },
+      { $set: { status: 'approved' } }
+    );
+    
+    res.json({
+      message: `Successfully approved ${result.modifiedCount} lectures`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Bulk approve error:', error);
+    res.status(500).json({ message: 'Error approving lectures', error: error.message });
+  }
+});
+
+router.post('/bulk/reject', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'IDs are required' });
+    }
+    
+    const result = await Lecture.updateMany(
+      { _id: { $in: ids } },
+      { $set: { status: 'rejected' } }
+    );
+    
+    res.json({
+      message: `Successfully rejected ${result.modifiedCount} lectures`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Bulk reject error:', error);
+    res.status(500).json({ message: 'Error rejecting lectures', error: error.message });
+  }
+});
+
+router.post('/bulk/delete', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'IDs are required' });
+    }
+    
+    const result = await Lecture.deleteMany({ _id: { $in: ids } });
+    
+    res.json({
+      message: `Successfully deleted ${result.deletedCount} lectures`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Bulk delete error:', error);
+    res.status(500).json({ message: 'Error deleting lectures', error: error.message });
+  }
+});
+
 // Make lectures endpoint public (remove authentication requirement)
 router.get('/public', async (req, res) => {
   
@@ -1183,7 +1250,9 @@ router.get('/:id', async (req, res) => {
     }
     
     const lecture = await Lecture.findById(req.params.id)
-      .populate('createdBy', 'firstName lastName email');
+      .populate('createdBy', 'firstName lastName email')
+      .populate('daija', 'name title')
+      .populate('organizationId', 'name');
     
     if (!lecture) {
       return res.status(404).json({ message: 'Lecture not found' });

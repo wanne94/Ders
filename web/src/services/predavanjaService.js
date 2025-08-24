@@ -47,6 +47,16 @@ const predavanjaService = {
     return response; // Backend returns lectures directly, not wrapped in data property
   },
 
+  getPredavanjaBySpeaker: async (speakerId) => {
+    // This function uses the same endpoint as getPredavanjaByDaija
+    // It's added for compatibility with the profile component
+    if (!speakerId || speakerId === 'undefined') {
+      return [];
+    }
+    const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/daija/${speakerId}`);
+    return response; // Backend returns lectures directly, not wrapped in data property
+  },
+
   getPredavanjaByOrganization: async (organizationId) => {
     const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/organization/${organizationId}`);
     return response; // Backend returns lectures directly, not wrapped in data property
@@ -94,6 +104,22 @@ const predavanjaService = {
     
     const endpoint = `${ENV.API_ENDPOINTS.PREDAVANJA}/statistics${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await apiClient.get(endpoint);
+    return response;
+  },
+
+  // Bulk operations
+  bulkApprove: async (ids) => {
+    const response = await apiClient.post(`${ENV.API_ENDPOINTS.PREDAVANJA}/bulk/approve`, { ids });
+    return response;
+  },
+
+  bulkReject: async (ids) => {
+    const response = await apiClient.post(`${ENV.API_ENDPOINTS.PREDAVANJA}/bulk/reject`, { ids });
+    return response;
+  },
+
+  bulkDelete: async (ids) => {
+    const response = await apiClient.post(`${ENV.API_ENDPOINTS.PREDAVANJA}/bulk/delete`, { ids });
     return response;
   }
 };

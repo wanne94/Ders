@@ -293,7 +293,14 @@ const UnifiedFormNew = ({
       // Upload image if new one selected
       if (imageFile) {
         try {
-          imageUrl = await uploadImage(imageFile);
+          const uploadResult = await uploadImage(imageFile);
+          // uploadImage returns an object with { success, path, ... }
+          if (uploadResult && uploadResult.path) {
+            imageUrl = uploadResult.path;
+            console.log('Image uploaded successfully:', imageUrl);
+          } else {
+            throw new Error('Upload result missing path');
+          }
         } catch (uploadError) {
           console.error('Error uploading image:', uploadError);
           setError('Greška pri učitavanju slike');
@@ -535,18 +542,17 @@ const UnifiedFormNew = ({
 
               {/* Organization Selection */}
               <div className="space-y-2">
-                <Label>Udruženje</Label>
+                <Label>Organizator</Label>
                 {!useCustomOrganization ? (
                   <Combobox
                     options={[
-                      { value: 'none', label: 'Bez udruženja' },
                       ...(organizations && organizations.length > 0 ? organizations : fetchedOrganizations).map(org => ({
                         value: org._id,
                         label: org.name
                       })),
                       { value: 'custom', label: 'Unesi prilagođeni naziv...' }
                     ]}
-                    value={formData.organizationId || 'none'}
+                    value={formData.organizationId}
                     onValueChange={(value) => {
                       if (value === 'custom') {
                         setUseCustomOrganization(true);
@@ -556,13 +562,6 @@ const UnifiedFormNew = ({
                           organization: '',
                           address: '',
                           city: ''
-                        }));
-                      } else if (value === 'none') {
-                        setUseCustomOrganization(false);
-                        setFormData(prev => ({
-                          ...prev,
-                          organizationId: '',
-                          organization: ''
                         }));
                       } else {
                         setUseCustomOrganization(false);
@@ -578,8 +577,8 @@ const UnifiedFormNew = ({
                       }
                     }}
                     placeholder="Odaberi ili pretraži udruženje..."
-                    searchPlaceholder="Pretraži udruženja..."
-                    emptyText="Nema pronađenih udruženja"
+                    searchPlaceholder="Pretraži organizatore..."
+                    emptyText="Nema pronađenih organizatora"
                   />
                 ) : (
                   <Input
@@ -587,7 +586,7 @@ const UnifiedFormNew = ({
                     name="organization"
                     value={formData.organization}
                     onChange={handleChange}
-                    placeholder="Unesite naziv udruženja..."
+                    placeholder="Unesite naziv organizatora..."
                   />
                 )}
               </div>
@@ -618,12 +617,20 @@ const UnifiedFormNew = ({
                       <SelectValue placeholder="Odaberi vrijeme" />
                     </SelectTrigger>
                     <SelectContent>
-                      {['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', 
-                        '17:00', '18:00', '19:00', '20:00', '21:00'].map(time => (
-                        <SelectItem key={time} value={time}>
-                          {time}
-                        </SelectItem>
-                      ))}
+                      {(() => {
+                        const times = [];
+                        for (let hour = 8; hour <= 22; hour++) {
+                          times.push(`${hour.toString().padStart(2, '0')}:00`);
+                          if (hour < 22) {
+                            times.push(`${hour.toString().padStart(2, '0')}:30`);
+                          }
+                        }
+                        return times.map(time => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ));
+                      })()}
                     </SelectContent>
                   </Select>
                 </div>
@@ -642,7 +649,7 @@ const UnifiedFormNew = ({
                 />
                 {isOrganizationSelected && (
                   <span className="text-sm text-gray-500">
-                    Adresa se automatski popunjava iz odabranog udruženja
+                    Adresa se automatski popunjava iz odabranog organizatora
                   </span>
                 )}
               </div>
@@ -659,7 +666,7 @@ const UnifiedFormNew = ({
                 />
                 {isOrganizationSelected && (
                   <span className="text-sm text-gray-500">
-                    Mjesto se automatski popunjava iz odabranog udruženja
+                    Mjesto se automatski popunjava iz odabranog organizatora
                   </span>
                 )}
               </div>
