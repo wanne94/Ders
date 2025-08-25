@@ -9,15 +9,21 @@ console.log(`🌍 Next.js Environment: ${envConfig.NODE_ENV}`);
 const nextConfig = {
   reactStrictMode: true,
   
-  // Explicitly disable static generation
+  // Completely disable static generation and optimization
   output: undefined, // Ensure no static export
   trailingSlash: false, // Disable trailing slash for static files
   generateEtags: false, // Disable ETags for static content
+  generateBuildId: async () => {
+    // Generate unique build ID on each build to force fresh content
+    return `build-${Date.now()}`
+  },
   distDir: '.next', // Standard build directory
   
   // Force all pages to be server-side rendered
-  // No static optimization
+  // Disable ALL static optimization
   poweredByHeader: false,
+  compress: false, // Disable compression for dynamic content
+  optimizeFonts: false, // Disable font optimization
   
   // Images configuration - allow loading from server in both environments
   // Disable image caching completely
@@ -44,6 +50,25 @@ const nextConfig = {
   // Increase static generation timeout
   staticPageGenerationTimeout: 120,
   
+  // Headers configuration to control caching
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+        ],
+      },
+    ];
+  },
+  
   // Environment variables that will be available in the browser
   env: {
     NEXT_PUBLIC_API_URL: envConfig.API_URL,
@@ -58,7 +83,7 @@ const nextConfig = {
     NEXT_PUBLIC_ENABLE_ANALYTICS: envConfig.ENABLE_ANALYTICS.toString(),
   },
 
-  webpack: (config, { dev }) => {
+  webpack: (config, { dev, isServer }) => {
     // Add watch options for development
     if (dev) {
       config.watchOptions = {
@@ -67,6 +92,22 @@ const nextConfig = {
         ignored: ['**/.next/**', '**/node_modules/**'],
       };
     }
+    
+    // Disable code splitting and optimization for client bundles
+    if (!isServer) {
+      config.optimization = {
+        ...config.optimization,
+        runtimeChunk: false,
+        splitChunks: {
+          chunks: 'async', // Only split async chunks, not all
+          cacheGroups: {
+            default: false,
+            vendors: false,
+          },
+        },
+      };
+    }
+    
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname, 'src'),

@@ -16,3 +16,13 @@ const OrganizationsPage = () => {
 };
 
 export default OrganizationsPage; 
+
+// Force server-side rendering to avoid static generation
+export async function getServerSideProps() {
+  return {
+    props: {
+      // This ensures the page is rendered on each request
+      timestamp: new Date().toISOString()
+    }
+  };
+}

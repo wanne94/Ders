@@ -1832,9 +1832,14 @@ const Dashboard = () => {
   );
 };
 
-// Dashboard is a protected route, skip static generation
-Dashboard.getInitialProps = () => {
-  return {};
-}
-
 export default Dashboard; 
+
+// Force server-side rendering to avoid static generation
+export async function getServerSideProps() {
+  return {
+    props: {
+      // This ensures the page is rendered on each request
+      timestamp: new Date().toISOString()
+    }
+  };
+}

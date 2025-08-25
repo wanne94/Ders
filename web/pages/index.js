@@ -503,9 +503,17 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
       const approvedOrgs = (organizations || []).filter(org => {
         if (org.status !== 'approved') return false;
         
-        // Provjeri da li udruženje ima bar jedno predavanje
+        // Ako organizacija već ima lectureCount iz backend-a, koristi ga
+        // Backend računa samo odobrena predavanja
+        if (typeof org.lectureCount === 'number') {
+          return org.lectureCount > 0;
+        }
+        
+        // Fallback: Provjeri da li udruženje ima bar jedno odobreno predavanje
         // Organizacije u predavanjima su sačuvane kao stringovi (imena), ne kao ID reference
         const hasPredavanje = lectures.some(lecture => {
+          // Provjeri da li je predavanje odobreno
+          if (lecture.status !== 'approved') return false;
           if (!lecture.organization) return false;
           
           // Ako je organizacija string, poredi sa imenom
@@ -713,8 +721,15 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
       const approvedDaije = (daije || []).filter(daija => {
         if (daija.status !== 'approved') return false;
         
-        // Provjeri da li daija ima bar jedno predavanje
+        // Ako daija već ima lectureCount iz backend-a, koristi ga
+        // Backend računa samo odobrena predavanja
+        if (typeof daija.lectureCount === 'number') {
+          return daija.lectureCount > 0;
+        }
+        
+        // Fallback: Provjeri da li daija ima bar jedno odobreno predavanje
         const hasPredavanje = lectures.some(lecture => 
+          lecture.status === 'approved' &&
           lecture.daija && 
           (lecture.daija._id === daija._id || lecture.daija === daija._id)
         );
@@ -975,4 +990,16 @@ export default function Home() {
      
     </PageLayout>
   );
+}
+
+// Force server-side rendering to ensure fresh content on every request
+export async function getServerSideProps() {
+  // This function runs on every request, forcing server-side rendering
+  // We don't need to fetch data here since the component fetches it client-side
+  return {
+    props: {
+      // Add a timestamp to verify fresh rendering
+      timestamp: new Date().toISOString()
+    }
+  };
 }
