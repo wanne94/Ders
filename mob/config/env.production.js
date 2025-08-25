@@ -22,7 +22,7 @@ export const ENV = {
   },
   
   // Helper function za slike - isto kao development
-  getImageUrl: (imagePath, preferOptimized = true) => {
+  getImageUrl: (imagePath, preferOptimized = false) => {
     if (!imagePath) return 'https://ders.ba/uploads/images/default.jpg';
     
     // If it's already a full URL, return as is
@@ -37,13 +37,8 @@ export const ENV = {
       cleanPath = `/uploads/images/${cleanPath.replace(/^\/+/, '')}`;
     }
     
-    // For images in /uploads/images/, try optimized version first if preferred
-    if (preferOptimized && cleanPath.startsWith('/uploads/images/') && !cleanPath.includes('/optimized/')) {
-      const filename = cleanPath.replace('/uploads/images/', '');
-      const optimizedPath = `/uploads/images/optimized/${filename}`;
-      return `https://ders.ba${optimizedPath}`;
-    }
-    
+    // Don't use optimized images - they may not exist
+    // Always return the standard image path
     return `https://ders.ba${cleanPath}`;
   },
   

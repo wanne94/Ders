@@ -43,6 +43,7 @@ import {
   getUserData,
   logout
 } from './utils/authHelpers';
+import TestFormsScreen from './screens/TestFormsScreen';
 
 Dimensions.get('window');
 
@@ -90,26 +91,87 @@ const fetchLectures = async () => {
   }
 };
 
-// API function to fetch daije
-const fetchDaije = async () => {
+// API function to fetch daije with filtering
+const fetchDaije = async (allLectures = []) => {
   try {
     // Fetching daije...
     const data = await daijeService.getAllDaije();
+    const daije = Array.isArray(data) ? data : [];
+    
+    // Filter only daije with at least one lecture (matching web implementation)
+    console.log(`📊 Filtering daije: Total ${daije.length}, Lectures available: ${allLectures.length}`);
+    const daijeWithLectures = daije.filter(daija => {
+      // If daija has lectureCount from backend, use it
+      if (typeof daija.lectureCount === 'number') {
+        return daija.lectureCount > 0;
+      }
+      
+      // Fallback: Check if daija has any approved lectures
+      return allLectures.some(lecture => {
+        if (!lecture || lecture.isCancelled || lecture.status === 'cancelled') {
+          return false;
+        }
+        
+        // Check if lecture is by this daija
+        if (lecture.daija && typeof lecture.daija === 'object') {
+          return lecture.daija._id === daija._id;
+        } else if (lecture.daija) {
+          return lecture.daija === daija._id;
+        }
+        
+        // Check daijaIds array for multiple daija support
+        if (lecture.daijaIds && Array.isArray(lecture.daijaIds)) {
+          return lecture.daijaIds.includes(daija._id);
+        }
+        
+        return false;
+      });
+    });
+    
     // Daije response received
-    return Array.isArray(data) ? data : [];
+    console.log(`✅ Filtered daije: ${daijeWithLectures.length} with lectures (from ${daije.length} total)`);
+    return daijeWithLectures;
   } catch (error) {
     console.error('❌ Error fetching daije:', error);
     return [];
   }
 };
 
-// API function to fetch udruzenja
-const fetchUdruzenja = async () => {
+// API function to fetch udruzenja with filtering
+const fetchUdruzenja = async (allLectures = []) => {
   try {
     // Fetching udruzenja...
     const data = await udruzenjaService.getAllUdruzenja();
+    const organizations = Array.isArray(data) ? data : [];
+    
+    // Filter only organizations with at least one lecture (matching web implementation)
+    console.log(`📊 Filtering organizations: Total ${organizations.length}, Lectures available: ${allLectures.length}`);
+    const orgsWithLectures = organizations.filter(org => {
+      // If organization has lectureCount from backend, use it
+      if (typeof org.lectureCount === 'number') {
+        return org.lectureCount > 0;
+      }
+      
+      // Fallback: Check if organization has any approved lectures
+      return allLectures.some(lecture => {
+        if (!lecture || lecture.isCancelled || lecture.status === 'cancelled') {
+          return false;
+        }
+        
+        // Check if lecture is by this organization
+        if (lecture.organizationId && typeof lecture.organizationId === 'object') {
+          return lecture.organizationId._id === org._id;
+        } else if (lecture.organizationId) {
+          return lecture.organizationId === org._id;
+        }
+        
+        return false;
+      });
+    });
+    
     // Udruzenja response received
-    return Array.isArray(data) ? data : [];
+    console.log(`✅ Filtered organizations: ${orgsWithLectures.length} with lectures (from ${organizations.length} total)`);
+    return orgsWithLectures;
   } catch (error) {
     console.error('❌ Error fetching udruzenja:', error);
     return [];
@@ -128,14 +190,17 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection, fo
       setIsLoading(true);
       
       // Load all data in parallel
-      const [lecturesData, daijeData, udruzenjaData] = await Promise.all([
-        fetchLectures(),
-        fetchDaije(),
-        fetchUdruzenja()
+      // First fetch lectures as they are needed for filtering
+      const lecturesData = await fetchLectures();
+      const allLectures = Array.isArray(lecturesData) ? lecturesData : [];
+      
+      // Then fetch daije and udruzenja with lectures for filtering
+      const [daijeData, udruzenjaData] = await Promise.all([
+        fetchDaije(allLectures),
+        fetchUdruzenja(allLectures)
       ]);
       
       // Process lectures - include all lectures (approved and cancelled) like web app
-      const allLectures = Array.isArray(lecturesData) ? lecturesData : [];
       // Add type field to each lecture
       const lecturesWithType = allLectures.map(lecture => ({
         ...lecture,
@@ -503,6 +568,9 @@ export default function App() {
           return null;
         }
         return <ProfileScreen navigation={{ navigate: (screen) => setActiveTab(screen) }} onBack={handleBack} />;
+      
+      case 'testforms':
+        return <TestFormsScreen />;
 
       default:
         return (

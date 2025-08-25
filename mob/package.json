@@ -20,7 +20,8 @@
     "build-clean": "cd android && ./gradlew clean",
     "build-info": "cd android && ./gradlew app:dependencies",
     "prebuild": "expo prebuild --platform android",
-    "prebuild:clean": "expo prebuild --platform android --clean"
+    "prebuild:clean": "expo prebuild --platform android --clean",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",

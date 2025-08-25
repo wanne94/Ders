@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "serena": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/oraios/serena", "serena-mcp-server", "--context", "ide-assistant", "--project", "/home/avdo/Majstori"]
+    },
+    "shadcn-ui": {
+      "command": "npx",
+      "args": ["-y", "@heilgar/shadcn-ui-mcp-server"]
+    },
+    "ref-tools": {
+      "command": "npx",
+      "args": ["-y", "ref-tools-mcp"],
+      "cwd": "/home/avdo/Majstori"
+    },
+    "filesystem-test": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/avdo/Majstori"]
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "mcp-postgres-server"],
+      "env": {
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "wanne1994",
+        "POSTGRES_DATABASE": "majstori_db"
+      }
+    }
+  }
+}

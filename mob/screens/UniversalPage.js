@@ -40,20 +40,77 @@ const fetchLectures = async () => {
   }
 };
 
-const fetchDaije = async () => {
+const fetchDaije = async (allLectures = []) => {
   try {
     const data = await daijeService.getAllDaije();
-    return Array.isArray(data) ? data : [];
+    const daije = Array.isArray(data) ? data : [];
+    
+    // Filter only daije with at least one lecture (matching web implementation)
+    const daijeWithLectures = daije.filter(daija => {
+      // If daija has lectureCount from backend, use it
+      if (typeof daija.lectureCount === 'number') {
+        return daija.lectureCount > 0;
+      }
+      
+      // Fallback: Check if daija has any approved lectures
+      return allLectures.some(lecture => {
+        if (!lecture || lecture.isCancelled || lecture.status === 'cancelled') {
+          return false;
+        }
+        
+        // Check if lecture is by this daija
+        if (lecture.daija && typeof lecture.daija === 'object') {
+          return lecture.daija._id === daija._id;
+        } else if (lecture.daija) {
+          return lecture.daija === daija._id;
+        }
+        
+        // Check daijaIds array for multiple daija support
+        if (lecture.daijaIds && Array.isArray(lecture.daijaIds)) {
+          return lecture.daijaIds.includes(daija._id);
+        }
+        
+        return false;
+      });
+    });
+    
+    return daijeWithLectures;
   } catch (error) {
     // console.error('Error fetching daije:', error);
     return [];
   }
 };
 
-const fetchOrganizations = async () => {
+const fetchOrganizations = async (allLectures = []) => {
   try {
     const data = await udruzenjaService.getAllUdruzenja();
-    return Array.isArray(data) ? data : [];
+    const organizations = Array.isArray(data) ? data : [];
+    
+    // Filter only organizations with at least one lecture (matching web implementation)
+    const orgsWithLectures = organizations.filter(org => {
+      // If organization has lectureCount from backend, use it
+      if (typeof org.lectureCount === 'number') {
+        return org.lectureCount > 0;
+      }
+      
+      // Fallback: Check if organization has any approved lectures
+      return allLectures.some(lecture => {
+        if (!lecture || lecture.isCancelled || lecture.status === 'cancelled') {
+          return false;
+        }
+        
+        // Check if lecture is by this organization
+        if (lecture.organizationId && typeof lecture.organizationId === 'object') {
+          return lecture.organizationId._id === org._id;
+        } else if (lecture.organizationId) {
+          return lecture.organizationId === org._id;
+        }
+        
+        return false;
+      });
+    });
+    
+    return orgsWithLectures;
   } catch (error) {
     // console.error('Error fetching organizations:', error);
     return [];
@@ -93,7 +150,7 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
         return {
           title: 'Daije',
           subtitle: 'Naši daije',
-          fetchFunction: fetchDaije,
+          fetchFunction: () => fetchDaije(allLectures),
           cardConfig: {
             titleKey: 'name',
             subtitleKey: 'title',
@@ -108,7 +165,7 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
         return {
           title: 'Udruženja',
           subtitle: 'Naši partneri',
-          fetchFunction: fetchOrganizations,
+          fetchFunction: () => fetchOrganizations(allLectures),
           cardConfig: {
             titleKey: 'name',
             subtitleKey: 'city',

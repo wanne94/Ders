@@ -34,7 +34,7 @@ import Toast from '../Toast';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImage, getImageUrl } from '../../utils/imageUtils';
 import { isAuthenticated as checkIsAuthenticated } from '../../utils/authHelpers';
-import axiosInstance from '../../utils/axiosConfig';
+import apiClient from '../../services/apiClient';
 
 const COLORS = {
   primary: '#022C43',
@@ -83,6 +83,11 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  
+  // Missing states for existing images
+  const [showExistingImages, setShowExistingImages] = useState(false);
+  const [existingImages, setExistingImages] = useState([]);
+  const [selectedExistingImage, setSelectedExistingImage] = useState(null);
 
   // Hardcoded time options with 15-minute intervals (same as web version)
   const timeOptions = [
@@ -109,11 +114,10 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
 
   const loadData = async () => {
     try {
-      const [daijeResponse, organizationsResponse, allLecturesResponse, imagesResponse] = await Promise.all([
+      const [daijeResponse, organizationsResponse, allLecturesResponse] = await Promise.all([
         daijeService.getAllDaije(),
         udruzenjaService.getAllUdruzenja(),
-        predavanjaService.getAllPredavanja(),
-        axiosInstance.get('/existing-images')
+        predavanjaService.getAllPredavanja()
       ]);
       
       // Debug logs removed - data loading working correctly
@@ -127,10 +131,23 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       const sortedDaije = sortLecturers(approvedDaije, allLectures);
       const sortedOrganizations = sortAssociations(approvedOrganizations, allLectures);
       
-      // Load existing images
-      if (imagesResponse?.data?.images) {
-        console.log('Fetched existing images:', imagesResponse.data.images.length);
-        setExistingImages(imagesResponse.data.images);
+      // Extract unique images from all lectures for existing images feature
+      const uniqueImages = [];
+      const imageUrls = new Set();
+      
+      allLectures.forEach(lecture => {
+        if (lecture.image && !imageUrls.has(lecture.image)) {
+          imageUrls.add(lecture.image);
+          uniqueImages.push({
+            url: lecture.image,
+            title: lecture.title
+          });
+        }
+      });
+      
+      if (uniqueImages.length > 0) {
+        console.log('Found existing images from lectures:', uniqueImages.length);
+        setExistingImages(uniqueImages);
       }
       
       setDaije(sortedDaije);
@@ -564,7 +581,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
             style={styles.picker}
             mode="dropdown"
             itemStyle={styles.pickerItem}
-            dropdownIconColor="#000000"
+            dropdownIconColor="#1a1a1a"
           >
             {items.map((item, index) => (
               <Picker.Item
@@ -572,7 +589,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
                 label={item.label}
                 value={item.value}
                 style={styles.pickerItem}
-                color="#000000"
+                color="#1a1a1a"
               />
             ))}
           </Picker>
@@ -655,13 +672,31 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
-              <View style={styles.imagePickerContent}>
-                <Ionicons name="image-outline" size={48} color={COLORS.primary} />
-                <Text style={styles.imagePickerText}>Dodaj sliku</Text>
-                <Text style={styles.imagePickerSubtext}>Kliknite za odabir iz galerije</Text>
-              </View>
-            </TouchableOpacity>
+            <View>
+              <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
+                <View style={styles.imagePickerContent}>
+                  <Ionicons name="image-outline" size={48} color={COLORS.primary} />
+                  <Text style={styles.imagePickerText}>Dodaj sliku</Text>
+                  <Text style={styles.imagePickerSubtext}>Kliknite za odabir iz galerije</Text>
+                </View>
+              </TouchableOpacity>
+              {existingImages.length > 0 && (
+                <TouchableOpacity 
+                  style={[styles.imagePickerButton, { marginTop: 10 }]} 
+                  onPress={() => setShowExistingImages(true)}
+                >
+                  <View style={styles.imagePickerContent}>
+                    <Ionicons name="images-outline" size={48} color={COLORS.primaryLight} />
+                    <Text style={[styles.imagePickerText, { color: COLORS.primaryLight }]}>
+                      Odaberi postojeću sliku
+                    </Text>
+                    <Text style={styles.imagePickerSubtext}>
+                      {existingImages.length} dostupnih slika
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
           )}
         </View>
 
@@ -969,12 +1004,13 @@ const styles = StyleSheet.create({
   },
   picker: {
     height: 50,
-    color: '#000000',
+    color: '#1a1a1a',
     backgroundColor: '#FFFFFF',
   },
   pickerItem: {
-    color: '#000000',
+    color: '#1a1a1a',
     fontSize: 16,
+    fontWeight: '500',
     backgroundColor: '#FFFFFF',
   },
   // Modal styles

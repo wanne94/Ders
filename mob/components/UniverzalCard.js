@@ -358,18 +358,33 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
             displayData.type === 'organization' && { width: 100, height: 100 },
           ]}>
             <Image
-              source={{ uri: 
-                imageError || !data.image 
+              source={{ uri: (() => {
+                const imageUrl = imageError || !data.image 
                   ? (displayData.type === 'daija' 
                     ? getDefaultDaijaImage() 
                     : displayData.type === 'organization'
                     ? getDefaultOrganizationImage()
                     : getDefaultLectureImage())
-                  : getImageUrl(data.image)
-              }}
+                  : getImageUrl(data.image);
+                
+                // Debug log za slike
+                if (data.image) {
+                  console.log('📸 Image URL generated:', {
+                    type: displayData.type,
+                    originalPath: data.image,
+                    generatedUrl: imageUrl,
+                    hasError: imageError
+                  });
+                }
+                
+                return imageUrl;
+              })()}}
               style={displayData.type === 'daija' ? styles.imageDaija : displayData.type === 'organization' ? styles.imageOrganization : styles.image}
               resizeMode="cover"
-              onError={() => setImageError(true)}
+              onError={() => {
+                console.log('❌ Image failed to load:', data.image);
+                setImageError(true);
+              }}
             />
             {/* Diagonal "OTKAZANO" label for cancelled lectures - only over image */}
             {displayData.type === 'lecture' && displayData.isCancelled && (
