@@ -42,23 +42,32 @@ import {
 } from 'lucide-react';
 import RoleBadge from './RoleBadge.jsx';
 import { getValue as getValueHelper, formatDate } from '@/utils/dataHelpers.js';
-import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils.js';
+import { getImageUrl, getImageFallbackUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils.js';
 import LoadingSkeleton from './LoadingSkeleton';
 
 // Optimizirana komponenta za slike
 const ImageCell = memo(({ src, alt, defaultSrc }) => {
   const [imageSrc, setImageSrc] = useState(getImageUrl(src) || defaultSrc);
   const [hasError, setHasError] = useState(false);
+  const [attemptedOptimized, setAttemptedOptimized] = useState(false);
   
   useEffect(() => {
     setImageSrc(getImageUrl(src) || defaultSrc);
     setHasError(false);
+    setAttemptedOptimized(false);
   }, [src, defaultSrc]);
   
   const handleError = () => {
     if (!hasError) {
-      setHasError(true);
-      setImageSrc(defaultSrc);
+      if (!attemptedOptimized && src) {
+        // First try fallback to non-optimized version
+        setAttemptedOptimized(true);
+        setImageSrc(getImageFallbackUrl(src));
+      } else {
+        // If fallback also fails, use default image
+        setHasError(true);
+        setImageSrc(defaultSrc);
+      }
     }
   };
   
@@ -530,14 +539,13 @@ const DataTable = ({
             label: 'Ime i Prezime', 
             sortable: true,
             sortKey: 'name',
-            getValue: (item) => item.name || 'N/A'
+            getValue: (item) => formatDaijaTitle(item.name, item.title) || 'N/A'
           },
-          { id: 'title', label: 'Titula', sortable: true, sortKey: 'title', getValue: (item) => item.title || 'N/A' },
-          { id: 'biography', label: 'Biografija', sortable: false, getValue: (item) => {
-            const biography = item.biography || 'N/A';
-            if (biography === 'N/A') return biography;
-            const maxLength = 40
-            return biography.length > maxLength ? biography.substring(0, maxLength) + '...' : biography;
+          { id: 'description', label: 'Opis', sortable: false, getValue: (item) => {
+            const description = item.description || '';
+            if (!description) return '-';
+            const maxLength = 60;
+            return description.length > maxLength ? description.substring(0, maxLength) + '...' : description;
           }}
         ];
         break;

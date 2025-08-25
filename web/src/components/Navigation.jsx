@@ -183,7 +183,7 @@ const Navigation = () => {
       }
     ] || []),
     {
-      label: 'Prijedlozi',
+      label: '',
       path: '#',
       icon: <Lightbulb className="h-5 w-5" />,
       onClick: handleSuggestionClick
@@ -282,10 +282,11 @@ const Navigation = () => {
                 {/* Suggestion Button */}
                 <Button
                   onClick={handleSuggestionClick}
-                  className="flex items-center gap-2 bg-white text-[#022C43] hover:bg-gray-100 font-medium"
+                  className="bg-white text-[#022C43] hover:bg-gray-100 font-medium"
+                  size="icon"
+                  title="Prijedlozi"
                 >
-                  <Lightbulb className="h-4 w-4" />
-                  Prijedlozi
+                  <Lightbulb className="h-5 w-5" />
                 </Button>
 
                 {/* User Account */}

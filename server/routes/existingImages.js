@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 
 // Get all existing images
 router.get('/', async (req, res) => {
@@ -9,23 +10,71 @@ router.get('/', async (req, res) => {
     const isDevelopment = process.env.NODE_ENV === 'development';
     
     if (isDevelopment) {
-      // In development, return placeholder images for testing
-      const placeholderImages = [
-        { name: 'placeholder1.jpg', url: 'https://picsum.photos/400/300?random=1', uploadedAt: new Date() },
-        { name: 'placeholder2.jpg', url: 'https://picsum.photos/400/300?random=2', uploadedAt: new Date() },
-        { name: 'placeholder3.jpg', url: 'https://picsum.photos/400/300?random=3', uploadedAt: new Date() },
-        { name: 'placeholder4.jpg', url: 'https://picsum.photos/400/300?random=4', uploadedAt: new Date() },
-        { name: 'placeholder5.jpg', url: 'https://picsum.photos/400/300?random=5', uploadedAt: new Date() },
-        { name: 'placeholder6.jpg', url: 'https://picsum.photos/400/300?random=6', uploadedAt: new Date() },
-        { name: 'placeholder7.jpg', url: 'https://picsum.photos/400/300?random=7', uploadedAt: new Date() },
-        { name: 'placeholder8.jpg', url: 'https://picsum.photos/400/300?random=8', uploadedAt: new Date() },
-        { name: 'placeholder9.jpg', url: 'https://picsum.photos/400/300?random=9', uploadedAt: new Date() },
-      ];
+      // In development, fetch recent images from production server
+      try {
+        // Fetch recent lectures to get their images
+        const response = await axios.get('https://ders.ba/api/lectures', {
+          timeout: 10000,
+          params: { limit: 100 }
+        });
+        
+        if (response.data) {
+          // Extract unique images from lectures
+          const imageSet = new Set();
+          const images = [];
+          
+          // Handle both array and object response formats
+          const lectures = Array.isArray(response.data) ? response.data : 
+                          (response.data.lectures || []);
+          
+          lectures.forEach(lecture => {
+            if (lecture.image && !imageSet.has(lecture.image)) {
+              imageSet.add(lecture.image);
+              
+              // Get image name from path
+              let imageName = lecture.image;
+              if (imageName.includes('/')) {
+                imageName = imageName.split('/').pop();
+              }
+              
+              // Ensure full URL for all images
+              let imageUrl = lecture.image;
+              if (!imageUrl.startsWith('http')) {
+                imageUrl = `https://ders.ba${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+              }
+              
+              images.push({
+                name: imageName,
+                url: imageUrl,
+                uploadedAt: lecture.createdAt || lecture.date || new Date()
+              });
+            }
+          });
+          
+          // Sort images by date, newest first (no default images)
+          const allImages = images
+            .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+          
+          console.log(`Fetched ${images.length} unique images from production lectures`);
+          
+          return res.json({ 
+            success: true, 
+            images: allImages.slice(0, 50), // Return up to 50 images
+            source: 'production-api',
+            total: allImages.length
+          });
+        }
+      } catch (fetchError) {
+        console.log('Error fetching from production API:', fetchError.message);
+      }
+      
+      // Fallback: Return empty array if can't fetch from production
+      const fallbackImages = [];
       
       return res.json({ 
         success: true, 
-        images: placeholderImages,
-        source: 'development-placeholders'
+        images: fallbackImages,
+        source: 'fallback-images'
       });
     }
     

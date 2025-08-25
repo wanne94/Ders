@@ -1,26 +1,38 @@
-# Plan za deployment web aplikacije i git push
+# Plan izmjene forme za dodavanje predavanja
+
+## Zadatak
+Forma za dodavanje predavanja treba da se izmjeni tako da predavači (daije) nemaju zasebnu oblast, nego da budu integrisani kao obične stavke u formi.
 
 ## TODO Lista
 
-- [x] 1. Provjeriti trenutno stanje git repozitorija
-- [x] 2. Build-ovati web aplikaciju za produkciju
-- [x] 3. Provjeriti da li postoje greške u build procesu
-- [x] 4. Dodati sve izmjene u git staging
-- [x] 5. Kreirati commit sa opisom izmjena
-- [ ] 6. Push-ovati izmjene na remote repozitorij (u toku - rješavanje konflikta)
-- [ ] 7. Verifikovati da je push uspješan
+- [x] Ukloniti okvir (border) i posebno stilizovanje sa sekcije Daije/Predavači
+- [x] Pojednostaviti UI za dodavanje predavača - zadržati na istoj poziciji
+- [x] Prilagoditi padding i spacing da bude konzistentan sa ostalim poljima
+- [x] Testirati funkcionalnost forme nakon izmjena
 
-## Tehničke napomene
+## Tehnički detalji
 
-- Web aplikacija se nalazi u /web direktoriju
-- Koristiti npm run build za produkcijski build
-- Provjeriti da li postoje environment varijable za produkciju
+### Trenutno stanje:
+- Daije/Predavači su u posebnoj sekciji sa okvirom (border p-4 rounded-lg) na liniji 480
+- Imaju složen UI sa listom dodanih predavača
+- Pozicija: između kratkog opisa i organizatora
 
-## Review sekcija
+### Planirane izmjene:
+1. Ukloniti border, p-4 i rounded-lg klase sa wrapper div-a
+2. Zadržati poziciju u formi (između kratkog opisa i organizatora)
+3. Zadržati svu funkcionalnost dodavanja više predavača
+4. Prilagoditi spacing da bude kao kod ostalih polja (space-y-2)
 
-### Završene akcije:
-1. Provjereno git stanje - lokalna grana je iza remote za 1 commit
-2. Build web aplikacije uspješno završen sa samo upozorenjima (nema grešaka)
-3. Sve izmjene dodane u staging
-4. Kreiran commit sa opisom izmjena
-5. U toku je rješavanje merge konflikta sa remote branch
+## Review
+
+### Izvršene izmjene:
+1. **Uklonjen okvir sa sekcije Daije/Predavači** - Zamijenjena klasa `border p-4 rounded-lg` sa `space-y-2` (linija 480)
+2. **Pojednostavljen UI** - Uklonjen nepotreban wrapper div oko interface-a za dodavanje predavača
+3. **Prilagođen spacing** - Sve je sada konzistentno sa ostalim poljima forme
+4. **Zadržana sva funkcionalnost** - Dodavanje više predavača, custom imena, sve radi kao prije
+
+### Rezultat:
+- Forma sada ima jedinstveni, konzistentan izgled
+- Daije/Predavači su integrisani kao obična stavka u formi
+- Nema više zasebne oblasti sa okvirom
+- Funkcionalnost je u potpunosti očuvana

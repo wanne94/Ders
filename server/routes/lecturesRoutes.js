@@ -152,6 +152,11 @@ router.get('/public', async (req, res) => {
           select: 'name title image',
           strictPopulate: false
         })
+        .populate({
+          path: 'daijaIds',
+          select: 'name title image',
+          strictPopulate: false
+        })
         // .hint({ status: 1, date: 1 }) // 🚀 Force index usage - DISABLED
         .lean()
         .exec();
@@ -173,6 +178,11 @@ router.get('/public', async (req, res) => {
         })
         .populate({
           path: 'daija',
+          select: 'name title image',
+          strictPopulate: false
+        })
+        .populate({
+          path: 'daijaIds',
           select: 'name title image',
           strictPopulate: false
         })
@@ -568,6 +578,8 @@ router.post('/', authenticateToken, async (req, res) => {
       title,
       type = 'Predavanje',
       daija,
+      daijaIds,  // Nova polja za podršku više daija
+      customSpeakers,  // Nova polja za prilagođene predavače
       speaker,
       organization,
       organizationId,
@@ -649,6 +661,8 @@ router.post('/', authenticateToken, async (req, res) => {
           type,
           title: title,
           daija,
+          daijaIds: daijaIds || [],  // Dodano za podršku više daija
+          customSpeakers: customSpeakers || [],  // Dodano za prilagođene predavače
           speaker,
           organization,
           organizationId,
@@ -702,6 +716,8 @@ router.post('/', authenticateToken, async (req, res) => {
         type,
         title,
         daija,
+        daijaIds: daijaIds || [],  // Dodano za podršku više daija
+        customSpeakers: customSpeakers || [],  // Dodano za prilagođene predavače
         speaker,
         organization,
         organizationId,
@@ -1006,7 +1022,9 @@ router.get('/', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
       daijaId: lecture.daija?._id || lecture.daija || null,
       speaker: lecture.daija && lecture.daija.name 
         ? formatDaijaTitle(lecture.daija.name, lecture.daija.title)
-        : lecture.speaker || 'Nepoznat predavač'
+        : lecture.speaker || 'Nepoznat predavač',
+      // Add organization name for dashboard display
+      organization: lecture.organizationId?.name || lecture.organization || ''
     }));
     
     res.json(transformedLectures);
@@ -1019,12 +1037,19 @@ router.get('/pending', authenticateToken, isAdminOrSuperAdmin, async (req, res) 
   try {
     const lectures = await Lecture.find({ status: 'pending' })
       .populate('createdBy', 'firstName lastName email')
+      .populate('organizationId', 'name')
+      .populate('daija', 'name title image')
       .sort({ createdAt: -1 });
     
     // Transform lectures to include daijaId for frontend compatibility
     const transformedLectures = lectures.map(lecture => ({
       ...lecture.toObject(),
-      daijaId: lecture.daija || null
+      daijaId: lecture.daija?._id || lecture.daija || null,
+      speaker: lecture.daija && lecture.daija.name 
+        ? formatDaijaTitle(lecture.daija.name, lecture.daija.title)
+        : lecture.speaker || 'Nepoznat predavač',
+      // Add organization name for dashboard display
+      organization: lecture.organizationId?.name || lecture.organization || ''
     }));
     
     res.json(transformedLectures);
@@ -1037,12 +1062,19 @@ router.get('/approved', async (req, res) => {
   try {
     const lectures = await Lecture.find({ status: 'approved' })
       .populate('createdBy', 'firstName lastName email')
+      .populate('organizationId', 'name')
+      .populate('daija', 'name title image')
       .sort({ date: -1 });
     
     // Transform lectures to include daijaId for frontend compatibility
     const transformedLectures = lectures.map(lecture => ({
       ...lecture.toObject(),
-      daijaId: lecture.daija || null
+      daijaId: lecture.daija?._id || lecture.daija || null,
+      speaker: lecture.daija && lecture.daija.name 
+        ? formatDaijaTitle(lecture.daija.name, lecture.daija.title)
+        : lecture.speaker || 'Nepoznat predavač',
+      // Add organization name for dashboard display
+      organization: lecture.organizationId?.name || lecture.organization || ''
     }));
     
     res.json(transformedLectures);
@@ -1142,6 +1174,82 @@ router.get('/weekly-series/:seriesId', async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: 'Greška pri dohvaćanju serije predavanja' });
+  }
+});
+
+// Update lecture by ID
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const lectureId = req.params.id;
+    
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(lectureId)) {
+      return res.status(400).json({ message: 'Neispravna ID predavanja' });
+    }
+    
+    const {
+      title,
+      type,
+      daija,
+      daijaIds,  // Nova polja za podršku više daija
+      customSpeakers,  // Nova polja za prilagođene predavače
+      speaker,
+      organization,
+      organizationId,
+      address,
+      city,
+      date,
+      time,
+      duration,
+      shortDescription,
+      description,
+      image,
+      status,
+      isWeeklyLecture,
+      totalWeeks
+    } = req.body;
+    
+    // Find and update the lecture
+    const updatedLecture = await Lecture.findByIdAndUpdate(
+      lectureId,
+      {
+        title,
+        type,
+        daija,
+        daijaIds: daijaIds || [],
+        customSpeakers: customSpeakers || [],
+        speaker,
+        organization,
+        organizationId,
+        address,
+        city,
+        date: date ? parseLocalDate(date) : undefined,
+        time,
+        duration,
+        shortDescription,
+        description,
+        image,
+        status,
+        isWeeklyLecture,
+        totalWeeks
+      },
+      { new: true, runValidators: true }
+    ).populate('daija').populate('daijaIds').populate('organizationId');
+    
+    if (!updatedLecture) {
+      return res.status(404).json({ message: 'Predavanje nije pronađeno' });
+    }
+    
+    res.json({
+      message: 'Predavanje uspješno ažurirano',
+      lecture: updatedLecture
+    });
+  } catch (error) {
+    console.error('Error updating lecture:', error);
+    res.status(500).json({ 
+      message: 'Greška pri ažuriranju predavanja',
+      error: error.message 
+    });
   }
 });
 

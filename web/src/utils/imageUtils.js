@@ -16,7 +16,7 @@ const IMAGE_SERVER_URL = 'https://ders.ba';
  * @param {string} imagePath - The image path (can be relative or full URL or base64 data)
  * @returns {string} - The full image URL or base64 data string
  */
-export const getImageUrl = (imagePath) => {
+export const getImageUrl = (imagePath, preferOptimized = false) => {
   // Always load from server - unified /uploads/images/ path for both development and production
   const defaultImage = '/uploads/images/default.jpg';
   
@@ -61,15 +61,37 @@ export const getImageUrl = (imagePath) => {
   }
   
   // Ensure path starts with /uploads/images/ if it contains images
-  if (!cleanPath.startsWith('/uploads/') && cleanPath.includes('images/')) {
-    cleanPath = `/uploads/images/${cleanPath.replace(/^\/+/, '').replace(/^images\//, '')}`;
+  if (!cleanPath.startsWith('/uploads/')) {
+    // If it's just a filename or doesn't have the full path, add it
+    if (!cleanPath.includes('/')) {
+      cleanPath = `/uploads/images/${cleanPath}`;
+    } else if (cleanPath.includes('images/')) {
+      cleanPath = `/uploads/images/${cleanPath.replace(/^\/+/, '').replace(/^images\//, '')}`;
+    }
   }
   
   // Ensure path starts with /
   cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
   
+  // For images in /uploads/images/, try optimized version first if preferred
+  // Optimized images are stored in /uploads/images/optimized/
+  if (preferOptimized && cleanPath.startsWith('/uploads/images/') && !cleanPath.includes('/optimized/')) {
+    const filename = cleanPath.replace('/uploads/images/', '');
+    const optimizedPath = `/uploads/images/optimized/${filename}`;
+    return `${IMAGE_SERVER_URL}${optimizedPath}`;
+  }
+  
   // Always return server URL - no local public folder usage
   return `${IMAGE_SERVER_URL}${cleanPath}`;
+};
+
+/**
+ * Get the fallback URL for an image (non-optimized version)
+ * @param {string} imagePath - The image path
+ * @returns {string} - The fallback image URL
+ */
+export const getImageFallbackUrl = (imagePath) => {
+  return getImageUrl(imagePath, false);
 };
 
 /**

@@ -6,17 +6,22 @@ import { Badge } from './ui/badge';
 import { MapPin, Building2, Clock, Calendar, User, Briefcase, GraduationCap, BookOpen } from 'lucide-react';
 import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrganizationSlug, calculateLectureStatus } from '../utils/dataHelpers';
 import CancelledOverlay from './CancelledOverlay';
-import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
+import { getImageUrl, getImageFallbackUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
 import { formatDaijaTitle, generateSlug } from '../utils';
 import { logLectureView, logDaijaProfileView, logOrganizationView } from '@/services/analytics';
 
 const UniversalCard = React.memo(({ data }) => {
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
+  const [attemptedOptimized, setAttemptedOptimized] = useState(false);
 
   const handleImageError = useCallback(() => {
-    setImageError(true);
-  }, []);
+    if (!attemptedOptimized) {
+      setAttemptedOptimized(true);
+    } else {
+      setImageError(true);
+    }
+  }, [attemptedOptimized]);
 
   if (!data) {
     return null;
@@ -116,7 +121,7 @@ const UniversalCard = React.memo(({ data }) => {
     (displayData.type === 'lecture' ? getDefaultLectureImage() :
      displayData.type === 'daija' ? getDefaultDaijaImage() :
      getDefaultOrganizationImage()) : 
-    getImageUrl(displayData.image);
+    (attemptedOptimized ? getImageFallbackUrl(displayData.image) : getImageUrl(displayData.image));
 
   const getBadgeColor = (color) => {
     switch(color) {

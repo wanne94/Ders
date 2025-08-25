@@ -1149,7 +1149,7 @@ const Dashboard = () => {
         );
         content = (
           <Box>
-            {renderSection('approved', approvedDaije, 'Odobrene daije', 'daija')}
+            {renderSection('approved', approvedDaije, 'Odobrene Daije', 'daija')}
           </Box>
         );
         break;
@@ -1192,7 +1192,7 @@ const Dashboard = () => {
         content = (
           <Box>
             {rejectedLectures.length > 0 && renderSection('rejected', rejectedLectures, 'Odbačena predavanja', 'lecture', true)}
-            {rejectedDaije.length > 0 && renderSection('rejected', rejectedDaije, 'Odbačene daije', 'daija', true)}
+            {rejectedDaije.length > 0 && renderSection('rejected', rejectedDaije, 'Odbačene Daije', 'daija', true)}
             {rejectedOrganizations.length > 0 && renderSection('rejected', rejectedOrganizations, 'Odbačena udruženja', 'organization', true)}
             {rejectedLectures.length === 0 && rejectedDaije.length === 0 && rejectedOrganizations.length === 0 && (
               <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>

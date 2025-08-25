@@ -55,7 +55,7 @@ export const ENV = {
   MAX_RETRY_ATTEMPTS: 3,
   
   // Helper function za slike
-  getImageUrl: (imagePath) => {
+  getImageUrl: (imagePath, preferOptimized = true) => {
     if (!imagePath) return 'https://ders.ba/uploads/images/default.jpg';
     
     // If it's already a full URL, return as is
@@ -70,7 +70,19 @@ export const ENV = {
       cleanPath = `/uploads/images/${cleanPath.replace(/^\/+/, '')}`;
     }
     
+    // For images in /uploads/images/, try optimized version first if preferred
+    if (preferOptimized && cleanPath.startsWith('/uploads/images/') && !cleanPath.includes('/optimized/')) {
+      const filename = cleanPath.replace('/uploads/images/', '');
+      const optimizedPath = `/uploads/images/optimized/${filename}`;
+      return `https://ders.ba${optimizedPath}`;
+    }
+    
     return `https://ders.ba${cleanPath}`;
+  },
+  
+  // Helper function for fallback (non-optimized) images
+  getImageFallbackUrl: (imagePath) => {
+    return module.exports.getImageUrl(imagePath, false);
   },
   
   getDefaultImages: () => ({

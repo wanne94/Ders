@@ -161,18 +161,16 @@ if (isProduction) {
 // Static files are now served by Next.js from web/public
 
 // Serve uploads in both development and production
-// In development, if images don't exist locally, they'll 404 and frontend can fallback
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Also setup proxy to production server for missing images
+// In development, always redirect to production server for images
 if (process.env.NODE_ENV === 'development') {
   app.use('/uploads/*', (req, res, next) => {
-    // If local file doesn't exist, proxy to production
+    // Always redirect to production server for images
     const imagePath = req.originalUrl;
     res.redirect(`https://ders.ba${imagePath}`);
   });
-  console.log('📁 Development mode: serving local uploads with fallback to production (https://ders.ba)');
+  console.log('📁 Development mode: redirecting all uploads to production (https://ders.ba)');
 } else {
+  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
   console.log('📁 Production mode: serving uploads from server/uploads');
 }
 
@@ -1082,8 +1080,12 @@ app.get('/api/organizations/public', async (req, res) => {
     const organizationsWithLectureCount = await Promise.all(
       organizations.map(async (organization) => {
         // Count approved lectures for this organization
+        // Check both organizationId (ObjectId) and organization (String name)
         const lectureCount = await Lecture.countDocuments({ 
-          organizationId: organization._id, 
+          $or: [
+            { organizationId: organization._id },
+            { organization: organization.name }
+          ],
           status: 'approved' 
         });
         
@@ -2792,8 +2794,12 @@ app.get('/api/organizations', async (req, res) => {
     const organizationsWithLectureCount = await Promise.all(
       organizations.map(async (organization) => {
         // Count approved lectures for this organization
+        // Check both organizationId (ObjectId) and organization (String name)
         const lectureCount = await Lecture.countDocuments({ 
-          organizationId: organization._id, 
+          $or: [
+            { organizationId: organization._id },
+            { organization: organization.name }
+          ],
           status: 'approved' 
         });
         

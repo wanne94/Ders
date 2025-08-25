@@ -37,6 +37,51 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// POST /api/users/refresh-token - Refresh JWT token
+router.post('/refresh-token', authMiddleware, async (req, res) => {
+  try {
+    // Korisnik je već autentifikovan kroz authMiddleware
+    const userId = req.user.id || req.user.userId || req.user._id;
+    
+    // Pronađi korisnika u bazi da dobijemo najnovije podatke
+    const user = await User.findById(userId).select('-password -securityAnswer');
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Korisnik nije pronađen.' 
+      });
+    }
+
+    // Generiši novi token sa produženim rokom
+    const newToken = generateToken({ 
+      id: user._id, 
+      email: user.email,
+      username: user.username, 
+      role: user.role 
+    });
+
+    console.log('✅ Token refreshed for user:', user.username);
+
+    res.json({ 
+      success: true, 
+      token: newToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error refreshing token:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Greška pri osvježavanju tokena.' 
+    });
+  }
+});
+
 // POST /api/users/auth
 router.post('/auth', async (req, res) => {
   try {

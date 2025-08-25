@@ -5,17 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Combobox } from '@/components/ui/combobox';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
+  DialogContent, DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogFooter
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -24,10 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  CloudUpload, 
-  X, 
-  Plus, 
+import {
+  CloudUpload,
+  X,
+  Plus,
   Trash2,
   Facebook,
   Instagram,
@@ -313,7 +310,7 @@ const UnifiedFormNew = ({
       
       switch (type) {
         case 'lecture':
-          endpoint = data ? `/api/lectures/${data._id}` : '/api/lectures';
+          endpoint = data ? `/lectures/${data._id}` : '/lectures';
           method = data ? 'put' : 'post';
           dataToSend = {
             ...formData,
@@ -327,7 +324,7 @@ const UnifiedFormNew = ({
           break;
           
         case 'daija':
-          endpoint = data ? `/api/daije/${data._id}` : '/api/daije';
+          endpoint = data ? `/daije/${data._id}` : '/daije';
           method = data ? 'put' : 'post';
           dataToSend = {
             ...formData,
@@ -336,7 +333,7 @@ const UnifiedFormNew = ({
           break;
           
         case 'organization':
-          endpoint = data ? `/api/organizations/${data._id}` : '/api/organizations';
+          endpoint = data ? `/organizations/${data._id}` : '/organizations';
           method = data ? 'put' : 'post';
           dataToSend = {
             ...formData,
@@ -698,21 +695,16 @@ const UnifiedFormNew = ({
                     <Label htmlFor="prof">prof.</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="dr" id="dr" />
-                    <Label htmlFor="dr">dr.</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="hafiz" id="hafiz" />
-                    <Label htmlFor="hafiz">hafiz</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
                     <RadioGroupItem value="mr" id="mr" />
                     <Label htmlFor="mr">mr.</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="" id="none" />
-                    <Label htmlFor="none">Bez titule</Label>
+                    <RadioGroupItem value="dr" id="dr" />
+                    <Label htmlFor="dr">dr.</Label>
                   </div>
+                 
+                  
+               
                 </RadioGroup>
               </div>
 

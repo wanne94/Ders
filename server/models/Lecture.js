@@ -16,6 +16,14 @@ const lectureSchema = new mongoose.Schema({
     ref: 'Daija',
     required: false
   },
+  // Nova polja za podršku više daija
+  daijaIds: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Daija'
+  }],
+  customSpeakers: [{
+    type: String
+  }],
   speaker: {
     type: String,
     required: false

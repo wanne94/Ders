@@ -499,9 +499,37 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
 
   useEffect(() => {
     if (organizations && lectures) {
-      // Privremeno koristimo jednostavno sortiranje umesto složene funkcije
-      const approvedOrgs = (organizations || []).filter(org => org.status === 'approved');
-      const sortedOrganizations = approvedOrgs.slice(0, 10); // Limit to 10 organizations
+      // Filtriramo samo odobrena udruženja koja imaju bar jedno predavanje
+      const approvedOrgs = (organizations || []).filter(org => {
+        if (org.status !== 'approved') return false;
+        
+        // Provjeri da li udruženje ima bar jedno predavanje
+        // Organizacije u predavanjima su sačuvane kao stringovi (imena), ne kao ID reference
+        const hasPredavanje = lectures.some(lecture => {
+          if (!lecture.organization) return false;
+          
+          // Ako je organizacija string, poredi sa imenom
+          if (typeof lecture.organization === 'string') {
+            return lecture.organization === org.name;
+          }
+          
+          // Ako je organizacija objekat, poredi ID ili ime
+          if (typeof lecture.organization === 'object') {
+            return lecture.organization._id === org._id || 
+                   lecture.organization.name === org.name;
+          }
+          
+          return false;
+        });
+        
+        return hasPredavanje;
+      });
+      
+      // Nasumično mešamo array
+      const shuffled = [...approvedOrgs].sort(() => Math.random() - 0.5);
+      
+      // Uzimamo prvih 10
+      const sortedOrganizations = shuffled.slice(0, 10);
 
       setDisplayOrganizations(sortedOrganizations || []);
     }
@@ -521,7 +549,7 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
           Udruženja
         </Typography>
         <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
-          Upoznaj 10 nasumično odabranih udruženja.
+          Upoznaj 10 nasumično odabranih udruženja koja su imala najavljeno predavanje.
         </Typography>
 
       {isLoading ? (
@@ -681,8 +709,18 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
 
   useEffect(() => {
     if (daije && lectures) {
-      // Filtriramo samo odobrene daije
-      const approvedDaije = (daije || []).filter(daija => daija.status === 'approved');
+      // Filtriramo samo odobrene daije koji imaju bar jedno predavanje
+      const approvedDaije = (daije || []).filter(daija => {
+        if (daija.status !== 'approved') return false;
+        
+        // Provjeri da li daija ima bar jedno predavanje
+        const hasPredavanje = lectures.some(lecture => 
+          lecture.daija && 
+          (lecture.daija._id === daija._id || lecture.daija === daija._id)
+        );
+        
+        return hasPredavanje;
+      });
       
       // Nasumično mešamo array
       const shuffled = [...approvedDaije].sort(() => Math.random() - 0.5);
@@ -707,7 +745,7 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
           Daije
         </Typography>
         <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
-        Upoznaj 10 nasumično odabranih daija.
+        Upoznaj 10 nasumično odabranih daija koji su imali najavljeno predavanje.
         </Typography>
 
       {isLoading ? (

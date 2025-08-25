@@ -149,8 +149,7 @@ const DraggableDataTable = ({
         headers.push(
           <TableHead key="image" className="w-16">Slika</TableHead>,
           <TableHead key="title">Ime</TableHead>,
-          <TableHead key="description">Opis</TableHead>,
-          <TableHead key="createdAt">Kreiran</TableHead>
+          <TableHead key="description">Opis</TableHead>
         );
         break;
       case 'organization':
@@ -288,12 +287,11 @@ const DraggableDataTable = ({
               />
             </div>
           </TableCell>,
-          <TableCell key="title">{item.title || item.name}</TableCell>,
+          <TableCell key="title">{formatDaijaTitle(item.name, item.title)}</TableCell>,
           <TableCell key="description">
-            {item.description ? item.description.substring(0, 100) + '...' : '-'}
-          </TableCell>,
-          <TableCell key="createdAt">
-            {item.createdAt ? new Date(item.createdAt).toLocaleDateString('bs-BA') : '-'}
+            <div className="max-w-md line-clamp-2">
+              {item.shortDescription || item.biography || '-'}
+            </div>
           </TableCell>
         );
         break;

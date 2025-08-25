@@ -50,6 +50,8 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
     title: '',
     speaker: '',
     daijaId: '',
+    daijaIds: [],  // Dodano za podršku više daija
+    customSpeakers: [],  // Za prilagođene predavače
     organization: '',
     organizationId: '',
     date: '',
@@ -74,10 +76,24 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
       setUseCustomOrganization(isCustomOrg);
       setShowWeeklyOptions(existingLecture.isWeeklyLecture || false);
       
+      // Provjeri da li postojeće predavanje ima više daija
+      const daijaIds = existingLecture.daijaIds || [];
+      const customSpeakers = existingLecture.customSpeakers || [];
+      
+      // Ako nema novo polje daijaIds, koristi staru logiku
+      if (daijaIds.length === 0 && existingLecture.daija) {
+        daijaIds.push(existingLecture.daija._id || existingLecture.daija);
+      }
+      if (customSpeakers.length === 0 && isCustomSpeaker && existingLecture.speaker) {
+        customSpeakers.push(existingLecture.speaker);
+      }
+      
       setFormData({
         title: existingLecture.title || '',
-        speaker: isCustomSpeaker ? (existingLecture.speaker || '') : '',
+        speaker: '',
         daijaId: !isCustomSpeaker && existingLecture.daija ? existingLecture.daija._id : '',
+        daijaIds: daijaIds,
+        customSpeakers: customSpeakers,
         organization: isCustomOrg ? (existingLecture.organization || '') : '',
         organizationId: !isCustomOrg && existingLecture.organizationId ? 
           (typeof existingLecture.organizationId === 'object' ? 
@@ -190,10 +206,9 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
       missingFields.push('Naslov predavanja');
     }
     
-    if (!useCustomSpeaker && !formData.daijaId) {
-      missingFields.push('Daija');
-    } else if (useCustomSpeaker && !formData.speaker.trim()) {
-      missingFields.push('Ime predavača');
+    // Provjeri da li ima bar jedan daija ili prilagođeni predavač
+    if (formData.daijaIds.length === 0 && formData.customSpeakers.length === 0) {
+      missingFields.push('Daija/Predavač (morate dodati bar jednog)');
     }
     
     if (!useCustomOrganization && !formData.organizationId) {
@@ -250,9 +265,13 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
       const dataToSend = {
         ...formData,
         image: imageUrl,
-        daija: useCustomSpeaker ? null : formData.daijaId,
-        daijaId: useCustomSpeaker ? null : formData.daijaId,
-        speaker: useCustomSpeaker ? formData.speaker : '',
+        // Pošalji sve daije i prilagođene predavače
+        daijaIds: formData.daijaIds,
+        customSpeakers: formData.customSpeakers,
+        // Za kompatibilnost sa starim kodom, postavi prvi daija kao glavni
+        daija: formData.daijaIds.length > 0 ? formData.daijaIds[0] : null,
+        daijaId: formData.daijaIds.length > 0 ? formData.daijaIds[0] : null,
+        speaker: formData.customSpeakers.length > 0 ? formData.customSpeakers.join(', ') : '',
         organization: useCustomOrganization ? formData.organization : '',
         organizationId: useCustomOrganization ? null : formData.organizationId,
       };
@@ -283,6 +302,8 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
       title: '',
       speaker: '',
       daijaId: '',
+      daijaIds: [],
+      customSpeakers: [],
       organization: '',
       organizationId: '',
       date: '',
@@ -455,58 +476,144 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
             </span>
           </div>
 
-          {/* Speaker Selection */}
+          {/* Multiple Speakers Section */}
           <div className="space-y-2">
-            <Label htmlFor="speaker">Daija *</Label>
+            <Label>Daije / Predavači *</Label>
+            
+            {/* List of added speakers */}
+            {formData.daijaIds.length > 0 || formData.customSpeakers.length > 0 ? (
+              <div className="space-y-2 mb-2">
+                {/* Existing daije */}
+                {formData.daijaIds.map((daijaId, index) => {
+                  const daija = daije.find(d => d._id === daijaId);
+                  return daija ? (
+                    <div key={`daija-${index}`} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                      <span className="text-sm">{daija.name}{daija.title ? ` (${daija.title})` : ''}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            daijaIds: prev.daijaIds.filter((_, i) => i !== index)
+                          }));
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : null;
+                })}
+                
+                {/* Custom speakers */}
+                {formData.customSpeakers.map((speaker, index) => (
+                  <div key={`speaker-${index}`} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                    <span className="text-sm">{speaker}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          customSpeakers: prev.customSpeakers.filter((_, i) => i !== index)
+                        }));
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            
+            {/* Add speaker interface */}
             {!useCustomSpeaker ? (
               <Combobox
-                options={[
-                  ...daije.map(daija => ({
-                    value: daija._id,
-                    label: `${daija.name}${daija.title ? ` (${daija.title})` : ''}`
-                  })),
-                  { value: 'custom', label: 'Unesi prilagođeno ime...' }
-                ]}
-                value={formData.daijaId}
-                onValueChange={(value) => {
-                  if (value === 'custom') {
-                    setUseCustomSpeaker(true);
-                    setFormData(prev => ({
-                      ...prev,
-                      daijaId: '',
-                      speaker: ''
-                    }));
-                  } else {
-                    setUseCustomSpeaker(false);
-                    const selectedDaija = daije.find(d => d._id === value);
-                    setFormData(prev => ({
-                      ...prev,
-                      daijaId: value,
-                      speaker: selectedDaija ? selectedDaija.name : ''
-                    }));
-                  }
-                }}
-                placeholder="Odaberi ili pretraži daiju..."
-                searchPlaceholder="Pretraži daije..."
-                emptyText="Nema pronađenih daija"
+                  options={[
+                    ...daije
+                      .filter(d => !formData.daijaIds.includes(d._id))
+                      .map(daija => ({
+                        value: daija._id,
+                        label: `${daija.name}${daija.title ? ` (${daija.title})` : ''}`
+                      })),
+                    { value: 'custom', label: 'Unesi prilagođeno ime...' }
+                  ]}
+                  value=""
+                  onValueChange={(value) => {
+                    if (value === 'custom') {
+                      setUseCustomSpeaker(true);
+                    } else if (value) {
+                      setFormData(prev => ({
+                        ...prev,
+                        daijaIds: [...prev.daijaIds, value]
+                      }));
+                    }
+                  }}
+                  placeholder="Odaberi ili pretraži daiju..."
+                  searchPlaceholder="Pretraži daije..."
+                  emptyText="Nema pronađenih daija"
               />
-            ) : null}
+            ) : (
+              <div className="flex gap-2">
+                  <Input
+                    placeholder="Unesite ime predavača..."
+                    value={formData.speaker}
+                    onChange={(e) => setFormData(prev => ({ ...prev, speaker: e.target.value }))}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && formData.speaker.trim()) {
+                        e.preventDefault();
+                        setFormData(prev => ({
+                          ...prev,
+                          customSpeakers: [...prev.customSpeakers, prev.speaker.trim()],
+                          speaker: ''
+                        }));
+                        setUseCustomSpeaker(false);
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      if (formData.speaker.trim()) {
+                        setFormData(prev => ({
+                          ...prev,
+                          customSpeakers: [...prev.customSpeakers, prev.speaker.trim()],
+                          speaker: ''
+                        }));
+                        setUseCustomSpeaker(false);
+                      }
+                    }}
+                  >
+                    Dodaj
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setUseCustomSpeaker(false);
+                      setFormData(prev => ({ ...prev, speaker: '' }));
+                    }}
+                  >
+                    Otkaži
+                  </Button>
+              </div>
+            )}
+            
+            {/* Add more button */}
+            {(formData.daijaIds.length > 0 || formData.customSpeakers.length > 0) && !useCustomSpeaker && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => {}}
+              >
+                + Dodaj još jednog daiju
+              </Button>
+            )}
           </div>
-
-          {/* Custom Speaker Input */}
-          {useCustomSpeaker && (
-            <div className="space-y-2">
-              <Label htmlFor="customSpeaker">Ime predavača *</Label>
-              <Input
-                id="customSpeaker"
-                name="speaker"
-                value={formData.speaker}
-                onChange={handleChange}
-                placeholder="Unesite ime predavača..."
-                required={useCustomSpeaker}
-              />
-            </div>
-          )}
 
           {/* Organization Selection */}
           <div className="space-y-2">
@@ -720,35 +827,39 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
         
         <div className="overflow-y-auto max-h-[60vh] p-4">
           {existingImages.length > 0 ? (
-            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {existingImages.map((img, index) => (
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {existingImages
+                .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
+                .map((img, index) => (
                 <div
                   key={index}
-                  className="relative cursor-pointer group"
+                  className="relative cursor-pointer group aspect-[3/4]"
                   onClick={() => {
+                    // Always use the full URL for preview
+                    const fullImageUrl = img.url.startsWith('http') ? img.url : getImageUrl(img.url);
                     setSelectedExistingImage(img.url);
-                    const imageUrl = img.url.startsWith('http') ? img.url : getImageUrl(img.url);
-                    setImagePreview(imageUrl);
-                    setFormData(prev => ({ ...prev, image: img.url }));
+                    setImagePreview(fullImageUrl);
+                    // Store the path that will be saved to database
+                    const imagePath = img.url.startsWith('https://ders.ba') 
+                      ? img.url.replace('https://ders.ba', '') 
+                      : img.url;
+                    setFormData(prev => ({ ...prev, image: imagePath }));
                     setImageFile(null);
                     setShowExistingImages(false);
                   }}
                 >
-                  <div className={`border-2 rounded-lg overflow-hidden transition-all ${
+                  <div className={`h-full border-2 rounded-lg overflow-hidden transition-all ${
                     selectedExistingImage === img.url 
                       ? 'border-blue-500 ring-2 ring-blue-200' 
                       : 'border-gray-200 hover:border-blue-400'
                   }`}>
                     <Image
                       src={img.url.startsWith('http') ? img.url : getImageUrl(img.url)}
-                      alt={img.name}
-                      width={200}
-                      height={150}
-                      className="w-full h-32 object-cover"
+                      alt="Slika predavanja"
+                      width={300}
+                      height={400}
+                      className="w-full h-full object-cover"
                     />
-                    <div className="p-2 bg-white">
-                      <p className="text-xs text-gray-600 truncate">{img.name}</p>
-                    </div>
                   </div>
                   
                   {/* Overlay on hover */}
@@ -756,8 +867,8 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
                   
                   {/* Check mark for selected */}
                   {selectedExistingImage === img.url && (
-                    <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1.5 shadow-lg">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
