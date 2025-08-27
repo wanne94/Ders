@@ -1339,7 +1339,7 @@ const ProfilePage = () => {
               <div className="py-4">
                 <p className="text-sm text-gray-600">
                   Da li ste sigurni da želite obrisati {type === 'lecture' ? 'predavanje' : type === 'daija' ? 'daiju' : 'organizaciju'} 
-                  "{type === 'daija' || type === 'organization' ? profile?.name : profile?.title}"?
+                  &quot;{type === 'daija' || type === 'organization' ? profile?.name : profile?.title}&quot;?
                 </p>
                 <p className="text-sm text-red-600 mt-2">
                   Ova akcija ne može biti poništena!
