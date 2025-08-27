@@ -282,6 +282,8 @@ router.get('/public', async (req, res) => {
         speaker: lecture.daija && lecture.daija.name 
           ? formatDaijaTitle(lecture.daija.name, lecture.daija.title)
           : lecture.speaker,
+        // Include populated daijaIds
+        daijaIds: lecture.daijaIds,
         // Explicitly include weekly lecture fields
         isWeeklyLecture: lecture.isWeeklyLecture,
         weekNumber: lecture.weekNumber,
@@ -1360,6 +1362,7 @@ router.get('/:id', async (req, res) => {
     const lecture = await Lecture.findById(req.params.id)
       .populate('createdBy', 'firstName lastName email')
       .populate('daija', 'name title')
+      .populate('daijaIds', 'name title image')
       .populate('organizationId', 'name');
     
     if (!lecture) {
@@ -1604,6 +1607,63 @@ router.post('/:id/override-cancellation', authenticateToken, isAdminOrSuperAdmin
   }
 });
 
+
+// Delete lecture by ID
+router.delete('/:id', authenticateToken, async (req, res) => {
+  try {
+    const lectureId = req.params.id;
+    
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(lectureId)) {
+      return res.status(400).json({ message: 'Neispravna ID predavanja' });
+    }
+    
+    // Check if user is admin or the owner of the lecture
+    const lecture = await Lecture.findById(lectureId);
+    
+    if (!lecture) {
+      return res.status(404).json({ message: 'Lecture not found' });
+    }
+    
+    // Check permissions - admin/superadmin can delete any lecture, others only their own
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
+    const isOwner = lecture.createdBy && lecture.createdBy.toString() === req.user.id;
+    
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ message: 'Nemate dozvolu za brisanje ovog predavanja' });
+    }
+    
+    // If it's a weekly series, optionally delete all lectures in the series
+    if (lecture.isWeeklyLecture && req.query.deleteAll === 'true') {
+      // Delete all lectures in the series
+      await Lecture.deleteMany({ weeklySeriesId: lecture.weeklySeriesId });
+      
+      return res.json({ 
+        message: 'Uspješno obrisana serija sedmičnih predavanja',
+        deletedCount: await Lecture.countDocuments({ weeklySeriesId: lecture.weeklySeriesId })
+      });
+    }
+    
+    // Delete single lecture
+    await Lecture.findByIdAndDelete(lectureId);
+    
+    res.json({ 
+      message: 'Predavanje uspješno obrisano',
+      deletedLecture: {
+        _id: lecture._id,
+        title: lecture.title,
+        date: lecture.date
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error deleting lecture:', error);
+    res.status(500).json({ 
+      message: 'Greška pri brisanju predavanja',
+      error: error.message 
+    });
+  }
+});
 
 // Admin endpoint - Reset cancellation reports
 router.delete('/:id/reset-cancellation', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {

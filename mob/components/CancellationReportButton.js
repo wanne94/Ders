@@ -122,7 +122,7 @@ const CancellationReportButton = ({
             style={styles.icon}
           />
           <Text style={textStyle}>
-            {loading ? 'Slanje...' : 'Prijavi otkazivanje'}
+            {loading ? 'Slanje...' : 'Prijavi otkazivanje dersa'}
           </Text>
           {loading && (
             <ActivityIndicator 

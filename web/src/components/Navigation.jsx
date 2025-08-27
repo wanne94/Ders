@@ -3,11 +3,9 @@ import { useRouter } from 'next/router';
 import { Button } from './ui/button';
 import {
   Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
+  SheetContent, SheetHeader,
   SheetTitle,
-  SheetTrigger,
+  SheetTrigger
 } from './ui/sheet';
 import {
   DropdownMenu,
@@ -25,22 +23,12 @@ import {
   DialogTitle,
 } from './ui/dialog';
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from './ui/navigation-menu';
-import {
   BookOpen,
   Plus,
   LogIn,
   LogOut,
   LayoutDashboard,
-  Menu,
-  X,
-  Building2,
+  Menu, Building2,
   User,
   Lightbulb,
   UserCircle,
@@ -393,7 +381,7 @@ const Navigation = () => {
       </nav>
 
       {/* Spacer for fixed navigation */}
-      <div className="h-16" />
+      <div className="h-4" />
 
       {/* Auth Prompt Dialog */}
       <Dialog open={authPromptOpen} onOpenChange={setAuthPromptOpen}>

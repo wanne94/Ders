@@ -9,7 +9,9 @@ import {
     Alert,
     Image,
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    SafeAreaView,
+    StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import daijeService from '../../services/daijeService';
@@ -341,19 +343,21 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
   );
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-      enabled
-    >
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{editMode ? 'Uredi Daiju' : 'Dodaj Daiju'}</Text>
-        <View style={styles.headerRight} />
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <KeyboardAvoidingView 
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+        enabled
+      >
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={onBack}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{editMode ? 'Uredi Daiju' : 'Dodaj Daiju'}</Text>
+          <View style={styles.headerRight} />
+        </View>
 
       <ScrollView 
         style={styles.formContainer} 
@@ -445,11 +449,16 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
         type={toast.type}
         onHide={hideToast}
       />
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -463,9 +472,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    paddingTop: Platform.OS === 'ios' ? 12 : 12,
+    zIndex: 10,
+    elevation: 5,
   },
   backButton: {
     padding: 8,
+    zIndex: 11,
   },
   headerTitle: {
     fontSize: 18,

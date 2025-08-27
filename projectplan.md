@@ -1,38 +1,43 @@
-# Plan izmjene forme za dodavanje predavanja
+# Uklanjanje pretrage - Samo dropdown liste sa skrolanjem
 
-## Zadatak
-Forma za dodavanje predavanja treba da se izmjeni tako da predavači (daije) nemaju zasebnu oblast, nego da budu integrisani kao obične stavke u formi.
+## Problem
+Potrebno je ukloniti pretragu iz formi i zadržati samo dropdown liste koje mogu da se skrolaju.
 
-## TODO Lista
+## Rješenje
 
-- [x] Ukloniti okvir (border) i posebno stilizovanje sa sekcije Daije/Predavači
-- [x] Pojednostaviti UI za dodavanje predavača - zadržati na istoj poziciji
-- [x] Prilagoditi padding i spacing da bude konzistentan sa ostalim poljima
-- [x] Testirati funkcionalnost forme nakon izmjena
+### ✅ 1. Web aplikacija - ZAVRŠENO
+- Uklonio Combobox komponent koji ima pretragu
+- Zamijenio sa standardnim Select dropdown komponentom
+- Dropdown sada ima samo skrolanje (max-h-[300px] overflow-y-auto)
+- Zadržana opcija za custom unos
 
-## Tehnički detalji
+### ✅ 2. Mobilna aplikacija - ZAVRŠENO  
+- Već koristi standardni Picker dropdown bez pretrage
+- Dropdown funkcioniše sa scroll wheel-om
+- Nema potrebe za dodatnim izmjenama
 
-### Trenutno stanje:
-- Daije/Predavači su u posebnoj sekciji sa okvirom (border p-4 rounded-lg) na liniji 480
-- Imaju složen UI sa listom dodanih predavača
-- Pozicija: između kratkog opisa i organizatora
+## Promjene u kodu
 
-### Planirane izmjene:
-1. Ukloniti border, p-4 i rounded-lg klase sa wrapper div-a
-2. Zadržati poziciju u formi (između kratkog opisa i organizatora)
-3. Zadržati svu funkcionalnost dodavanja više predavača
-4. Prilagoditi spacing da bude kao kod ostalih polja (space-y-2)
+### Web aplikacija:
+1. `/home/avdo/Ders/web/src/components/LectureFormNew.jsx`
+   - Uklonio import za Combobox (linija 25)
+   - Zamijenio Combobox sa Select za daije (linije 531-558)
+   - Zamijenio Combobox sa Select za organizacije (linije 623-659)
+   - Dropdown liste sada imaju samo skrolanje bez pretrage
+
+### Mobilna aplikacija:
+1. `/home/avdo/Ders/mob/components/forms/LectureForm.jsx`
+   - Već koristi Picker dropdown bez pretrage
+   - Funkcioniše sa scroll wheel-om na PC-u
+
+## Rezultat
+- Obje platforme sada koriste standardne dropdown liste
+- Nema pretrage, samo skrolanje
+- Bolja kompatibilnost sa mišem na PC-u
+- Jednostavniji UX bez nepotrebne pretrage
 
 ## Review
-
-### Izvršene izmjene:
-1. **Uklonjen okvir sa sekcije Daije/Predavači** - Zamijenjena klasa `border p-4 rounded-lg` sa `space-y-2` (linija 480)
-2. **Pojednostavljen UI** - Uklonjen nepotreban wrapper div oko interface-a za dodavanje predavača
-3. **Prilagođen spacing** - Sve je sada konzistentno sa ostalim poljima forme
-4. **Zadržana sva funkcionalnost** - Dodavanje više predavača, custom imena, sve radi kao prije
-
-### Rezultat:
-- Forma sada ima jedinstveni, konzistentan izgled
-- Daije/Predavači su integrisani kao obična stavka u formi
-- Nema više zasebne oblasti sa okvirom
-- Funkcionalnost je u potpunosti očuvana
+Uspješno uklonjena pretraga sa obje platforme. Forme sada koriste:
+- **Web**: Select dropdown sa skrolanjem
+- **Mob**: Picker dropdown sa skrolanjem
+- Obje platforme rade sa scroll wheel-om miša

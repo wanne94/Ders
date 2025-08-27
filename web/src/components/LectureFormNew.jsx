@@ -22,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Combobox } from '@/components/ui/combobox';
 import { CloudUpload, X } from 'lucide-react';
 import axiosInstance from '../utils/axiosConfig';
 import { daijeService, udruzenjaService } from '@/services';
@@ -530,31 +529,33 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
             
             {/* Add speaker interface */}
             {!useCustomSpeaker ? (
-              <Combobox
-                  options={[
-                    ...daije
-                      .filter(d => !formData.daijaIds.includes(d._id))
-                      .map(daija => ({
-                        value: daija._id,
-                        label: `${daija.name}${daija.title ? ` (${daija.title})` : ''}`
-                      })),
-                    { value: 'custom', label: 'Unesi prilagođeno ime...' }
-                  ]}
-                  value=""
-                  onValueChange={(value) => {
-                    if (value === 'custom') {
-                      setUseCustomSpeaker(true);
-                    } else if (value) {
-                      setFormData(prev => ({
-                        ...prev,
-                        daijaIds: [...prev.daijaIds, value]
-                      }));
-                    }
-                  }}
-                  placeholder="Odaberi ili pretraži daiju..."
-                  searchPlaceholder="Pretraži daije..."
-                  emptyText="Nema pronađenih daija"
-              />
+              <Select
+                value=""
+                onValueChange={(value) => {
+                  if (value === 'custom') {
+                    setUseCustomSpeaker(true);
+                  } else if (value) {
+                    setFormData(prev => ({
+                      ...prev,
+                      daijaIds: [...prev.daijaIds, value]
+                    }));
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Odaberi daiju..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px] overflow-y-auto">
+                  {daije
+                    .filter(d => !formData.daijaIds.includes(d._id))
+                    .map(daija => (
+                      <SelectItem key={daija._id} value={daija._id}>
+                        {daija.name}{daija.title ? ` (${daija.title})` : ''}
+                      </SelectItem>
+                    ))}
+                  <SelectItem value="custom">➕ Unesi prilagođeno ime...</SelectItem>
+                </SelectContent>
+              </Select>
             ) : (
               <div className="flex gap-2">
                   <Input
@@ -619,14 +620,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
           <div className="space-y-2">
             <Label htmlFor="organization">Organizator *</Label>
             {!useCustomOrganization ? (
-              <Combobox
-                options={[
-                  ...organizations.map(org => ({
-                    value: org._id,
-                    label: org.name
-                  })),
-                  { value: 'custom', label: 'Unesi prilagođeni naziv...' }
-                ]}
+              <Select
                 value={formData.organizationId}
                 onValueChange={(value) => {
                   if (value === 'custom') {
@@ -650,10 +644,19 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
                     }));
                   }
                 }}
-                placeholder="Odaberi ili pretraži organizatora..."
-                searchPlaceholder="Pretraži organizatore..."
-                emptyText="Nema pronađenih organizatora"
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Odaberi organizatora..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px] overflow-y-auto">
+                  {organizations.map(org => (
+                    <SelectItem key={org._id} value={org._id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="custom">➕ Unesi prilagođeni naziv...</SelectItem>
+                </SelectContent>
+              </Select>
             ) : null}
           </div>
 

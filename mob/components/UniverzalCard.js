@@ -149,7 +149,10 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
           statusInfo,
           isCancelled,
           items: [
-            { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker },
+            // Handle multiple daijas
+            data.daijaIds && data.daijaIds.length > 1 
+              ? { icon: "Person", text: `${data.daijaIds.length} Predavača` }
+              : { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker },
             data.organization && { icon: 'Business', text: data.organization },
             // Show date/time for all lectures including cancelled ones
             data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
@@ -194,7 +197,10 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
             statusInfo,
             isCancelled,
             items: [
-              { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker },
+              // Handle multiple daijas
+              data.daijaIds && data.daijaIds.length > 1 
+                ? { icon: "Person", text: `${data.daijaIds.length} Predavača` }
+                : { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker },
               data.organization && { icon: 'Business', text: data.organization },
               data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
               data.time && { icon: 'Time', text: data.time },
@@ -249,7 +255,15 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
     });
   }
 
-  // console.log('Image URL:', data.image ? getImageUrl(data.image) : 'Using default image');
+  // Debug za slike - samo u development modu
+  if (__DEV__ && data.image) {
+    const imageUrl = getImageUrl(data.image);
+    console.log('🖼️ Image URL generated:', {
+      type: displayData.type,
+      originalPath: data.image,
+      generatedUrl: imageUrl
+    });
+  }
 
   const renderIcon = (iconName) => {
     const IconComponent = Icons[iconName];
@@ -369,7 +383,10 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
               }}
               style={displayData.type === 'daija' ? styles.imageDaija : displayData.type === 'organization' ? styles.imageOrganization : styles.image}
               resizeMode="cover"
-              onError={() => setImageError(true)}
+              onError={(e) => {
+                console.log('🚫 Image load error:', data.image, e.nativeEvent);
+                setImageError(true);
+              }}
             />
             {/* Diagonal "OTKAZANO" label for cancelled lectures - only over image */}
             {displayData.type === 'lecture' && displayData.isCancelled && (

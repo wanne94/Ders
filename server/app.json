@@ -1,5 +1,17 @@
 {
-  "android": {
-    "package": "com.wanne.server"
+  "expo": {
+    "name": "DERS.BA",
+    "slug": "ders-ba",
+    "version": "1.1.5",
+    "android": {
+      "package": "com.wanne.dersba",
+      "versionCode": 19
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ad12abb0-43d3-4d86-bf43-bd14ab751159"
+      }
+    },
+    "owner": "wanne"
   }
 }

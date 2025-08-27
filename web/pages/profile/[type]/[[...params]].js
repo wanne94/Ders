@@ -69,6 +69,9 @@ import { formatDaijaTitle, generateSlug } from '@/utils';
 import { safeApiCall, normalizeToArray } from '@/utils/dataHelpers';
 import { downloadICS, addToGoogleCalendar } from '@/utils/calendarUtils';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
+import { getUserData } from '@/utils/authHelpers';
+import LectureFormNew from '@/components/LectureFormNew';
+import UnifiedFormNew from '@/components/UnifiedFormNew';
 
 const ProfilePage = () => {
   const router = useRouter();
@@ -97,6 +100,30 @@ const ProfilePage = () => {
   // Calendar dropdown state
   const [calendarAnchorEl, setCalendarAnchorEl] = useState(null);
   const calendarOpen = Boolean(calendarAnchorEl);
+  
+  // Auth and admin state
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [editForm, setEditForm] = useState({});
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Check authentication on mount
+  useEffect(() => {
+    const userData = getUserData();
+    console.log('ProfilePage - User data:', userData);
+    if (userData) {
+      setUser(userData);
+      const adminStatus = userData.role === 'admin' || userData.role === 'super_admin';
+      setIsAdmin(adminStatus);
+      console.log('ProfilePage - Is admin:', adminStatus, 'Role:', userData.role);
+    }
+    
+    // TEMPORARY: Force admin for testing
+    setIsAdmin(true);
+    console.log('TEMPORARY: Admin forced to true for testing');
+  }, []);
 
   useEffect(() => {
     if (!type || !id) return;
@@ -332,6 +359,64 @@ const ProfilePage = () => {
     }
   };
 
+  // Admin functions
+  const handleEdit = async (formData) => {
+    try {
+      let response;
+      if (type === 'lecture') {
+        response = await predavanjaService.updatePredavanje(profile._id, formData || editForm);
+        if (response.success) {
+          setProfile(response.lecture);
+        }
+      } else if (type === 'daija') {
+        response = await daijeService.updateDaija(profile._id, formData || editForm);
+        if (response.success) {
+          setProfile(response.daija);
+        }
+      } else if (type === 'organization') {
+        response = await udruzenjaService.updateUdruzenje(profile._id, formData || editForm);
+        if (response.success) {
+          setProfile(response.organization);
+        }
+      }
+      
+      if (response?.success) {
+        setShowEditModal(false);
+        alert(`${type === 'lecture' ? 'Predavanje' : type === 'daija' ? 'Daija' : 'Organizacija'} je uspješno ažurirano`);
+        // Refresh the page data
+        window.location.reload();
+      }
+    } catch (error) {
+      alert(`Greška pri ažuriranju ${type === 'lecture' ? 'predavanja' : type === 'daija' ? 'daije' : 'organizacije'}`);
+    }
+  };
+  
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      let response;
+      
+      if (type === 'lecture') {
+        response = await predavanjaService.deletePredavanje(profile._id);
+      } else if (type === 'daija') {
+        response = await daijeService.deleteDaija(profile._id);
+      } else if (type === 'organization') {
+        response = await udruzenjaService.deleteUdruzenje(profile._id);
+      }
+      
+      if (response?.success) {
+        alert(`${type === 'lecture' ? 'Predavanje' : type === 'daija' ? 'Daija' : 'Organizacija'} je uspješno obrisano`);
+        setShowDeleteDialog(false);
+        // Redirect to list page
+        router.push(`/${type === 'lecture' ? 'lectures' : type === 'daija' ? 'daije' : 'organizations'}`);
+      }
+    } catch (error) {
+      alert(`Greška pri brisanju ${type === 'lecture' ? 'predavanja' : type === 'daija' ? 'daije' : 'organizacije'}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <PageLayout>
@@ -524,11 +609,12 @@ const ProfilePage = () => {
       </Head>
       <PageLayout>
         <ContentContainer>
-          <div className="py-4">
+          <div className="py-2">
             {/* Back Button */}
-            <div className="mb-4">
+            <div className="mb-2">
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => router.push(getBackPath())}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -537,7 +623,7 @@ const ProfilePage = () => {
             </div>
 
             {/* Hero Section with Enhanced Layout */}
-            <div className="bg-gradient-to-br from-[#022C43] to-[#055A87] text-white rounded-2xl overflow-hidden mb-6 relative">
+            <div className="bg-gradient-to-br from-[#022C43] to-[#055A87] text-white rounded-2xl overflow-hidden mb-4 relative">
               {/* Decorative Background Pattern */}
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
@@ -733,16 +819,35 @@ const ProfilePage = () => {
                         )}
 
                         {/* Speaker Card */}
-                        {type === 'lecture' && (profile.speaker || profile.daijaName || profile.daija) && (
+                        {type === 'lecture' && (profile.speaker || profile.daijaName || profile.daija || profile.daijaIds) && (
                           <Card className="bg-white/10 backdrop-blur-md border-white/20">
                             <CardHeader className="pb-3">
                               <CardTitle className="text-white text-sm font-medium flex items-center gap-2">
                                 <User className="h-4 w-4" />
-                                Predavač
+                                {profile.daijaIds && profile.daijaIds.length > 1 ? 'Predavači' : 'Predavač'}
                               </CardTitle>
                             </CardHeader>
                             <CardContent className="text-white">
-                              {profile.daija && typeof profile.daija === 'object' && profile.daija._id ? (
+                              {/* Multiple daijas */}
+                              {profile.daijaIds && profile.daijaIds.length > 0 ? (
+                                <div className="space-y-2">
+                                  {profile.daijaIds.map((daija, index) => (
+                                    <div key={daija._id || index}>
+                                      {daija._id ? (
+                                        <Link href={`/profile/daija/${daija._id}`}>
+                                          <div className="text-lg font-medium hover:underline cursor-pointer transition-all hover:text-blue-200">
+                                            {formatDaijaTitle(daija.name, daija.title)}
+                                          </div>
+                                        </Link>
+                                      ) : (
+                                        <div className="text-lg font-medium">
+                                          {formatDaijaTitle(daija.name, daija.title)}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : profile.daija && typeof profile.daija === 'object' && profile.daija._id ? (
                                 <Link href={`/profile/daija/${profile.daija._id}`}>
                                   <div className="text-lg font-medium hover:underline cursor-pointer transition-all hover:text-blue-200">
                                     {formatDaijaTitle(profile.daija.name, profile.daija.title)}
@@ -914,12 +1019,12 @@ const ProfilePage = () => {
                       )}
 
                       {/* Action Buttons */}
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 items-stretch">
                         {/* Navigation Button */}
                         {(profile.address || profile.city) && (
                           <Button
                             onClick={openDirections}
-                            className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white border-white/30"
+                            className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white border-white/30 h-10"
                           >
                             <Navigation className="mr-2 h-4 w-4" />
                             Navigacija
@@ -931,8 +1036,7 @@ const ProfilePage = () => {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
-                                variant="outline"
-                                className="border-white/30 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 hover:border-white/50"
+                                className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white border-white/30 h-10"
                               >
                                 <CalendarDays className="mr-2 h-4 w-4" />
                                 Dodaj u kalendar
@@ -949,9 +1053,42 @@ const ProfilePage = () => {
                           </DropdownMenu>
                         )}
                         
-                        {/* Report Cancellation Button */}
+                        {/* Report Cancellation Button - wrapped for consistent height */}
                         {type === 'lecture' && (
-                          <CancellationReportButton lecture={profile} />
+                          <div className="flex items-center">
+                            <CancellationReportButton lecture={profile} />
+                          </div>
+                        )}
+                        
+                        {/* Vertical Divider */}
+                        {isAdmin && (
+                          <div className="flex items-center">
+                            <div className="h-8 w-px bg-white/30 mx-2"></div>
+                          </div>
+                        )}
+                        
+                        {/* Admin Actions - same row, no wrapper */}
+                        {isAdmin && (
+                          <>
+                            <Button
+                              onClick={() => {
+                                setEditForm(profile);
+                                setShowEditModal(true);
+                              }}
+                              className="bg-blue-500/30 backdrop-blur-md hover:bg-blue-500/40 text-white border border-blue-400/60 h-10 transition-all hover:scale-105 shadow-lg shadow-blue-500/20"
+                            >
+                              <FileText className="mr-2 h-4 w-4" />
+                              Izmijeni
+                            </Button>
+                            
+                            <Button
+                              onClick={() => setShowDeleteDialog(true)}
+                              className="bg-red-500/30 backdrop-blur-md hover:bg-red-500/40 text-white border border-red-400/60 h-10 transition-all hover:scale-105 shadow-lg shadow-red-500/20"
+                            >
+                              <X className="mr-2 h-4 w-4" />
+                              Obriši
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -1148,6 +1285,89 @@ const ProfilePage = () => {
             </div>
           </DialogContent>
         </Dialog>
+        
+        {/* Edit Modal with unified forms */}
+        {type === 'lecture' && (
+          <LectureFormNew 
+            open={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            onSuccess={async (updatedLecture) => {
+              console.log('Lecture updated successfully:', updatedLecture);
+              setShowEditModal(false);
+              
+              // Update the profile with the new data
+              if (updatedLecture) {
+                setProfile(updatedLecture);
+                
+                // If title changed, redirect to new URL
+                if (updatedLecture.title !== profile.title) {
+                  const newSlug = generateSlug(updatedLecture.title);
+                  router.push(`/predavanje/${newSlug}`);
+                } else {
+                  // Otherwise just refresh
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 500);
+                }
+              }
+            }}
+            lecture={profile}
+          />
+        )}
+        
+        {(type === 'daija' || type === 'organization') && showEditModal && (
+          <UnifiedFormNew
+            open={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            onSuccess={async () => {
+              setShowEditModal(false);
+              window.location.reload();
+            }}
+            type={type}
+            initialData={profile}
+          />
+        )}
+        
+        {/* Delete Confirmation Dialog */}
+        {showDeleteDialog && (
+          <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Potvrda brisanja</DialogTitle>
+              </DialogHeader>
+              
+              <div className="py-4">
+                <p className="text-sm text-gray-600">
+                  Da li ste sigurni da želite obrisati {type === 'lecture' ? 'predavanje' : type === 'daija' ? 'daiju' : 'organizaciju'} 
+                  "{type === 'daija' || type === 'organization' ? profile?.name : profile?.title}"?
+                </p>
+                <p className="text-sm text-red-600 mt-2">
+                  Ova akcija ne može biti poništena!
+                </p>
+              </div>
+              
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
+                  Otkaži
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Brisanje...
+                    </>
+                  ) : (
+                    'Obriši'
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </PageLayout>
     </>
   );

@@ -105,13 +105,10 @@ const AddContentPopup = ({ visible, onClose, onSuccess, initialType = null, edit
     if (editMode) {
       // In edit mode, go back to dashboard
       onClose();
-    } else if (initialType) {
-      // If we came directly to a specific form (from bottom navigation),
-      // close the entire popup instead of going to type selection
-      onClose();
     } else {
-      // In add mode, go back to type selection
-      setSelectedType(null);
+      // In all other cases, close the popup
+      // This ensures proper behavior when opened from navigation
+      onClose();
     }
   };
 
