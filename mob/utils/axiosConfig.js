@@ -4,8 +4,10 @@ import { ENV } from '../config';
 // Create axios-like instance wrapper for API calls
 class AxiosInstance {
   constructor() {
-    this.baseURL = ENV.API_BASE_URL;
+    // Use API_URL with fallback to BACKUP_API_URL if localhost doesn't work
+    this.baseURL = ENV.API_URL || ENV.BACKUP_API_URL || 'https://ders.ba/api';
     this.timeout = 30000;
+    this.fallbackURL = ENV.BACKUP_API_URL || 'https://ders.ba/api';
   }
 
   async getHeaders() {
@@ -17,22 +19,24 @@ class AxiosInstance {
   }
 
   async request(config) {
-    const url = config.url.startsWith('http') 
-      ? config.url 
-      : `${this.baseURL}${config.url}`;
+    const makeRequest = async (baseUrl) => {
+      const url = config.url.startsWith('http') 
+        ? config.url 
+        : `${baseUrl}${config.url}`;
+      
+      console.log(`🌐 [axiosConfig] Request to: ${url}`);
 
-    const headers = await this.getHeaders();
-    
-    const options = {
-      method: config.method || 'GET',
-      headers: {
-        ...headers,
-        ...config.headers
-      },
-      ...(config.data ? { body: JSON.stringify(config.data) } : {})
-    };
+      const headers = await this.getHeaders();
+      
+      const options = {
+        method: config.method || 'GET',
+        headers: {
+          ...headers,
+          ...config.headers
+        },
+        ...(config.data ? { body: JSON.stringify(config.data) } : {})
+      };
 
-    try {
       const response = await fetch(url, options);
       const data = await response.json();
       
@@ -41,7 +45,21 @@ class AxiosInstance {
       }
       
       return { data };
+    };
+
+    try {
+      // Try with primary URL first
+      return await makeRequest(this.baseURL);
     } catch (error) {
+      // If localhost fails and we have a fallback URL, try it
+      if (this.baseURL.includes('localhost') && this.fallbackURL) {
+        // Silently fallback to production API
+        try {
+          return await makeRequest(this.fallbackURL);
+        } catch (fallbackError) {
+          throw fallbackError;
+        }
+      }
       throw error;
     }
   }

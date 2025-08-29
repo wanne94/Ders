@@ -8,6 +8,7 @@
  */
 
 import { ENV } from '../config';
+import axiosInstance from '../utils/axiosConfig';
 
 /**
  * Upload sliku na produkcijski server
@@ -105,10 +106,32 @@ export const getDefaultImages = () => {
   return ENV.getDefaultImages();
 };
 
+/**
+ * Fetch existing images from server
+ * @returns {Promise<Array>} - Array of existing images
+ */
+export const fetchExistingImages = async () => {
+  try {
+    // Use axiosInstance for consistency
+    console.log('📸 [MOBILE] Fetching existing images');
+    
+    const response = await axiosInstance.get('/existing-images');
+    
+    const data = response.data;
+    console.log('✅ [MOBILE] Fetched', data.images?.length || 0, 'existing images');
+    
+    return data.images || [];
+  } catch (error) {
+    console.error('❌ [MOBILE] Error fetching existing images:', error);
+    return [];
+  }
+};
+
 export default {
   uploadImage,
   getImageUrl,
   getDefaultImages,
+  fetchExistingImages,
   UPLOAD_SERVER_URL: ENV.UPLOAD_SERVER_URL,
   IMAGE_SERVER_URL: ENV.IMAGE_SERVER_URL
 };

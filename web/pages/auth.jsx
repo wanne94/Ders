@@ -94,15 +94,11 @@ const Authentication = () => {
 
   // Load remembered credentials on component mount
   useEffect(() => {
-    const { email, password } = getRememberedCredentials();
+    const { email } = getRememberedCredentials();
     
     if (email) {
       setLoginData(prev => ({ ...prev, email }));
       setRememberMe(true);
-    }
-    
-    if (password) {
-      setLoginData(prev => ({ ...prev, password }));
     }
   }, []);
 
@@ -161,7 +157,7 @@ const Authentication = () => {
 
       // Handle remember me
       if (rememberMe) {
-        setRememberedCredentials(loginData.email, loginData.password);
+        setRememberedCredentials(loginData.email);
       } else {
         clearRememberedCredentials();
       }

@@ -489,13 +489,7 @@ const ProfilePage = () => {
       return profile.bio || `Profil daije ${profile.name}. Pronađite predavanja i informacije.`;
     } else if (type === 'lecture') {
       // Create detailed description for lectures
-      const date = new Date(profile.date);
-      const formattedDate = date.toLocaleDateString('sr-RS', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
+      const formattedDate = formatDateWithDay(profile.date);
       
       let description = `📚 ${profile.title}`;
       description += ` | 📅 ${formattedDate} u ${profile.time}`;
@@ -689,7 +683,13 @@ const ProfilePage = () => {
 
                             {/* Badges */}
                             <div className="flex flex-wrap gap-2">
-                          {type === 'lecture' && profile.isWeeklyLecture && (
+                          {type === 'lecture' && profile.isSeminar && (
+                            <Badge className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white font-bold px-4 py-1.5 shadow-lg">
+                              <CalendarDays className="h-4 w-4 mr-1" />
+                              SEMINAR
+                            </Badge>
+                          )}
+                          {type === 'lecture' && profile.isWeeklyLecture && !profile.isSeminar && (
                             <Badge className="bg-blue-500/20 text-blue-100 border-blue-400/30 px-3 py-1">
                               <CalendarDays className="h-3 w-3 mr-1" />
                               Sedmično predavanje
@@ -765,7 +765,7 @@ const ProfilePage = () => {
                             )}
                             {profile.cancelledAt && (
                               <span className="block text-sm opacity-80 mt-1">
-                                Otkazano: {new Date(profile.cancelledAt).toLocaleDateString('bs-BA')}
+                                Otkazano: {formatDate(profile.cancelledAt)}
                               </span>
                             )}
                           </AlertDescription>
@@ -784,17 +784,36 @@ const ProfilePage = () => {
                               </CardTitle>
                             </CardHeader>
                             <CardContent className="text-white space-y-2">
-                              {profile.date && (
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4 opacity-70" />
-                                  <span className="text-lg font-medium">{formatDateWithDay(profile.date)}</span>
-                                </div>
-                              )}
-                              {profile.time && (
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4 opacity-70" />
-                                  <span className="text-lg font-medium">{profile.time}</span>
-                                </div>
+                              {profile.isSeminar && profile.endDate ? (
+                                <>
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4 opacity-70" />
+                                    <span className="text-lg font-medium">
+                                      {formatDateWithDay(profile.date)} - {formatDateWithDay(profile.endDate)}
+                                    </span>
+                                  </div>
+                                  {profile.seminarSessions && profile.seminarSessions.length > 0 && (
+                                    <div className="flex items-center gap-2">
+                                      <Clock className="h-4 w-4 opacity-70" />
+                                      <span className="text-lg font-medium">{profile.seminarSessions.length} sesija</span>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  {profile.date && (
+                                    <div className="flex items-center gap-2">
+                                      <Calendar className="h-4 w-4 opacity-70" />
+                                      <span className="text-lg font-medium">{formatDateWithDay(profile.date)}</span>
+                                    </div>
+                                  )}
+                                  {profile.time && (
+                                    <div className="flex items-center gap-2">
+                                      <Clock className="h-4 w-4 opacity-70" />
+                                      <span className="text-lg font-medium">{profile.time}</span>
+                                    </div>
+                                  )}
+                                </>
                               )}
                             </CardContent>
                           </Card>
@@ -1096,6 +1115,71 @@ const ProfilePage = () => {
                 </div>
               </ContentContainer>
             </div>
+
+            {/* Seminar Sessions Section */}
+            {type === 'lecture' && profile.isSeminar && profile.seminarSessions && profile.seminarSessions.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                  <CalendarDays className="h-6 w-6 text-amber-500" />
+                  Raspored sesija seminara
+                  {profile.seminarTheme && (
+                    <span className="text-lg font-normal text-gray-600 ml-2">- {profile.seminarTheme}</span>
+                  )}
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {profile.seminarSessions
+                    .sort((a, b) => new Date(a.date) - new Date(b.date))
+                    .map((session, index) => (
+                      <Card key={index} className="border-l-4 border-amber-400 hover:shadow-lg transition-shadow">
+                        <CardHeader className="pb-3">
+                          <div className="flex justify-between items-start">
+                            <CardTitle className="text-lg font-bold">
+                              Sesija {index + 1}
+                            </CardTitle>
+                            <Badge className="bg-amber-100 text-amber-800">
+                              {formatDateWithDay(session.date)}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {session.title && (
+                            <h4 className="font-semibold text-gray-800">{session.title}</h4>
+                          )}
+                          
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Clock className="h-4 w-4" />
+                            <span>{session.time}</span>
+                            {session.duration && session.duration !== 60 && (
+                              <span className="text-sm">({session.duration} min)</span>
+                            )}
+                          </div>
+                          
+                          {session.speakerIds && session.speakerIds.length > 0 && (
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <User className="h-4 w-4" />
+                              <span>{session.speakerIds.length} predavač(a)</span>
+                            </div>
+                          )}
+                          
+                          {session.customSpeakers && session.customSpeakers.length > 0 && (
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <User className="h-4 w-4" />
+                              <span>{session.customSpeakers.join(', ')}</span>
+                            </div>
+                          )}
+                          
+                          {session.description && (
+                            <p className="text-sm text-gray-600 pt-2 border-t">
+                              {session.description}
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              </div>
+            )}
 
             {/* Daija's/Organization's Upcoming Lectures Section */}
             {type === 'daija' && relatedLectures.length > 0 && (

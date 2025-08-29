@@ -1,4 +1,3 @@
-export { default as apiClient } from './apiClient';
 export { default as predavanjaService } from './predavanjaService';
 export { default as udruzenjaService } from './udruzenjaService';
 export { default as daijeService } from './daijeService';

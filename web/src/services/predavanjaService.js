@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import axiosInstance from '@/utils/axiosConfig';
 import { ENV } from './config';
 
 
@@ -17,34 +17,34 @@ const predavanjaService = {
     }
     
     
-    const response = await apiClient.get(endpoint);
+    const response = await axiosInstance.get(endpoint);
     
-    return response; // Backend returns lectures directly, not wrapped in data property
+    return response.data; // Backend returns lectures directly, not wrapped in data property
   },
 
   getAllPredavanjaForAdmin: async () => {
-    const response = await apiClient.get(ENV.API_ENDPOINTS.PREDAVANJA);
-    return response; // Backend returns lectures directly, not wrapped in data property
+    const response = await axiosInstance.get(ENV.API_ENDPOINTS.PREDAVANJA);
+    return response.data; // Backend returns lectures directly, not wrapped in data property
   },
 
   getApprovedPredavanja: async (page = 1, limit = 10) => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/approved?page=${page}&limit=${limit}`);
-    return response;
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/approved?page=${page}&limit=${limit}`);
+    return response.data;
   },
 
   getPendingPredavanja: async (page = 1, limit = 10) => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/pending?page=${page}&limit=${limit}`);
-    return response;
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/pending?page=${page}&limit=${limit}`);
+    return response.data;
   },
 
   getPredavanjeById: async (id) => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/${id}`);
-    return response; // Backend returns lecture directly, not wrapped in data property
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/${id}`);
+    return response.data; // Backend returns lecture directly, not wrapped in data property
   },
 
   getPredavanjaByDaija: async (daijaId) => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/daija/${daijaId}`);
-    return response; // Backend returns lectures directly, not wrapped in data property
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/daija/${daijaId}`);
+    return response.data; // Backend returns lectures directly, not wrapped in data property
   },
 
   getPredavanjaBySpeaker: async (speakerId) => {
@@ -53,46 +53,46 @@ const predavanjaService = {
     if (!speakerId || speakerId === 'undefined') {
       return [];
     }
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/daija/${speakerId}`);
-    return response; // Backend returns lectures directly, not wrapped in data property
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/daija/${speakerId}`);
+    return response.data; // Backend returns lectures directly, not wrapped in data property
   },
 
   getPredavanjaByOrganization: async (organizationId) => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/organization/${organizationId}`);
-    return response; // Backend returns lectures directly, not wrapped in data property
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/organization/${organizationId}`);
+    return response.data; // Backend returns lectures directly, not wrapped in data property
   },
 
   searchPredavanja: async (query) => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/search?q=${encodeURIComponent(query)}`);
-    return response; // Backend returns lectures directly, not wrapped in data property
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/search?q=${encodeURIComponent(query)}`);
+    return response.data; // Backend returns lectures directly, not wrapped in data property
   },
 
   getLatestPredavanja: async (limit = 10) => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/latest?limit=${limit}`);
-    return response; // Backend returns lectures directly, not wrapped in data property
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.PREDAVANJA}/latest?limit=${limit}`);
+    return response.data; // Backend returns lectures directly, not wrapped in data property
   },
 
   createPredavanje: async (lectureData) => {
-    const response = await apiClient.post(ENV.API_ENDPOINTS.PREDAVANJA, lectureData);
-    return response; // Backend returns lecture directly, not wrapped in data property
+    const response = await axiosInstance.post(ENV.API_ENDPOINTS.PREDAVANJA, lectureData);
+    return response.data; // Backend returns lecture directly, not wrapped in data property
   },
 
   updatePredavanje: async (id, lectureData) => {
-    const response = await apiClient.put(`${ENV.API_ENDPOINTS.PREDAVANJA}/${id}`, lectureData);
-    return response; // Backend returns lecture directly, not wrapped in data property
+    const response = await axiosInstance.put(`${ENV.API_ENDPOINTS.PREDAVANJA}/${id}`, lectureData);
+    return response.data; // Backend returns lecture directly, not wrapped in data property
   },
 
   deletePredavanje: async (id) => {
-    const response = await apiClient.delete(`${ENV.API_ENDPOINTS.PREDAVANJA}/${id}`);
-    return response; // Backend returns response directly, not wrapped in data property
+    const response = await axiosInstance.delete(`${ENV.API_ENDPOINTS.PREDAVANJA}/${id}`);
+    return response.data; // Backend returns response directly, not wrapped in data property
   },
 
   updateStatus: async (id, status, reason = null) => {
     const payload = { status };
     if (reason) payload.rejectionReason = reason;
 
-    const response = await apiClient.patch(`${ENV.API_ENDPOINTS.PREDAVANJA}/${id}`, payload);
-    return response; // Backend returns response directly, not wrapped in data property
+    const response = await axiosInstance.patch(`${ENV.API_ENDPOINTS.PREDAVANJA}/${id}`, payload);
+    return response.data; // Backend returns response directly, not wrapped in data property
   },
 
   getStatistics: async (params = {}) => {
@@ -103,24 +103,24 @@ const predavanjaService = {
     if (params.endYear) queryParams.append('endYear', params.endYear);
     
     const endpoint = `${ENV.API_ENDPOINTS.PREDAVANJA}/statistics${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    const response = await apiClient.get(endpoint);
-    return response;
+    const response = await axiosInstance.get(endpoint);
+    return response.data;
   },
 
   // Bulk operations
   bulkApprove: async (ids) => {
-    const response = await apiClient.post(`${ENV.API_ENDPOINTS.PREDAVANJA}/bulk/approve`, { ids });
-    return response;
+    const response = await axiosInstance.post(`${ENV.API_ENDPOINTS.PREDAVANJA}/bulk/approve`, { ids });
+    return response.data;
   },
 
   bulkReject: async (ids) => {
-    const response = await apiClient.post(`${ENV.API_ENDPOINTS.PREDAVANJA}/bulk/reject`, { ids });
-    return response;
+    const response = await axiosInstance.post(`${ENV.API_ENDPOINTS.PREDAVANJA}/bulk/reject`, { ids });
+    return response.data;
   },
 
   bulkDelete: async (ids) => {
-    const response = await apiClient.post(`${ENV.API_ENDPOINTS.PREDAVANJA}/bulk/delete`, { ids });
-    return response;
+    const response = await axiosInstance.post(`${ENV.API_ENDPOINTS.PREDAVANJA}/bulk/delete`, { ids });
+    return response.data;
   }
 };
 

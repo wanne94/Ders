@@ -1,11 +1,11 @@
 // Web Auth Helpers for Remember Me functionality
+import { secureSetToken, secureGetToken, secureClearToken } from './tokenManager';
 
 // Storage keys
 export const STORAGE_KEYS = {
   TOKEN: process.env.NEXT_PUBLIC_JWT_STORAGE_KEY || 'token',
   USER: 'user',
-  REMEMBERED_EMAIL: 'rememberedEmail',
-  REMEMBERED_PASSWORD: 'rememberedPassword'
+  REMEMBERED_EMAIL: 'rememberedEmail'
 };
 
 // Remember email functionality
@@ -28,85 +28,51 @@ export const removeRememberedEmail = () => {
   }
 };
 
-// Remember password functionality
-export const getRememberedPassword = () => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem(STORAGE_KEYS.REMEMBERED_PASSWORD);
-  }
-  return null;
-};
-
-export const setRememberedPassword = (password) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEYS.REMEMBERED_PASSWORD, password);
-  }
-};
-
-export const removeRememberedPassword = () => {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem(STORAGE_KEYS.REMEMBERED_PASSWORD);
-  }
-};
+// Password is never stored in localStorage for security reasons
 
 // Clear all remembered credentials
 export const clearRememberedCredentials = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(STORAGE_KEYS.REMEMBERED_EMAIL);
-    localStorage.removeItem(STORAGE_KEYS.REMEMBERED_PASSWORD);
   }
 };
 
-// Set remembered credentials
-export const setRememberedCredentials = (email, password) => {
+// Set remembered credentials (only email)
+export const setRememberedCredentials = (email) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem(STORAGE_KEYS.REMEMBERED_EMAIL, email);
-    localStorage.setItem(STORAGE_KEYS.REMEMBERED_PASSWORD, password);
   }
 };
 
-// Get remembered credentials
+// Get remembered credentials (only email)
 export const getRememberedCredentials = () => {
   if (typeof window !== 'undefined') {
     return {
       email: localStorage.getItem(STORAGE_KEYS.REMEMBERED_EMAIL),
-      password: localStorage.getItem(STORAGE_KEYS.REMEMBERED_PASSWORD)
+      password: null // Password is never stored
     };
   }
   return { email: null, password: null };
 };
 
-// Auth data management
+// Auth data management - using secure token manager
 export const getToken = () => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-    console.log('🔑 getToken: Retrieved token with key:', STORAGE_KEYS.TOKEN);
-    console.log('🔑 getToken: Token value:', token);
-    return token;
-  }
-  return null;
+  return secureGetToken();
 };
 
 export const setToken = (token) => {
-  if (typeof window !== 'undefined') {
-    console.log('🔑 setToken: Storing token with key:', STORAGE_KEYS.TOKEN);
-    console.log('🔑 setToken: Token value:', token);
-    localStorage.setItem(STORAGE_KEYS.TOKEN, token);
-    console.log('🔑 setToken: Token stored, verifying...');
-    const storedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
-    console.log('🔑 setToken: Verification - stored token:', storedToken);
-    // Emit custom event da su se auth podaci promenili
-    window.dispatchEvent(new CustomEvent('authChanged', { detail: { type: 'login' } }));
-  }
+  return secureSetToken(token);
 };
 
 export const getUserData = () => {
   if (typeof window !== 'undefined') {
-    const userData = localStorage.getItem(STORAGE_KEYS.USER);
+    // Use sessionStorage instead of localStorage for user data
+    const userData = sessionStorage.getItem(STORAGE_KEYS.USER);
     if (userData && userData !== 'undefined') {
       try {
         return JSON.parse(userData);
       } catch (e) {
-        console.error('❌ Failed to parse userData from localStorage:', e);
+        console.error('❌ Failed to parse userData from sessionStorage:', e);
         return null;
       }
     }
@@ -117,7 +83,8 @@ export const getUserData = () => {
 
 export const setUserData = (user) => {
   if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+    // Use sessionStorage instead of localStorage for user data
+    sessionStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
     // Emit custom event da su se auth podaci promenili
     window.dispatchEvent(new CustomEvent('authChanged', { detail: { type: 'login' } }));
   }
@@ -125,8 +92,8 @@ export const setUserData = (user) => {
 
 export const clearAuthData = () => {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem(STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.USER);
+    secureClearToken();
+    sessionStorage.removeItem(STORAGE_KEYS.USER);
     // Emit custom event da su se auth podaci promenili
     window.dispatchEvent(new CustomEvent('authChanged', { detail: { type: 'logout' } }));
   }
@@ -134,10 +101,9 @@ export const clearAuthData = () => {
 
 export const clearAllData = () => {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem(STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.USER);
+    secureClearToken();
+    sessionStorage.removeItem(STORAGE_KEYS.USER);
     localStorage.removeItem(STORAGE_KEYS.REMEMBERED_EMAIL);
-    localStorage.removeItem(STORAGE_KEYS.REMEMBERED_PASSWORD);
     // Emit custom event da su se auth podaci promenili
     window.dispatchEvent(new CustomEvent('authChanged', { detail: { type: 'logout' } }));
   }

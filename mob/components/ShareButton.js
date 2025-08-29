@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, Share, Linking, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getImageUrl } from '../utils/imageUtils';
+import { formatDateWithDay } from '../utils/dateUtils';
 
 const ShareButton = ({ profileData, type, style = {}, textStyle = {} }) => {
   if (!profileData) return null;
@@ -15,7 +16,7 @@ const ShareButton = ({ profileData, type, style = {}, textStyle = {} }) => {
   if (type === 'lecture') {
     shareText = `🎓 ${profileData.title}
 
-📅 ${new Date(profileData.date).toLocaleDateString('sr-RS')} u ${profileData.time}
+📅 ${formatDateWithDay(profileData.date)} u ${profileData.time}
 📍 ${profileData.address}, ${profileData.city}${profileData.organization ? `
 🏛️ ${profileData.organization}` : ''}${profileData.speaker ? `
 👤 ${profileData.speaker}` : ''}`;

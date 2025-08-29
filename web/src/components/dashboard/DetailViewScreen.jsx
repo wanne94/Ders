@@ -17,6 +17,7 @@ import {
     Stack,
     CircularProgress
 } from '@mui/material';
+import { formatDate, formatDateWithDay } from '@/utils/dataHelpers';
 import {
     ArrowBack as ArrowBackIcon,
     Edit as EditIcon,
@@ -198,7 +199,7 @@ const DetailViewScreen = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CalendarIcon color="action" />
             <Typography variant="body1">
-              <strong>Datum:</strong> {item.date ? new Date(item.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+              <strong>Datum:</strong> {item.date ? formatDateWithDay(item.date) : 'N/A'}
             </Typography>
           </Box>
           
@@ -420,7 +421,7 @@ const DetailViewScreen = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CalendarIcon color="action" />
             <Typography variant="body1">
-              <strong>Kreiran:</strong> {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+              <strong>Kreiran:</strong> {item.createdAt ? formatDate(item.createdAt) : 'N/A'}
             </Typography>
           </Box>
         </Stack>

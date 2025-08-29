@@ -17,6 +17,7 @@ import {
 
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {
     format,
     startOfMonth,
@@ -33,8 +34,8 @@ import udruzenjaService from '../../services/udruzenjaService';
 import { formatDaijaTitle } from '../../utils';
 import { sortLecturers, sortAssociations } from '../../utils/sortingUtils';
 import Toast from '../Toast';
-import * as ImagePicker from 'expo-image-picker';
 import { uploadImage, getImageUrl } from '../../utils/imageUtils';
+import ImagePickerWithGallery from '../ImagePickerWithGallery';
 import { isAuthenticated as checkIsAuthenticated } from '../../utils/authHelpers';
 import axiosInstance from '../../utils/axiosConfig';
 
@@ -71,7 +72,10 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     totalWeeks: 2,
     videoUrl: '',
     facebookUrl: '',
-    instagramUrl: ''
+    instagramUrl: '',
+    // Seminar fields
+    isSeminar: false,
+    endDate: ''
   });
   
   const [loading, setLoading] = useState(false);
@@ -94,6 +98,11 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [tempTimeValue, setTempTimeValue] = useState('');
+  
+  // Seminar states
+  const [showSeminarOptions, setShowSeminarOptions] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [selectedEndDate, setSelectedEndDate] = useState(new Date());
 
   // Hardcoded time options with 15-minute intervals (same as web version)
   const timeOptions = [
@@ -132,7 +141,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       try {
         const isAuth = await checkIsAuthenticated();
         if (isAuth) {
-          imagesResponse = await axiosInstance.get('/existing-images');
+          imagesResponse = await axiosInstance.get('/existing-images?lecturesOnly=true');
         }
       } catch (imgError) {
         console.log('Could not load existing images (optional):', imgError.message);
@@ -149,8 +158,18 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       
       // Load existing images if available
       if (imagesResponse?.data?.images) {
-        console.log('Fetched existing images:', imagesResponse.data.images.length);
-        setExistingImages(imagesResponse.data.images);
+        // Filter out default/placeholder images
+        const defaultImages = ['predavanjeslika.jpg', 'daijaslika.jpg', 'udruzenjeslika.jpg', 
+                              'logo.jpg', 'favicon.png', 'icon.png', 'adaptive-icon.png', 
+                              'splash.png', 'splash-icon.png', 'maxresdefault.jpg'];
+        
+        const filteredImages = imagesResponse.data.images.filter(img => {
+          const imageName = img.name || img.url.split('/').pop();
+          return !defaultImages.includes(imageName.toLowerCase());
+        });
+        
+        console.log('Fetched existing images:', filteredImages.length, '(filtered from', imagesResponse.data.images.length, ')');
+        setExistingImages(filteredImages);
       }
       
       setDaije(sortedDaije);
@@ -182,12 +201,33 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       totalWeeks: editData.totalWeeks || 2,
       videoUrl: editData.videoUrl || '',
       facebookUrl: editData.facebookUrl || '',
-      instagramUrl: editData.instagramUrl || ''
+      instagramUrl: editData.instagramUrl || '',
+      isSeminar: editData.isSeminar || false,
+      endDate: editData.endDate ? format(new Date(editData.endDate), 'dd.MM.yyyy') : ''
     });
 
     // Set image URI if exists
     if (editData.image) {
       setImageUri(getImageUrl(editData.image));
+    }
+    
+    // Set seminar options
+    setShowSeminarOptions(editData.isSeminar || false);
+    
+    // Parse end date if exists
+    if (editData.endDate) {
+      try {
+        let endDateObj;
+        if (editData.endDate.includes('.')) {
+          const [day, month, year] = editData.endDate.split('.');
+          endDateObj = new Date(year, month - 1, day);
+        } else {
+          endDateObj = new Date(editData.endDate);
+        }
+        setSelectedEndDate(endDateObj);
+      } catch (e) {
+        console.error('Error parsing end date:', e);
+      }
     }
 
     // Set custom speaker/organization flags and picker values
@@ -246,6 +286,38 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       setSelectedDate(selectedDate);
       handleInputChange('date', format(selectedDate, 'dd.MM.yyyy'));
     }
+  };
+  
+  const handleEndDateChange = (event, selectedDate) => {
+    setShowEndDatePicker(false);
+    if (selectedDate) {
+      setSelectedEndDate(selectedDate);
+      handleInputChange('endDate', format(selectedDate, 'dd.MM.yyyy'));
+    }
+  };
+  
+  const calculateSeminarDays = (startDate, endDate) => {
+    if (!startDate || !endDate) return 0;
+    
+    const parseDate = (dateStr) => {
+      const parts = dateStr.split('.');
+      if (parts.length === 3) {
+        const [day, month, year] = parts;
+        return new Date(year, month - 1, day);
+      }
+      return null;
+    };
+    
+    const start = parseDate(startDate);
+    const end = parseDate(endDate);
+    
+    if (start && end) {
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays + 1; // Include both start and end day
+    }
+    
+    return 0;
   };
 
   const renderCalendar = () => {
@@ -453,6 +525,33 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       Alert.alert('Greška', 'Mjesto je obavezno');
       return false;
     }
+    
+    // Validacija za seminare
+    if (showSeminarOptions) {
+      if (!formData.endDate) {
+        Alert.alert('Greška', 'Datum završetka je obavezan za seminare');
+        return false;
+      }
+      
+      if (!validateDate(formData.endDate)) {
+        Alert.alert('Greška', 'Unesite valjan datum završetka u formatu DD.MM.YYYY');
+        return false;
+      }
+      
+      // Provjeri da li je datum završetka nakon datuma početka
+      const startParts = formData.date.split('.');
+      const endParts = formData.endDate.split('.');
+      if (startParts.length === 3 && endParts.length === 3) {
+        const startDate = new Date(startParts[2], startParts[1] - 1, startParts[0]);
+        const endDate = new Date(endParts[2], endParts[1] - 1, endParts[0]);
+        
+        if (endDate < startDate) {
+          Alert.alert('Greška', 'Datum završetka mora biti nakon datuma početka');
+          return false;
+        }
+      }
+    }
+    
     return true;
   };
 
@@ -503,22 +602,36 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         const [day, month, year] = formData.date.split('.');
         formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       }
+      
+      // Format end date for seminars
+      let formattedEndDate = formData.endDate;
+      if (showSeminarOptions && formData.endDate && formData.endDate.includes('.')) {
+        const [day, month, year] = formData.endDate.split('.');
+        formattedEndDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
 
       // Prepare final form data - map daijaId to daija for server compatibility
       const finalFormData = {
         ...formData,
         daija: formData.daijaId, // Server expects 'daija' field, not 'daijaId'
         image: imagePath,
-        date: formattedDate
+        date: formattedDate,
+        ...(showSeminarOptions && {
+          isSeminar: true,
+          endDate: formattedEndDate,
+          seminarTheme: formData.title // Use title as seminar theme
+        })
       };
 
       // Submit the form - either create or update
       if (editMode && editData?._id) {
         await predavanjaService.updateItem(editData._id, finalFormData);
-        Alert.alert('Uspjeh', 'Uspješno ste ažurirali predavanje!');
+        const message = showSeminarOptions ? 'Uspješno ste ažurirali seminar!' : 'Uspješno ste ažurirali predavanje!';
+        Alert.alert('Uspjeh', message);
       } else {
         await predavanjaService.createPredavanje(finalFormData);
-        Alert.alert('Uspjeh', 'Uspješno ste dodali predavanje!');
+        const message = showSeminarOptions ? 'Uspješno ste dodali seminar!' : 'Uspješno ste dodali predavanje!';
+        Alert.alert('Uspjeh', message);
       }
       
       // Call success callback
@@ -541,12 +654,16 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           organizationId: '',
           image: '',
           isWeeklyLecture: false,
-          totalWeeks: 2
+          totalWeeks: 2,
+          isSeminar: false,
+          endDate: ''
         });
         setImageUri(null);
         setSelectedDate(new Date());
+        setSelectedEndDate(new Date());
         setSelectedDaijaId('');
         setUseCustomSpeaker(false);
+        setShowSeminarOptions(false);
       }
       
     } catch (error) {
@@ -726,39 +843,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     );
   };
 
-  const pickImage = async () => {
-    try {
-      // Request permission
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (permissionResult.granted === false) {
-        Alert.alert('Dozvola potrebna', 'Potrebna je dozvola za pristup galeriji slika.');
-        return;
-      }
-
-      // Launch image picker directly
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'images',
-        allowsEditing: false,
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setImageUri(result.assets[0].uri);
-        // Don't set image in formData yet - it will be set after upload
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Greška', 'Došlo je do greške prilikom odabira slike.');
-    }
-  };
-
-  const removeImage = () => {
-    setImageUri(null);
-    setSelectedExistingImage(null);
-    handleInputChange('image', '');
-  };
-  
   const selectExistingImage = (image) => {
     setSelectedExistingImage(image.url);
     // Check if it's already a full URL
@@ -791,40 +875,21 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Image Picker */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Slika predavanja (neobavezno)</Text>
-          {imageUri ? (
-            <View style={styles.imageContainer}>
-              <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="contain" />
-              <TouchableOpacity style={styles.removeImageButton} onPress={removeImage}>
-                <Ionicons name="close-circle" size={30} color={COLORS.error} />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View>
-              <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
-                <View style={styles.imagePickerContent}>
-                  <Ionicons name="image-outline" size={48} color={COLORS.primary} />
-                  <Text style={styles.imagePickerText}>Dodaj sliku</Text>
-                  <Text style={styles.imagePickerSubtext}>Kliknite za odabir iz galerije</Text>
-                </View>
-              </TouchableOpacity>
-              {existingImages.length > 0 && (
-                <TouchableOpacity 
-                  style={[styles.imagePickerButton, { marginTop: 10 }]} 
-                  onPress={() => setShowExistingImages(true)}
-                >
-                  <View style={styles.imagePickerContent}>
-                    <Ionicons name="images-outline" size={48} color={COLORS.primary} />
-                    <Text style={styles.imagePickerText}>Odaberi postojeću sliku</Text>
-                    <Text style={styles.imagePickerSubtext}>Iz baze podataka</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-        </View>
+        {/* Image Picker with Gallery */}
+        <ImagePickerWithGallery
+          value={formData.image}
+          onChange={(imagePath) => {
+            handleInputChange('image', imagePath);
+            if (imagePath) {
+              setImageUri(imagePath.startsWith('http') ? imagePath : getImageUrl(imagePath));
+            } else {
+              setImageUri(null);
+            }
+          }}
+          onUpload={true}
+          disabled={loading}
+          placeholder="Odaberite sliku predavanja"
+        />
 
         {renderInput('Naslov predavanja', 'title', 'Unesite naslov...', false, true)}
         {renderInput('Kratak opis (neobavezno)', 'shortDescription', 'Unesite kratak opis (max 200 karaktera)...', false)}
@@ -914,6 +979,64 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           )}
         </View>
 
+        
+        {/* Seminar section */}
+        <View style={styles.seminarSection}>
+          <TouchableOpacity 
+            style={styles.checkboxContainer}
+            onPress={() => {
+              setShowSeminarOptions(!showSeminarOptions);
+              handleInputChange('isSeminar', !showSeminarOptions);
+              // Disable weekly lectures if seminar is selected
+              if (!showSeminarOptions) {
+                handleInputChange('isWeeklyLecture', false);
+              }
+            }}
+            disabled={editMode || formData.isWeeklyLecture}
+          >
+            <View style={[styles.checkbox, showSeminarOptions && styles.checkboxCheckedSeminar]}>
+              {showSeminarOptions && (
+                <Ionicons name="checkmark" size={16} color={COLORS.white} />
+              )}
+            </View>
+            <Text style={[
+              styles.checkboxLabel, 
+              styles.seminarLabel,
+              (editMode || formData.isWeeklyLecture) && styles.disabledText
+            ]}>
+              Seminar (događaj koji traje više dana)
+            </Text>
+          </TouchableOpacity>
+          
+          {showSeminarOptions && (
+            <View style={styles.seminarContainer}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>
+                  Datum završetka <Text style={styles.required}>*</Text>
+                </Text>
+                <TouchableOpacity
+                  style={styles.dateInput}
+                  onPress={() => setShowEndDatePicker(true)}
+                >
+                  <Text style={styles.dateInputText}>
+                    {formData.endDate || 'Odaberite datum završetka'}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
+                </TouchableOpacity>
+              </View>
+              
+              {formData.date && formData.endDate && (
+                <View style={styles.durationInfo}>
+                  <Ionicons name="calendar-outline" size={20} color={COLORS.warning} />
+                  <Text style={styles.durationText}>
+                    Trajanje seminara: {calculateSeminarDays(formData.date, formData.endDate)} dana
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+        
         {/* Padding for sticky button */}
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -944,6 +1067,49 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+      
+      {/* End Date Picker Modal for Seminars */}
+      <Modal
+        visible={showEndDatePicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowEndDatePicker(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowEndDatePicker(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Datum završetka seminara</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowEndDatePicker(false)}
+                    style={styles.modalCloseButton}
+                  >
+                    <Ionicons name="close" size={24} color={COLORS.primary} />
+                  </TouchableOpacity>
+                </View>
+                {Platform.OS === 'android' ? (
+                  <DateTimePicker
+                    value={selectedEndDate}
+                    mode="date"
+                    display="spinner"
+                    onChange={handleEndDateChange}
+                    minimumDate={selectedDate}
+                  />
+                ) : (
+                  <DateTimePicker
+                    value={selectedEndDate}
+                    mode="date"
+                    display="spinner"
+                    onChange={handleEndDateChange}
+                    minimumDate={selectedDate}
+                  />
+                )}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
 
       {/* Sticky Submit Button */}
       <View style={styles.submitContainer}>
@@ -955,7 +1121,10 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           <Text style={styles.submitButtonText}>
             {loading 
               ? (editMode ? 'Ažuriranje...' : 'Dodavanje...') 
-              : (editMode ? 'Ažuriraj Ders' : 'Dodaj Ders')
+              : (editMode 
+                  ? (showSeminarOptions ? 'Ažuriraj Seminar' : 'Ažuriraj Ders')
+                  : (showSeminarOptions ? 'Dodaj Seminar' : 'Dodaj Ders')
+                )
             }
           </Text>
         </TouchableOpacity>
@@ -1380,6 +1549,53 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: COLORS.gray,
+  },
+  // Seminar styles
+  seminarSection: {
+    marginBottom: 16,
+    backgroundColor: '#fff5e6', // Light amber background
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+  },
+  checkboxCheckedSeminar: {
+    backgroundColor: COLORS.warning,
+  },
+  seminarLabel: {
+    color: COLORS.warning,
+    fontWeight: 'bold',
+  },
+  seminarContainer: {
+    marginTop: 16,
+  },
+  dateInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: COLORS.white,
+  },
+  dateInputText: {
+    fontSize: 16,
+    color: COLORS.primary,
+  },
+  durationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+  },
+  durationText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: COLORS.warning,
+    fontWeight: '500',
   },
   imageOptionsContainer: {
     flexDirection: 'row',

@@ -403,7 +403,7 @@ const DraggableDataTable = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => onStatusChange(item, type, 'approved')}
+                  onClick={() => onStatusChange(item, 'approved', type)}
                   title="Odobri"
                   className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
                 >
@@ -412,7 +412,7 @@ const DraggableDataTable = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => onStatusChange(item, type, 'rejected')}
+                  onClick={() => onStatusChange(item, 'rejected', type)}
                   title="Odbij"
                   className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                 >

@@ -141,7 +141,7 @@ router.get('/public', async (req, res) => {
     
     try {
       lectures = await Lecture.find(statusFilter)
-        .select('title speaker daija organization organizationId address city date time shortDescription image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId')
+        .select('title speaker daija organization organizationId address city date time shortDescription image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId isSeminar endDate seminarTheme totalDays')
         .populate({
           path: 'organizationId',
           select: 'name',
@@ -161,6 +161,18 @@ router.get('/public', async (req, res) => {
         .lean()
         .exec();
       
+      // Debug seminar data in first query
+      const seminarDebug1 = lectures.find(l => l.title && l.title.toLowerCase().includes('seminar'));
+      if (seminarDebug1) {
+        console.log('SEMINAR DATA FROM FIRST QUERY:', {
+          title: seminarDebug1.title,
+          isSeminar: seminarDebug1.isSeminar,
+          totalDays: seminarDebug1.totalDays,
+          endDate: seminarDebug1.endDate,
+          seminarTheme: seminarDebug1.seminarTheme,
+          allFields: Object.keys(seminarDebug1)
+        });
+      }
       
       // Debug first lecture
       if (lectures.length > 0) {
@@ -170,7 +182,7 @@ router.get('/public', async (req, res) => {
       
       // Fallback: Regular optimized query
       lectures = await Lecture.find(statusFilter)
-        .select('title speaker daija organization organizationId address city date time shortDescription image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId')
+        .select('title speaker daija organization organizationId address city date time shortDescription image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId isSeminar endDate seminarTheme totalDays')
         .populate({
           path: 'organizationId',
           select: 'name',
@@ -188,10 +200,36 @@ router.get('/public', async (req, res) => {
         })
         .lean()
         .exec();
+        
+      // Debug seminar data in fallback query
+      const seminarDebug2 = lectures.find(l => l.title && l.title.toLowerCase().includes('seminar'));
+      if (seminarDebug2) {
+        console.log('SEMINAR DATA FROM FALLBACK QUERY:', {
+          title: seminarDebug2.title,
+          isSeminar: seminarDebug2.isSeminar,
+          totalDays: seminarDebug2.totalDays,
+          endDate: seminarDebug2.endDate,
+          seminarTheme: seminarDebug2.seminarTheme,
+          allFields: Object.keys(seminarDebug2)
+        });
+      }
     }
 
     const queryEndTime = Date.now();
     const queryDuration = queryEndTime - queryStartTime;
+    
+    // Debug: Check if any lectures have seminar in title
+    const seminarLectures = lectures.filter(l => l.title && l.title.toLowerCase().includes('seminar'));
+    console.log('FOUND LECTURES COUNT:', lectures.length);
+    console.log('SEMINAR LECTURES COUNT:', seminarLectures.length);
+    if (seminarLectures.length > 0) {
+      console.log('FIRST SEMINAR:', {
+        title: seminarLectures[0].title,
+        isSeminar: seminarLectures[0].isSeminar,
+        hasIsSeminar: 'isSeminar' in seminarLectures[0],
+        allKeys: Object.keys(seminarLectures[0])
+      });
+    }
     
     // CRITICAL: Check what statuses we got
     const lectureStatusCounts = {};
@@ -278,6 +316,7 @@ router.get('/public', async (req, res) => {
       
       // Use Object.assign to ensure all properties are copied
       transformedLectures[i] = Object.assign({}, lecture, {
+        type: 'Predavanje',  // Ensure type is always set for UniversalCard
         daijaId: lecture.daija ? lecture.daija._id : null,
         speaker: lecture.daija && lecture.daija.name 
           ? formatDaijaTitle(lecture.daija.name, lecture.daija.title)
@@ -292,7 +331,12 @@ router.get('/public', async (req, res) => {
         // Explicitly include cancellation fields
         isCancelled: lecture.isCancelled,
         cancelledAt: lecture.cancelledAt,
-        cancellationReason: lecture.cancellationReason
+        cancellationReason: lecture.cancellationReason,
+        // Explicitly include seminar fields
+        isSeminar: lecture.isSeminar,
+        endDate: lecture.endDate,
+        seminarTheme: lecture.seminarTheme,
+        totalDays: lecture.totalDays
       });
       
       // Debug cancelled lecture after transformation
@@ -301,6 +345,18 @@ router.get('/public', async (req, res) => {
       
       // Debug first test lecture after transform
       if (i === 0 && lecture.title?.toLowerCase().includes('test')) {
+      }
+      
+      // Debug seminar after transformation
+      if (lecture.title?.toLowerCase().includes('seminar')) {
+        console.log('SEMINAR AFTER TRANSFORMATION:', {
+          title: transformedLectures[i].title,
+          type: transformedLectures[i].type,
+          isSeminar: transformedLectures[i].isSeminar,
+          endDate: transformedLectures[i].endDate,
+          seminarTheme: transformedLectures[i].seminarTheme,
+          totalDays: transformedLectures[i].totalDays
+        });
       }
     }
     
@@ -312,6 +368,13 @@ router.get('/public', async (req, res) => {
     
     // Debug: Check weekly lectures after transformation
     const weeklyAfterTransform = transformedLectures.filter(l => l.isWeeklyLecture);
+    
+    // Force debug output
+    console.error(`TRANSFORMATION COMPLETE: ${transformedLectures.length} lectures`);
+    const seminarCheck = transformedLectures.find(l => l.title && l.title.toLowerCase().includes('seminar'));
+    if (seminarCheck) {
+      console.error(`FOUND SEMINAR: type=${seminarCheck.type}, isSeminar=${seminarCheck.isSeminar}`);
+    }
     
     // 🚀 CUSTOM SORTING: Future lectures first (ascending date), then past lectures (descending date)
     const sortStartTime = Date.now();
@@ -404,6 +467,14 @@ router.get('/public', async (req, res) => {
     } else {
     }
     
+    // Debug seminar in final output
+    const seminarInFinal = sortedLectures.find(l => l.title && l.title.toLowerCase().includes('seminar'));
+    if (seminarInFinal) {
+      // Force output that we can see
+      const debugMsg = `SEMINAR: title=${seminarInFinal.title}, type=${seminarInFinal.type}, isSeminar=${seminarInFinal.isSeminar}`;
+      console.error(debugMsg); // Use console.error to bypass winston
+    }
+    
     res.json(sortedLectures);
   } catch (error) {
     const errorTime = Date.now();
@@ -441,7 +512,7 @@ router.get('/public/with-status', async (req, res) => {
     const lectures = await Lecture.find({ 
       status: { $in: ['approved', 'cancelled'] }
     })
-      .select('title speaker daija organization organizationId address city date time duration shortDescription image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId')
+      .select('title speaker daija organization organizationId address city date time duration shortDescription image status createdAt isCancelled cancelledAt cancellationReason isWeeklyLecture weekNumber totalWeeks weeklySeriesId isSeminar endDate seminarTheme totalDays')
       .populate({
         path: 'organizationId',
         select: 'name',
@@ -462,6 +533,7 @@ router.get('/public/with-status', async (req, res) => {
     
     const transformedLectures = lectures.map(lecture => ({
       ...lecture,
+      type: 'Predavanje',  // Ensure type is always set for UniversalCard
       daijaId: lecture.daija ? lecture.daija._id : null,
       speaker: lecture.daija && lecture.daija.name 
         ? formatDaijaTitle(lecture.daija.name, lecture.daija.title)
@@ -474,7 +546,12 @@ router.get('/public/with-status', async (req, res) => {
       // Explicitly include cancellation fields
       isCancelled: lecture.isCancelled,
       cancelledAt: lecture.cancelledAt,
-      cancellationReason: lecture.cancellationReason
+      cancellationReason: lecture.cancellationReason,
+      // Explicitly include seminar fields
+      isSeminar: lecture.isSeminar,
+      endDate: lecture.endDate,
+      seminarTheme: lecture.seminarTheme,
+      totalDays: lecture.totalDays
     }));
 
     const transformEndTime = Date.now();
@@ -595,7 +672,13 @@ router.post('/', authenticateToken, async (req, res) => {
       image,
       status = 'approved',
       isWeeklyLecture = false,
-      totalWeeks = 2
+      totalWeeks = 2,
+      // Seminar fields
+      isSeminar = false,
+      endDate,
+      seminarTheme,
+      seminarSessions = [],
+      totalDays
     } = req.body;
 
     // CRITICAL: Log received date for production debugging
@@ -646,6 +729,28 @@ router.post('/', authenticateToken, async (req, res) => {
       if (totalWeeks < 2 || totalWeeks > 12) {
         return res.status(400).json({ 
           message: 'Broj sedmica mora biti između 2 i 12.' 
+        });
+      }
+    }
+
+    // Seminar validation
+    if (isSeminar) {
+      if (!endDate) {
+        return res.status(400).json({ 
+          message: 'Datum završetka je obavezan za seminare.' 
+        });
+      }
+      
+      const seminarEndDate = parseLocalDate(endDate);
+      if (seminarEndDate <= lectureDate) {
+        return res.status(400).json({ 
+          message: 'Datum završetka mora biti nakon datuma početka.' 
+        });
+      }
+      
+      if (!seminarSessions || seminarSessions.length === 0) {
+        return res.status(400).json({ 
+          message: 'Seminar mora imati barem jednu sesiju.' 
         });
       }
     }
@@ -710,6 +815,43 @@ router.post('/', authenticateToken, async (req, res) => {
           createdLectures: lectures.length,
           lectureIds: lectures.map(l => l._id)
         }
+      });
+      
+    } else if (isSeminar) {
+      // Create seminar
+      const seminarData = {
+        type,
+        title,
+        daija,
+        daijaIds: daijaIds || [],
+        customSpeakers: customSpeakers || [],
+        speaker,
+        organization,
+        organizationId,
+        address,
+        city,
+        date: lectureDate,
+        time,
+        duration,
+        shortDescription,
+        description,
+        image,
+        status,
+        createdBy: req.user.id,
+        // Seminar specific fields
+        isSeminar: true,
+        endDate: parseLocalDate(endDate),
+        seminarTheme,
+        seminarSessions,
+        totalDays
+      };
+      
+      const newSeminar = new Lecture(seminarData);
+      const savedSeminar = await newSeminar.save();
+      
+      res.status(201).json({
+        message: 'Seminar uspješno kreiran',
+        lecture: savedSeminar
       });
       
     } else {
@@ -1208,7 +1350,13 @@ router.put('/:id', authenticateToken, async (req, res) => {
       image,
       status,
       isWeeklyLecture,
-      totalWeeks
+      totalWeeks,
+      // Seminar fields
+      isSeminar,
+      endDate,
+      seminarTheme,
+      seminarSessions,
+      totalDays
     } = req.body;
     
     // Find and update the lecture

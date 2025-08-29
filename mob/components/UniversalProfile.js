@@ -12,8 +12,10 @@ import {
   Dimensions,
   Alert,
   TextInput,
+  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Calendar from 'expo-calendar';
 import predavanjaService from '../services/predavanjaService';
 import { daijeService, udruzenjaService } from '../services';
@@ -393,8 +395,12 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAu
       style={styles.container}
       contentContainerStyle={styles.scrollContentContainer}
     >
-      {/* Hero Section */}
-      <View style={styles.heroSection}>
+      {/* Hero Section with Gradient */}
+      <LinearGradient
+        colors={['#022C43', '#055A87']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.heroSection}>
         {/* Back Button */}
         <TouchableOpacity style={styles.backButton} onPress={goBack}>
           <Ionicons name="arrow-back" size={24} color="white" />
@@ -448,12 +454,71 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAu
           {getTitle()}
         </Text>
 
+        {/* Badges Section */}
+        <View style={styles.badgeContainer}>
+          {type === 'lecture' && profile.isSeminar && (
+            <View style={[styles.badge, styles.seminarBadge]}>
+              <Ionicons name="calendar" size={14} color="white" />
+              <Text style={styles.badgeText}>SEMINAR</Text>
+            </View>
+          )}
+          {type === 'lecture' && profile.isWeeklyLecture && !profile.isSeminar && (
+            <View style={[styles.badge, styles.weeklyBadge]}>
+              <Ionicons name="calendar-outline" size={12} color="white" />
+              <Text style={styles.badgeText}>Sedmično predavanje</Text>
+            </View>
+          )}
+          {type === 'daija' && profile.title && (
+            <View style={[styles.badge, styles.titleBadge]}>
+              <Ionicons name="school" size={14} color="white" />
+              <Text style={styles.badgeText}>{profile.title}</Text>
+            </View>
+          )}
+          {type === 'organization' && (
+            <View style={[styles.badge, styles.orgBadge]}>
+              <Ionicons name="people" size={14} color="white" />
+              <Text style={styles.badgeText}>Islamsko udruženje</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Statistics for daija and organization profiles */}
+        {type !== 'lecture' && (
+          <View style={styles.statsContainer}>
+            {profileLectures.length > 0 && (
+              <View style={styles.statCard}>
+                <Ionicons name="book" size={24} color="rgba(255,255,255,0.7)" />
+                <Text style={styles.statNumber}>{profileLectures.length}</Text>
+                <Text style={styles.statLabel}>Predavanja</Text>
+              </View>
+            )}
+            {profile.views && (
+              <View style={styles.statCard}>
+                <Ionicons name="eye" size={24} color="rgba(255,255,255,0.7)" />
+                <Text style={styles.statNumber}>{profile.views}</Text>
+                <Text style={styles.statLabel}>Pregleda</Text>
+              </View>
+            )}
+            {profile.rating && (
+              <View style={styles.statCard}>
+                <Ionicons name="star" size={24} color="rgba(255,255,255,0.7)" />
+                <Text style={styles.statNumber}>{profile.rating}</Text>
+                <Text style={styles.statLabel}>Ocjena</Text>
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Meta Information */}
         <View style={styles.metaContainer}>
           {type === 'lecture' && profile.date && (
             <View style={styles.metaItem}>
               <Ionicons name="calendar" size={16} color="white" />
-              <Text style={styles.metaText}>{formatDateWithDay(profile.date)}</Text>
+              <Text style={styles.metaText}>
+                {profile.isSeminar && profile.endDate 
+                  ? `${formatDateWithDay(profile.date)} - ${formatDateWithDay(profile.endDate)}`
+                  : formatDateWithDay(profile.date)}
+              </Text>
             </View>
           )}
 
@@ -488,6 +553,28 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAu
               <Text style={styles.metaText}>
                 {[profile.address, profile.city].filter(Boolean).join(', ')}
               </Text>
+            </View>
+          )}
+          
+          {/* Contact Info for Organizations */}
+          {type === 'organization' && profile.phone && (
+            <View style={styles.metaItem}>
+              <Ionicons name="call" size={16} color="white" />
+              <Text style={styles.metaText}>{profile.phone}</Text>
+            </View>
+          )}
+          
+          {type === 'organization' && profile.email && (
+            <View style={styles.metaItem}>
+              <Ionicons name="mail" size={16} color="white" />
+              <Text style={styles.metaText}>{profile.email}</Text>
+            </View>
+          )}
+          
+          {type === 'organization' && profile.website && (
+            <View style={styles.metaItem}>
+              <Ionicons name="globe" size={16} color="white" />
+              <Text style={styles.metaText}>{profile.website.replace(/^https?:\/\//, '')}</Text>
             </View>
           )}
         </View>
@@ -607,7 +694,7 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAu
             </TouchableOpacity>
           </View>
         )}
-      </View>
+      </LinearGradient>
 
       {/* Lectures Section - For daija and organization profiles */}
       {(type === 'daija' || type === 'organization') && (
@@ -703,6 +790,37 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAu
                 />
               ))}
             </View>
+          )}
+        </View>
+      )}
+      
+      {/* Other Upcoming Lectures Section - Shows for all profile types */}
+      {relatedLectures && relatedLectures.length > 0 && (
+        <View style={styles.relatedSection}>
+          <Text style={styles.relatedTitle}>Ostali najavljeni dersovi</Text>
+          {loadingRelated ? (
+            <ActivityIndicator size="small" color="#022C43" style={styles.relatedLoader} />
+          ) : (
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScrollContainer}
+            >
+              {relatedLectures.map((lecture) => (
+                <View key={lecture._id} style={styles.horizontalCardWrapper}>
+                  <UniverzalCard
+                    data={lecture}
+                    onPress={() => {
+                      if (onProfileOpen) {
+                        onProfileOpen(lecture, 'lecture');
+                      }
+                    }}
+                    onAdd={onAdd}
+                    style={styles.horizontalCard}
+                  />
+                </View>
+              ))}
+            </ScrollView>
           )}
         </View>
       )}
@@ -976,8 +1094,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   heroSection: {
-    background: 'linear-gradient(135deg, #022C43 0%, #055A87 100%)',
-    backgroundColor: '#022C43',
     padding: screenWidth > 600 ? 30 : 20,
     paddingTop: screenWidth > 600 ? 30 : 20,
     alignItems: 'center',
@@ -1161,6 +1277,74 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 8,
   },
+  badgeContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 10,
+    marginBottom: 15,
+    gap: 8,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    gap: 4,
+  },
+  seminarBadge: {
+    backgroundColor: 'rgba(255, 193, 7, 0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 193, 7, 0.5)',
+  },
+  weeklyBadge: {
+    backgroundColor: 'rgba(33, 150, 243, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(33, 150, 243, 0.4)',
+  },
+  titleBadge: {
+    backgroundColor: 'rgba(156, 39, 176, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(156, 39, 176, 0.4)',
+  },
+  orgBadge: {
+    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.4)',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 15,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  statCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    minWidth: 80,
+  },
+  statNumber: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
+  statLabel: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 11,
+    marginTop: 2,
+  },
   backButton: {
     position: 'absolute',
     top: 10,
@@ -1331,6 +1515,16 @@ const styles = StyleSheet.create({
     borderColor: '#f44336',
     borderWidth: 2,
     minWidth: 120,
+  },
+  horizontalScrollContainer: {
+    paddingRight: 20,
+  },
+  horizontalCardWrapper: {
+    marginRight: 12,
+    width: 280,
+  },
+  horizontalCard: {
+    width: '100%',
   },
   modalOverlay: {
     flex: 1,

@@ -15,12 +15,16 @@ router.post('/register', async (req, res) => {
     const emailValue = email.trim().toLowerCase();
     const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Hash security answer for secure storage
+    const hashedSecurityAnswer = await bcrypt.hash(securityAnswer.toLowerCase().trim(), 10);
+    
     const user = new User({
       username,
       email: emailValue,
       password: hashedPassword,
       securityQuestionIndex,
-      securityAnswer
+      securityAnswer: hashedSecurityAnswer
     });
     await user.save();
     const token = generateToken({ id: user._id, username: user.username, role: user.role });

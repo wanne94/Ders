@@ -32,7 +32,8 @@ import {
   User,
   Lightbulb,
   UserCircle,
-  ChevronDown
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import LogoCircle from './LogoCircle.jsx';
 import LectureFormNew from './LectureFormNew.jsx';
@@ -55,6 +56,7 @@ const Navigation = () => {
   const [showNavigation, setShowNavigation] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [mobileAddExpanded, setMobileAddExpanded] = useState(false);
 
   // Scroll handler za skrivanje/prikazivanje navigacije
   useEffect(() => {
@@ -147,34 +149,42 @@ const Navigation = () => {
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
-  const mobileMenuItems = [
+  const baseMenuItems = [
     ...menuItems,
-    ...(isAdmin ? adminMenuItems : []),
-    ...(isLoggedIn && [
-      {
-        label: 'Dodaj predavanje',
-        path: '#',
-        icon: <BookOpen className="h-5 w-5" />,
-        onClick: handleAddLectureClick
-      },
-      {
-        label: 'Dodaj daiju',
-        path: '#',
-        icon: <User className="h-5 w-5" />,
-        onClick: handleAddDaijaClick
-      },
-      {
-        label: 'Dodaj udruženje',
-        path: '#',
-        icon: <Building2 className="h-5 w-5" />,
-        onClick: handleAddOrganizationClick
-      }
-    ] || []),
     {
-      label: '',
+      label: 'Prijedlozi i ideje',
       path: '#',
       icon: <Lightbulb className="h-5 w-5" />,
       onClick: handleSuggestionClick
+    }
+  ];
+
+  const mobileMenuItems = baseMenuItems;
+
+  const mobileAddItems = [
+    {
+      label: 'Dodaj predavanje',
+      icon: <BookOpen className="h-4 w-4" />,
+      onClick: () => {
+        handleAddLectureClick();
+        setMobileAddExpanded(false);
+      }
+    },
+    {
+      label: 'Dodaj daiju',
+      icon: <User className="h-4 w-4" />,
+      onClick: () => {
+        handleAddDaijaClick();
+        setMobileAddExpanded(false);
+      }
+    },
+    {
+      label: 'Dodaj udruženje',
+      icon: <Building2 className="h-4 w-4" />,
+      onClick: () => {
+        handleAddOrganizationClick();
+        setMobileAddExpanded(false);
+      }
     }
   ];
 
@@ -343,6 +353,65 @@ const Navigation = () => {
                       <span className="ml-2">{item.label}</span>
                     </Button>
                   ))}
+                  
+                  {/* Add Dropdown for Mobile */}
+                  {isLoggedIn && (
+                    <div className="mt-2">
+                      <Button
+                        variant="ghost"
+                        className="justify-start w-full hover:bg-gray-100 font-semibold"
+                        onClick={() => setMobileAddExpanded(!mobileAddExpanded)}
+                      >
+                        <Plus className="h-5 w-5" />
+                        <span className="ml-2 flex-1 text-left">Dodaj</span>
+                        <ChevronDown className={cn(
+                          "h-4 w-4 transition-transform",
+                          mobileAddExpanded && "rotate-180"
+                        )} />
+                      </Button>
+                      
+                      {mobileAddExpanded && (
+                        <div className="ml-4 mt-1 space-y-1">
+                          {mobileAddItems.map((addItem, idx) => (
+                            <Button
+                              key={idx}
+                              variant="ghost"
+                              size="sm"
+                              className="justify-start w-full pl-4 text-gray-700 hover:bg-gray-100"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                addItem.onClick();
+                              }}
+                            >
+                              {addItem.icon}
+                              <span className="ml-2">{addItem.label}</span>
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Admin Panel - with divider */}
+                  {isAdmin && (
+                    <>
+                      <div className="border-t my-2" />
+                      <Button
+                        variant="ghost"
+                        className="justify-start w-full"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          navigateToRoute('/dashboard');
+                        }}
+                        disabled={isNavigating}
+                      >
+                        <LayoutDashboard className="h-5 w-5" />
+                        <span className="ml-2">Admin Panel</span>
+                      </Button>
+                    </>
+                  )}
                   
                   <div className="border-t pt-4 mt-4">
                     {isLoggedIn ? (

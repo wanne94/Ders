@@ -45,6 +45,7 @@ import useUndoRedo from '@/hooks/useUndoRedo';
 import { predavanjaService, daijeService, udruzenjaService, suggestionsService, usersService, settingsService } from '@/services';
 import axiosInstance from '@/utils/axiosConfig';
 import { getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
+import { formatDate } from '@/utils/dataHelpers';
 import { isValid, parseISO } from 'date-fns';
 
 const Dashboard = () => {
@@ -55,6 +56,8 @@ const Dashboard = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [activeSection, setActiveSection] = useState('predavanja');
+  const [sectionAction, setSectionAction] = useState(null);
+  const [openAddDialog, setOpenAddDialog] = useState(false);
   const [approvalSettings, setApprovalSettings] = useState({
     lecture: true,
     daija: true,
@@ -548,7 +551,7 @@ const Dashboard = () => {
     openDialog('deleteDialog');
   }, [openDialog]);
 
-  const handleStatusChange = useCallback((item, type, newStatus) => {
+  const handleStatusChange = useCallback((item, newStatus, type) => {
     setStatusChange({ item, type, value: newStatus });
     if (newStatus === 'rejected') {
       openDialog('rejectDialog');
@@ -1016,7 +1019,7 @@ const Dashboard = () => {
             onDelete={canDelete ? handleDelete : undefined}
             onDuplicate={handleDuplicate}
             onCancel={(type === 'lecture' || type === 'lectures') && isAdmin ? handleCancelLecture : undefined}
-            onStatusChange={isAdmin ? (item, newStatus) => handleStatusChange(item, type || getTypeFromSection(activeSection), newStatus) : undefined}
+            onStatusChange={isAdmin ? (item, newStatus) => handleStatusChange(item, newStatus, type || getTypeFromSection(activeSection)) : undefined}
             onBulkStatusChange={isAdmin ? handleBulkStatusChange : undefined}
             onBulkDelete={canDelete ? handleBulkDelete : undefined}
             onReorder={(reorderedItems) => handleReorder(reorderedItems, type || getTypeFromSection(activeSection))}
@@ -1409,8 +1412,65 @@ const Dashboard = () => {
     return content;
   };
 
-  const setSection = (section) => {
-    setActiveSection(section);
+  const handleQuickAdd = useCallback(async (type, data) => {
+    try {
+      if (type === 'predavanja') {
+        // Create a lecture with minimal data
+        const lectureData = {
+          title: data.title,
+          speaker: data.speaker,
+          date: data.date,
+          status: approvalSettings.lecture ? 'pending' : 'approved',
+          image: getDefaultLectureImage()
+        };
+        await predavanjaService.createPredavanje(lectureData);
+        showSnackbar('Ders uspješno dodan!');
+        if (fetchData) await fetchData(); // Reload data
+      } else if (type === 'organizations') {
+        const orgData = {
+          name: data.name,
+          description: data.description,
+          status: approvalSettings.organization ? 'pending' : 'approved',
+          image: getDefaultOrganizationImage()
+        };
+        await udruzenjaService.createUdruzenje(orgData);
+        showSnackbar('Udruženje uspješno dodano!');
+        if (fetchData) await fetchData();
+      } else if (type === 'daije') {
+        const daijaData = {
+          name: data.name,
+          title: data.title,
+          status: approvalSettings.daija ? 'pending' : 'approved',
+          image: getDefaultDaijaImage()
+        };
+        await daijeService.createDaija(daijaData);
+        showSnackbar('Daija uspješno dodana!');
+        if (fetchData) await fetchData();
+      }
+    } catch (error) {
+      console.error(`Error creating ${type}:`, error);
+      showSnackbar(`Greška pri dodavanju: ${error.message}`, 'error');
+    }
+  }, [approvalSettings, showSnackbar, fetchData]);
+
+  const setSection = (section, action) => {
+    // Handle mobile sub-actions
+    if (action) {
+      setActiveSection(section);
+      if (action === 'add') {
+        // Open appropriate dialog for adding new items
+        if (section === 'predavanja') {
+          handleAddPredavanje();
+        } else if (section === 'organizations') {
+          setOrganizationDialogOpen(true);
+        } else if (section === 'daije') {
+          setDaijaDialogOpen(true);
+        }
+      }
+      // 'list' action just switches to the section view
+    } else {
+      setActiveSection(section);
+    }
   };
 
   return (
@@ -1421,6 +1481,7 @@ const Dashboard = () => {
             <DashSidebar 
               activeSection={activeSection} 
               onSectionChange={setSection}
+              onQuickAdd={handleQuickAdd}
               pendingCount={
                 (data.daije || []).filter(d => d.status === 'pending').length +
                 (data.organizations || []).filter(o => o.status === 'pending').length
@@ -1636,7 +1697,7 @@ const Dashboard = () => {
                     Predavač: {cancellationItem.speaker}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Datum: {new Date(cancellationItem.date).toLocaleDateString('hr-HR')}
+                    Datum: {formatDate(cancellationItem.date)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Vrijeme: {cancellationItem.time}

@@ -154,9 +154,11 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
               ? { icon: "Person", text: `${data.daijaIds.length} Predavača` }
               : { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker },
             data.organization && { icon: 'Business', text: data.organization },
-            // Show date/time for all lectures including cancelled ones
-            data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
-            data.time && { icon: 'Time', text: data.time },
+            // Show date/time for all lectures including seminars
+            data.isSeminar && data.date && data.endDate 
+              ? { icon: 'Calendar', text: `${formatDateWithDay(data.date)} - ${formatDateWithDay(data.endDate)}` }
+              : data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
+            !data.isSeminar && data.time && { icon: 'Time', text: data.time },
             data.address && { icon: 'LocationOn', text: data.address },
             data.city && { icon: 'LocationCity', text: data.city },
           ].filter(Boolean)
@@ -202,8 +204,10 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
                 ? { icon: "Person", text: `${data.daijaIds.length} Predavača` }
                 : { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker },
               data.organization && { icon: 'Business', text: data.organization },
-              data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
-              data.time && { icon: 'Time', text: data.time },
+              data.isSeminar && data.date && data.endDate 
+                ? { icon: 'Calendar', text: `${formatDateWithDay(data.date)} - ${formatDateWithDay(data.endDate)}` }
+                : data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
+              !data.isSeminar && data.time && { icon: 'Time', text: data.time },
               data.address && { icon: 'LocationOn', text: data.address },
               data.city && { icon: 'LocationCity', text: data.city },
             ].filter(Boolean)
@@ -244,6 +248,20 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
   };
 
   const displayData = getDisplayData();
+
+  // Debug za seminare - ENHANCED
+  if (data.isSeminar === true || (data.title && data.title.toLowerCase().includes('seminar'))) {
+    console.log('');
+    console.log('🎓 ===== SEMINAR DEBUG =====');
+    console.log('🏷️ Title:', data.title);
+    console.log('📌 isSeminar flag:', data.isSeminar);
+    console.log('🔤 Type field:', data.type);
+    console.log('🎨 Display type:', displayData.type);
+    console.log('✅ Badge will show:', displayData.type === 'lecture' && data.isSeminar === true);
+    console.log('📅 Date range:', data.date ? 'YES' : 'NO', '->', data.endDate ? 'YES' : 'NO');
+    console.log('==========================');
+    console.log('');
+  }
 
   // Debug za otkazana predavanja
   if (displayData.type === 'lecture' && displayData.isCancelled) {
@@ -289,11 +307,19 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
       
 
       {/* Weekly lecture badge - left side */}
-      {displayData.type === 'lecture' && data.isWeeklyLecture && (
+      {displayData.type === 'lecture' && data.isWeeklyLecture && !data.isSeminar && (
         <View style={styles.weeklyBadge}>
           <Text style={styles.weeklyBadgeText}>Sedmično</Text>
         </View>
       )}
+
+      {/* Seminar badge - left side - ISTI PRISTUP KAO SEDMIČNO */}
+      {displayData.type === 'lecture' && data.isSeminar && (
+        <View style={styles.seminarBadge}>
+          <Text style={styles.seminarBadgeText}>Seminar</Text>
+        </View>
+      )}
+
 
       {/* Status Badge for all lectures */}
       {displayData.type === 'lecture' && displayData.statusInfo && (
@@ -399,6 +425,7 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
           </View>
         </View>
       </View>
+      
     </TouchableOpacity>
   );
 };
@@ -411,6 +438,8 @@ const styles = StyleSheet.create({
     borderRadius: SPACING.card.borderRadius,
     padding: SPACING.card.padding,
     flexDirection: 'column',
+    overflow: 'visible', // Ensure badges are visible
+    position: 'relative', // For absolute positioning of badges
     ...{
       elevation: 2,
       shadowColor: '#000',
@@ -593,6 +622,23 @@ const styles = StyleSheet.create({
   },
   weeklyBadgeText: {
     color: '#1565c0',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  seminarBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#fff7ed', // amber-50 ekvivalent
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 4,
+    zIndex: 3,
+    borderWidth: 1,
+    borderColor: '#fed7aa', // amber-200 ekvivalent
+  },
+  seminarBadgeText: {
+    color: '#d97706', // amber-600 ekvivalent
     fontSize: 12,
     fontWeight: 'bold',
   },

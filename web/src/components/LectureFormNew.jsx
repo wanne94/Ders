@@ -41,6 +41,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
   const [useCustomSpeaker, setUseCustomSpeaker] = useState(false);
   const [useCustomOrganization, setUseCustomOrganization] = useState(false);
   const [showWeeklyOptions, setShowWeeklyOptions] = useState(false);
+  const [showSeminarOptions, setShowSeminarOptions] = useState(false);
   const [existingImages, setExistingImages] = useState([]);
   const [showExistingImages, setShowExistingImages] = useState(false);
   const [selectedExistingImage, setSelectedExistingImage] = useState(null);
@@ -61,7 +62,10 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
     description: '',
     image: null,
     isWeeklyLecture: false,
-    totalWeeks: 4
+    totalWeeks: 4,
+    // Seminar fields
+    isSeminar: false,
+    endDate: ''
   });
 
   // Initialize form when lecture prop changes
@@ -74,6 +78,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
       setUseCustomSpeaker(isCustomSpeaker);
       setUseCustomOrganization(isCustomOrg);
       setShowWeeklyOptions(existingLecture.isWeeklyLecture || false);
+      setShowSeminarOptions(existingLecture.isSeminar || false);
       
       // Provjeri da li postojeće predavanje ima više daija
       const daijaIds = existingLecture.daijaIds || [];
@@ -109,7 +114,10 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
         totalWeeks: existingLecture.totalWeeks || 4,
         videoUrl: existingLecture.videoUrl || '',
         facebookUrl: existingLecture.facebookUrl || '',
-        instagramUrl: existingLecture.instagramUrl || ''
+        instagramUrl: existingLecture.instagramUrl || '',
+        // Seminar polja
+        isSeminar: existingLecture.isSeminar || false,
+        endDate: existingLecture.endDate ? existingLecture.endDate.split('T')[0] : ''
       });
       
       if (existingLecture.image) {
@@ -133,7 +141,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
         const [daijeResponse, orgsResponse, imagesResponse] = await Promise.all([
           daijeService.getAllDaije(),
           udruzenjaService.getAllUdruzenja(),
-          axiosInstance.get('/existing-images')
+          axiosInstance.get('/existing-images?lecturesOnly=true')
         ]);
         
         if (daijeResponse) {
@@ -145,8 +153,18 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
           setOrganizations(Array.isArray(orgsResponse) ? orgsResponse : []);
         }
         if (imagesResponse?.data?.images) {
-          console.log('🖼️ [LectureFormNew] Fetched', imagesResponse.data.images.length, 'existing images');
-          setExistingImages(imagesResponse.data.images);
+          // Filter out default/placeholder images
+          const defaultImages = ['predavanjeslika.jpg', 'daijaslika.jpg', 'udruzenjeslika.jpg', 
+                                'logo.jpg', 'favicon.png', 'icon.png', 'adaptive-icon.png', 
+                                'splash.png', 'splash-icon.png', 'maxresdefault.jpg'];
+          
+          const filteredImages = imagesResponse.data.images.filter(img => {
+            const imageName = img.name || img.url.split('/').pop();
+            return !defaultImages.includes(imageName.toLowerCase());
+          });
+          
+          console.log('🖼️ [LectureFormNew] Fetched', filteredImages.length, 'lecture images (filtered from', imagesResponse.data.images.length, ')');
+          setExistingImages(filteredImages);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -237,6 +255,14 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
       return;
     }
     
+    // Validacija za seminare
+    if (formData.isSeminar) {
+      if (!formData.endDate) {
+        setError('Datum završetka je obavezan za seminare');
+        return;
+      }
+    }
+    
     setLoading(true);
     
     try {
@@ -273,6 +299,21 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
         speaker: formData.customSpeakers.length > 0 ? formData.customSpeakers.join(', ') : '',
         organization: useCustomOrganization ? formData.organization : '',
         organizationId: useCustomOrganization ? null : formData.organizationId,
+        // Seminar podaci
+        ...(formData.isSeminar && {
+          isSeminar: true,
+          endDate: formData.endDate,
+          seminarTheme: formData.title, // Tema se uzima iz naslova
+          totalDays: (() => {
+            if (formData.date && formData.endDate) {
+              const start = new Date(formData.date);
+              const end = new Date(formData.endDate);
+              const diffTime = Math.abs(end - start);
+              return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            }
+            return 1;
+          })()
+        })
       };
       
       let response;
@@ -316,13 +357,17 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
       totalWeeks: 4,
       videoUrl: '',
       facebookUrl: '',
-      instagramUrl: ''
+      instagramUrl: '',
+      // Seminar fields
+      isSeminar: false,
+      endDate: ''
     });
     setImageFile(null);
     setImagePreview(null);
     setUseCustomSpeaker(false);
     setUseCustomOrganization(false);
     setShowWeeklyOptions(false);
+    setShowSeminarOptions(false);
     setError(null);
     setSuccess(false);
   };
@@ -342,7 +387,9 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditMode ? 'Uredi predavanje' : 'Dodaj novo predavanje'}
+            {isEditMode ? 
+              (showSeminarOptions ? 'Uredi seminar' : 'Uredi predavanje') : 
+              (showSeminarOptions ? 'Dodaj novi seminar' : 'Dodaj novo predavanje')}
           </DialogTitle>
         </DialogHeader>
 
@@ -444,7 +491,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
 
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="title">Naslov predavanja *</Label>
+            <Label htmlFor="title">Naslov predavanja ili seminara *</Label>
             <Input
               id="title"
               name="title"
@@ -770,6 +817,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
             <Checkbox
               id="weeklyLecture"
               checked={showWeeklyOptions}
+              disabled={showSeminarOptions}
               onCheckedChange={(checked) => {
                 setShowWeeklyOptions(checked);
                 setFormData(prev => ({ ...prev, isWeeklyLecture: checked }));
@@ -799,6 +847,57 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
             </div>
           )}
 
+          {/* Seminar Checkbox */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="seminar"
+              checked={showSeminarOptions}
+              disabled={showWeeklyOptions}
+              onCheckedChange={(checked) => {
+                setShowSeminarOptions(checked);
+                setFormData(prev => ({ ...prev, isSeminar: checked }));
+              }}
+            />
+            <Label htmlFor="seminar" className="font-bold text-amber-600">
+              Seminar (događaj koji traje više dana)
+            </Label>
+          </div>
+
+          {/* Seminar Options */}
+          {showSeminarOptions && (
+            <div className="space-y-4 pl-6 border-l-4 border-amber-400">
+              <div className="space-y-2">
+                <Label htmlFor="endDate">Datum završetka seminara</Label>
+                <DatePickerFixed
+                  value={formData.endDate}
+                  onChange={(formattedDate) => {
+                    setFormData(prev => ({ ...prev, endDate: formattedDate }));
+                  }}
+                  isEditing={isEditMode}
+                  placeholder="Izaberite datum završetka"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Trajanje seminara</Label>
+                <div className="p-3 bg-gray-50 rounded-md">
+                  <span className="text-sm font-medium text-gray-700">
+                    {formData.date && formData.endDate ? (
+                      (() => {
+                        const start = new Date(formData.date);
+                        const end = new Date(formData.endDate);
+                        const diffTime = Math.abs(end - start);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                        return `Seminar će trajati ${diffDays} ${diffDays === 1 ? 'dan' : diffDays < 5 ? 'dana' : 'dana'}`;
+                      })()
+                    ) : (
+                      'Izaberite datume početka i završetka'
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Form Actions */}
           <DialogFooter>
@@ -811,7 +910,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
               Otkaži
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Spremanje...' : (isEditMode ? 'Sačuvaj izmjene' : 'Dodaj predavanje')}
+              {loading ? 'Spremanje...' : (isEditMode ? 'Sačuvaj izmjene' : (showSeminarOptions ? 'Dodaj seminar' : 'Dodaj predavanje'))}
             </Button>
           </DialogFooter>
         </form>
@@ -831,9 +930,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
         <div className="overflow-y-auto max-h-[60vh] p-4">
           {existingImages.length > 0 ? (
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {existingImages
-                .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
-                .map((img, index) => (
+              {existingImages.map((img, index) => (
                 <div
                   key={index}
                   className="relative cursor-pointer group aspect-[3/4]"

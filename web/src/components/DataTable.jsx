@@ -481,7 +481,7 @@ const DataTable = ({
           { id: 'username', label: 'Korisničko ime', sortable: true, getValue: (item) => item.username || item.email },
           { id: 'email', label: 'Email', sortable: true, getValue: (item) => item.email },
           { id: 'role', label: 'Uloga', sortable: true, getValue: (item) => <RoleBadge role={item.role || 'user'} /> },
-          { id: 'createdAt', label: 'Kreiran', sortable: true, getValue: (item) => new Date(item.createdAt).toLocaleDateString('hr-HR') }
+          { id: 'createdAt', label: 'Kreiran', sortable: true, getValue: (item) => formatDate(item.createdAt) }
         ];
         break;
       case 'lecture':

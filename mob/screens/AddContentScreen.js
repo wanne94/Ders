@@ -8,12 +8,16 @@ import {
     Alert,
     ActivityIndicator,
     TextInput,
-    Modal
+    Modal,
+    Image,
+    FlatList,
+    Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import predavanjaService from '../services/predavanjaService';
 import daijeService from '../services/daijeService';
 import udruzenjaService from '../services/udruzenjaService';
+import uploadService from '../services/uploadService';
 
 const COLORS = {
   primary: '#022C43',
@@ -40,6 +44,12 @@ const AddContentScreen = ({ onBack }) => {
   const [useCustomOrganization, setUseCustomOrganization] = useState(false);
   const [education, setEducation] = useState([]);
   const [educationInput, setEducationInput] = useState('');
+  const [isSeminar, setIsSeminar] = useState(false);
+  const [showSeminarOptions, setShowSeminarOptions] = useState(false);
+  const [existingImages, setExistingImages] = useState([]);
+  const [showExistingImages, setShowExistingImages] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const contentTypes = [
     {
@@ -80,6 +90,7 @@ const AddContentScreen = ({ onBack }) => {
 
   useEffect(() => {
     loadData();
+    loadExistingImages();
   }, []);
 
   const loadData = async () => {
@@ -96,6 +107,25 @@ const AddContentScreen = ({ onBack }) => {
     }
   };
 
+  const loadExistingImages = async () => {
+    try {
+      const images = await uploadService.fetchExistingImages();
+      
+      // Same logic as web - just sort by date and display all
+      // Backend already handles deduplication
+      const sortedImages = images
+        .map(img => ({
+          ...img,
+          fullUrl: img.url.startsWith('http') ? img.url : uploadService.getImageUrl(img.url)
+        }))
+        .sort((a, b) => new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0));
+      
+      setExistingImages(sortedImages);
+    } catch (error) {
+      console.error('Error loading existing images:', error);
+    }
+  };
+
   const initializeFormData = (type) => {
     switch (type) {
       case 'lecture':
@@ -109,7 +139,9 @@ const AddContentScreen = ({ onBack }) => {
           speaker: '',
           daijaId: '',
           organization: '',
-          organizationId: ''
+          organizationId: '',
+          isSeminar: false,
+          endDate: ''
         };
       case 'daija':
         return {
@@ -142,6 +174,10 @@ const AddContentScreen = ({ onBack }) => {
     setEducationInput('');
     setUseCustomSpeaker(false);
     setUseCustomOrganization(false);
+    setIsSeminar(false);
+    setShowSeminarOptions(false);
+    setSelectedImage(null);
+    setImagePreview(null);
   };
 
   const handleInputChange = (field, value) => {
@@ -152,7 +188,10 @@ const AddContentScreen = ({ onBack }) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return dateString;
-    return date.toLocaleDateString('sr-RS');
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
   };
 
   const handleTimeSelect = (time) => {
@@ -224,6 +263,19 @@ const AddContentScreen = ({ onBack }) => {
             }
           }
         }
+        
+        // Validacija za seminare
+        if (showSeminarOptions) {
+          if (!formData.endDate) {
+            errors.push('Datum završetka je obavezan za seminare');
+          } else {
+            const dateRegex = /^\d{1,2}\.\d{1,2}\.\d{4}$/;
+            if (!dateRegex.test(formData.endDate)) {
+              errors.push('Datum završetka mora biti u formatu DD.MM.YYYY');
+            }
+          }
+        }
+        
         if (!formData.time) errors.push('Vrijeme je obavezno');
         if (!formData.address?.trim()) errors.push('Adresa je obavezna');
         if (!formData.city?.trim()) errors.push('Grad je obavezan');
@@ -255,6 +307,11 @@ const AddContentScreen = ({ onBack }) => {
     try {
       let response;
       const submitData = { ...formData };
+      
+      // Add selected image if any
+      if (selectedImage) {
+        submitData.image = selectedImage;
+      }
 
       switch (selectedType) {
         case 'lecture':
@@ -268,6 +325,19 @@ const AddContentScreen = ({ onBack }) => {
               submitData.date = `${year}-${month}-${day}`;
             }
           }
+          
+          // Format endDate for seminars
+          if (showSeminarOptions && submitData.endDate) {
+            const dateParts = submitData.endDate.split('.');
+            if (dateParts.length === 3) {
+              const day = dateParts[0].padStart(2, '0');
+              const month = dateParts[1].padStart(2, '0');
+              const year = dateParts[2];
+              submitData.endDate = `${year}-${month}-${day}`;
+            }
+            submitData.isSeminar = true;
+          }
+          
           response = await predavanjaService.createPredavanje(submitData);
           break;
         case 'daija':
@@ -407,6 +477,42 @@ const AddContentScreen = ({ onBack }) => {
       {renderInput('Naslov predavanja', 'title', 'Unesite naslov...', false, true)}
       {renderInput('Opis predavanja', 'description', 'Unesite opis...')}
       
+      {/* Image Selection Section */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Slika predavanja</Text>
+        
+        {/* Show selected image preview */}
+        {imagePreview && (
+          <View style={styles.imagePreviewContainer}>
+            <Image 
+              source={{ uri: imagePreview }} 
+              style={styles.imagePreview}
+              resizeMode="cover"
+            />
+            <TouchableOpacity 
+              style={styles.removeImageButton}
+              onPress={() => {
+                setSelectedImage(null);
+                setImagePreview(null);
+              }}
+            >
+              <Ionicons name="close-circle" size={24} color={COLORS.white} />
+            </TouchableOpacity>
+          </View>
+        )}
+        
+        {/* Button to show existing images */}
+        {!imagePreview && (
+          <TouchableOpacity 
+            style={styles.selectImageButton}
+            onPress={() => setShowExistingImages(true)}
+          >
+            <Ionicons name="images-outline" size={24} color={COLORS.primary} />
+            <Text style={styles.selectImageButtonText}>Odaberi postojeću sliku</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      
       {renderInput('Datum', 'date', 'DD.MM.YYYY (npr. 15.06.2024)', false, true)}
 
       {/* Time Picker */}
@@ -508,8 +614,65 @@ const AddContentScreen = ({ onBack }) => {
 
       {renderInput('Adresa', 'address', 'Unesite adresu...', false, true)}
       {renderInput('mjesto', 'city', 'Unesite mjesto...', false, true)}
+      
+      {/* Seminar Options */}
+      <View style={styles.checkboxContainer}>
+        <TouchableOpacity
+          style={styles.checkboxRow}
+          onPress={() => {
+            setShowSeminarOptions(!showSeminarOptions);
+            handleInputChange('isSeminar', !showSeminarOptions);
+          }}
+        >
+          <View style={[styles.checkbox, showSeminarOptions && styles.checkboxChecked]}>
+            {showSeminarOptions && (
+              <Ionicons name="checkmark" size={16} color={COLORS.white} />
+            )}
+          </View>
+          <Text style={styles.checkboxLabel}>
+            Seminar (događaj koji traje više dana)
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Seminar End Date */}
+      {showSeminarOptions && (
+        <View style={styles.seminarContainer}>
+          {renderInput('Datum završetka', 'endDate', 'DD.MM.YYYY (npr. 20.06.2024)', false, true)}
+          
+          {formData.date && formData.endDate && (
+            <View style={styles.durationInfo}>
+              <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
+              <Text style={styles.durationText}>
+                Trajanje seminara: {calculateSeminarDays(formData.date, formData.endDate)} dana
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
+  
+  const calculateSeminarDays = (startDate, endDate) => {
+    if (!startDate || !endDate) return 0;
+    
+    const parseDate = (dateStr) => {
+      const parts = dateStr.split('.');
+      if (parts.length === 3) {
+        return new Date(parts[2], parts[1] - 1, parts[0]);
+      }
+      return null;
+    };
+    
+    const start = parseDate(startDate);
+    const end = parseDate(endDate);
+    
+    if (start && end) {
+      const diffTime = Math.abs(end - start);
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    }
+    return 0;
+  };
 
   const renderDaijaForm = () => (
     <ScrollView style={styles.formContainer}>
@@ -570,8 +733,67 @@ const AddContentScreen = ({ onBack }) => {
     }
   };
 
+  const renderExistingImagesModal = () => (
+    <Modal
+      visible={showExistingImages}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setShowExistingImages(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContainer, { maxHeight: '80%' }]}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Odaberi postojeću sliku</Text>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => setShowExistingImages(false)}
+            >
+              <Ionicons name="close" size={24} color={COLORS.gray} />
+            </TouchableOpacity>
+          </View>
+          
+          <FlatList
+            data={existingImages}
+            numColumns={3}
+            keyExtractor={(item, index) => index.toString()}
+            contentContainerStyle={styles.imagesGrid}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.imageGridItem}
+                onPress={() => {
+                  const imagePath = item.url.startsWith('https://ders.ba') 
+                    ? item.url.replace('https://ders.ba', '') 
+                    : item.url;
+                  setSelectedImage(imagePath);
+                  setImagePreview(item.fullUrl || item.url);
+                  setShowExistingImages(false);
+                }}
+              >
+                <Image 
+                  source={{ uri: item.fullUrl || item.url }} 
+                  style={styles.gridImage}
+                  resizeMode="cover"
+                />
+                {selectedImage === item.url && (
+                  <View style={styles.selectedOverlay}>
+                    <Ionicons name="checkmark-circle" size={32} color={COLORS.white} />
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+
   if (!selectedType) {
-    return renderTypeSelection();
+    return (
+      <>
+        {renderTypeSelection()}
+        {renderExistingImagesModal()}
+      </>
+    );
   }
 
   return (
@@ -602,6 +824,9 @@ const AddContentScreen = ({ onBack }) => {
           )}
         </TouchableOpacity>
       </View>
+      
+      {/* Existing Images Modal */}
+      {renderExistingImagesModal()}
     </View>
   );
 };
@@ -810,6 +1035,116 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.white,
+  },
+  checkboxContainer: {
+    marginVertical: 16,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    borderRadius: 4,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: COLORS.primary,
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: COLORS.primary,
+    fontWeight: '500',
+  },
+  seminarContainer: {
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 8,
+  },
+  durationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+  },
+  durationText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: COLORS.primary,
+    fontWeight: '500',
+  },
+  
+  // Image selection styles
+  selectImageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    padding: 16,
+    backgroundColor: COLORS.lightGray,
+  },
+  selectImageButtonText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: COLORS.primary,
+    fontWeight: '500',
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  imagePreview: {
+    width: '100%',
+    height: 300,
+    borderRadius: 8,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 20,
+    padding: 4,
+  },
+  
+  // Images grid styles
+  imagesGrid: {
+    padding: 8,
+  },
+  imageGridItem: {
+    flex: 1,
+    aspectRatio: 3/4,
+    margin: 4,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: COLORS.lightGray,
+  },
+  gridImage: {
+    width: '100%',
+    height: '100%',
+  },
+  selectedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(2, 44, 67, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
