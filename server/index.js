@@ -19,6 +19,9 @@ if (process.env.MONGODB_URI) {
 }
 const mongoose = require('mongoose');
 const cors = require('cors');
+const getCorsOptions = require('./config/cors');
+const { getSecurityHeaders, rateLimitConfig } = require('./config/security');
+const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const helmet = require('helmet');
@@ -49,7 +52,7 @@ const { initializeFirebase } = require('./services/firebaseService');
 // Import Cron Jobs
 
 const app = express();
-const PORT = process.env.PORT || 5003;
+const PORT = process.env.PORT || 5004;
 
 // Winston logger konfiguracija
 const logger = winston.createLogger({
@@ -70,60 +73,20 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
-// CORS konfiguracija - dozvoliti sve domene u produkciji
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Dozvoliti sve domene u produkciji
-    if (process.env.NODE_ENV === 'production') {
-      callback(null, true);
-    } else {
-      // U development-u, dozvoliti localhost i lokalne IP adrese
-      const allowedOrigins = [
-        'http://localhost:3000',
-        'http://localhost:3001', 
-        'http://127.0.0.1:3000',
-        'http://192.168.0.20:3000',
-        'https://ders.ba',
-        'http://ders.ba',
-        'https://ders.ba:3000',
-        'http://ders.ba:3000',
-        'http://194.163.176.171:3000',
-        'http://194.163.176.171',
-        'https://194.163.176.171'
-      ];
-      
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  optionsSuccessStatus: 200
-};
+// Apply secure CORS configuration
+app.use(cors(getCorsOptions()));
 
-app.use(cors(corsOptions));
+// Apply rate limiting
+const generalLimiter = rateLimit(rateLimitConfig.general);
+const authLimiter = rateLimit(rateLimitConfig.auth);
+const apiLimiter = rateLimit(rateLimitConfig.api);
 
-// Helmet sigurnosni headers - konfiguracija za produkciju
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "http://localhost:5003", "https://ders.ba:5003", "http://ders.ba:5003", "https://194.163.176.171:5003", "http://194.163.176.171:5003"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:", "http:"],
-      fontSrc: ["'self'", "data:"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'none'"]
-    }
-  },
-  crossOriginResourcePolicy: { policy: "cross-origin" }
-}));
+app.use('/api/', apiLimiter);
+app.use('/users/auth', authLimiter);
+app.use('/users/register', authLimiter);
+
+// Apply security headers
+app.use(helmet(getSecurityHeaders()));
 
 app.use(express.json({ limit: '10mb' })); // Reduced from 50mb to prevent memory issues
 app.use(morgan('combined')); // HTTP request logging
@@ -1449,7 +1412,7 @@ app.get('/api/lectures/public', async (req, res) => {
     let lectures;
     try {
       lectures = await Lecture.find(statusFilter)
-        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isWeeklyLecture weekNumber totalWeeks weeklySeriesId lecturePart isCancelled cancelledAt cancellationReason')
+        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isWeeklyLecture weekNumber totalWeeks weeklySeriesId lecturePart isCancelled cancelledAt cancellationReason isSeminar endDate seminarTheme totalDays')
         .populate('organization', 'name')
         .populate('daija', 'name title image')
         .hint({ status: 1, date: 1 }) // 🚀 Force index usage
@@ -1460,7 +1423,7 @@ app.get('/api/lectures/public', async (req, res) => {
       
       // Fallback: Regular optimized query
       lectures = await Lecture.find(statusFilter)
-        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isWeeklyLecture weekNumber totalWeeks weeklySeriesId lecturePart isCancelled cancelledAt cancellationReason')
+        .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isWeeklyLecture weekNumber totalWeeks weeklySeriesId lecturePart isCancelled cancelledAt cancellationReason isSeminar endDate seminarTheme totalDays')
         .populate('organization', 'name')
         .populate('daija', 'name title image')
         .lean()
@@ -1481,8 +1444,14 @@ app.get('/api/lectures/public', async (req, res) => {
       const lecture = lectures[i];
       transformedLectures[i] = {
         ...lecture,
+        type: 'Predavanje',  // Ensure type is always set for UniversalCard
         daijaId: lecture.daija?._id || lecture.daija || null,
-        speaker: lecture.daija ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim() : lecture.speaker || 'Nepoznat daija'
+        speaker: lecture.daija ? `${lecture.daija.title || ''} ${lecture.daija.name || ''}`.trim() : lecture.speaker || 'Nepoznat daija',
+        // Explicitly include seminar fields
+        isSeminar: lecture.isSeminar,
+        endDate: lecture.endDate,
+        seminarTheme: lecture.seminarTheme,
+        totalDays: lecture.totalDays
       };
     }
 

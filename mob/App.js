@@ -37,6 +37,7 @@ import AddContentMenu from './components/AddContentMenu';
 import AddContentPopup from './components/AddContentPopup';
 import SearchScreen from './screens/SearchScreen';
 import UpdateChecker from './components/UpdateChecker';
+import { ToastProvider } from './utils/ToastManager';
 import { SkeletonCardList } from './components/SkeletonCard';
 import {
   isAuthenticated as checkIsAuthenticated,
@@ -353,14 +354,14 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection, fo
         />
       }
       // Performance optimizations
-      windowSize={10}
-      initialNumToRender={10}
-      maxToRenderPerBatch={5}
+      windowSize={5}
+      initialNumToRender={6}
+      maxToRenderPerBatch={3}
       updateCellsBatchingPeriod={50}
       removeClippedSubviews={true}
       getItemLayout={(data, index) => ({
-        length: 200, // Approximate height of each card
-        offset: 200 * index,
+        length: 220, // Approximate height of each card including margin
+        offset: 220 * index,
         index,
       })}
     />
@@ -388,6 +389,24 @@ export default function App() {
   const [allLectures, setAllLectures] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+
+  // Check authentication status on app start
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const userData = await getUserData();
+        if (userData) {
+          setUser(userData);
+          setIsAuthenticated(true);
+          console.log('User loaded:', userData.username, 'Role:', userData.role);
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    };
+    
+    checkAuthStatus();
+  }, []);
 
   // Load all lectures for sorting purposes
   useEffect(() => {
@@ -540,6 +559,8 @@ export default function App() {
             onBack={handleProfileBack}
             onProfileOpen={handleProfileOpen}
             onAdd={handleAddContentOptionSelect}
+            user={user}
+            isAuthenticated={isAuthenticated}
           />
         );
       case 'dashboard':
@@ -584,11 +605,12 @@ export default function App() {
   };
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      <View style={styles.container}>
-        <Header 
-          onMenuPress={handleMenuToggle}
+    <ToastProvider>
+      <SafeAreaProvider>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <View style={styles.container}>
+          <Header 
+            onMenuPress={handleMenuToggle}
           title={getPageTitle()}
           onLogoPress={handleLogoPress}
         />
@@ -634,6 +656,7 @@ export default function App() {
         <UpdateChecker />
       </View>
     </SafeAreaProvider>
+    </ToastProvider>
   );
 }
 

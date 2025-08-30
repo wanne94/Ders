@@ -28,6 +28,7 @@ import AddContentPopup from '../components/AddContentPopup';
 import DraggableList from '../components/DraggableList';
 import UndoRedoBar from '../components/UndoRedoBar';
 import AdvancedFilters from '../components/AdvancedFilters';
+import UserForm from '../components/forms/UserForm';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import useUndoRedo from '../hooks/useUndoRedo';
 import { getImageUrl } from '../utils/imageUtils';
@@ -119,6 +120,8 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [showReactivateModal, setShowReactivateModal] = useState(false);
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [reactivateReason, setReactivateReason] = useState('');
   
   // Bulk selection states
@@ -1103,11 +1106,14 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
 
   // Handle edit user
   const handleEditUser = (user) => {
-    Alert.alert(
-      'Uredi korisnika',
-      `Funkcionalnost uređivanja korisnika "${user.username}" će biti dostupna uskoro.`,
-      [{ text: 'OK' }]
-    );
+    setSelectedUser(user);
+    setShowUserForm(true);
+  };
+  
+  // Handle add new user
+  const handleAddUser = () => {
+    setSelectedUser(null);
+    setShowUserForm(true);
   };
 
   // Handle delete user
@@ -2634,6 +2640,32 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         }}
         data={getCurrentSectionData().items}
       />
+      
+      {/* User Form Modal */}
+      <UserForm
+        visible={showUserForm}
+        onClose={() => {
+          setShowUserForm(false);
+          setSelectedUser(null);
+        }}
+        onSuccess={() => {
+          setShowUserForm(false);
+          setSelectedUser(null);
+          loadUsers(); // Reload users after success
+        }}
+        editMode={!!selectedUser}
+        editData={selectedUser}
+      />
+      
+      {/* FAB for adding users - only visible for super_admin and when in users section */}
+      {userRole === 'super_admin' && activeSection === 'korisnici' && (
+        <TouchableOpacity 
+          style={styles.fab} 
+          onPress={handleAddUser}
+        >
+          <Ionicons name="add" size={28} color={COLORS.white} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -3265,6 +3297,22 @@ const styles = StyleSheet.create({
   },
   bulkDeleteButton: {
     backgroundColor: COLORS.error,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
 });
 

@@ -45,15 +45,22 @@ const UniversalCard = React.memo(({ data }) => {
           isPastLecture,
           statusInfo,
           infoItems: [
-            data.daija && typeof data.daija === 'object' 
-              ? { icon: User, text: formatDaijaTitle(data.daija.name, data.daija.title) }
-              : data.speaker ? { icon: User, text: data.speaker }
-              : null,
+            // Handle multiple daijas
+            data.daijaIds && data.daijaIds.length > 1 
+              ? { icon: User, text: `${data.daijaIds.length} Predavača` }
+              : data.daija && typeof data.daija === 'object' 
+                ? { icon: User, text: formatDaijaTitle(data.daija.name, data.daija.title) }
+                : data.speaker ? { icon: User, text: data.speaker }
+                : null,
+            data.organization && { icon: Briefcase, text: data.organization },
+            data.isSeminar && data.date && data.endDate ? 
+              { icon: Calendar, text: `${formatDateWithDay(data.date)} - ${formatDateWithDay(data.endDate)}` } :
+              data.date && { icon: Calendar, text: formatDateWithDay(data.date) },
+            data.isSeminar && data.seminarSessions ? 
+              { icon: Clock, text: `${data.seminarSessions.length} sesija` } :
+              data.time && { icon: Clock, text: data.time },
             data.address && { icon: MapPin, text: data.address },
-            data.date && { icon: Calendar, text: formatDateWithDay(data.date) },
-            data.time && { icon: Clock, text: data.time },
-            data.city && { icon: Building2, text: data.city },
-            data.organization && { icon: Briefcase, text: data.organization }
+            data.city && { icon: Building2, text: data.city }
           ].filter(Boolean),
           onClick: () => {
             const slug = generateSlug(data.title);
@@ -71,7 +78,7 @@ const UniversalCard = React.memo(({ data }) => {
           imageStyle: 'rounded-full',
           infoItems: [
             data.specialization && { icon: GraduationCap, text: data.specialization },
-            data.city && { icon: Building2, text: data.city },
+            data.city && { icon: MapPin, text: data.city },
             data.lectureCount !== undefined && { 
               icon: BookOpen, 
               text: `Broj predavanja: ${data.lectureCount || 0}`,           
@@ -138,8 +145,17 @@ const UniversalCard = React.memo(({ data }) => {
       className="h-full w-full flex flex-col relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer"
       onClick={displayData.onClick}
     >
+      {/* Seminar badge - left side */}
+      {displayData.type === 'lecture' && data.isSeminar && (
+        <div className="absolute top-3 left-3 z-10">
+          <Badge className="bg-amber-50 text-amber-600 font-medium text-xs px-2 py-0.5 border border-amber-200 pointer-events-none">
+            Seminar
+          </Badge>
+        </div>
+      )}
+      
       {/* Weekly lecture badge - left side */}
-      {displayData.type === 'lecture' && data.isWeeklyLecture && (
+      {displayData.type === 'lecture' && data.isWeeklyLecture && !data.isSeminar && (
         <div className="absolute top-3 left-3 z-10">
           <Badge className="bg-blue-50 text-blue-600 font-medium text-xs px-2 py-0.5 border border-blue-200 pointer-events-none">
             Sedmično
@@ -183,20 +199,20 @@ const UniversalCard = React.memo(({ data }) => {
 
             {/* Main title for non-lecture types */}
             {displayData.type !== 'lecture' && (
-              <h2 className="text-base font-semibold mb-2 text-left text-gray-900 truncate">
+              <h2 className="text-base font-semibold mb-1.5 text-left text-gray-900 truncate">
                 {displayData.title}
                 {data.lecturePart && ` (dio ${data.lecturePart}.)`}
               </h2>
             )}
 
             {/* Info items */}
-            <div className="flex flex-col gap-1.5">
-              {displayData.infoItems.slice(0, 5).map((item, index) => {
+            <div className="flex flex-col gap-0.5">
+              {displayData.infoItems.slice(0, 6).map((item, index) => {
                 const Icon = item.icon;
                 return (
                   <div key={index} className="flex items-center gap-2">
                     <Icon className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                    <span className="text-sm text-gray-600 line-clamp-1 text-left leading-relaxed">
+                    <span className="text-[15px] text-gray-600 line-clamp-1 text-left leading-tight">
                       {item.text}
                     </span>
                   </div>
@@ -236,4 +252,23 @@ const UniversalCard = React.memo(({ data }) => {
 
 UniversalCard.displayName = 'UniversalCard';
 
-export default UniversalCard;
+// Optimize memo comparison
+export default React.memo(UniversalCard, (prevProps, nextProps) => {
+  // Deep comparison for critical fields only
+  const prevData = prevProps.data;
+  const nextData = nextProps.data;
+  
+  if (!prevData && !nextData) return true;
+  if (!prevData || !nextData) return false;
+  
+  // Compare only fields that affect rendering
+  return (
+    prevData._id === nextData._id &&
+    prevData.title === nextData.title &&
+    prevData.type === nextData.type &&
+    prevData.isCancelled === nextData.isCancelled &&
+    prevData.image === nextData.image &&
+    prevData.date === nextData.date &&
+    prevData.time === nextData.time
+  );
+});

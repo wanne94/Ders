@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ENV } from '../config';
 import { appEvents, AUTH_EVENTS } from '../utils/eventEmitter';
+import apiCache from './apiCache';
 
 // Create a fetch-based API client to replace axios
 class ApiClient {
@@ -24,6 +25,22 @@ class ApiClient {
   }
 
   async request(url, options = {}, retries = 3) {
+    // Check cache for GET requests
+    if (options.method === 'GET' || !options.method) {
+      const cacheType = this.getCacheType(url);
+      const cached = await apiCache.getCachedResponse(url, options.params, cacheType);
+      
+      if (cached) {
+        return { data: cached };
+      }
+      
+      // Check for pending request
+      const pending = apiCache.getPendingRequest(url, options.params);
+      if (pending) {
+        return pending;
+      }
+    }
+    
     const baseUrl = this.getCurrentBaseURL();
     const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
     
@@ -87,6 +104,12 @@ class ApiClient {
         responseData.data = await response.json();
       } else {
         responseData.data = await response.text();
+      }
+
+      // Cache successful GET responses
+      if (response.ok && (options.method === 'GET' || !options.method)) {
+        const cacheType = this.getCacheType(url);
+        await apiCache.setCachedResponse(url, options.params, responseData.data, cacheType);
       }
 
       if (!response.ok) {
@@ -206,6 +229,15 @@ class ApiClient {
       ...config,
       method: 'DELETE',
     });
+  }
+  
+  // Determine cache type based on URL
+  getCacheType(url) {
+    if (url.includes('/lectures')) return 'lectures';
+    if (url.includes('/daije')) return 'daije';
+    if (url.includes('/organizations') || url.includes('/udruzenja')) return 'organizations';
+    if (url.includes('/settings') || url.includes('/config')) return 'static';
+    return 'default';
   }
 }
 

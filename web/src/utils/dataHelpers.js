@@ -113,7 +113,7 @@ export const formatDate = (dateString) => {
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const year = date.getFullYear();
   
-  return `${day}.${month}.${year}.`;
+  return `${day}.${month}.${year}`;
 };
 
 /**
@@ -134,7 +134,7 @@ export const formatDateWithDay = (dateString) => {
   const days = ['Nedjelja', 'Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota'];
   const dayOfWeek = days[date.getDay()];
 
-  return `${day}.${month}.${year}. (${dayOfWeek})`;
+  return `${day}.${month}.${year} (${dayOfWeek})`;
 };
 
 /**

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MessageCircle, Send, Facebook, Twitter, Copy, MoreHorizontal } from 'lucide-react';
 import { Button } from './ui/button';
+import { formatDateWithDay } from '@/utils/dataHelpers';
 
 const ShareButton = ({ lecture, profileData, type }) => {
   const [copied, setCopied] = useState(false);
@@ -31,29 +32,51 @@ const ShareButton = ({ lecture, profileData, type }) => {
         return `👤 ${data.title || ''}. ${data.name || ''}${data.organization ? `\n🕌 ${data.organization}` : ''}`.trim();
       default:
         // For lectures - more detailed info
-        const lectureDate = new Date(data.date);
-        const formattedDate = lectureDate.toLocaleDateString('sr-RS', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        });
+        const formattedDate = formatDateWithDay(data.date);
         
-        let shareText = `📚 ${data.title}\n`;
-        shareText += `📅 ${formattedDate} u ${data.time}\n`;
-        shareText += `📍 ${data.address}, ${data.city}\n`;
-        
-        if (data.daijaName) {
-          shareText += `👤 Predavač: ${data.daijaTitle ? `${data.daijaTitle} ` : ''}${data.daijaName}\n`;
+        // Check if it's a seminar
+        if (data.isSeminar) {
+          let shareText = `🌟 SEMINAR: ${data.title}\n`;
+          shareText += `📅 ${formattedDate}`;
+          if (data.endDate) {
+            shareText += ` - ${formatDateWithDay(data.endDate)}`;
+          }
+          if (data.totalDays && data.totalDays > 1) {
+            shareText += ` (${data.totalDays} dana)`;
+          }
+          shareText += `\n`;
+          shareText += `⏰ ${data.time}\n`;
+          shareText += `📍 ${data.address}, ${data.city}\n`;
+          
+          if (data.daijaName) {
+            shareText += `👤 Predavač: ${data.daijaTitle ? `${data.daijaTitle} ` : ''}${data.daijaName}\n`;
+          }
+          
+          if (data.organizationName) {
+            shareText += `🕌 Organizator: ${data.organizationName}\n`;
+          }
+          
+          shareText += `\n🔗 Više informacija:`;
+          
+          return shareText;
+        } else {
+          // Regular lecture
+          let shareText = `📚 ${data.title}\n`;
+          shareText += `📅 ${formattedDate} u ${data.time}\n`;
+          shareText += `📍 ${data.address}, ${data.city}\n`;
+          
+          if (data.daijaName) {
+            shareText += `👤 Predavač: ${data.daijaTitle ? `${data.daijaTitle} ` : ''}${data.daijaName}\n`;
+          }
+          
+          if (data.organizationName) {
+            shareText += `🕌 Organizator: ${data.organizationName}\n`;
+          }
+          
+          shareText += `\n🔗 Više informacija:`;
+          
+          return shareText;
         }
-        
-        if (data.organizationName) {
-          shareText += `🕌 Organizator: ${data.organizationName}\n`;
-        }
-        
-        shareText += `\n🔗 Više informacija:`;
-        
-        return shareText;
     }
   };
 

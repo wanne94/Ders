@@ -89,7 +89,9 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
   
   // Calculate status for lectures - only once on mount
   useEffect(() => {
-    if (data && (data.type?.toLowerCase() === 'predavanje' || (data.title && (data.speaker || data.daija)))) {
+    const shouldCalculateStatus = data && (data.type?.toLowerCase() === 'predavanje' || (data.title && (data.speaker || data.daija)));
+    
+    if (shouldCalculateStatus) {
       const calculatedStatus = data.statusInfo || calculateLectureStatus(data);
       setStatusInfo(calculatedStatus);
       
@@ -103,10 +105,12 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
       }
       
       return () => {
-        if (interval) clearInterval(interval);
+        if (interval) {
+          clearInterval(interval);
+        }
       };
     }
-  }, [data, data._id, data.id, data.date, data.time, data.isCancelled, data.status]); // Only recalculate when these critical fields change
+  }, [data?._id, data?.date, data?.time]); // Only recalculate when these critical fields change
 
   // Handle null or undefined data
   if (!data) {
@@ -149,11 +153,16 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
           statusInfo,
           isCancelled,
           items: [
-            { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker },
+            // Handle multiple daijas
+            data.daijaIds && data.daijaIds.length > 1 
+              ? { icon: "Person", text: `${data.daijaIds.length} Predavača` }
+              : { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker },
             data.organization && { icon: 'Business', text: data.organization },
-            // Show date/time for all lectures including cancelled ones
-            data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
-            data.time && { icon: 'Time', text: data.time },
+            // Show date/time for all lectures including seminars
+            data.isSeminar && data.date && data.endDate 
+              ? { icon: 'Calendar', text: `${formatDateWithDay(data.date)} - ${formatDateWithDay(data.endDate)}` }
+              : data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
+            !data.isSeminar && data.time && { icon: 'Time', text: data.time },
             data.address && { icon: 'LocationOn', text: data.address },
             data.city && { icon: 'LocationCity', text: data.city },
           ].filter(Boolean)
@@ -194,10 +203,15 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
             statusInfo,
             isCancelled,
             items: [
-              { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker },
+              // Handle multiple daijas
+              data.daijaIds && data.daijaIds.length > 1 
+                ? { icon: "Person", text: `${data.daijaIds.length} Predavača` }
+                : { icon: "Person", text: data.daija && typeof data.daija === "object" ? formatDaijaTitle(data.daija.name, data.daija.title) : data.speaker },
               data.organization && { icon: 'Business', text: data.organization },
-              data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
-              data.time && { icon: 'Time', text: data.time },
+              data.isSeminar && data.date && data.endDate 
+                ? { icon: 'Calendar', text: `${formatDateWithDay(data.date)} - ${formatDateWithDay(data.endDate)}` }
+                : data.date && { icon: 'Calendar', text: formatDateWithDay(data.date) },
+              !data.isSeminar && data.time && { icon: 'Time', text: data.time },
               data.address && { icon: 'LocationOn', text: data.address },
               data.city && { icon: 'LocationCity', text: data.city },
             ].filter(Boolean)
@@ -239,6 +253,20 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
 
   const displayData = getDisplayData();
 
+  // Debug za seminare - ENHANCED
+  if (data.isSeminar === true || (data.title && data.title.toLowerCase().includes('seminar'))) {
+    console.log('');
+    console.log('🎓 ===== SEMINAR DEBUG =====');
+    console.log('🏷️ Title:', data.title);
+    console.log('📌 isSeminar flag:', data.isSeminar);
+    console.log('🔤 Type field:', data.type);
+    console.log('🎨 Display type:', displayData.type);
+    console.log('✅ Badge will show:', displayData.type === 'lecture' && data.isSeminar === true);
+    console.log('📅 Date range:', data.date ? 'YES' : 'NO', '->', data.endDate ? 'YES' : 'NO');
+    console.log('==========================');
+    console.log('');
+  }
+
   // Debug za otkazana predavanja
   if (displayData.type === 'lecture' && displayData.isCancelled) {
     console.log('🚫 Otkazano predavanje detektovano:', {
@@ -249,7 +277,15 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
     });
   }
 
-  // console.log('Image URL:', data.image ? getImageUrl(data.image) : 'Using default image');
+  // Debug za slike - samo u development modu
+  if (__DEV__ && data.image) {
+    const imageUrl = getImageUrl(data.image);
+    console.log('🖼️ Image URL generated:', {
+      type: displayData.type,
+      originalPath: data.image,
+      generatedUrl: imageUrl
+    });
+  }
 
   const renderIcon = (iconName) => {
     const IconComponent = Icons[iconName];
@@ -275,11 +311,19 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
       
 
       {/* Weekly lecture badge - left side */}
-      {displayData.type === 'lecture' && data.isWeeklyLecture && (
+      {displayData.type === 'lecture' && data.isWeeklyLecture && !data.isSeminar && (
         <View style={styles.weeklyBadge}>
           <Text style={styles.weeklyBadgeText}>Sedmično</Text>
         </View>
       )}
+
+      {/* Seminar badge - left side - ISTI PRISTUP KAO SEDMIČNO */}
+      {displayData.type === 'lecture' && data.isSeminar && (
+        <View style={styles.seminarBadge}>
+          <Text style={styles.seminarBadgeText}>Seminar</Text>
+        </View>
+      )}
+
 
       {/* Status Badge for all lectures */}
       {displayData.type === 'lecture' && displayData.statusInfo && (
@@ -358,31 +402,19 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
             displayData.type === 'organization' && { width: 100, height: 100 },
           ]}>
             <Image
-              source={{ uri: (() => {
-                const imageUrl = imageError || !data.image 
+              source={{ uri: 
+                imageError || !data.image 
                   ? (displayData.type === 'daija' 
                     ? getDefaultDaijaImage() 
                     : displayData.type === 'organization'
                     ? getDefaultOrganizationImage()
                     : getDefaultLectureImage())
-                  : getImageUrl(data.image);
-                
-                // Debug log za slike
-                if (data.image) {
-                  console.log('📸 Image URL generated:', {
-                    type: displayData.type,
-                    originalPath: data.image,
-                    generatedUrl: imageUrl,
-                    hasError: imageError
-                  });
-                }
-                
-                return imageUrl;
-              })()}}
+                  : getImageUrl(data.image)
+              }}
               style={displayData.type === 'daija' ? styles.imageDaija : displayData.type === 'organization' ? styles.imageOrganization : styles.image}
               resizeMode="cover"
-              onError={() => {
-                console.log('❌ Image failed to load:', data.image);
+              onError={(e) => {
+                console.log('🚫 Image load error:', data.image, e.nativeEvent);
                 setImageError(true);
               }}
             />
@@ -397,6 +429,7 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
           </View>
         </View>
       </View>
+      
     </TouchableOpacity>
   );
 };
@@ -409,6 +442,8 @@ const styles = StyleSheet.create({
     borderRadius: SPACING.card.borderRadius,
     padding: SPACING.card.padding,
     flexDirection: 'column',
+    overflow: 'visible', // Ensure badges are visible
+    position: 'relative', // For absolute positioning of badges
     ...{
       elevation: 2,
       shadowColor: '#000',
@@ -594,21 +629,37 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
+  seminarBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#fff7ed', // amber-50 ekvivalent
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 4,
+    zIndex: 3,
+    borderWidth: 1,
+    borderColor: '#fed7aa', // amber-200 ekvivalent
+  },
+  seminarBadgeText: {
+    color: '#d97706', // amber-600 ekvivalent
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
 });
 
 // Memoize component to prevent unnecessary re-renders
 export default memo(UniverzalCard, (prevProps, nextProps) => {
-  // Custom comparison function
-  // Re-render only if data or onPress changes
-  return (
-    prevProps.data?._id === nextProps.data?._id &&
-    prevProps.data?.id === nextProps.data?.id &&
-    prevProps.data?.title === nextProps.data?.title &&
-    prevProps.data?.status === nextProps.data?.status &&
-    prevProps.data?.cancelled === nextProps.data?.cancelled &&
-    prevProps.data?.date === nextProps.data?.date &&
-    prevProps.data?.time === nextProps.data?.time &&
-    prevProps.onPress === nextProps.onPress &&
-    prevProps.isFollowing === nextProps.isFollowing
-  );
+  // Custom comparison function - only re-render if critical props change
+  const prevData = prevProps.data;
+  const nextData = nextProps.data;
+  
+  if (!prevData && !nextData) return true;
+  if (!prevData || !nextData) return false;
+  
+  const criticalFields = ['_id', 'id', 'title', 'status', 'date', 'time', 'isCancelled', 'type'];
+  
+  return criticalFields.every(field => 
+    prevData[field] === nextData[field]
+  ) && prevProps.onPress === nextProps.onPress && prevProps.isFollowing === nextProps.isFollowing;
 });

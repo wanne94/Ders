@@ -9,24 +9,22 @@ console.log(`🌍 Next.js Environment: ${envConfig.NODE_ENV}`);
 const nextConfig = {
   reactStrictMode: true,
   
-  // Completely disable static generation and optimization
-  output: undefined, // Ensure no static export
-  trailingSlash: false, // Disable trailing slash for static files
-  generateEtags: false, // Disable ETags for static content
+  // Enable optimizations for better performance
+  swcMinify: true, // Use SWC for faster minification
+  compress: true, // Enable gzip compression
+  optimizeFonts: true, // Enable font optimization
+  poweredByHeader: false, // Security: hide X-Powered-By header
+  
+  // Production optimizations
+  productionBrowserSourceMaps: false, // Disable source maps in production
+  
   generateBuildId: async () => {
-    // Generate unique build ID on each build to force fresh content
-    return `build-${Date.now()}`
+    // Use consistent build ID for better caching
+    return process.env.BUILD_ID || `build-${Date.now()}`
   },
   distDir: '.next', // Standard build directory
   
-  // Force all pages to be server-side rendered
-  // Disable ALL static optimization
-  poweredByHeader: false,
-  compress: false, // Disable compression for dynamic content
-  optimizeFonts: false, // Disable font optimization
-  
-  // Images configuration - allow loading from server in both environments
-  // Disable image caching completely
+  // Images configuration with optimization
   images: {
     remotePatterns: [
       {
@@ -41,24 +39,50 @@ const nextConfig = {
         pathname: '/uploads/**',
       },
     ],
-    // Disable image optimization and caching
-    unoptimized: true,
-    // Set minimum cache TTL to 0 (no cache)
-    minimumCacheTTL: 0,
+    // Enable image optimization
+    unoptimized: false,
+    // Cache images for 1 hour
+    minimumCacheTTL: 3600,
+    // Optimize image formats
+    formats: ['image/avif', 'image/webp'],
+    // Device sizes for responsive images
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   
   // Increase static generation timeout
   staticPageGenerationTimeout: 120,
   
-  // Headers configuration to control caching
+  // Headers configuration with smart caching
   async headers() {
     return [
       {
-        source: '/:path*',
+        // Static assets should be cached
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        // API routes should not be cached
+        source: '/api/:path*',
         headers: [
           {
             key: 'Cache-Control',
             value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+      {
+        // Default caching for other pages
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, stale-while-revalidate=59',
           },
           {
             key: 'X-Content-Type-Options',
@@ -93,16 +117,26 @@ const nextConfig = {
       };
     }
     
-    // Disable code splitting and optimization for client bundles
+    // Enable smart code splitting for better performance
     if (!isServer) {
       config.optimization = {
         ...config.optimization,
-        runtimeChunk: false,
+        runtimeChunk: 'single',
         splitChunks: {
-          chunks: 'async', // Only split async chunks, not all
+          chunks: 'all',
           cacheGroups: {
             default: false,
-            vendors: false,
+            vendors: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              priority: 10,
+              reuseExistingChunk: true,
+            },
+            common: {
+              minChunks: 2,
+              priority: 5,
+              reuseExistingChunk: true,
+            },
           },
         },
       };

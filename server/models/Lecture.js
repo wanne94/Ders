@@ -166,6 +166,54 @@ const lectureSchema = new mongoose.Schema({
     type: Number,
     required: false,
     min: 1
+  },
+  // Seminar fields
+  isSeminar: {
+    type: Boolean,
+    default: false
+  },
+  endDate: {
+    type: Date,
+    required: false
+  },
+  seminarTheme: {
+    type: String,
+    required: false
+  },
+  seminarSessions: [{
+    date: {
+      type: Date,
+      required: true
+    },
+    time: {
+      type: String,
+      required: true
+    },
+    title: {
+      type: String,
+      required: true
+    },
+    speakerIds: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Daija'
+    }],
+    customSpeakers: [{
+      type: String
+    }],
+    duration: {
+      type: Number,
+      default: 60
+    },
+    description: {
+      type: String,
+      required: false
+    }
+  }],
+  totalDays: {
+    type: Number,
+    required: false,
+    min: 1,
+    max: 10
   }
 }, {
   timestamps: true
@@ -201,5 +249,9 @@ lectureSchema.index({ 'cancellationReports.userId': 1 }); // For user cancellati
 
 // 7. Weekly lecture indexes
 lectureSchema.index({ weeklySeriesId: 1, weekNumber: 1 }); // For finding lectures in a series
+
+// 8. Seminar indexes
+lectureSchema.index({ isSeminar: 1 }); // For filtering seminars
+lectureSchema.index({ isSeminar: 1, date: 1, endDate: 1 }); // For seminar date ranges
 
 module.exports = mongoose.model('Lecture', lectureSchema); 

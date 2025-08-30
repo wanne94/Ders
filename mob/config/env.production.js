@@ -37,8 +37,8 @@ export const ENV = {
       cleanPath = `/uploads/images/${cleanPath.replace(/^\/+/, '')}`;
     }
     
-    // Don't use optimized images - they may not exist
-    // Always return the standard image path
+    // Ne koristi optimized verziju jer ne postoji na serveru
+    // Direktno vrati običnu putanju
     return `https://ders.ba${cleanPath}`;
   },
   

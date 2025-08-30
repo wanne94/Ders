@@ -15,7 +15,11 @@
       "Bash(open /Users/wanne/react-app/Ders/mob/ios/Ders.xcworkspace)",
       "Bash(xcrun simctl list:*)",
       "Bash(DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl list devices)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }

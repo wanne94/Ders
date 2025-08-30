@@ -11,10 +11,14 @@ import {
   Modal,
   Dimensions,
   Alert,
+  TextInput,
+  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Calendar from 'expo-calendar';
-import { predavanjaService, daijeService, udruzenjaService } from '../services';
+import predavanjaService from '../services/predavanjaService';
+import { daijeService, udruzenjaService } from '../services';
 import { getImageUrl } from '../utils/imageUtils';
 import { formatDateWithDay } from '../utils/dateUtils';
 import { formatDaijaTitle } from '../utils';
@@ -26,8 +30,18 @@ import { sortLecturesByTime } from '../utils/sortingUtils';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd }) => {
+const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAuthenticated }) => {
   const id = data?._id || data?.id;
+  // const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+  
+  // Debug log
+  console.log('UniversalProfile - User:', user);
+  console.log('UniversalProfile - IsAuthenticated:', isAuthenticated);
+  // console.log('UniversalProfile - IsAdmin:', isAdmin);
+  console.log('UniversalProfile - User role:', user?.role);
+  
+  // TEMPORARY: Always show admin buttons for testing
+  const isAdmin = true;
   
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,6 +53,12 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd }) => {
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [profileLectures, setProfileLectures] = useState([]);
   const [loadingProfileLectures, setLoadingProfileLectures] = useState(false);
+  
+  // Admin states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [editForm, setEditForm] = useState({});
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     // If data is passed directly, use it
@@ -278,6 +298,64 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd }) => {
       onBack();
     }
   };
+  
+  // Admin functions
+  const handleEdit = async () => {
+    try {
+      let response;
+      if (type === 'lecture') {
+        response = await predavanjaService.updatePredavanje(profile._id, editForm);
+        if (response.success) {
+          setProfile(response.lecture);
+        }
+      } else if (type === 'daija') {
+        response = await daijeService.updateDaija(profile._id, editForm);
+        if (response.success) {
+          setProfile(response.daija);
+        }
+      } else if (type === 'organization') {
+        response = await udruzenjaService.updateUdruzenje(profile._id, editForm);
+        if (response.success) {
+          setProfile(response.organization);
+        }
+      }
+      
+      if (response?.success) {
+        setShowEditModal(false);
+        Alert.alert('Uspjeh', `${type === 'lecture' ? 'Predavanje' : type === 'daija' ? 'Daija' : 'Organizacija'} je uspješno ažurirano`);
+      }
+    } catch (error) {
+      Alert.alert('Greška', `Greška pri ažuriranju ${type === 'lecture' ? 'predavanja' : type === 'daija' ? 'daije' : 'organizacije'}`);
+    }
+  };
+  
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      let response;
+      
+      if (type === 'lecture') {
+        response = await predavanjaService.deletePredavanje(profile._id);
+      } else if (type === 'daija') {
+        response = await daijeService.deleteDaija(profile._id);
+      } else if (type === 'organization') {
+        response = await udruzenjaService.deleteUdruzenje(profile._id);
+      }
+      
+      if (response?.success) {
+        Alert.alert('Uspjeh', `${type === 'lecture' ? 'Predavanje' : type === 'daija' ? 'Daija' : 'Organizacija'} je uspješno obrisano`);
+        setShowDeleteDialog(false);
+        // Go back to list
+        if (onBack) {
+          onBack();
+        }
+      }
+    } catch (error) {
+      Alert.alert('Greška', `Greška pri brisanju ${type === 'lecture' ? 'predavanja' : type === 'daija' ? 'daije' : 'organizacije'}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -317,8 +395,12 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd }) => {
       style={styles.container}
       contentContainerStyle={styles.scrollContentContainer}
     >
-      {/* Hero Section */}
-      <View style={styles.heroSection}>
+      {/* Hero Section with Gradient */}
+      <LinearGradient
+        colors={['#022C43', '#055A87']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.heroSection}>
         {/* Back Button */}
         <TouchableOpacity style={styles.backButton} onPress={goBack}>
           <Ionicons name="arrow-back" size={24} color="white" />
@@ -372,12 +454,71 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd }) => {
           {getTitle()}
         </Text>
 
+        {/* Badges Section */}
+        <View style={styles.badgeContainer}>
+          {type === 'lecture' && profile.isSeminar && (
+            <View style={[styles.badge, styles.seminarBadge]}>
+              <Ionicons name="calendar" size={14} color="white" />
+              <Text style={styles.badgeText}>SEMINAR</Text>
+            </View>
+          )}
+          {type === 'lecture' && profile.isWeeklyLecture && !profile.isSeminar && (
+            <View style={[styles.badge, styles.weeklyBadge]}>
+              <Ionicons name="calendar-outline" size={12} color="white" />
+              <Text style={styles.badgeText}>Sedmično predavanje</Text>
+            </View>
+          )}
+          {type === 'daija' && profile.title && (
+            <View style={[styles.badge, styles.titleBadge]}>
+              <Ionicons name="school" size={14} color="white" />
+              <Text style={styles.badgeText}>{profile.title}</Text>
+            </View>
+          )}
+          {type === 'organization' && (
+            <View style={[styles.badge, styles.orgBadge]}>
+              <Ionicons name="people" size={14} color="white" />
+              <Text style={styles.badgeText}>Islamsko udruženje</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Statistics for daija and organization profiles */}
+        {type !== 'lecture' && (
+          <View style={styles.statsContainer}>
+            {profileLectures.length > 0 && (
+              <View style={styles.statCard}>
+                <Ionicons name="book" size={24} color="rgba(255,255,255,0.7)" />
+                <Text style={styles.statNumber}>{profileLectures.length}</Text>
+                <Text style={styles.statLabel}>Predavanja</Text>
+              </View>
+            )}
+            {profile.views && (
+              <View style={styles.statCard}>
+                <Ionicons name="eye" size={24} color="rgba(255,255,255,0.7)" />
+                <Text style={styles.statNumber}>{profile.views}</Text>
+                <Text style={styles.statLabel}>Pregleda</Text>
+              </View>
+            )}
+            {profile.rating && (
+              <View style={styles.statCard}>
+                <Ionicons name="star" size={24} color="rgba(255,255,255,0.7)" />
+                <Text style={styles.statNumber}>{profile.rating}</Text>
+                <Text style={styles.statLabel}>Ocjena</Text>
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Meta Information */}
         <View style={styles.metaContainer}>
           {type === 'lecture' && profile.date && (
             <View style={styles.metaItem}>
               <Ionicons name="calendar" size={16} color="white" />
-              <Text style={styles.metaText}>{formatDateWithDay(profile.date)}</Text>
+              <Text style={styles.metaText}>
+                {profile.isSeminar && profile.endDate 
+                  ? `${formatDateWithDay(profile.date)} - ${formatDateWithDay(profile.endDate)}`
+                  : formatDateWithDay(profile.date)}
+              </Text>
             </View>
           )}
 
@@ -388,10 +529,14 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd }) => {
             </View>
           )}
 
-          {type === 'lecture' && profile.speaker && (
+          {type === 'lecture' && (profile.speaker || profile.daijaIds) && (
             <View style={styles.metaItem}>
               <Ionicons name="person" size={16} color="white" />
-              <Text style={styles.metaText}>{profile.speaker}</Text>
+              <Text style={styles.metaText}>
+                {profile.daijaIds && profile.daijaIds.length > 1 
+                  ? `${profile.daijaIds.length} Predavača`
+                  : profile.speaker}
+              </Text>
             </View>
           )}
 
@@ -408,6 +553,28 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd }) => {
               <Text style={styles.metaText}>
                 {[profile.address, profile.city].filter(Boolean).join(', ')}
               </Text>
+            </View>
+          )}
+          
+          {/* Contact Info for Organizations */}
+          {type === 'organization' && profile.phone && (
+            <View style={styles.metaItem}>
+              <Ionicons name="call" size={16} color="white" />
+              <Text style={styles.metaText}>{profile.phone}</Text>
+            </View>
+          )}
+          
+          {type === 'organization' && profile.email && (
+            <View style={styles.metaItem}>
+              <Ionicons name="mail" size={16} color="white" />
+              <Text style={styles.metaText}>{profile.email}</Text>
+            </View>
+          )}
+          
+          {type === 'organization' && profile.website && (
+            <View style={styles.metaItem}>
+              <Ionicons name="globe" size={16} color="white" />
+              <Text style={styles.metaText}>{profile.website.replace(/^https?:\/\//, '')}</Text>
             </View>
           )}
         </View>
@@ -503,7 +670,31 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd }) => {
             />
           )}
         </View>
-      </View>
+        
+        {/* Admin Actions - Visible for admins on all profile types */}
+        {isAdmin && (
+          <View style={styles.adminButtonsContainer}>
+            <TouchableOpacity 
+              style={[styles.glassButton, styles.adminEditButton]} 
+              onPress={() => {
+                setEditForm(profile);
+                setShowEditModal(true);
+              }}
+            >
+              <Ionicons name="create-outline" size={20} color="white" />
+              <Text style={styles.glassButtonText}>Izmijeni</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.glassButton, styles.adminDeleteButton]} 
+              onPress={() => setShowDeleteDialog(true)}
+            >
+              <Ionicons name="trash-outline" size={20} color="white" />
+              <Text style={styles.glassButtonText}>Obriši</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </LinearGradient>
 
       {/* Lectures Section - For daija and organization profiles */}
       {(type === 'daija' || type === 'organization') && (
@@ -603,6 +794,269 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd }) => {
         </View>
       )}
       
+      {/* Other Upcoming Lectures Section - Shows for all profile types */}
+      {relatedLectures && relatedLectures.length > 0 && (
+        <View style={styles.relatedSection}>
+          <Text style={styles.relatedTitle}>Ostali najavljeni dersovi</Text>
+          {loadingRelated ? (
+            <ActivityIndicator size="small" color="#022C43" style={styles.relatedLoader} />
+          ) : (
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScrollContainer}
+            >
+              {relatedLectures.map((lecture) => (
+                <View key={lecture._id} style={styles.horizontalCardWrapper}>
+                  <UniverzalCard
+                    data={lecture}
+                    onPress={() => {
+                      if (onProfileOpen) {
+                        onProfileOpen(lecture, 'lecture');
+                      }
+                    }}
+                    onAdd={onAdd}
+                    style={styles.horizontalCard}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      )}
+      
+      {/* Edit Modal for Admin */}
+      {showEditModal && (
+        <Modal
+          visible={showEditModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowEditModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.editModalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  Izmijeni {type === 'lecture' ? 'predavanje' : type === 'daija' ? 'daiju' : 'organizaciju'}
+                </Text>
+                <TouchableOpacity 
+                  onPress={() => setShowEditModal(false)}
+                  style={styles.modalCloseIcon}
+                >
+                  <Ionicons name="close" size={24} color="#666" />
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView style={styles.editFormScroll}>
+                {type === 'lecture' && (
+                  <>
+                    <Text style={styles.inputLabel}>Naslov</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editForm.title}
+                      onChangeText={(text) => setEditForm({...editForm, title: text})}
+                      placeholder="Naslov predavanja"
+                    />
+                    
+                    <Text style={styles.inputLabel}>Predavač</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editForm.speaker}
+                      onChangeText={(text) => setEditForm({...editForm, speaker: text})}
+                      placeholder="Ime predavača"
+                    />
+                    
+                    <Text style={styles.inputLabel}>Organizacija</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editForm.organization}
+                      onChangeText={(text) => setEditForm({...editForm, organization: text})}
+                      placeholder="Naziv organizacije"
+                    />
+                    
+                    <Text style={styles.inputLabel}>Vrijeme</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editForm.time}
+                      onChangeText={(text) => setEditForm({...editForm, time: text})}
+                      placeholder="HH:MM"
+                    />
+                  </>
+                )}
+                
+                {type === 'daija' && (
+                  <>
+                    <Text style={styles.inputLabel}>Ime</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editForm.name}
+                      onChangeText={(text) => setEditForm({...editForm, name: text})}
+                      placeholder="Ime daije"
+                    />
+                    
+                    <Text style={styles.inputLabel}>Titula</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editForm.title}
+                      onChangeText={(text) => setEditForm({...editForm, title: text})}
+                      placeholder="Titula"
+                    />
+                    
+                    <Text style={styles.inputLabel}>Biografija</Text>
+                    <TextInput
+                      style={[styles.input, styles.textArea]}
+                      value={editForm.biography}
+                      onChangeText={(text) => setEditForm({...editForm, biography: text})}
+                      placeholder="Biografija"
+                      multiline
+                      numberOfLines={4}
+                    />
+                  </>
+                )}
+                
+                {type === 'organization' && (
+                  <>
+                    <Text style={styles.inputLabel}>Naziv</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editForm.name}
+                      onChangeText={(text) => setEditForm({...editForm, name: text})}
+                      placeholder="Naziv organizacije"
+                    />
+                    
+                    <Text style={styles.inputLabel}>Kontakt</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editForm.contact}
+                      onChangeText={(text) => setEditForm({...editForm, contact: text})}
+                      placeholder="Kontakt telefon"
+                    />
+                    
+                    <Text style={styles.inputLabel}>Email</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editForm.email}
+                      onChangeText={(text) => setEditForm({...editForm, email: text})}
+                      placeholder="Email adresa"
+                    />
+                  </>
+                )}
+                
+                {/* Common fields */}
+                {(type === 'lecture' || type === 'organization') && (
+                  <>
+                    <Text style={styles.inputLabel}>Adresa</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editForm.address}
+                      onChangeText={(text) => setEditForm({...editForm, address: text})}
+                      placeholder="Adresa"
+                    />
+                    
+                    <Text style={styles.inputLabel}>Grad</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editForm.city}
+                      onChangeText={(text) => setEditForm({...editForm, city: text})}
+                      placeholder="Grad"
+                    />
+                  </>
+                )}
+                
+                {type === 'lecture' && (
+                  <>
+                    <Text style={styles.inputLabel}>Opis</Text>
+                    <TextInput
+                      style={[styles.input, styles.textArea]}
+                      value={editForm.description}
+                      onChangeText={(text) => setEditForm({...editForm, description: text})}
+                      placeholder="Opis predavanja"
+                      multiline
+                      numberOfLines={4}
+                    />
+                  </>
+                )}
+                
+                {type === 'organization' && (
+                  <>
+                    <Text style={styles.inputLabel}>Opis</Text>
+                    <TextInput
+                      style={[styles.input, styles.textArea]}
+                      value={editForm.description}
+                      onChangeText={(text) => setEditForm({...editForm, description: text})}
+                      placeholder="Opis organizacije"
+                      multiline
+                      numberOfLines={4}
+                    />
+                  </>
+                )}
+              </ScrollView>
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={styles.cancelButton}
+                  onPress={() => setShowEditModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Otkaži</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.saveButton}
+                  onPress={handleEdit}
+                >
+                  <Text style={styles.saveButtonText}>Sačuvaj</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+      
+      {/* Delete Dialog for Admin */}
+      {showDeleteDialog && (
+        <Modal
+          visible={showDeleteDialog}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowDeleteDialog(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.deleteDialogContent}>
+              <View style={styles.deleteIconContainer}>
+                <Ionicons name="warning" size={50} color="#f44336" />
+              </View>
+              <Text style={styles.deleteTitle}>Potvrda brisanja</Text>
+              <Text style={styles.deleteMessage}>
+                Da li ste sigurni da želite obrisati {type === 'lecture' ? 'predavanje' : type === 'daija' ? 'daiju' : 'organizaciju'} "{type === 'daija' || type === 'organization' ? profile?.name : profile?.title}"?
+              </Text>
+              <Text style={styles.deleteWarning}>
+                Ova akcija ne može biti poništena!
+              </Text>
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={styles.cancelButton}
+                  onPress={() => setShowDeleteDialog(false)}
+                  disabled={isDeleting}
+                >
+                  <Text style={styles.cancelButtonText}>Otkaži</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.deleteButton}
+                  onPress={handleDelete}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <Text style={styles.deleteButtonText}>Obriši</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+      
     </ScrollView>
   );
 };
@@ -640,8 +1094,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   heroSection: {
-    background: 'linear-gradient(135deg, #022C43 0%, #055A87 100%)',
-    backgroundColor: '#022C43',
     padding: screenWidth > 600 ? 30 : 20,
     paddingTop: screenWidth > 600 ? 30 : 20,
     alignItems: 'center',
@@ -825,6 +1277,74 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 8,
   },
+  badgeContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 10,
+    marginBottom: 15,
+    gap: 8,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    gap: 4,
+  },
+  seminarBadge: {
+    backgroundColor: 'rgba(255, 193, 7, 0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 193, 7, 0.5)',
+  },
+  weeklyBadge: {
+    backgroundColor: 'rgba(33, 150, 243, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(33, 150, 243, 0.4)',
+  },
+  titleBadge: {
+    backgroundColor: 'rgba(156, 39, 176, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(156, 39, 176, 0.4)',
+  },
+  orgBadge: {
+    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.4)',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 15,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  statCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    minWidth: 80,
+  },
+  statNumber: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
+  statLabel: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 11,
+    marginTop: 2,
+  },
   backButton: {
     position: 'absolute',
     top: 10,
@@ -879,10 +1399,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   relatedList: {
-    gap: 15,
+    gap: 8,
   },
   relatedCard: {
-    marginBottom: 15,
+    marginBottom: 8,
   },
   imageLoader: {
     position: 'absolute',
@@ -975,6 +1495,159 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  // Admin styles
+  adminButtonsContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 10,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  adminEditButton: {
+    backgroundColor: 'rgba(33, 150, 243, 0.5)',
+    borderColor: '#2196F3',
+    borderWidth: 2,
+    minWidth: 120,
+  },
+  adminDeleteButton: {
+    backgroundColor: 'rgba(244, 67, 54, 0.5)',
+    borderColor: '#f44336',
+    borderWidth: 2,
+    minWidth: 120,
+  },
+  horizontalScrollContainer: {
+    paddingRight: 20,
+  },
+  horizontalCardWrapper: {
+    marginRight: 12,
+    width: 280,
+  },
+  horizontalCard: {
+    width: '100%',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editModalContent: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    width: '90%',
+    maxWidth: 500,
+    maxHeight: '80%',
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#022C43',
+  },
+  modalCloseIcon: {
+    padding: 5,
+  },
+  editFormScroll: {
+    maxHeight: 400,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+    fontWeight: '500',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    fontSize: 16,
+    color: '#333',
+  },
+  textArea: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 10,
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#666',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  saveButton: {
+    flex: 1,
+    backgroundColor: '#022C43',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteDialogContent: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    width: '85%',
+    maxWidth: 400,
+    padding: 25,
+    alignItems: 'center',
+  },
+  deleteIconContainer: {
+    marginBottom: 15,
+  },
+  deleteTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  deleteMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  deleteWarning: {
+    fontSize: 14,
+    color: '#f44336',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  deleteButton: {
+    flex: 1,
+    backgroundColor: '#f44336',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

@@ -6,22 +6,22 @@ const getLocalIP = () => {
 
 const getBackupURL = () => {
   // Backup opcija - može se koristiti alternativna IP adresa
-  return 'http://192.168.0.20:5003';
+  return 'http://192.168.0.20:5004';
 };
 
 const getFallbackLocalURL = () => {
   // Fallback opcija
-  return 'http://192.168.0.20:5003';
+  return 'http://192.168.0.20:5004';
 };
 
 export const ENV = {
   IS_DEV: true,
   
   // API Configuration  
-  API_URL: `https://ders.ba/api`,
-  SERVER_URL: `https://ders.ba/api`,
+  API_URL: `http://localhost:5004/api`,
+  SERVER_URL: `http://localhost:5004/api`,
   BACKUP_API_URL: `https://ders.ba/api`,
-  UPLOADS_URL: `https://ders.ba/uploads`,
+  UPLOADS_URL: `http://localhost:5004/uploads`,
   FALLBACK_API_URL: `https://ders.ba/api`, // Fallback URL
   
   // Image handling
@@ -70,8 +70,8 @@ export const ENV = {
       cleanPath = `/uploads/images/${cleanPath.replace(/^\/+/, '')}`;
     }
     
-    // Don't use optimized images in development - they may not exist
-    // Always return the standard image path
+    // Ne koristi optimized verziju jer ne postoji na serveru
+    // Direktno vrati običnu putanju
     return `https://ders.ba${cleanPath}`;
   },
   

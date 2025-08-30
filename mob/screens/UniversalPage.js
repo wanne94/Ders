@@ -126,7 +126,7 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
   const [searchQuery, setSearchQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   
-  const ITEMS_PER_PAGE = 10; // Smanjen broj za bolje performanse
+  const ITEMS_PER_PAGE = 8; // Optimalan broj za mobilne uređaje
 
   const getPageConfig = () => {
     switch (type) {
@@ -450,10 +450,16 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
           displayedData.length === 0 && styles.emptyContentContainer
         ]}
         showsVerticalScrollIndicator={false}
-        windowSize={5}
-        initialNumToRender={5}
-        maxToRenderPerBatch={3}
-        updateCellsBatchingPeriod={100}
+        windowSize={3}
+        initialNumToRender={4}
+        maxToRenderPerBatch={2}
+        updateCellsBatchingPeriod={50}
+        removeClippedSubviews={true}
+        getItemLayout={(data, index) => ({
+          length: 220, // Approximate height of UniverzalCard
+          offset: 220 * index,
+          index,
+        })}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

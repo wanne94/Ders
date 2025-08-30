@@ -9,15 +9,17 @@ import {
     Alert,
     Image,
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    SafeAreaView,
+    StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import daijeService from '../../services/daijeService';
 import Toast from '../Toast';
-import * as ImagePicker from 'expo-image-picker';
 import { uploadImage, getImageUrl } from '../../utils/imageUtils';
 import { parseApiError, parseImageUploadError, showDetailedErrorAlert } from '../../utils/errorUtils';
 import { checkConnectivityBeforeApiCall, showNetworkAlert } from '../../utils/networkUtils';
+import ImagePickerWithGallery from '../ImagePickerWithGallery';
 
 const COLORS = {
   primary: '#022C43',
@@ -40,7 +42,11 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
     title: 'prof',
     biography: '',
     image: '',
-    status: 'approved'
+    status: 'approved',
+    // Social networks
+    facebook: '',
+    viber: '',
+    telegram: ''
   });
   
   const [loading, setLoading] = useState(false);
@@ -64,7 +70,10 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
       title: editData.title || 'prof',
       biography: editData.biography || '',
       image: editData.image || '',
-      status: editData.status || 'approved'
+      status: editData.status || 'approved',
+      facebook: editData.facebook || '',
+      viber: editData.viber || '',
+      telegram: editData.telegram || ''
     });
 
     // Set education array
@@ -111,39 +120,6 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
 
   const hideToast = () => {
     setToast({ visible: false, message: '', type: 'success' });
-  };
-
-  const pickImage = async () => {
-    try {
-      // Request permission
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (permissionResult.granted === false) {
-        Alert.alert('Dozvola potrebna', 'Potrebna je dozvola za pristup galeriji slika.');
-        return;
-      }
-
-      // Launch image picker
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'images',
-        allowsEditing: false,
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setImageUri(result.assets[0].uri);
-        handleInputChange('image', result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Greška', 'Došlo je do greške prilikom odabira slike.');
-    }
-  };
-
-
-  const removeImage = () => {
-    setImageUri(null);
-    handleInputChange('image', '');
   };
 
   const handleSubmit = async () => {
@@ -341,19 +317,21 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
   );
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-      enabled
-    >
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{editMode ? 'Uredi Daiju' : 'Dodaj Daiju'}</Text>
-        <View style={styles.headerRight} />
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <KeyboardAvoidingView 
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+        enabled
+      >
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={onBack}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{editMode ? 'Uredi Daiju' : 'Dodaj Daiju'}</Text>
+          <View style={styles.headerRight} />
+        </View>
 
       <ScrollView 
         style={styles.formContainer} 
@@ -361,26 +339,21 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Image Picker */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Slika daije (neobavezno)</Text>
-          {imageUri ? (
-            <View style={styles.imageContainer}>
-              <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="contain" />
-              <TouchableOpacity style={styles.removeImageButton} onPress={removeImage}>
-                <Ionicons name="close-circle" size={30} color={COLORS.error} />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
-              <View style={styles.imagePickerContent}>
-                <Ionicons name="camera-outline" size={48} color={COLORS.primary} />
-                <Text style={styles.imagePickerText}>Dodaj sliku</Text>
-                <Text style={styles.imagePickerSubtext}>Kliknite za odabir slike</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
+        {/* Image Picker with Gallery */}
+        <ImagePickerWithGallery
+          value={formData.image}
+          onChange={(imagePath) => {
+            handleInputChange('image', imagePath);
+            if (imagePath) {
+              setImageUri(imagePath.startsWith('http') ? imagePath : getImageUrl(imagePath));
+            } else {
+              setImageUri(null);
+            }
+          }}
+          onUpload={true}
+          disabled={loading}
+          placeholder="Odaberite sliku daije"
+        />
 
         {renderInput('Ime i prezime', 'name', 'Unesite ime i prezime...', false, true)}
         
@@ -388,6 +361,14 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
         {renderPicker('Titula', titles, formData.title, (value) => handleInputChange('title', value), true)}
         
         {renderInput('Biografija', 'biography', 'Unesite biografiju...', true, false)}
+        
+        {/* Social Networks */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Društvene mreže (neobavezno)</Text>
+          {renderInput('Facebook', 'facebook', 'https://facebook.com/...')}
+          {renderInput('Viber', 'viber', '+387...')}
+          {renderInput('Telegram', 'telegram', 'https://t.me/...')}
+        </View>
         
         {/* Education Section */}
         <View style={styles.inputContainer}>
@@ -445,11 +426,16 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
         type={toast.type}
         onHide={hideToast}
       />
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -463,9 +449,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    paddingTop: Platform.OS === 'ios' ? 12 : 12,
+    zIndex: 10,
+    elevation: 5,
   },
   backButton: {
     padding: 8,
+    zIndex: 11,
   },
   headerTitle: {
     fontSize: 18,
@@ -559,6 +549,16 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: COLORS.primary,
+  },
+  sectionContainer: {
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 8,
   },
   submitContainer: {
     position: 'absolute',

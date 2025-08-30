@@ -20,25 +20,6 @@ const api = axios.create({
   }
 });
 
-// Retry function for failed requests
-const retryRequest = async (config, retryCount = 0) => {
-  const maxRetries = 2;
-  
-  try {
-    return await api.request(config);
-  } catch (error) {
-    if (retryCount < maxRetries && (
-      error.code === 'ECONNABORTED' || 
-      error.code === 'NETWORK_ERROR' ||
-      (error.response && error.response.status >= 500)
-    )) {
-      console.log(`🔄 Retrying request (${retryCount + 1}/${maxRetries}):`, config.url);
-      await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Progressive delay
-      return retryRequest(config, retryCount + 1);
-    }
-    throw error;
-  }
-};
 
 // Request interceptor - adds token to requests
 api.interceptors.request.use(
@@ -101,13 +82,6 @@ api.interceptors.response.use(
   }
 );
 
-// Enhanced API instance with retry logic
-const apiWithRetry = {
-  get: (url, config = {}) => retryRequest({ ...config, method: 'get', url }),
-  post: (url, data, config = {}) => retryRequest({ ...config, method: 'post', url, data }),
-  put: (url, data, config = {}) => retryRequest({ ...config, method: 'put', url, data }),
-  delete: (url, config = {}) => retryRequest({ ...config, method: 'delete', url }),
-  patch: (url, data, config = {}) => retryRequest({ ...config, method: 'patch', url, data }),
-};
-
-export default apiWithRetry; 
+// Export the api instance directly since interceptors are already set up
+// The retry logic is handled within the response interceptor
+export default api; 

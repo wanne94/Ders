@@ -8,6 +8,8 @@ const axios = require('axios');
 router.get('/', async (req, res) => {
   try {
     const isDevelopment = process.env.NODE_ENV === 'development';
+    // Add option to fetch only lecture images
+    const lecturesOnly = req.query.lecturesOnly === 'true';
     
     if (isDevelopment) {
       // In development, fetch recent images from production server
@@ -37,15 +39,16 @@ router.get('/', async (req, res) => {
                 imageName = imageName.split('/').pop();
               }
               
-              // Ensure full URL for all images
+              // Keep relative URL for consistency with production mode
               let imageUrl = lecture.image;
-              if (!imageUrl.startsWith('http')) {
-                imageUrl = `https://ders.ba${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+              if (imageUrl.startsWith('https://ders.ba')) {
+                // Convert full URL to relative path
+                imageUrl = imageUrl.replace('https://ders.ba', '');
               }
               
               images.push({
                 name: imageName,
-                url: imageUrl,
+                url: imageUrl, // Return relative path, frontend will handle URL generation
                 uploadedAt: lecture.createdAt || lecture.date || new Date()
               });
             }
@@ -78,7 +81,60 @@ router.get('/', async (req, res) => {
       });
     }
     
-    // Production - read from local uploads directory
+    // Production mode
+    if (lecturesOnly) {
+      // Fetch only lecture images from production API
+      try {
+        const response = await axios.get('https://ders.ba/api/lectures', {
+          timeout: 10000,
+          params: { limit: 100 }
+        });
+        
+        if (response.data) {
+          const imageSet = new Set();
+          const images = [];
+          
+          const lectures = Array.isArray(response.data) ? response.data : 
+                          (response.data.lectures || []);
+          
+          lectures.forEach(lecture => {
+            if (lecture.image && !imageSet.has(lecture.image)) {
+              imageSet.add(lecture.image);
+              
+              let imageName = lecture.image;
+              if (imageName.includes('/')) {
+                imageName = imageName.split('/').pop();
+              }
+              
+              let imageUrl = lecture.image;
+              if (imageUrl.startsWith('https://ders.ba')) {
+                imageUrl = imageUrl.replace('https://ders.ba', '');
+              }
+              
+              images.push({
+                name: imageName,
+                url: imageUrl,
+                uploadedAt: lecture.createdAt || lecture.date || new Date()
+              });
+            }
+          });
+          
+          const sortedImages = images
+            .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+          
+          return res.json({ 
+            success: true, 
+            images: sortedImages.slice(0, 50),
+            source: 'production-lectures',
+            total: sortedImages.length
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching lectures:', error.message);
+      }
+    }
+    
+    // Default: read from local uploads directory (all images)
     const uploadsDir = path.join(__dirname, '../uploads/images');
     
     if (!fs.existsSync(uploadsDir)) {
@@ -89,10 +145,24 @@ router.get('/', async (req, res) => {
     
     // Filter only image files
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    
+    // Default images to exclude when lecturesOnly is true
+    const defaultImages = ['predavanjeslika.jpg', 'daijaslika.jpg', 'udruzenjeslika.jpg', 
+                          'logo.jpg', 'favicon.png', 'icon.png', 'adaptive-icon.png', 
+                          'splash.png', 'splash-icon.png', 'maxresdefault.jpg'];
+    
     const images = files
       .filter(file => {
         const ext = path.extname(file).toLowerCase();
-        return imageExtensions.includes(ext);
+        // Exclude non-image files
+        if (!imageExtensions.includes(ext)) return false;
+        
+        // If lecturesOnly, exclude default images
+        if (lecturesOnly && defaultImages.includes(file.toLowerCase())) {
+          return false;
+        }
+        
+        return true;
       })
       .map(file => {
         const filePath = path.join(uploadsDir, file);

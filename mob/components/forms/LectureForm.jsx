@@ -10,11 +10,15 @@ import {
     Modal, Image,
     KeyboardAvoidingView,
     Platform,
-    TouchableWithoutFeedback
+    TouchableWithoutFeedback,
+    SafeAreaView,
+    StatusBar
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import IOSCompatibleDropdown from '../IOSCompatibleDropdown';
 import {
     format,
     startOfMonth,
@@ -31,10 +35,10 @@ import udruzenjaService from '../../services/udruzenjaService';
 import { formatDaijaTitle } from '../../utils';
 import { sortLecturers, sortAssociations } from '../../utils/sortingUtils';
 import Toast from '../Toast';
-import * as ImagePicker from 'expo-image-picker';
 import { uploadImage, getImageUrl } from '../../utils/imageUtils';
+import ImagePickerWithGallery from '../ImagePickerWithGallery';
 import { isAuthenticated as checkIsAuthenticated } from '../../utils/authHelpers';
-import apiClient from '../../services/apiClient';
+import axiosInstance from '../../utils/axiosConfig';
 
 const COLORS = {
   primary: '#022C43',
@@ -55,6 +59,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    shortDescription: '',
     date: format(new Date(), 'dd.MM.yyyy'),
     time: '',
     address: '',
@@ -65,7 +70,10 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     organizationId: '',
     image: '',
     isWeeklyLecture: false,
-    totalWeeks: 2
+    totalWeeks: 2,
+    // Seminar fields
+    isSeminar: false,
+    endDate: ''
   });
   
   const [loading, setLoading] = useState(false);
@@ -75,6 +83,9 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const [useCustomOrganization, setUseCustomOrganization] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
   const [imageUri, setImageUri] = useState(null);
+  const [showExistingImages, setShowExistingImages] = useState(false);
+  const [existingImages, setExistingImages] = useState([]);
+  const [selectedExistingImage, setSelectedExistingImage] = useState(null);
   
   // Separate state for picker selected values to ensure proper updates
   const [selectedDaijaId, setSelectedDaijaId] = useState('');
@@ -83,11 +94,14 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [tempTimeValue, setTempTimeValue] = useState('');
   
-  // Missing states for existing images
-  const [showExistingImages, setShowExistingImages] = useState(false);
-  const [existingImages, setExistingImages] = useState([]);
-  const [selectedExistingImage, setSelectedExistingImage] = useState(null);
+  // Seminar states
+  const [showSeminarOptions, setShowSeminarOptions] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [selectedEndDate, setSelectedEndDate] = useState(new Date());
+  const [selectedTime, setSelectedTime] = useState('');
 
   // Hardcoded time options with 15-minute intervals (same as web version)
   const timeOptions = [
@@ -114,13 +128,30 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
 
   const loadData = async () => {
     try {
+      console.log('🔄 LectureForm - Starting data load...');
+      // Load basic data first
       const [daijeResponse, organizationsResponse, allLecturesResponse] = await Promise.all([
         daijeService.getAllDaije(),
         udruzenjaService.getAllUdruzenja(),
         predavanjaService.getAllPredavanja()
       ]);
       
-      // Debug logs removed - data loading working correctly
+      console.log('✅ LectureForm - Raw responses:', {
+        daije: daijeResponse,
+        organizations: organizationsResponse,
+        lectures: allLecturesResponse
+      });
+      
+      // Try to load existing images separately (optional)
+      let imagesResponse = null;
+      try {
+        const isAuth = await checkIsAuthenticated();
+        if (isAuth) {
+          imagesResponse = await axiosInstance.get('/existing-images?lecturesOnly=true');
+        }
+      } catch (imgError) {
+        console.log('Could not load existing images (optional):', imgError.message);
+      }
       
       // Filter only approved items
       const approvedDaije = Array.isArray(daijeResponse) ? daijeResponse.filter(d => d.status === 'approved') : [];
@@ -131,29 +162,35 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       const sortedDaije = sortLecturers(approvedDaije, allLectures);
       const sortedOrganizations = sortAssociations(approvedOrganizations, allLectures);
       
-      // Extract unique images from all lectures for existing images feature
-      const uniqueImages = [];
-      const imageUrls = new Set();
+      console.log('📚 LectureForm - Loaded daije:', sortedDaije.length, 'items');
+      console.log('🏢 LectureForm - Loaded organizations:', sortedOrganizations.length, 'items');
       
-      allLectures.forEach(lecture => {
-        if (lecture.image && !imageUrls.has(lecture.image)) {
-          imageUrls.add(lecture.image);
-          uniqueImages.push({
-            url: lecture.image,
-            title: lecture.title
-          });
-        }
-      });
-      
-      if (uniqueImages.length > 0) {
-        console.log('Found existing images from lectures:', uniqueImages.length);
-        setExistingImages(uniqueImages);
+      // Load existing images if available
+      if (imagesResponse?.data?.images) {
+        // Filter out default/placeholder images
+        const defaultImages = ['predavanjeslika.jpg', 'daijaslika.jpg', 'udruzenjeslika.jpg', 
+                              'logo.jpg', 'favicon.png', 'icon.png', 'adaptive-icon.png', 
+                              'splash.png', 'splash-icon.png', 'maxresdefault.jpg'];
+        
+        const filteredImages = imagesResponse.data.images.filter(img => {
+          const imageName = img.name || img.url.split('/').pop();
+          return !defaultImages.includes(imageName.toLowerCase());
+        });
+        
+        console.log('Fetched existing images:', filteredImages.length, '(filtered from', imagesResponse.data.images.length, ')');
+        setExistingImages(filteredImages);
       }
       
       setDaije(sortedDaije);
       setOrganizations(sortedOrganizations);
+      console.log('✅ LectureForm - Data set successfully');
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('❌ Error loading data:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       setDaije([]);
       setOrganizations([]);
     }
@@ -165,6 +202,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     setFormData({
       title: editData.title || '',
       description: editData.description || '',
+      shortDescription: editData.shortDescription || '',
       date: editData.date || format(new Date(), 'dd.MM.yyyy'),
       time: editData.time || '',
       address: editData.address || '',
@@ -175,12 +213,33 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       organizationId: editData.organizationId || '',
       image: editData.image || '',
       isWeeklyLecture: editData.isWeeklyLecture || false,
-      totalWeeks: editData.totalWeeks || 2
+      totalWeeks: editData.totalWeeks || 2,
+      isSeminar: editData.isSeminar || false,
+      endDate: editData.endDate ? format(new Date(editData.endDate), 'dd.MM.yyyy') : ''
     });
 
     // Set image URI if exists
     if (editData.image) {
       setImageUri(getImageUrl(editData.image));
+    }
+    
+    // Set seminar options
+    setShowSeminarOptions(editData.isSeminar || false);
+    
+    // Parse end date if exists
+    if (editData.endDate) {
+      try {
+        let endDateObj;
+        if (editData.endDate.includes('.')) {
+          const [day, month, year] = editData.endDate.split('.');
+          endDateObj = new Date(year, month - 1, day);
+        } else {
+          endDateObj = new Date(editData.endDate);
+        }
+        setSelectedEndDate(endDateObj);
+      } catch (e) {
+        console.error('Error parsing end date:', e);
+      }
     }
 
     // Set custom speaker/organization flags and picker values
@@ -239,6 +298,49 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       setSelectedDate(selectedDate);
       handleInputChange('date', format(selectedDate, 'dd.MM.yyyy'));
     }
+  };
+  
+  const handleEndDateChange = (event, selectedDate) => {
+    // Ne zatvarati modal automatski - čeka se klik na dugme Potvrdi
+    if (selectedDate) {
+      setSelectedEndDate(selectedDate);
+    }
+  };
+  
+  const confirmEndDate = () => {
+    setShowEndDatePicker(false);
+    handleInputChange('endDate', format(selectedEndDate, 'dd.MM.yyyy'));
+  };
+  
+  const confirmTime = () => {
+    setShowTimePicker(false);
+    if (selectedTime) {
+      handleInputChange('time', selectedTime);
+    }
+  };
+  
+  const calculateSeminarDays = (startDate, endDate) => {
+    if (!startDate || !endDate) return 0;
+    
+    const parseDate = (dateStr) => {
+      const parts = dateStr.split('.');
+      if (parts.length === 3) {
+        const [day, month, year] = parts;
+        return new Date(year, month - 1, day);
+      }
+      return null;
+    };
+    
+    const start = parseDate(startDate);
+    const end = parseDate(endDate);
+    
+    if (start && end) {
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays + 1; // Include both start and end day
+    }
+    
+    return 0;
   };
 
   const renderCalendar = () => {
@@ -446,6 +548,33 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       Alert.alert('Greška', 'Mjesto je obavezno');
       return false;
     }
+    
+    // Validacija za seminare
+    if (showSeminarOptions) {
+      if (!formData.endDate) {
+        Alert.alert('Greška', 'Datum završetka je obavezan za seminare');
+        return false;
+      }
+      
+      if (!validateDate(formData.endDate)) {
+        Alert.alert('Greška', 'Unesite valjan datum završetka u formatu DD.MM.YYYY');
+        return false;
+      }
+      
+      // Provjeri da li je datum završetka nakon datuma početka
+      const startParts = formData.date.split('.');
+      const endParts = formData.endDate.split('.');
+      if (startParts.length === 3 && endParts.length === 3) {
+        const startDate = new Date(startParts[2], startParts[1] - 1, startParts[0]);
+        const endDate = new Date(endParts[2], endParts[1] - 1, endParts[0]);
+        
+        if (endDate < startDate) {
+          Alert.alert('Greška', 'Datum završetka mora biti nakon datuma početka');
+          return false;
+        }
+      }
+    }
+    
     return true;
   };
 
@@ -496,22 +625,36 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         const [day, month, year] = formData.date.split('.');
         formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       }
+      
+      // Format end date for seminars
+      let formattedEndDate = formData.endDate;
+      if (showSeminarOptions && formData.endDate && formData.endDate.includes('.')) {
+        const [day, month, year] = formData.endDate.split('.');
+        formattedEndDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
 
       // Prepare final form data - map daijaId to daija for server compatibility
       const finalFormData = {
         ...formData,
         daija: formData.daijaId, // Server expects 'daija' field, not 'daijaId'
         image: imagePath,
-        date: formattedDate
+        date: formattedDate,
+        ...(showSeminarOptions && {
+          isSeminar: true,
+          endDate: formattedEndDate,
+          seminarTheme: formData.title // Use title as seminar theme
+        })
       };
 
       // Submit the form - either create or update
       if (editMode && editData?._id) {
         await predavanjaService.updateItem(editData._id, finalFormData);
-        Alert.alert('Uspjeh', 'Uspješno ste ažurirali predavanje!');
+        const message = showSeminarOptions ? 'Uspješno ste ažurirali seminar!' : 'Uspješno ste ažurirali predavanje!';
+        Alert.alert('Uspjeh', message);
       } else {
         await predavanjaService.createPredavanje(finalFormData);
-        Alert.alert('Uspjeh', 'Uspješno ste dodali predavanje!');
+        const message = showSeminarOptions ? 'Uspješno ste dodali seminar!' : 'Uspješno ste dodali predavanje!';
+        Alert.alert('Uspjeh', message);
       }
       
       // Call success callback
@@ -534,12 +677,16 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           organizationId: '',
           image: '',
           isWeeklyLecture: false,
-          totalWeeks: 2
+          totalWeeks: 2,
+          isSeminar: false,
+          endDate: ''
         });
         setImageUri(null);
         setSelectedDate(new Date());
+        setSelectedEndDate(new Date());
         setSelectedDaijaId('');
         setUseCustomSpeaker(false);
+        setShowSeminarOptions(false);
       }
       
     } catch (error) {
@@ -551,22 +698,107 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     }
   };
 
-  const renderInput = (label, field, placeholder, multiline = false, required = false) => (
+  const renderInput = (label, field, placeholder, multiline = false, required = false, disabled = false) => (
     <View style={styles.inputContainer}>
       <Text style={styles.inputLabel}>
         {label} {required && <Text style={styles.required}>*</Text>}
       </Text>
       <TextInput
-        style={[styles.input, multiline && styles.multilineInput]}
+        style={[styles.input, multiline && styles.multilineInput, disabled && styles.inputDisabled]}
         value={formData[field]}
         onChangeText={(value) => handleInputChange(field, value)}
         placeholder={placeholder}
         placeholderTextColor={COLORS.gray}
         multiline={multiline}
         numberOfLines={multiline ? 4 : 1}
+        editable={!disabled}
       />
+      {disabled && field === 'address' && (
+        <Text style={styles.helperText}>Adresa se automatski popunjava iz odabranog udruženja</Text>
+      )}
+      {disabled && field === 'city' && (
+        <Text style={styles.helperText}>Mjesto se automatski popunjava iz odabranog udruženja</Text>
+      )}
     </View>
   );
+
+  const renderTimeDropdown = () => {
+    return (
+      <IOSCompatibleDropdown
+        label="Vrijeme"
+        items={timeOptions.filter(opt => opt.value !== '')}
+        value={formData.time}
+        onChangeValue={(value) => handleInputChange('time', value)}
+        placeholder="Odaberite vrijeme"
+        required={true}
+        searchable={true}
+      />
+    );
+  };
+
+  const renderDaijaDropdown = () => {
+    console.log('renderDaijaDropdown - daije array:', daije);
+    console.log('renderDaijaDropdown - daije length:', daije.length);
+    
+    const daijaOptions = daije.map(d => ({
+      label: formatDaijaTitle(d.name, d.title),
+      value: d._id
+    }));
+    
+    console.log('renderDaijaDropdown - daijaOptions:', daijaOptions);
+
+    return (
+      <IOSCompatibleDropdown
+        label="Daija/Predavač"
+        items={daijaOptions}
+        value={formData.daijaId}
+        onChangeValue={(value) => {
+          handleInputChange('daijaId', value);
+          const selectedDaija = daije.find(d => d._id === value);
+          if (selectedDaija) {
+            handleInputChange('speaker', formatDaijaTitle(selectedDaija));
+          }
+        }}
+        placeholder="Odaberite predavača"
+        required={true}
+        searchable={true}
+      />
+    );
+  };
+
+  const renderOrganizationDropdown = () => {
+    const organizationOptions = [
+      { label: 'Nije navedeno', value: '' },
+      ...organizations.map(o => ({
+        label: o.name,
+        value: o._id
+      })),
+      { label: '➕ Unesi ručno naziv udruženja', value: 'custom' }
+    ];
+
+    return (
+      <IOSCompatibleDropdown
+        label="Udruženje"
+        items={organizationOptions.filter(item => item.value !== 'custom')}
+        value={formData.organizationId}
+        onChangeValue={(value) => {
+          handleInputChange('organizationId', value);
+          if (value) {
+            const selectedOrg = organizations.find(o => o._id === value);
+            if (selectedOrg) {
+              handleInputChange('organization', selectedOrg.name);
+              if (selectedOrg.city) handleInputChange('city', selectedOrg.city);
+              if (selectedOrg.address) handleInputChange('address', selectedOrg.address);
+            }
+          } else {
+            handleInputChange('organization', '');
+          }
+        }}
+        placeholder="Odaberite udruženje"
+        searchable={true}
+      />
+    );
+  };
 
   const renderDropdown = (label, selectedValue, onValueChange, items, required = false) => {
     return (
@@ -581,7 +813,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
             style={styles.picker}
             mode="dropdown"
             itemStyle={styles.pickerItem}
-            dropdownIconColor="#1a1a1a"
+            dropdownIconColor="#000000"
           >
             {items.map((item, index) => (
               <Picker.Item
@@ -589,7 +821,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
                 label={item.label}
                 value={item.value}
                 style={styles.pickerItem}
-                color="#1a1a1a"
+                color="#000000"
               />
             ))}
           </Picker>
@@ -598,39 +830,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     );
   };
 
-  const pickImage = async () => {
-    try {
-      // Request permission
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (permissionResult.granted === false) {
-        Alert.alert('Dozvola potrebna', 'Potrebna je dozvola za pristup galeriji slika.');
-        return;
-      }
-
-      // Launch image picker directly
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'images',
-        allowsEditing: false,
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setImageUri(result.assets[0].uri);
-        // Don't set image in formData yet - it will be set after upload
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Greška', 'Došlo je do greške prilikom odabira slike.');
-    }
-  };
-
-  const removeImage = () => {
-    setImageUri(null);
-    setSelectedExistingImage(null);
-    handleInputChange('image', '');
-  };
-  
   const selectExistingImage = (image) => {
     setSelectedExistingImage(image.url);
     // Check if it's already a full URL
@@ -641,19 +840,21 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-      enabled
-    >
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{editMode ? 'Uredi Ders' : 'Dodaj Ders'}</Text>
-        <View style={styles.headerRight} />
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <KeyboardAvoidingView 
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+        enabled
+      >
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={onBack}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{editMode ? 'Uredi Ders' : 'Dodaj Ders'}</Text>
+          <View style={styles.headerRight} />
+        </View>
 
       <ScrollView 
         style={styles.formContainer} 
@@ -661,46 +862,24 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Image Picker */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Slika predavanja (neobavezno)</Text>
-          {imageUri ? (
-            <View style={styles.imageContainer}>
-              <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="contain" />
-              <TouchableOpacity style={styles.removeImageButton} onPress={removeImage}>
-                <Ionicons name="close-circle" size={30} color={COLORS.error} />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View>
-              <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
-                <View style={styles.imagePickerContent}>
-                  <Ionicons name="image-outline" size={48} color={COLORS.primary} />
-                  <Text style={styles.imagePickerText}>Dodaj sliku</Text>
-                  <Text style={styles.imagePickerSubtext}>Kliknite za odabir iz galerije</Text>
-                </View>
-              </TouchableOpacity>
-              {existingImages.length > 0 && (
-                <TouchableOpacity 
-                  style={[styles.imagePickerButton, { marginTop: 10 }]} 
-                  onPress={() => setShowExistingImages(true)}
-                >
-                  <View style={styles.imagePickerContent}>
-                    <Ionicons name="images-outline" size={48} color={COLORS.primaryLight} />
-                    <Text style={[styles.imagePickerText, { color: COLORS.primaryLight }]}>
-                      Odaberi postojeću sliku
-                    </Text>
-                    <Text style={styles.imagePickerSubtext}>
-                      {existingImages.length} dostupnih slika
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-        </View>
+        {/* Image Picker with Gallery */}
+        <ImagePickerWithGallery
+          value={formData.image}
+          onChange={(imagePath) => {
+            handleInputChange('image', imagePath);
+            if (imagePath) {
+              setImageUri(imagePath.startsWith('http') ? imagePath : getImageUrl(imagePath));
+            } else {
+              setImageUri(null);
+            }
+          }}
+          onUpload={true}
+          disabled={loading}
+          placeholder="Odaberite sliku predavanja"
+        />
 
         {renderInput('Naslov predavanja', 'title', 'Unesite naslov...', false, true)}
+        {renderInput('Kratak opis (neobavezno)', 'shortDescription', 'Unesite kratak opis (max 200 karaktera)...', false)}
         {renderInput('Opis predavanja (neobavezno)', 'description', 'Unesite opis...', true)}
         
         {/* Date Picker */}
@@ -718,51 +897,17 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         </View>
 
         {/* Time Picker */}
-        {renderDropdown(
-          'Vrijeme',
-          formData.time,
-          (value) => handleInputChange('time', value),
-          timeOptions,
-          true
-        )}
+        {renderTimeDropdown()}
 
-        {/* Speaker Dropdown */}
-        {renderDropdown(
-          'Daija',
-          selectedDaijaId,
-          handleDaijaSelect,
-          [
-            { label: 'Odaberite daiju', value: '' },
-            ...daije.map(daija => ({
-              label: formatDaijaTitle(daija.name, daija.title),
-              value: daija._id
-            })),
-            { label: '➕ Unesi ručno ime daije', value: 'custom' }
-          ],
-          true
-        )}
-
-        {useCustomSpeaker && renderInput('Ime daije', 'speaker', 'Unesite ime i prezime...', false, true)}
+        {/* Daija Dropdown */}
+        {renderDaijaDropdown()}
 
         {/* Organization Dropdown */}
-        {renderDropdown(
-          'Udruženje',
-          useCustomOrganization ? 'custom' : formData.organizationId,
-          handleOrganizationSelect,
-          [
-            { label: 'Nije navedeno', value: '' },
-            ...organizations.map(org => ({
-              label: org.name,
-              value: org._id
-            })),
-            { label: '➕ Unesi ručno naziv udruženja', value: 'custom' }
-          ]
-        )}
+        {renderOrganizationDropdown()}
 
-        {useCustomOrganization && renderInput('Naziv udruženja', 'organization', 'Unesite naziv...', false, true)}
+        {renderInput('Adresa', 'address', 'Unesite adresu...', false, true, Boolean(formData.organizationId && !useCustomOrganization))}
+        {renderInput('Mjesto', 'city', 'Unesite mjesto...', false, true, Boolean(formData.organizationId && !useCustomOrganization))}
 
-        {renderInput('Adresa', 'address', 'Unesite adresu...', false, true)}
-        {renderInput('Mjesto', 'city', 'Unesite mjesto...', false, true)}
 
         {/* Weekly lecture section */}
         <View style={styles.weeklyLectureSection}>
@@ -814,6 +959,64 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           )}
         </View>
 
+        
+        {/* Seminar section */}
+        <View style={styles.seminarSection}>
+          <TouchableOpacity 
+            style={styles.checkboxContainer}
+            onPress={() => {
+              setShowSeminarOptions(!showSeminarOptions);
+              handleInputChange('isSeminar', !showSeminarOptions);
+              // Disable weekly lectures if seminar is selected
+              if (!showSeminarOptions) {
+                handleInputChange('isWeeklyLecture', false);
+              }
+            }}
+            disabled={editMode || formData.isWeeklyLecture}
+          >
+            <View style={[styles.checkbox, showSeminarOptions && styles.checkboxCheckedSeminar]}>
+              {showSeminarOptions && (
+                <Ionicons name="checkmark" size={16} color={COLORS.white} />
+              )}
+            </View>
+            <Text style={[
+              styles.checkboxLabel, 
+              styles.seminarLabel,
+              (editMode || formData.isWeeklyLecture) && styles.disabledText
+            ]}>
+              Seminar (događaj koji traje više dana)
+            </Text>
+          </TouchableOpacity>
+          
+          {showSeminarOptions && (
+            <View style={styles.seminarContainer}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>
+                  Datum završetka <Text style={styles.required}>*</Text>
+                </Text>
+                <TouchableOpacity
+                  style={styles.dateInput}
+                  onPress={() => setShowEndDatePicker(true)}
+                >
+                  <Text style={styles.dateInputText}>
+                    {formData.endDate || 'Odaberite datum završetka'}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
+                </TouchableOpacity>
+              </View>
+              
+              {formData.date && formData.endDate && (
+                <View style={styles.durationInfo}>
+                  <Ionicons name="calendar-outline" size={20} color={COLORS.warning} />
+                  <Text style={styles.durationText}>
+                    Trajanje seminara: {calculateSeminarDays(formData.date, formData.endDate)} dana
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+        
         {/* Padding for sticky button */}
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -844,6 +1047,53 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+      
+      {/* End Date Picker Modal for Seminars */}
+      <Modal
+        visible={showEndDatePicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => {}}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.centeredModal]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Datum završetka seminara</Text>
+            </View>
+            {Platform.OS === 'android' ? (
+              <DateTimePicker
+                value={selectedEndDate}
+                mode="date"
+                display="spinner"
+                onChange={handleEndDateChange}
+                minimumDate={selectedDate}
+              />
+            ) : (
+              <DateTimePicker
+                value={selectedEndDate}
+                mode="date"
+                display="spinner"
+                onChange={handleEndDateChange}
+                minimumDate={selectedDate}
+              />
+            )}
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => setShowEndDatePicker(false)}
+              >
+                <Text style={styles.modalCancelButtonText}>Otkaži</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirmButton}
+                onPress={confirmEndDate}
+              >
+                <Text style={styles.modalConfirmButtonText}>Potvrdi</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Sticky Submit Button */}
       <View style={styles.submitContainer}>
@@ -855,7 +1105,10 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           <Text style={styles.submitButtonText}>
             {loading 
               ? (editMode ? 'Ažuriranje...' : 'Dodavanje...') 
-              : (editMode ? 'Ažuriraj Ders' : 'Dodaj Ders')
+              : (editMode 
+                  ? (showSeminarOptions ? 'Ažuriraj Seminar' : 'Ažuriraj Ders')
+                  : (showSeminarOptions ? 'Dodaj Seminar' : 'Dodaj Ders')
+                )
             }
           </Text>
         </TouchableOpacity>
@@ -867,7 +1120,70 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         type={toast.type}
         onHide={hideToast}
       />
-      
+
+      {/* Time Picker Modal - Centered with confirm button */}
+      <Modal
+        visible={showTimePicker}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => {}}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.timeModalContent]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Odaberite vrijeme</Text>
+            </View>
+            
+            <ScrollView 
+              style={styles.timeModalScrollView}
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={{ paddingBottom: 10 }}
+            >
+              {timeOptions.slice(1).map((time) => (
+                <TouchableOpacity
+                  key={time.value}
+                  style={[
+                    styles.timeItem,
+                    selectedTime === time.value && styles.timeItemSelected
+                  ]}
+                  onPress={() => {
+                    setSelectedTime(time.value);
+                  }}
+                >
+                  <Text style={[
+                    styles.timeItemText,
+                    selectedTime === time.value && styles.timeItemTextSelected
+                  ]}>
+                    {time.label}
+                  </Text>
+                  {selectedTime === time.value && (
+                    <Ionicons name="checkmark" size={24} color={COLORS.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => {
+                  setShowTimePicker(false);
+                  setSelectedTime(formData.time || '');
+                }}
+              >
+                <Text style={styles.modalCancelButtonText}>Otkaži</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirmButton}
+                onPress={confirmTime}
+              >
+                <Text style={styles.modalConfirmButtonText}>Potvrdi</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Existing Images Modal */}
       <Modal
         visible={showExistingImages}
@@ -913,11 +1229,16 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           </View>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -931,9 +1252,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    // Add extra padding for iOS without SafeAreaView
+    paddingTop: Platform.OS === 'ios' ? 12 : 12,
+    zIndex: 10,
+    elevation: 5,
   },
   backButton: {
     padding: 8,
+    zIndex: 11,
   },
   headerTitle: {
     fontSize: 18,
@@ -1001,16 +1327,25 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Platform.OS === 'ios' ? 12 : 0,
+    paddingVertical: Platform.OS === 'ios' ? 14 : 0,
+  },
+  pickerText: {
+    fontSize: 16,
+    color: COLORS.primary,
+    flex: 1,
   },
   picker: {
     height: 50,
-    color: '#1a1a1a',
+    color: '#000000',
     backgroundColor: '#FFFFFF',
   },
   pickerItem: {
-    color: '#1a1a1a',
+    color: '#000000',
     fontSize: 16,
-    fontWeight: '500',
     backgroundColor: '#FFFFFF',
   },
   // Modal styles
@@ -1027,6 +1362,50 @@ const styles = StyleSheet.create({
     margin: 20,
     maxWidth: 350,
     width: '90%',
+  },
+  centeredModal: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 12,
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: COLORS.lightGray,
+    alignItems: 'center',
+  },
+  modalCancelButtonText: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalConfirmButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+  },
+  modalConfirmButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  timeModalContent: {
+    maxHeight: '70%',
+    width: '90%',
+  },
+  timeModalScrollView: {
+    maxHeight: 300,
+    marginVertical: 10,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1164,6 +1543,19 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     marginTop: 4,
   },
+  // Section styles
+  sectionContainer: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 16,
+  },
   // Weekly lecture styles
   weeklyLectureSection: {
     marginBottom: 16,
@@ -1195,6 +1587,53 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: COLORS.gray,
+  },
+  // Seminar styles
+  seminarSection: {
+    marginBottom: 16,
+    backgroundColor: '#fff5e6', // Light amber background
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+  },
+  checkboxCheckedSeminar: {
+    backgroundColor: COLORS.warning,
+  },
+  seminarLabel: {
+    color: COLORS.warning,
+    fontWeight: 'bold',
+  },
+  seminarContainer: {
+    marginTop: 16,
+  },
+  dateInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: COLORS.white,
+  },
+  dateInputText: {
+    fontSize: 16,
+    color: COLORS.primary,
+  },
+  durationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+  },
+  durationText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: COLORS.warning,
+    fontWeight: '500',
   },
   imageOptionsContainer: {
     flexDirection: 'row',
@@ -1312,6 +1751,90 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     textAlign: 'center',
     marginTop: 8,
+  },
+  timeButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    minHeight: 48,
+  },
+  timeButtonText: {
+    fontSize: 16,
+    color: COLORS.primary,
+  },
+  placeholderText: {
+    color: COLORS.gray,
+  },
+  timeListContainer: {
+    maxHeight: 400,
+  },
+  timeItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    minHeight: 60,
+  },
+  timeItemSelected: {
+    backgroundColor: '#E8F4FD',
+  },
+  timeItemText: {
+    fontSize: 18,
+    color: COLORS.primary,
+  },
+  timeItemTextSelected: {
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  largeModalContent: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '75%',
+    minHeight: '60%',
+    width: '100%',
+    position: 'absolute',
+    bottom: 0,
+  },
+  largeModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  largeModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  largeModalScrollView: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  inputDisabled: {
+    backgroundColor: '#f5f5f5',
+    opacity: 0.7,
+  },
+  helperText: {
+    fontSize: 12,
+    color: COLORS.gray,
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });
 

@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   ActivityIndicator,
   Switch,
   Dimensions,
@@ -17,6 +16,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SystemBars } from 'react-native-edge-to-edge';
 import { Picker } from '@react-native-picker/picker';
+import { useToast } from '../utils/ToastManager';
 
 import { authService } from '../services/authService';
 import { SECURITY_QUESTIONS, getQuestionByIndex } from '../constants/securityQuestions';
@@ -46,6 +46,7 @@ const COLORS = {
 };
 
 const AuthScreen = ({ onBack, onAuthSuccess }) => {
+  const { showSuccess, showError, showWarning, showInfo } = useToast();
   const [activeTab, setActiveTab] = useState(0); // 0: Login, 1: Register, 2: Forgot Password
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -56,10 +57,22 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
     email: '',
     password: ''
   });
+  const [loginErrors, setLoginErrors] = useState({
+    email: '',
+    password: ''
+  });
   const [rememberMe, setRememberMe] = useState(false);
 
   // Register state
   const [registerData, setRegisterData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    securityQuestionIndex: '',
+    securityAnswer: ''
+  });
+  const [registerErrors, setRegisterErrors] = useState({
     username: '',
     email: '',
     password: '',
@@ -98,22 +111,84 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
     loadRememberedCredentials();
   }, []);
 
+  // Validation helper functions
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const validateLoginField = (field, value) => {
+    let error = '';
+    switch(field) {
+      case 'email':
+        if (!value.trim()) {
+          error = 'Email ili korisničko ime je obavezno';
+        }
+        break;
+      case 'password':
+        if (!value) {
+          error = 'Lozinka je obavezna';
+        }
+        break;
+    }
+    setLoginErrors(prev => ({ ...prev, [field]: error }));
+    return error === '';
+  };
+
+  const validateRegisterField = (field, value) => {
+    let error = '';
+    switch(field) {
+      case 'username':
+        if (!value.trim()) {
+          error = 'Korisničko ime je obavezno';
+        } else if (value.length < 3) {
+          error = 'Korisničko ime mora imati najmanje 3 karaktera';
+        }
+        break;
+      case 'email':
+        if (!value.trim()) {
+          error = 'Email je obavezan';
+        } else if (!validateEmail(value)) {
+          error = 'Email nije valjan';
+        }
+        break;
+      case 'password':
+        if (!value) {
+          error = 'Lozinka je obavezna';
+        } else if (value.length < 6) {
+          error = 'Lozinka mora imati najmanje 6 karaktera';
+        }
+        break;
+      case 'confirmPassword':
+        if (!value) {
+          error = 'Potvrda lozinke je obavezna';
+        } else if (value !== registerData.password) {
+          error = 'Lozinke se ne poklapaju';
+        }
+        break;
+      case 'securityQuestionIndex':
+        if (value === '') {
+          error = 'Sigurnosno pitanje je obavezno';
+        }
+        break;
+      case 'securityAnswer':
+        if (!value.trim()) {
+          error = 'Odgovor na sigurnosno pitanje je obavezan';
+        }
+        break;
+    }
+    setRegisterErrors(prev => ({ ...prev, [field]: error }));
+    return error === '';
+  };
+
   // Handle login
   const handleLogin = async () => {
-    // Detailed validation like web version
-    const errors = [];
-    
-    if (!loginData.email || !loginData.email.trim()) {
-      errors.push('Email ili korisničko ime je obavezno');
-    }
-    
-    if (!loginData.password) {
-      errors.push('Lozinka je obavezna');
-    }
+    // Validate all fields
+    const isEmailValid = validateLoginField('email', loginData.email);
+    const isPasswordValid = validateLoginField('password', loginData.password);
 
-    if (errors.length > 0) {
-      const errorMessage = 'Molimo ispravite sledeće greške:\n• ' + errors.join('\n• ');
-      Alert.alert('Greška', errorMessage);
+    if (!isEmailValid || !isPasswordValid) {
+      showError('Molimo ispravite greške u formi');
       return;
     }
 
@@ -144,7 +219,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
         await clearRememberedCredentials();
       }
 
-      Alert.alert('Uspjeh', `Dobrodošli, ${user.username}!`);
+      showSuccess(`Dobrodošli, ${user.username}!`);
       
       // Call success callback
       if (onAuthSuccess) {
@@ -166,7 +241,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
         errorMessage = error.response?.data?.message || errorMessage;
       }
       
-      Alert.alert('Greška', errorMessage);
+      showError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -212,8 +287,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
     }
 
     if (errors.length > 0) {
-      const errorMessage = 'Molimo ispravite sledeće greške:\n• ' + errors.join('\n• ');
-      Alert.alert('Greška', errorMessage);
+      errors.forEach(error => showError(error));
       return;
     }
 
@@ -226,13 +300,13 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
         await setToken(response.token);
         await setUserData(response.user);
         
-        Alert.alert('Uspjeh', 'Registracija je uspješna!');
+        showSuccess('Registracija je uspješna!');
         
         if (onAuthSuccess) {
           onAuthSuccess(response.user);
         }
       } else {
-        Alert.alert('Greška', response.message || 'Greška pri registraciji');
+        showError(response.message || 'Greška pri registraciji');
       }
     } catch (error) {
       let errorMessage = 'Greška pri registraciji';
@@ -253,7 +327,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
         errorMessage = error.response?.data?.message || errorMessage;
       }
       
-      Alert.alert('Greška', errorMessage);
+      showError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -269,8 +343,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
     }
 
     if (errors.length > 0) {
-      const errorMessage = 'Molimo ispravite sledeće greške:\n• ' + errors.join('\n• ');
-      Alert.alert('Greška', errorMessage);
+      errors.forEach(error => showError(error));
       return;
     }
 
@@ -280,7 +353,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
       setSecurityQuestion(getQuestionByIndex(response.securityQuestionIndex));
       setForgotPasswordStep(2);
     } catch (error) {
-      Alert.alert('Greška', error.response?.data?.message || 'Greška pri pronalaženju korisnika');
+      showError(error.response?.data?.message || 'Greška pri pronalaženju korisnika');
     } finally {
       setIsLoading(false);
     }
@@ -289,7 +362,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
   // Handle forgot password step 2
   const handleForgotPasswordStep2 = async () => {
     if (!forgotPasswordData.securityAnswer.trim()) {
-      Alert.alert('Greška', 'Odgovor na sigurnosno pitanje je obavezan');
+      showError('Odgovor na sigurnosno pitanje je obavezan');
       return;
     }
 
@@ -298,7 +371,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
       await authService.verifySecurityAnswer(forgotPasswordData.email, forgotPasswordData.securityAnswer);
       setForgotPasswordStep(3);
     } catch (error) {
-      Alert.alert('Greška', error.response?.data?.message || 'Netačan odgovor na sigurnosno pitanje');
+      showError(error.response?.data?.message || 'Netačan odgovor na sigurnosno pitanje');
     } finally {
       setIsLoading(false);
     }
@@ -307,12 +380,12 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
   // Handle forgot password step 3
   const handleForgotPasswordStep3 = async () => {
     if (!forgotPasswordData.newPassword || !forgotPasswordData.confirmNewPassword) {
-      Alert.alert('Greška', 'Nova lozinka i potvrda su obavezne');
+      showError('Nova lozinka i potvrda su obavezne');
       return;
     }
 
     if (forgotPasswordData.newPassword !== forgotPasswordData.confirmNewPassword) {
-      Alert.alert('Greška', 'Lozinke se ne podudaraju');
+      showError('Lozinke se ne podudaraju');
       return;
     }
 
@@ -320,7 +393,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
     try {
       await authService.resetPassword(forgotPasswordData.email, forgotPasswordData.newPassword);
       
-      Alert.alert('Uspjeh', 'Lozinka je uspješno resetovana! Možete se prijaviti sa novom lozinkom.');
+      showSuccess('Lozinka je uspješno resetovana! Možete se prijaviti sa novom lozinkom.');
       setActiveTab(0); // Switch to login tab
       setForgotPasswordStep(1);
       setForgotPasswordData({
@@ -331,7 +404,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
       });
       setSecurityQuestion('');
     } catch (error) {
-      Alert.alert('Greška', error.response?.data?.message || 'Greška pri resetovanju lozinke');
+      showError(error.response?.data?.message || 'Greška pri resetovanju lozinke');
     } finally {
       setIsLoading(false);
     }
@@ -345,22 +418,33 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Email ili korisničko ime</Text>
         <TextInput
-          style={styles.textInput}
+          style={[styles.textInput, loginErrors.email && styles.textInputError]}
           value={loginData.email}
-          onChangeText={(text) => setLoginData({ ...loginData, email: text })}
+          onChangeText={(text) => {
+            setLoginData({ ...loginData, email: text });
+            validateLoginField('email', text);
+          }}
+          onBlur={() => validateLoginField('email', loginData.email)}
           placeholder="Unesite email ili korisničko ime"
           autoCapitalize="none"
           keyboardType="email-address"
         />
+        {loginErrors.email ? (
+          <Text style={styles.errorText}>{loginErrors.email}</Text>
+        ) : null}
       </View>
 
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Lozinka</Text>
-        <View style={styles.passwordContainer}>
+        <View style={[styles.passwordContainer, loginErrors.password && styles.textInputError]}>
           <TextInput
             style={styles.passwordInput}
             value={loginData.password}
-            onChangeText={(text) => setLoginData({ ...loginData, password: text })}
+            onChangeText={(text) => {
+              setLoginData({ ...loginData, password: text });
+              validateLoginField('password', text);
+            }}
+            onBlur={() => validateLoginField('password', loginData.password)}
             placeholder="Unesite lozinku"
             secureTextEntry={!showPassword}
           />
@@ -375,6 +459,9 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
             />
           </TouchableOpacity>
         </View>
+        {loginErrors.password ? (
+          <Text style={styles.errorText}>{loginErrors.password}</Text>
+        ) : null}
       </View>
 
       <View style={styles.switchContainer}>
@@ -825,6 +912,16 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     color: COLORS.gray,
+  },
+  textInputError: {
+    borderColor: COLORS.error,
+    borderWidth: 1.5,
+  },
+  errorText: {
+    color: COLORS.error,
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
   passwordContainer: {
     flexDirection: 'row',
