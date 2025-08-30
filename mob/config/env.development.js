@@ -18,10 +18,10 @@ export const ENV = {
   IS_DEV: true,
   
   // API Configuration  
-  API_URL: `http://localhost:5003/api`,
-  SERVER_URL: `http://localhost:5003/api`,
+  API_URL: `http://localhost:5004/api`,
+  SERVER_URL: `http://localhost:5004/api`,
   BACKUP_API_URL: `https://ders.ba/api`,
-  UPLOADS_URL: `http://localhost:5003/uploads`,
+  UPLOADS_URL: `http://localhost:5004/uploads`,
   FALLBACK_API_URL: `https://ders.ba/api`, // Fallback URL
   
   // Image handling

@@ -18,6 +18,7 @@ import predavanjaService from '../services/predavanjaService';
 import daijeService from '../services/daijeService';
 import udruzenjaService from '../services/udruzenjaService';
 import uploadService from '../services/uploadService';
+import IOSCompatibleDropdown from '../components/IOSCompatibleDropdown';
 
 const COLORS = {
   primary: '#022C43',
@@ -40,8 +41,6 @@ const AddContentScreen = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [daije, setDaije] = useState([]);
   const [organizations, setOrganizations] = useState([]);
-  const [useCustomSpeaker, setUseCustomSpeaker] = useState(false);
-  const [useCustomOrganization, setUseCustomOrganization] = useState(false);
   const [education, setEducation] = useState([]);
   const [educationInput, setEducationInput] = useState('');
   const [isSeminar, setIsSeminar] = useState(false);
@@ -100,8 +99,15 @@ const AddContentScreen = ({ onBack }) => {
         udruzenjaService.getAllUdruzenja()
       ]);
       
-      setDaije(daijeResponse.data || []);
-      setOrganizations(organizationsResponse.data || []);
+      // Check if response is array or has data property
+      const daijeData = Array.isArray(daijeResponse) ? daijeResponse : (daijeResponse.data || []);
+      const orgsData = Array.isArray(organizationsResponse) ? organizationsResponse : (organizationsResponse.data || []);
+      
+      console.log('📚 Loaded daije:', daijeData.length, 'items');
+      console.log('🏢 Loaded organizations:', orgsData.length, 'items');
+      
+      setDaije(daijeData);
+      setOrganizations(orgsData);
     } catch (error) {
       console.error('Error loading data:', error);
     }
@@ -172,8 +178,6 @@ const AddContentScreen = ({ onBack }) => {
     setFormData(initializeFormData(type));
     setEducation([]);
     setEducationInput('');
-    setUseCustomSpeaker(false);
-    setUseCustomOrganization(false);
     setIsSeminar(false);
     setShowSeminarOptions(false);
     setSelectedImage(null);
@@ -194,39 +198,6 @@ const AddContentScreen = ({ onBack }) => {
     return `${day}.${month}.${year}`;
   };
 
-  const handleTimeSelect = (time) => {
-    handleInputChange('time', time);
-  };
-
-  const handleDaijaSelect = (daijaId) => {
-    if (daijaId === 'custom') {
-      setUseCustomSpeaker(true);
-      handleInputChange('daijaId', '');
-      handleInputChange('speaker', '');
-    } else {
-      setUseCustomSpeaker(false);
-      const selectedDaija = daije.find(d => d._id === daijaId);
-      handleInputChange('daijaId', daijaId);
-      handleInputChange('speaker', selectedDaija ? `${selectedDaija.title} ${selectedDaija.name}` : '');
-    }
-  };
-
-  const handleOrganizationSelect = (orgId) => {
-    if (orgId === 'custom') {
-      setUseCustomOrganization(true);
-      handleInputChange('organizationId', '');
-      handleInputChange('organization', '');
-      handleInputChange('city', '');
-      handleInputChange('address', '');
-    } else {
-      setUseCustomOrganization(false);
-      const selectedOrg = organizations.find(o => o._id === orgId);
-      handleInputChange('organizationId', orgId);
-      handleInputChange('organization', selectedOrg ? selectedOrg.name : '');
-      handleInputChange('city', selectedOrg ? selectedOrg.city || '' : '');
-      handleInputChange('address', selectedOrg ? selectedOrg.address || '' : '');
-    }
-  };
 
   const addEducation = () => {
     if (educationInput.trim()) {
@@ -279,8 +250,7 @@ const AddContentScreen = ({ onBack }) => {
         if (!formData.time) errors.push('Vrijeme je obavezno');
         if (!formData.address?.trim()) errors.push('Adresa je obavezna');
         if (!formData.city?.trim()) errors.push('Grad je obavezan');
-        if (!useCustomSpeaker && !formData.daijaId) errors.push('Odaberite daiju');
-        if (useCustomSpeaker && !formData.speaker?.trim()) errors.push('Ime daije je obavezno');
+        if (!formData.daijaId) errors.push('Odaberite daiju');
         break;
       case 'daija':
         if (!formData.firstName?.trim()) errors.push('Ime je obavezno');
@@ -445,34 +415,15 @@ const AddContentScreen = ({ onBack }) => {
     </View>
   );
 
-  const renderPicker = (label, options, selectedValue, onSelect, required = false) => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.inputLabel}>
-        {label} {required && <Text style={styles.required}>*</Text>}
-      </Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pickerContainer}>
-        {options.map((option) => (
-          <TouchableOpacity
-            key={option.value || option}
-            style={[
-              styles.pickerOption,
-              (selectedValue === (option.value || option)) && styles.pickerOptionSelected
-            ]}
-            onPress={() => onSelect(option.value || option)}
-          >
-            <Text style={[
-              styles.pickerOptionText,
-              (selectedValue === (option.value || option)) && styles.pickerOptionTextSelected
-            ]}>
-              {option.label || option}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
 
-  const renderLectureForm = () => (
+  const renderLectureForm = () => {
+    console.log('🎯 Rendering lecture form with:', {
+      daijeCount: daije.length,
+      orgsCount: organizations.length,
+      timeOptions: timeOptions.length
+    });
+    
+    return (
     <ScrollView style={styles.formContainer}>
       {renderInput('Naslov predavanja', 'title', 'Unesite naslov...', false, true)}
       {renderInput('Opis predavanja', 'description', 'Unesite opis...')}
@@ -516,101 +467,63 @@ const AddContentScreen = ({ onBack }) => {
       {renderInput('Datum', 'date', 'DD.MM.YYYY (npr. 15.06.2024)', false, true)}
 
       {/* Time Picker */}
-      {renderPicker('Vrijeme', timeOptions, formData.time, handleTimeSelect, true)}
+      <IOSCompatibleDropdown
+        label="Vrijeme"
+        items={timeOptions.map(time => ({ label: time, value: time }))}
+        value={formData.time}
+        onChangeValue={(value) => handleInputChange('time', value)}
+        placeholder="Odaberite vrijeme"
+        required={true}
+        searchable={true}
+      />
 
       {/* Speaker Selection */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Predavač <Text style={styles.required}>*</Text></Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pickerContainer}>
-          {daije.map((daija) => (
-            <TouchableOpacity
-              key={daija._id}
-              style={[
-                styles.pickerOption,
-                (formData.daijaId === daija._id) && styles.pickerOptionSelected
-              ]}
-              onPress={() => handleDaijaSelect(daija._id)}
-            >
-              <Text style={[
-                styles.pickerOptionText,
-                (formData.daijaId === daija._id) && styles.pickerOptionTextSelected
-              ]}>
-                {daija.title} {daija.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            style={[
-              styles.pickerOption,
-              useCustomSpeaker && styles.pickerOptionSelected
-            ]}
-            onPress={() => handleDaijaSelect('custom')}
-          >
-            <Text style={[
-              styles.pickerOptionText,
-              useCustomSpeaker && styles.pickerOptionTextSelected
-            ]}>
-              ➕ Upiši ime
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-
-      {useCustomSpeaker && renderInput('Ime daije', 'speaker', 'Unesite ime i prezime...', false, true)}
+      <IOSCompatibleDropdown
+        label="Predavač"
+        items={daije.map(daija => ({ 
+          label: `${daija.title} ${daija.name}`, 
+          value: daija._id 
+        }))}
+        value={formData.daijaId}
+        onChangeValue={(value) => {
+          handleInputChange('daijaId', value);
+          const selectedDaija = daije.find(d => d._id === value);
+          if (selectedDaija) {
+            handleInputChange('speaker', `${selectedDaija.title} ${selectedDaija.name}`);
+          }
+        }}
+        placeholder="Odaberite predavača"
+        required={true}
+        searchable={true}
+      />
 
       {/* Organization Selection */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Udruženje</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pickerContainer}>
-          <TouchableOpacity
-            style={[
-              styles.pickerOption,
-              (!formData.organizationId && !useCustomOrganization) && styles.pickerOptionSelected
-            ]}
-            onPress={() => handleOrganizationSelect('')}
-          >
-            <Text style={[
-              styles.pickerOptionText,
-              (!formData.organizationId && !useCustomOrganization) && styles.pickerOptionTextSelected
-            ]}>
-              Nije navedeno
-            </Text>
-          </TouchableOpacity>
-          {organizations.map((org) => (
-            <TouchableOpacity
-              key={org._id}
-              style={[
-                styles.pickerOption,
-                (formData.organizationId === org._id) && styles.pickerOptionSelected
-              ]}
-              onPress={() => handleOrganizationSelect(org._id)}
-            >
-              <Text style={[
-                styles.pickerOptionText,
-                (formData.organizationId === org._id) && styles.pickerOptionTextSelected
-              ]}>
-                {org.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            style={[
-              styles.pickerOption,
-              useCustomOrganization && styles.pickerOptionSelected
-            ]}
-            onPress={() => handleOrganizationSelect('custom')}
-          >
-            <Text style={[
-              styles.pickerOptionText,
-              useCustomOrganization && styles.pickerOptionTextSelected
-            ]}>
-              ➕ Upiši naziv
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-
-      {useCustomOrganization && renderInput('Naziv udruženja', 'organization', 'Unesite naziv...', false, true)}
+      <IOSCompatibleDropdown
+        label="Udruženje"
+        items={[
+          { label: 'Nije navedeno', value: '' },
+          ...organizations.map(org => ({ 
+            label: org.name, 
+            value: org._id 
+          }))
+        ]}
+        value={formData.organizationId}
+        onChangeValue={(value) => {
+          handleInputChange('organizationId', value);
+          if (value) {
+            const selectedOrg = organizations.find(o => o._id === value);
+            if (selectedOrg) {
+              handleInputChange('organization', selectedOrg.name);
+              if (selectedOrg.city) handleInputChange('city', selectedOrg.city);
+              if (selectedOrg.address) handleInputChange('address', selectedOrg.address);
+            }
+          } else {
+            handleInputChange('organization', '');
+          }
+        }}
+        placeholder="Odaberite udruženje"
+        searchable={true}
+      />
 
       {renderInput('Adresa', 'address', 'Unesite adresu...', false, true)}
       {renderInput('mjesto', 'city', 'Unesite mjesto...', false, true)}
@@ -652,6 +565,7 @@ const AddContentScreen = ({ onBack }) => {
       )}
     </ScrollView>
   );
+  };
   
   const calculateSeminarDays = (startDate, endDate) => {
     if (!startDate || !endDate) return 0;
@@ -679,7 +593,14 @@ const AddContentScreen = ({ onBack }) => {
       {renderInput('Ime i prezime', 'firstName', 'Unesite ime i prezime...', false, true)}
       
       {/* Title Selection */}
-      {renderPicker('Titula', titles, formData.title, (value) => handleInputChange('title', value), true)}
+      <IOSCompatibleDropdown
+        label="Titula"
+        items={titles.map(title => ({ label: title.label, value: title.value }))}
+        value={formData.title}
+        onChangeValue={(value) => handleInputChange('title', value)}
+        placeholder="Odaberite titulu"
+        required={true}
+      />
       
       {renderInput('Biografija', 'biography', 'Unesite biografiju...', true, true)}
       
@@ -964,26 +885,6 @@ const styles = StyleSheet.create({
   dateButtonText: {
     fontSize: 16,
     color: COLORS.primary,
-  },
-  pickerContainer: {
-    flexDirection: 'row',
-  },
-  pickerOption: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: COLORS.lightGray,
-    marginRight: 8,
-  },
-  pickerOptionSelected: {
-    backgroundColor: COLORS.primary,
-  },
-  pickerOptionText: {
-    fontSize: 14,
-    color: COLORS.gray,
-  },
-  pickerOptionTextSelected: {
-    color: COLORS.white,
   },
   educationInputContainer: {
     flexDirection: 'row',

@@ -18,6 +18,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import IOSCompatibleDropdown from '../IOSCompatibleDropdown';
 import {
     format,
     startOfMonth,
@@ -155,6 +156,9 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       // Apply centralized sorting - lecturers and associations with upcoming lectures first
       const sortedDaije = sortLecturers(approvedDaije, allLectures);
       const sortedOrganizations = sortAssociations(approvedOrganizations, allLectures);
+      
+      console.log('📚 LectureForm - Loaded daije:', sortedDaije.length, 'items');
+      console.log('🏢 LectureForm - Loaded organizations:', sortedOrganizations.length, 'items');
       
       // Load existing images if available
       if (imagesResponse?.data?.images) {
@@ -693,74 +697,41 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   );
 
   const renderTimeDropdown = () => {
-    // Use same style as daije dropdown for both platforms
     return (
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>
-          Vrijeme <Text style={styles.required}>*</Text>
-        </Text>
-        <TouchableOpacity 
-          style={styles.pickerWrapper}
-          onPress={() => {
-            setTempTimeValue(formData.time || '');
-            setShowTimePicker(true);
-          }}
-        >
-          <Text style={[styles.pickerText, !formData.time && styles.placeholderText]}>
-            {formData.time || 'Odaberite vrijeme'}
-          </Text>
-          <Ionicons name="chevron-down" size={20} color={COLORS.gray} />
-        </TouchableOpacity>
-      </View>
+      <IOSCompatibleDropdown
+        label="Vrijeme"
+        items={timeOptions.filter(opt => opt.value !== '')}
+        value={formData.time}
+        onChangeValue={(value) => handleInputChange('time', value)}
+        placeholder="Odaberite vrijeme"
+        required={true}
+        searchable={true}
+      />
     );
   };
 
   const renderDaijaDropdown = () => {
-    const daijaOptions = [
-      { label: 'Odaberite daiju', value: '' },
-      ...daije.map(d => ({
-        label: formatDaijaTitle(d.name, d.title),
-        value: d._id
-      })),
-      { label: '➕ Unesi ručno ime daije', value: 'custom' }
-    ];
+    const daijaOptions = daije.map(d => ({
+      label: formatDaijaTitle(d.name, d.title),
+      value: d._id
+    }));
 
     return (
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>
-          Daija/Predavač <Text style={styles.required}>*</Text>
-        </Text>
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={selectedDaijaId}
-            onValueChange={handleDaijaSelect}
-            style={styles.picker}
-            mode="dropdown"
-            itemStyle={styles.pickerItem}
-            dropdownIconColor={COLORS.primary}
-          >
-            {daijaOptions.map((item, index) => (
-              <Picker.Item
-                key={item.value || `item-${index}`}
-                label={item.label}
-                value={item.value}
-                style={styles.pickerItem}
-                color={COLORS.primary}
-              />
-            ))}
-          </Picker>
-        </View>
-        
-        {useCustomSpeaker && (
-          <TextInput
-            style={[styles.input, { marginTop: 10 }]}
-            value={formData.speaker}
-            onChangeText={(value) => handleInputChange('speaker', value)}
-            placeholder="Unesite ime predavača..."
-            placeholderTextColor={COLORS.gray}
-          />
-        )}
-      </View>
+      <IOSCompatibleDropdown
+        label="Daija/Predavač"
+        items={daijaOptions}
+        value={formData.daijaId}
+        onChangeValue={(value) => {
+          handleInputChange('daijaId', value);
+          const selectedDaija = daije.find(d => d._id === value);
+          if (selectedDaija) {
+            handleInputChange('speaker', formatDaijaTitle(selectedDaija));
+          }
+        }}
+        placeholder="Odaberite predavača"
+        required={true}
+        searchable={true}
+      />
     );
   };
 
@@ -775,41 +746,26 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     ];
 
     return (
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>
-          Udruženje
-        </Text>
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={useCustomOrganization ? 'custom' : formData.organizationId}
-            onValueChange={handleOrganizationSelect}
-            style={styles.picker}
-            mode="dropdown"
-            itemStyle={styles.pickerItem}
-            dropdownIconColor={COLORS.primary}
-          >
-            {organizationOptions.map((item, index) => (
-              <Picker.Item
-                key={item.value || `item-${index}`}
-                label={item.label}
-                value={item.value}
-                style={styles.pickerItem}
-                color={COLORS.primary}
-              />
-            ))}
-          </Picker>
-        </View>
-        
-        {useCustomOrganization && (
-          <TextInput
-            style={[styles.input, { marginTop: 10 }]}
-            value={formData.organization}
-            onChangeText={(value) => handleInputChange('organization', value)}
-            placeholder="Unesite naziv udruženja..."
-            placeholderTextColor={COLORS.gray}
-          />
-        )}
-      </View>
+      <IOSCompatibleDropdown
+        label="Udruženje"
+        items={organizationOptions.filter(item => item.value !== 'custom')}
+        value={formData.organizationId}
+        onChangeValue={(value) => {
+          handleInputChange('organizationId', value);
+          if (value) {
+            const selectedOrg = organizations.find(o => o._id === value);
+            if (selectedOrg) {
+              handleInputChange('organization', selectedOrg.name);
+              if (selectedOrg.city) handleInputChange('city', selectedOrg.city);
+              if (selectedOrg.address) handleInputChange('address', selectedOrg.address);
+            }
+          } else {
+            handleInputChange('organization', '');
+          }
+        }}
+        placeholder="Odaberite udruženje"
+        searchable={true}
+      />
     );
   };
 
