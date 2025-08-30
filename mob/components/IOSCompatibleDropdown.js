@@ -121,13 +121,13 @@ const IOSCompatibleDropdown = ({
         transparent={true}
         onRequestClose={() => setOpen(false)}
       >
-        <SafeAreaView style={styles.modalOverlay}>
+        <View style={styles.modalOverlay}>
           <TouchableOpacity 
             style={styles.modalBackdrop}
             activeOpacity={1}
             onPress={() => setOpen(false)}
           />
-          <View style={styles.modalContent}>
+          <SafeAreaView style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{label || 'Odaberite opciju'}</Text>
               <TouchableOpacity onPress={() => setOpen(false)}>
@@ -170,8 +170,8 @@ const IOSCompatibleDropdown = ({
                 )}
               />
             </View>
-          </View>
-        </SafeAreaView>
+          </SafeAreaView>
+        </View>
       </Modal>
     </View>
   );
