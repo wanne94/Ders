@@ -112,9 +112,6 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
         image: existingLecture.image || null,
         isWeeklyLecture: existingLecture.isWeeklyLecture || false,
         totalWeeks: existingLecture.totalWeeks || 4,
-        videoUrl: existingLecture.videoUrl || '',
-        facebookUrl: existingLecture.facebookUrl || '',
-        instagramUrl: existingLecture.instagramUrl || '',
         // Seminar polja
         isSeminar: existingLecture.isSeminar || false,
         endDate: existingLecture.endDate ? existingLecture.endDate.split('T')[0] : ''
@@ -355,9 +352,6 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
       image: null,
       isWeeklyLecture: false,
       totalWeeks: 4,
-      videoUrl: '',
-      facebookUrl: '',
-      instagramUrl: '',
       // Seminar fields
       isSeminar: false,
       endDate: ''

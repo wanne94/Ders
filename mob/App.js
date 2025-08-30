@@ -289,14 +289,14 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection, fo
         />
       }
       // Performance optimizations
-      windowSize={10}
-      initialNumToRender={10}
-      maxToRenderPerBatch={5}
+      windowSize={5}
+      initialNumToRender={6}
+      maxToRenderPerBatch={3}
       updateCellsBatchingPeriod={50}
       removeClippedSubviews={true}
       getItemLayout={(data, index) => ({
-        length: 200, // Approximate height of each card
-        offset: 200 * index,
+        length: 220, // Approximate height of each card including margin
+        offset: 220 * index,
         index,
       })}
     />

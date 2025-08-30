@@ -89,7 +89,9 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
   
   // Calculate status for lectures - only once on mount
   useEffect(() => {
-    if (data && (data.type?.toLowerCase() === 'predavanje' || (data.title && (data.speaker || data.daija)))) {
+    const shouldCalculateStatus = data && (data.type?.toLowerCase() === 'predavanje' || (data.title && (data.speaker || data.daija)));
+    
+    if (shouldCalculateStatus) {
       const calculatedStatus = data.statusInfo || calculateLectureStatus(data);
       setStatusInfo(calculatedStatus);
       
@@ -103,10 +105,12 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
       }
       
       return () => {
-        if (interval) clearInterval(interval);
+        if (interval) {
+          clearInterval(interval);
+        }
       };
     }
-  }, [data, data._id, data.id, data.date, data.time, data.isCancelled, data.status]); // Only recalculate when these critical fields change
+  }, [data?._id, data?.date, data?.time]); // Only recalculate when these critical fields change
 
   // Handle null or undefined data
   if (!data) {
@@ -646,17 +650,16 @@ const styles = StyleSheet.create({
 
 // Memoize component to prevent unnecessary re-renders
 export default memo(UniverzalCard, (prevProps, nextProps) => {
-  // Custom comparison function
-  // Re-render only if data or onPress changes
-  return (
-    prevProps.data?._id === nextProps.data?._id &&
-    prevProps.data?.id === nextProps.data?.id &&
-    prevProps.data?.title === nextProps.data?.title &&
-    prevProps.data?.status === nextProps.data?.status &&
-    prevProps.data?.cancelled === nextProps.data?.cancelled &&
-    prevProps.data?.date === nextProps.data?.date &&
-    prevProps.data?.time === nextProps.data?.time &&
-    prevProps.onPress === nextProps.onPress &&
-    prevProps.isFollowing === nextProps.isFollowing
-  );
+  // Custom comparison function - only re-render if critical props change
+  const prevData = prevProps.data;
+  const nextData = nextProps.data;
+  
+  if (!prevData && !nextData) return true;
+  if (!prevData || !nextData) return false;
+  
+  const criticalFields = ['_id', 'id', 'title', 'status', 'date', 'time', 'isCancelled', 'type'];
+  
+  return criticalFields.every(field => 
+    prevData[field] === nextData[field]
+  ) && prevProps.onPress === nextProps.onPress && prevProps.isFollowing === nextProps.isFollowing;
 });

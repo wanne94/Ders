@@ -252,4 +252,23 @@ const UniversalCard = React.memo(({ data }) => {
 
 UniversalCard.displayName = 'UniversalCard';
 
-export default UniversalCard;
+// Optimize memo comparison
+export default React.memo(UniversalCard, (prevProps, nextProps) => {
+  // Deep comparison for critical fields only
+  const prevData = prevProps.data;
+  const nextData = nextProps.data;
+  
+  if (!prevData && !nextData) return true;
+  if (!prevData || !nextData) return false;
+  
+  // Compare only fields that affect rendering
+  return (
+    prevData._id === nextData._id &&
+    prevData.title === nextData.title &&
+    prevData.type === nextData.type &&
+    prevData.isCancelled === nextData.isCancelled &&
+    prevData.image === nextData.image &&
+    prevData.date === nextData.date &&
+    prevData.time === nextData.time
+  );
+});

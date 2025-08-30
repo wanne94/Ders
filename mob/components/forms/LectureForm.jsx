@@ -71,9 +71,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     image: '',
     isWeeklyLecture: false,
     totalWeeks: 2,
-    videoUrl: '',
-    facebookUrl: '',
-    instagramUrl: '',
     // Seminar fields
     isSeminar: false,
     endDate: ''
@@ -104,6 +101,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const [showSeminarOptions, setShowSeminarOptions] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [selectedEndDate, setSelectedEndDate] = useState(new Date());
+  const [selectedTime, setSelectedTime] = useState('');
 
   // Hardcoded time options with 15-minute intervals (same as web version)
   const timeOptions = [
@@ -216,9 +214,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       image: editData.image || '',
       isWeeklyLecture: editData.isWeeklyLecture || false,
       totalWeeks: editData.totalWeeks || 2,
-      videoUrl: editData.videoUrl || '',
-      facebookUrl: editData.facebookUrl || '',
-      instagramUrl: editData.instagramUrl || '',
       isSeminar: editData.isSeminar || false,
       endDate: editData.endDate ? format(new Date(editData.endDate), 'dd.MM.yyyy') : ''
     });
@@ -306,10 +301,21 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   };
   
   const handleEndDateChange = (event, selectedDate) => {
-    setShowEndDatePicker(false);
+    // Ne zatvarati modal automatski - čeka se klik na dugme Potvrdi
     if (selectedDate) {
       setSelectedEndDate(selectedDate);
-      handleInputChange('endDate', format(selectedDate, 'dd.MM.yyyy'));
+    }
+  };
+  
+  const confirmEndDate = () => {
+    setShowEndDatePicker(false);
+    handleInputChange('endDate', format(selectedEndDate, 'dd.MM.yyyy'));
+  };
+  
+  const confirmTime = () => {
+    setShowTimePicker(false);
+    if (selectedTime) {
+      handleInputChange('time', selectedTime);
     }
   };
   
@@ -692,20 +698,27 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     }
   };
 
-  const renderInput = (label, field, placeholder, multiline = false, required = false) => (
+  const renderInput = (label, field, placeholder, multiline = false, required = false, disabled = false) => (
     <View style={styles.inputContainer}>
       <Text style={styles.inputLabel}>
         {label} {required && <Text style={styles.required}>*</Text>}
       </Text>
       <TextInput
-        style={[styles.input, multiline && styles.multilineInput]}
+        style={[styles.input, multiline && styles.multilineInput, disabled && styles.inputDisabled]}
         value={formData[field]}
         onChangeText={(value) => handleInputChange(field, value)}
         placeholder={placeholder}
         placeholderTextColor={COLORS.gray}
         multiline={multiline}
         numberOfLines={multiline ? 4 : 1}
+        editable={!disabled}
       />
+      {disabled && field === 'address' && (
+        <Text style={styles.helperText}>Adresa se automatski popunjava iz odabranog udruženja</Text>
+      )}
+      {disabled && field === 'city' && (
+        <Text style={styles.helperText}>Mjesto se automatski popunjava iz odabranog udruženja</Text>
+      )}
     </View>
   );
 
@@ -892,16 +905,9 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         {/* Organization Dropdown */}
         {renderOrganizationDropdown()}
 
-        {renderInput('Adresa', 'address', 'Unesite adresu...', false, true)}
-        {renderInput('Mjesto', 'city', 'Unesite mjesto...', false, true)}
+        {renderInput('Adresa', 'address', 'Unesite adresu...', false, true, Boolean(formData.organizationId && !useCustomOrganization))}
+        {renderInput('Mjesto', 'city', 'Unesite mjesto...', false, true, Boolean(formData.organizationId && !useCustomOrganization))}
 
-        {/* Social Media Links */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Društvene mreže (neobavezno)</Text>
-          {renderInput('Video URL', 'videoUrl', 'https://youtube.com/...')}
-          {renderInput('Facebook', 'facebookUrl', 'https://facebook.com/...')}
-          {renderInput('Instagram', 'instagramUrl', 'https://instagram.com/...')}
-        </View>
 
         {/* Weekly lecture section */}
         <View style={styles.weeklyLectureSection}>
@@ -1047,42 +1053,46 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         visible={showEndDatePicker}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setShowEndDatePicker(false)}
+        onRequestClose={() => {}}
       >
-        <TouchableWithoutFeedback onPress={() => setShowEndDatePicker(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Datum završetka seminara</Text>
-                  <TouchableOpacity
-                    onPress={() => setShowEndDatePicker(false)}
-                    style={styles.modalCloseButton}
-                  >
-                    <Ionicons name="close" size={24} color={COLORS.primary} />
-                  </TouchableOpacity>
-                </View>
-                {Platform.OS === 'android' ? (
-                  <DateTimePicker
-                    value={selectedEndDate}
-                    mode="date"
-                    display="spinner"
-                    onChange={handleEndDateChange}
-                    minimumDate={selectedDate}
-                  />
-                ) : (
-                  <DateTimePicker
-                    value={selectedEndDate}
-                    mode="date"
-                    display="spinner"
-                    onChange={handleEndDateChange}
-                    minimumDate={selectedDate}
-                  />
-                )}
-              </View>
-            </TouchableWithoutFeedback>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.centeredModal]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Datum završetka seminara</Text>
+            </View>
+            {Platform.OS === 'android' ? (
+              <DateTimePicker
+                value={selectedEndDate}
+                mode="date"
+                display="spinner"
+                onChange={handleEndDateChange}
+                minimumDate={selectedDate}
+              />
+            ) : (
+              <DateTimePicker
+                value={selectedEndDate}
+                mode="date"
+                display="spinner"
+                onChange={handleEndDateChange}
+                minimumDate={selectedDate}
+              />
+            )}
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => setShowEndDatePicker(false)}
+              >
+                <Text style={styles.modalCancelButtonText}>Otkaži</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirmButton}
+                onPress={confirmEndDate}
+              >
+                <Text style={styles.modalConfirmButtonText}>Potvrdi</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </TouchableWithoutFeedback>
+        </View>
       </Modal>
 
       {/* Sticky Submit Button */}
@@ -1111,57 +1121,67 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         onHide={hideToast}
       />
 
-      {/* Time Picker Modal - Large but not full screen */}
+      {/* Time Picker Modal - Centered with confirm button */}
       <Modal
         visible={showTimePicker}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowTimePicker(false)}
+        onRequestClose={() => {}}
       >
-        <TouchableWithoutFeedback onPress={() => setShowTimePicker(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={[styles.largeModalContent]}>
-                <View style={styles.largeModalHeader}>
-                  <Text style={styles.largeModalTitle}>Odaberite vrijeme</Text>
-                  <TouchableOpacity onPress={() => setShowTimePicker(false)}>
-                    <Ionicons name="close" size={24} color={COLORS.primary} />
-                  </TouchableOpacity>
-                </View>
-                
-                <ScrollView 
-                  style={styles.largeModalScrollView}
-                  showsVerticalScrollIndicator={true}
-                  contentContainerStyle={{ paddingBottom: 20 }}
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.timeModalContent]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Odaberite vrijeme</Text>
+            </View>
+            
+            <ScrollView 
+              style={styles.timeModalScrollView}
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={{ paddingBottom: 10 }}
+            >
+              {timeOptions.slice(1).map((time) => (
+                <TouchableOpacity
+                  key={time.value}
+                  style={[
+                    styles.timeItem,
+                    selectedTime === time.value && styles.timeItemSelected
+                  ]}
+                  onPress={() => {
+                    setSelectedTime(time.value);
+                  }}
                 >
-                  {timeOptions.slice(1).map((time) => (
-                    <TouchableOpacity
-                      key={time.value}
-                      style={[
-                        styles.timeItem,
-                        formData.time === time.value && styles.timeItemSelected
-                      ]}
-                      onPress={() => {
-                        handleInputChange('time', time.value);
-                        setShowTimePicker(false);
-                      }}
-                    >
-                      <Text style={[
-                        styles.timeItemText,
-                        formData.time === time.value && styles.timeItemTextSelected
-                      ]}>
-                        {time.label}
-                      </Text>
-                      {formData.time === time.value && (
-                        <Ionicons name="checkmark" size={24} color={COLORS.primary} />
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </TouchableWithoutFeedback>
+                  <Text style={[
+                    styles.timeItemText,
+                    selectedTime === time.value && styles.timeItemTextSelected
+                  ]}>
+                    {time.label}
+                  </Text>
+                  {selectedTime === time.value && (
+                    <Ionicons name="checkmark" size={24} color={COLORS.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => {
+                  setShowTimePicker(false);
+                  setSelectedTime(formData.time || '');
+                }}
+              >
+                <Text style={styles.modalCancelButtonText}>Otkaži</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirmButton}
+                onPress={confirmTime}
+              >
+                <Text style={styles.modalConfirmButtonText}>Potvrdi</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </TouchableWithoutFeedback>
+        </View>
       </Modal>
 
       {/* Existing Images Modal */}
@@ -1342,6 +1362,50 @@ const styles = StyleSheet.create({
     margin: 20,
     maxWidth: 350,
     width: '90%',
+  },
+  centeredModal: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 12,
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: COLORS.lightGray,
+    alignItems: 'center',
+  },
+  modalCancelButtonText: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalConfirmButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+  },
+  modalConfirmButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  timeModalContent: {
+    maxHeight: '70%',
+    width: '90%',
+  },
+  timeModalScrollView: {
+    maxHeight: 300,
+    marginVertical: 10,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1761,6 +1825,16 @@ const styles = StyleSheet.create({
   largeModalScrollView: {
     flex: 1,
     backgroundColor: COLORS.white,
+  },
+  inputDisabled: {
+    backgroundColor: '#f5f5f5',
+    opacity: 0.7,
+  },
+  helperText: {
+    fontSize: 12,
+    color: COLORS.gray,
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });
 

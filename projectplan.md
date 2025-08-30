@@ -1,51 +1,67 @@
-# Plan za popravku iOS dropdown problema
+# Plan Optimizacije - Web i Mobilna Aplikacija
 
-## Problem
-Dropdown lista za daije na iOS-u se prikazuje samo na pola ekrana umjesto da koristi više prostora.
+## Web Aplikacija (Next.js) - Kritični Problemi
 
-## Analiza
-1. IOSCompatibleDropdown komponenta ima ograničenja:
-   - `maxHeight: '80%'` na modalContent (linija 229)
-   - `maxHeight: 400` na FlatList (linija 162)
-2. Ovo posebno utiče na daije dropdown jer može imati puno opcija
+### VISOK PRIORITET:
+- [x] **Next.js Konfiguracija** - Previše agresivno onemogućene optimizacije u next.config.js
+- [ ] **Bundle Size** - Redundantne UI biblioteke (Material-UI + Radix UI + Tailwind)
+- [x] **React.memo Optimizacije** - UniversalCard komponenta se rerenderuje nepotrebno
+- [ ] **Image Optimization** - Nedostaju Next.js Image komponente
 
-## TODO Lista
+### SREDNJI PRIORITET:
+- [x] **API Data Fetching** - Nedostaju caching strategije
+- [ ] **State Management** - Previše prop drilling-a
+- [ ] **Code Duplication** - imageUtils duplikati
 
-### [x] 1. Analizirati trenutnu implementaciju
-- Pronaći sve dropdown komponente koje koriste IOSCompatibleDropdown
-- Identificirati specifične probleme sa visinom na iOS-u
+## Mobilna Aplikacija (React Native/Expo) - Kritični Problemi
 
-### [x] 2. Popraviti visinu modal-a
-- Povećati maxHeight za modalContent (sa 80% na 90%)
-- Dodati SafeAreaView za iOS kompatibilnost
-- Posebno optimizovati za iPhone notch/Dynamic Island
+### VISOK PRIORITET:
+- [x] **FlatList Performance** - Neoptimalni parametri za renderovanje
+- [x] **Memory Leaks** - Interval u UniverzalCard bez cleanup-a
+- [ ] **Image Caching** - Nema strategije za keširanje slika
+- [ ] **Bundle Size** - Neiskorišćene dependencije
 
-### [x] 3. Popraviti FlatList visinu
-- Ukloniti fiksnu maxHeight sa FlatList-e (bila je 400px)
-- Omogućiti da lista koristi maksimalnu dostupnu visinu (flex: 1)
+### SREDNJI PRIORITET:
+- [x] **API Caching** - Nedostaju caching mehanizmi
+- [ ] **React Optimizacije** - Nedostaju useMemo/useCallback
+- [ ] **Network Layer** - Dupli API pozivi
 
-### [x] 4. Testirati promjene
-- Testirati na različitim iOS uređajima
-- Provjeriti da li dropdown radi pravilno sa puno opcija
-- Provjeriti da li search funkcionalnost radi
+## Preporučeni redoslijed implementacije:
 
-### [x] 5. Review i optimizacija
-- Provjeriti performanse sa velikim listama
-- Optimizovati renderovanje ako je potrebno
+1. ✅ Web: Next.js config fix
+2. ✅ Mobile: FlatList optimizacije
+3. ✅ Web: Bundle size reduction (React.memo)
+4. ✅ Mobile: Memory leak fixes
+5. ✅ Obje: API caching layer
 
-## Review izmjena
+## Review Sekcija
 
-### Izvršene promjene:
-1. **Povećana visina modal-a** - sa 80% na 90% ekrana
-2. **Uklonjena fiksna visina FlatList-e** - umjesto `maxHeight: 400` sada koristi `flex: 1`
-3. **Dodata SafeAreaView podrška** - za pravilno prikazivanje na iOS uređajima sa notch/Dynamic Island
-4. **Poboljšan modal overlay** - dodata transparentna pozadina
+### Završene optimizacije:
 
-### Tehničke izmjene u IOSCompatibleDropdown.js:
-- Linija 121: Dodat SafeAreaView wrapper oko modal sadržaja
-- Linija 162: Promjena sa `style={{ maxHeight: 400 }}` na `style={{ flex: 1 }}`
-- Linija 170: Zatvorena SafeAreaView umjesto View
-- Linija 216: Dodata `backgroundColor: 'transparent'` na modalOverlay
-- Linija 229: Promjena `maxHeight` sa '80%' na '90%'
+1. **Next.js konfiguracija (Web)**
+   - Omogućen SWC minifier za brže buildove
+   - Uključena kompresija i optimizacija fontova
+   - Implementiran smart caching za statične resurse
+   - Optimizovan code splitting sa vendor chunks
 
-Ove izmjene će omogućiti da se dropdown lista prikazuje sa više prostora na iOS uređajima, posebno kada ima puno opcija kao što je slučaj sa listom daija.
+2. **FlatList performanse (Mobile)**
+   - Smanjen windowSize sa 5 na 3
+   - Dodat getItemLayout za poznate dimenzije
+   - Omogućen removeClippedSubviews
+   - Optimizovan broj početnih renderovanja
+
+3. **React.memo optimizacije**
+   - Web: UniversalCard sada poredi samo kritična polja
+   - Mobile: UniverzalCard memo funkcija optimizovana
+   - Sprečava nepotrebne re-renderinge
+
+4. **Memory leak popravke (Mobile)**
+   - Popravljen cleanup za interval u UniverzalCard
+   - Optimizovan useEffect dependency array
+   - Interval se pokreće samo za aktivna predavanja
+
+5. **API Caching Layer**
+   - Web: Implementiran memory cache sa automatskim čišćenjem
+   - Mobile: Dual cache (memory + AsyncStorage)
+   - Request deduplication za sprečavanje duplikata
+   - Cache TTL konfigurisan po tipu podataka
