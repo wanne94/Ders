@@ -65,25 +65,28 @@ const IOSCompatibleDropdown = ({
     }
   }, [open, filteredItems, label]);
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.listItem,
-        item.value === value && styles.selectedListItem
-      ]}
-      onPress={() => handleSelect(item.value)}
-    >
-      <Text style={[
-        styles.listItemText,
-        item.value === value && styles.selectedListItemText
-      ]}>
-        {item.label}
-      </Text>
-      {item.value === value && (
-        <Ionicons name="checkmark" size={20} color={COLORS.primary} />
-      )}
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item }) => {
+    console.log('Rendering item:', item);
+    return (
+      <TouchableOpacity
+        style={[
+          styles.listItem,
+          item.value === value && styles.selectedListItem
+        ]}
+        onPress={() => handleSelect(item.value)}
+      >
+        <Text style={[
+          styles.listItemText,
+          item.value === value && styles.selectedListItemText
+        ]}>
+          {item.label}
+        </Text>
+        {item.value === value && (
+          <Ionicons name="checkmark" size={20} color={COLORS.primary} />
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -152,20 +155,21 @@ const IOSCompatibleDropdown = ({
               </View>
             )}
             
-            <FlatList
-              data={filteredItems}
-              renderItem={renderItem}
-              keyExtractor={(item) => item.value ? item.value.toString() : 'empty'}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-              style={{ flex: 1 }}
-              ListEmptyComponent={() => (
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>Nema dostupnih opcija</Text>
-                </View>
-              )}
-            />
+            <View style={{ flex: 1 }}>
+              <FlatList
+                data={filteredItems}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.value ? item.value.toString() : 'empty'}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={() => (
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>Nema dostupnih opcija</Text>
+                  </View>
+                )}
+              />
+            </View>
           </View>
         </SafeAreaView>
       </Modal>
@@ -227,7 +231,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '90%',
+    height: '90%',
+    display: 'flex',
+    flexDirection: 'column',
     ...Platform.select({
       ios: {
         paddingBottom: 20,
