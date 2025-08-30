@@ -130,12 +130,19 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
 
   const loadData = async () => {
     try {
+      console.log('🔄 LectureForm - Starting data load...');
       // Load basic data first
       const [daijeResponse, organizationsResponse, allLecturesResponse] = await Promise.all([
         daijeService.getAllDaije(),
         udruzenjaService.getAllUdruzenja(),
         predavanjaService.getAllPredavanja()
       ]);
+      
+      console.log('✅ LectureForm - Raw responses:', {
+        daije: daijeResponse,
+        organizations: organizationsResponse,
+        lectures: allLecturesResponse
+      });
       
       // Try to load existing images separately (optional)
       let imagesResponse = null;
@@ -178,8 +185,14 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       
       setDaije(sortedDaije);
       setOrganizations(sortedOrganizations);
+      console.log('✅ LectureForm - Data set successfully');
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('❌ Error loading data:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       setDaije([]);
       setOrganizations([]);
     }
@@ -711,10 +724,15 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   };
 
   const renderDaijaDropdown = () => {
+    console.log('renderDaijaDropdown - daije array:', daije);
+    console.log('renderDaijaDropdown - daije length:', daije.length);
+    
     const daijaOptions = daije.map(d => ({
       label: formatDaijaTitle(d.name, d.title),
       value: d._id
     }));
+    
+    console.log('renderDaijaDropdown - daijaOptions:', daijaOptions);
 
     return (
       <IOSCompatibleDropdown
