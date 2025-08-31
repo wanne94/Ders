@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
@@ -37,7 +38,14 @@ const Header = ({ onMenuPress, title, onLogoPress }) => {
   };
 
   return (
-    <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+    <View style={[
+      styles.header, 
+      { 
+        paddingTop: Platform.OS === 'ios' 
+          ? insets.top + 10 
+          : insets.top > 0 ? insets.top + 10 : 20 
+      }
+    ]}>
       <TouchableOpacity 
         style={styles.logoContainer}
         onPress={onLogoPress}

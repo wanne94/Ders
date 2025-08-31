@@ -117,9 +117,10 @@ const IOSCompatibleDropdown = ({
 
       <Modal
         visible={open}
-        animationType="slide"
+        animationType={Platform.OS === 'ios' ? 'slide' : 'fade'}
         transparent={true}
         onRequestClose={() => setOpen(false)}
+        statusBarTranslucent={Platform.OS === 'android'}
       >
         <View style={styles.modalOverlay}>
           <TouchableOpacity 
@@ -237,6 +238,13 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: {
         paddingBottom: 20,
+      },
+      android: {
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
       },
     }),
   },

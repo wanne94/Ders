@@ -17,7 +17,6 @@ import {
 
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import IOSCompatibleDropdown from '../IOSCompatibleDropdown';
 import {
     format,
@@ -101,6 +100,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const [showSeminarOptions, setShowSeminarOptions] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [selectedEndDate, setSelectedEndDate] = useState(new Date());
+  const [currentEndMonth, setCurrentEndMonth] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState('');
 
   // Hardcoded time options with 15-minute intervals (same as web version)
@@ -413,6 +413,97 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
                   isDisabled && styles.calendarDayDisabled
                 ]}
                 onPress={() => handleDateChange(null, day)}
+                disabled={isDisabled}
+              >
+                <Text style={[
+                  styles.calendarDayText,
+                  isSelected && styles.calendarDayTextSelected,
+                  isDisabled && styles.calendarDayTextDisabled
+                ]}>
+                  {format(day, 'd')}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
+
+  const renderEndCalendar = () => {
+    const monthStart = startOfMonth(currentEndMonth);
+    const monthEnd = endOfMonth(currentEndMonth);
+    
+    // Get the first Monday of the calendar view
+    const startDate = new Date(monthStart);
+    const dayOfWeek = monthStart.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startDate.setDate(monthStart.getDate() - daysToSubtract);
+    
+    // Get the last day to show
+    const endDate = new Date(monthEnd);
+    const lastDayOfWeek = monthEnd.getDay();
+    const daysToAdd = lastDayOfWeek === 0 ? 0 : 7 - lastDayOfWeek;
+    endDate.setDate(monthEnd.getDate() + daysToAdd);
+    
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    const minDate = startOfDay(selectedDate); // Minimum date is the selected start date
+    
+    // Bosnian month names
+    const bosnianMonths = [
+      'Januar', 'Februar', 'Mart', 'April', 'Maj', 'Juni',
+      'Juli', 'August', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'
+    ];
+    
+    const previousMonth = () => {
+      setCurrentEndMonth(new Date(currentEndMonth.getFullYear(), currentEndMonth.getMonth() - 1));
+    };
+    
+    const nextMonth = () => {
+      setCurrentEndMonth(new Date(currentEndMonth.getFullYear(), currentEndMonth.getMonth() + 1));
+    };
+
+    return (
+      <View style={styles.calendar}>
+        <View style={styles.calendarHeader}>
+          <TouchableOpacity onPress={previousMonth} style={styles.calendarNavButton}>
+            <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+          <Text style={styles.calendarTitle}>
+            {bosnianMonths[currentEndMonth.getMonth()]} {currentEndMonth.getFullYear()}
+          </Text>
+          <TouchableOpacity onPress={nextMonth} style={styles.calendarNavButton}>
+            <Ionicons name="chevron-forward" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.calendarGrid}>
+          {['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'].map(day => (
+            <Text key={day} style={styles.calendarDayHeader}>{day}</Text>
+          ))}
+          
+          {days.map(day => {
+            const dayStart = startOfDay(day);
+            const isPastDate = isBefore(dayStart, minDate);
+            const isCurrentMonth = isSameMonth(day, currentEndMonth);
+            const isSelected = isSameDay(day, selectedEndDate);
+            const isDisabled = !isCurrentMonth || isPastDate;
+            
+            return (
+              <TouchableOpacity
+                key={day.toISOString()}
+                style={[
+                  styles.calendarDay,
+                  isSelected && styles.calendarDaySelected,
+                  isDisabled && styles.calendarDayDisabled
+                ]}
+                onPress={() => {
+                  if (!isDisabled) {
+                    setSelectedEndDate(day);
+                    handleInputChange('endDate', format(day, 'dd.MM.yyyy'));
+                    setShowEndDatePicker(false);
+                  }
+                }}
                 disabled={isDisabled}
               >
                 <Text style={[
@@ -845,7 +936,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       <KeyboardAvoidingView 
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
         enabled
       >
         <View style={styles.header}>
@@ -1053,46 +1144,26 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         visible={showEndDatePicker}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => {}}
+        onRequestClose={() => setShowEndDatePicker(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, styles.centeredModal]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Datum završetka seminara</Text>
-            </View>
-            {Platform.OS === 'android' ? (
-              <DateTimePicker
-                value={selectedEndDate}
-                mode="date"
-                display="spinner"
-                onChange={handleEndDateChange}
-                minimumDate={selectedDate}
-              />
-            ) : (
-              <DateTimePicker
-                value={selectedEndDate}
-                mode="date"
-                display="spinner"
-                onChange={handleEndDateChange}
-                minimumDate={selectedDate}
-              />
-            )}
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity
-                style={styles.modalCancelButton}
-                onPress={() => setShowEndDatePicker(false)}
-              >
-                <Text style={styles.modalCancelButtonText}>Otkaži</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalConfirmButton}
-                onPress={confirmEndDate}
-              >
-                <Text style={styles.modalConfirmButtonText}>Potvrdi</Text>
-              </TouchableOpacity>
-            </View>
+        <TouchableWithoutFeedback onPress={() => setShowEndDatePicker(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Datum završetka seminara</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowEndDatePicker(false)}
+                    style={styles.modalCloseButton}
+                  >
+                    <Ionicons name="close" size={24} color={COLORS.primary} />
+                  </TouchableOpacity>
+                </View>
+                {renderEndCalendar()}
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
 
       {/* Sticky Submit Button */}
@@ -1663,31 +1734,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.gray,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-    paddingBottom: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.primary,
-  },
   imageGrid: {
     padding: 16,
   },
@@ -1767,9 +1813,6 @@ const styles = StyleSheet.create({
   timeButtonText: {
     fontSize: 16,
     color: COLORS.primary,
-  },
-  placeholderText: {
-    color: COLORS.gray,
   },
   timeListContainer: {
     maxHeight: 400,

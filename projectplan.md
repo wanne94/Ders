@@ -1,67 +1,64 @@
-# Plan Optimizacije - Web i Mobilna Aplikacija
+# Plan za rješavanje iOS/Android kompatibilnosti problema
 
-## Web Aplikacija (Next.js) - Kritični Problemi
+## TODO Lista:
 
-### VISOK PRIORITET:
-- [x] **Next.js Konfiguracija** - Previše agresivno onemogućene optimizacije u next.config.js
-- [ ] **Bundle Size** - Redundantne UI biblioteke (Material-UI + Radix UI + Tailwind)
-- [x] **React.memo Optimizacije** - UniversalCard komponenta se rerenderuje nepotrebno
-- [ ] **Image Optimization** - Nedostaju Next.js Image komponente
+### Kritični problemi:
+- [x] 1. Popraviti StatusBar handling u App.js - dodati platform-specifičnu logiku ✅
+- [x] 2. Implementirati Safe Area handling u Header komponenti ✅
 
-### SREDNJI PRIORITET:
-- [x] **API Data Fetching** - Nedostaju caching strategije
-- [ ] **State Management** - Previše prop drilling-a
-- [ ] **Code Duplication** - imageUtils duplikati
+### Visoki prioritet:
+- [x] 3. Optimizovati Keyboard handling u formama za iOS ✅
+- [x] 4. Poboljšati Modal positioning u IOSCompatibleDropdown za Android ✅
 
-## Mobilna Aplikacija (React Native/Expo) - Kritični Problemi
+## Detaljan plan:
 
-### VISOK PRIORITET:
-- [x] **FlatList Performance** - Neoptimalni parametri za renderovanje
-- [x] **Memory Leaks** - Interval u UniverzalCard bez cleanup-a
-- [ ] **Image Caching** - Nema strategije za keširanje slika
-- [ ] **Bundle Size** - Neiskorišćene dependencije
+### 1. StatusBar handling (App.js)
+- Dodati Platform.OS provjeru
+- Postaviti različite stilove za iOS i Android
+- iOS: light-content sa transparentnom pozadinom
+- Android: dark-content sa bojom pozadine
 
-### SREDNJI PRIORITET:
-- [x] **API Caching** - Nedostaju caching mehanizmi
-- [ ] **React Optimizacije** - Nedostaju useMemo/useCallback
-- [ ] **Network Layer** - Dupli API pozivi
+### 2. Safe Area handling (Header.js)
+- Importovati useSafeAreaInsets iz react-native-safe-area-context
+- Dodati padding-top baziran na safe area insets
+- Osigurati da sadržaj ne ide ispod notch-a na iOS uređajima
 
-## Preporučeni redoslijed implementacije:
+### 3. Keyboard handling optimizacija
+- Pronaći sve forme koje koriste KeyboardAvoidingView
+- Prilagoditi keyboardVerticalOffset za iOS
+- Testirati sa različitim veličinama ekrana
 
-1. ✅ Web: Next.js config fix
-2. ✅ Mobile: FlatList optimizacije
-3. ✅ Web: Bundle size reduction (React.memo)
-4. ✅ Mobile: Memory leak fixes
-5. ✅ Obje: API caching layer
+### 4. Modal positioning za Android
+- Pregledati IOSCompatibleDropdown
+- Dodati Android-specifično pozicioniranje
+- Osigurati konzistentno ponašanje na obje platforme
 
-## Review Sekcija
+## Review sekcija:
 
-### Završene optimizacije:
+### Završene promjene:
 
-1. **Next.js konfiguracija (Web)**
-   - Omogućen SWC minifier za brže buildove
-   - Uključena kompresija i optimizacija fontova
-   - Implementiran smart caching za statične resurse
-   - Optimizovan code splitting sa vendor chunks
+1. **StatusBar handling (App.js)**
+   - Dodana Platform.OS provjera
+   - iOS: light-content sa transparentnom pozadinom
+   - Android: dark-content sa bojom pozadine (#022C43)
+   - translucent samo za iOS
 
-2. **FlatList performanse (Mobile)**
-   - Smanjen windowSize sa 5 na 3
-   - Dodat getItemLayout za poznate dimenzije
-   - Omogućen removeClippedSubviews
-   - Optimizovan broj početnih renderovanja
+2. **Safe Area handling (Header.js)**
+   - Implementirana platform-specifična logika za padding-top
+   - iOS: koristi safe area insets + 10px
+   - Android: koristi safe area insets ili fallback na 20px
 
-3. **React.memo optimizacije**
-   - Web: UniversalCard sada poredi samo kritična polja
-   - Mobile: UniverzalCard memo funkcija optimizovana
-   - Sprečava nepotrebne re-renderinge
+3. **Keyboard handling optimizacija**
+   - Ažurirane sve forme sa KeyboardAvoidingView
+   - iOS keyboardVerticalOffset postavljen na 88px za glavne forme
+   - AuthScreen koristi 60px zbog drugačijeg layout-a
+   - Android zadržava 0px offset
 
-4. **Memory leak popravke (Mobile)**
-   - Popravljen cleanup za interval u UniverzalCard
-   - Optimizovan useEffect dependency array
-   - Interval se pokreće samo za aktivna predavanja
+4. **Modal positioning (IOSCompatibleDropdown)**
+   - Dodana elevation i shadow za Android
+   - Različite animacije: iOS koristi 'slide', Android koristi 'fade'
+   - statusBarTranslucent postavljen za Android
+   - Poboljšano vizuelno iskustvo na obje platforme
 
-5. **API Caching Layer**
-   - Web: Implementiran memory cache sa automatskim čišćenjem
-   - Mobile: Dual cache (memory + AsyncStorage)
-   - Request deduplication za sprečavanje duplikata
-   - Cache TTL konfigurisan po tipu podataka
+### Rezultat:
+Svi kritični i visoko prioritetni problemi kompatibilnosti između iOS i Android su riješeni. Aplikacija sada ima konzistentno ponašanje na obje platforme sa platform-specifičnim optimizacijama.

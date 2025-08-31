@@ -769,7 +769,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
       >
       <ScrollView 
         style={styles.content} 

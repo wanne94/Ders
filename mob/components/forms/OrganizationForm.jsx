@@ -294,7 +294,7 @@ const OrganizationForm = ({ onBack, onSuccess, editMode = false, editData = null
       <KeyboardAvoidingView 
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
         enabled
       >
         <View style={styles.header}>

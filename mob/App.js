@@ -14,7 +14,8 @@ import {
   StatusBar,
   InteractionManager,
   SectionList,
-  FlatList
+  FlatList,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -607,7 +608,11 @@ export default function App() {
   return (
     <ToastProvider>
       <SafeAreaProvider>
-        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <StatusBar 
+          barStyle={Platform.OS === 'ios' ? 'light-content' : 'dark-content'}
+          backgroundColor={Platform.OS === 'android' ? COLORS.primary : 'transparent'}
+          translucent={Platform.OS === 'ios'}
+        />
         <View style={styles.container}>
           <Header 
             onMenuPress={handleMenuToggle}
