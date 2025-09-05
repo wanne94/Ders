@@ -37,7 +37,6 @@ import Toast from '../Toast';
 import { uploadImage, getImageUrl } from '../../utils/imageUtils';
 import ImagePickerWithGallery from '../ImagePickerWithGallery';
 import { isAuthenticated as checkIsAuthenticated } from '../../utils/authHelpers';
-import axiosInstance from '../../utils/axiosConfig';
 
 const COLORS = {
   primary: '#022C43',
@@ -57,8 +56,6 @@ const COLORS = {
 const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) => {
   const [formData, setFormData] = useState({
     title: '',
-    description: '',
-    shortDescription: '',
     date: format(new Date(), 'dd.MM.yyyy'),
     time: '',
     address: '',
@@ -82,9 +79,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const [useCustomOrganization, setUseCustomOrganization] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
   const [imageUri, setImageUri] = useState(null);
-  const [showExistingImages, setShowExistingImages] = useState(false);
-  const [existingImages, setExistingImages] = useState([]);
-  const [selectedExistingImage, setSelectedExistingImage] = useState(null);
   
   // Separate state for picker selected values to ensure proper updates
   const [selectedDaijaId, setSelectedDaijaId] = useState('');
@@ -142,17 +136,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         lectures: allLecturesResponse
       });
       
-      // Try to load existing images separately (optional)
-      let imagesResponse = null;
-      try {
-        const isAuth = await checkIsAuthenticated();
-        if (isAuth) {
-          imagesResponse = await axiosInstance.get('/existing-images?lecturesOnly=true');
-        }
-      } catch (imgError) {
-        console.log('Could not load existing images (optional):', imgError.message);
-      }
-      
       // Filter only approved items
       const approvedDaije = Array.isArray(daijeResponse) ? daijeResponse.filter(d => d.status === 'approved') : [];
       const approvedOrganizations = Array.isArray(organizationsResponse) ? organizationsResponse.filter(o => o.status === 'approved') : [];
@@ -164,22 +147,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       
       console.log('📚 LectureForm - Loaded daije:', sortedDaije.length, 'items');
       console.log('🏢 LectureForm - Loaded organizations:', sortedOrganizations.length, 'items');
-      
-      // Load existing images if available
-      if (imagesResponse?.data?.images) {
-        // Filter out default/placeholder images
-        const defaultImages = ['predavanjeslika.jpg', 'daijaslika.jpg', 'udruzenjeslika.jpg', 
-                              'logo.jpg', 'favicon.png', 'icon.png', 'adaptive-icon.png', 
-                              'splash.png', 'splash-icon.png', 'maxresdefault.jpg'];
-        
-        const filteredImages = imagesResponse.data.images.filter(img => {
-          const imageName = img.name || img.url.split('/').pop();
-          return !defaultImages.includes(imageName.toLowerCase());
-        });
-        
-        console.log('Fetched existing images:', filteredImages.length, '(filtered from', imagesResponse.data.images.length, ')');
-        setExistingImages(filteredImages);
-      }
       
       setDaije(sortedDaije);
       setOrganizations(sortedOrganizations);
@@ -201,8 +168,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     
     setFormData({
       title: editData.title || '',
-      description: editData.description || '',
-      shortDescription: editData.shortDescription || '',
       date: editData.date || format(new Date(), 'dd.MM.yyyy'),
       time: editData.time || '',
       address: editData.address || '',
@@ -627,7 +592,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       Alert.alert('Greška', 'Vrijeme je obavezno');
       return false;
     }
-    if (!formData.speaker.trim() && !formData.daijaId) {
+    if ((!formData.speaker || !formData.speaker.trim()) && !formData.daijaId) {
       Alert.alert('Greška', 'Daija je obavezan');
       return false;
     }
@@ -757,7 +722,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       if (!editMode) {
         setFormData({
           title: '',
-          description: '',
           date: format(new Date(), 'dd.MM.yyyy'),
           time: '',
           address: '',
@@ -847,7 +811,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           handleInputChange('daijaId', value);
           const selectedDaija = daije.find(d => d._id === value);
           if (selectedDaija) {
-            handleInputChange('speaker', formatDaijaTitle(selectedDaija));
+            handleInputChange('speaker', formatDaijaTitle(selectedDaija.name, selectedDaija.title));
           }
         }}
         placeholder="Odaberite predavača"
@@ -921,14 +885,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     );
   };
 
-  const selectExistingImage = (image) => {
-    setSelectedExistingImage(image.url);
-    // Check if it's already a full URL
-    const imageUrl = image.url.startsWith('http') ? image.url : getImageUrl(image.url);
-    setImageUri(imageUrl);
-    handleInputChange('image', image.url);
-    setShowExistingImages(false);
-  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -936,7 +892,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       <KeyboardAvoidingView 
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
+        keyboardVerticalOffset={0}
         enabled
       >
         <View style={styles.header}>
@@ -970,8 +926,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         />
 
         {renderInput('Naslov predavanja', 'title', 'Unesite naslov...', false, true)}
-        {renderInput('Kratak opis (neobavezno)', 'shortDescription', 'Unesite kratak opis (max 200 karaktera)...', false)}
-        {renderInput('Opis predavanja (neobavezno)', 'description', 'Unesite opis...', true)}
         
         {/* Date Picker */}
         <View style={styles.inputContainer}>
@@ -1108,8 +1062,27 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           )}
         </View>
         
-        {/* Padding for sticky button */}
-        <View style={styles.bottomPadding} />
+        {/* Submit Button */}
+        <View style={styles.submitButtonWrapper}>
+          <TouchableOpacity
+            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={loading}
+          >
+            <Text style={styles.submitButtonText}>
+              {loading 
+                ? (editMode ? 'Ažuriranje...' : 'Dodavanje...') 
+                : (editMode 
+                    ? (showSeminarOptions ? 'Ažuriraj Seminar' : 'Ažuriraj Ders')
+                    : (showSeminarOptions ? 'Dodaj Seminar' : 'Dodaj Ders')
+                  )
+              }
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Extra padding at bottom */}
+        <View style={{ height: 20 }} />
       </ScrollView>
 
       {/* Date Picker Modal */}
@@ -1165,25 +1138,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-
-      {/* Sticky Submit Button */}
-      <View style={styles.submitContainer}>
-        <TouchableOpacity
-          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={loading}
-        >
-          <Text style={styles.submitButtonText}>
-            {loading 
-              ? (editMode ? 'Ažuriranje...' : 'Dodavanje...') 
-              : (editMode 
-                  ? (showSeminarOptions ? 'Ažuriraj Seminar' : 'Ažuriraj Ders')
-                  : (showSeminarOptions ? 'Dodaj Seminar' : 'Dodaj Ders')
-                )
-            }
-          </Text>
-        </TouchableOpacity>
-      </View>
 
       <Toast
         visible={toast.visible}
@@ -1255,51 +1209,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         </View>
       </Modal>
 
-      {/* Existing Images Modal */}
-      <Modal
-        visible={showExistingImages}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowExistingImages(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Odaberite sliku</Text>
-              <TouchableOpacity onPress={() => setShowExistingImages(false)}>
-                <Ionicons name="close" size={24} color={COLORS.primary} />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={styles.imageGrid}>
-              {existingImages.length > 0 ? (
-                <View style={styles.imageGridContainer}>
-                  {existingImages.map((img, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.gridImageItem,
-                        selectedExistingImage === img.url && styles.selectedImage
-                      ]}
-                      onPress={() => selectExistingImage(img)}
-                    >
-                      <Image
-                        source={{ uri: img.url.startsWith('http') ? img.url : getImageUrl(img.url) }}
-                        style={styles.gridImage}
-                        resizeMode="cover"
-                      />
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ) : (
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyStateText}>Nema dostupnih slika</Text>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -1547,15 +1456,10 @@ const styles = StyleSheet.create({
   calendarDayTextDisabled: {
     color: COLORS.gray,
   },
-  submitContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+  submitButtonWrapper: {
+    marginTop: 20,
+    marginHorizontal: 16,
+    marginBottom: 10,
   },
   submitButton: {
     backgroundColor: COLORS.primary,

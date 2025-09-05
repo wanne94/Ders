@@ -45,7 +45,6 @@ import {
   getUserData,
   logout
 } from './utils/authHelpers';
-import TestFormsScreen from './screens/TestFormsScreen';
 
 Dimensions.get('window');
 
@@ -591,8 +590,6 @@ export default function App() {
         }
         return <ProfileScreen navigation={{ navigate: (screen) => setActiveTab(screen) }} onBack={handleBack} />;
       
-      case 'testforms':
-        return <TestFormsScreen />;
 
       default:
         return (

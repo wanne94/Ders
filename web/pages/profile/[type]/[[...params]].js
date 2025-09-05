@@ -69,7 +69,7 @@ import { formatDaijaTitle, generateSlug } from '@/utils';
 import { safeApiCall, normalizeToArray } from '@/utils/dataHelpers';
 import { downloadICS, addToGoogleCalendar } from '@/utils/calendarUtils';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
-import { getUserData } from '@/utils/authHelpers';
+import { getUserData, getToken } from '@/utils/authHelpers';
 import LectureFormNew from '@/components/LectureFormNew';
 import UnifiedFormNew from '@/components/UnifiedFormNew';
 
@@ -115,14 +115,10 @@ const ProfilePage = () => {
     console.log('ProfilePage - User data:', userData);
     if (userData) {
       setUser(userData);
-      const adminStatus = userData.role === 'admin' || userData.role === 'super_admin';
+      const adminStatus = userData.role === 'admin' || userData.role === 'super_admin' || userData.role === 'superadmin';
       setIsAdmin(adminStatus);
       console.log('ProfilePage - Is admin:', adminStatus, 'Role:', userData.role);
     }
-    
-    // TEMPORARY: Force admin for testing
-    setIsAdmin(true);
-    console.log('TEMPORARY: Admin forced to true for testing');
   }, []);
 
   useEffect(() => {
@@ -198,6 +194,12 @@ const ProfilePage = () => {
   
   // Fetch upcoming lectures for all profile types
   useEffect(() => {
+    // Skip if we're viewing a lecture profile - we don't need upcoming lectures for individual lectures
+    if (type === 'lecture') {
+      setUpcomingLoading(false);
+      return;
+    }
+    
     const fetchUpcomingLectures = async () => {
       try {
         setUpcomingLoading(true);
@@ -394,6 +396,16 @@ const ProfilePage = () => {
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
+      
+      // Check if user is authenticated before attempting delete
+      const currentUser = getUserData();
+      const token = getToken();
+      if (!currentUser || !token) {
+        alert('Morate biti prijavljeni da biste obrisali ovaj sadržaj');
+        router.push('/login');
+        return;
+      }
+      
       let response;
       
       if (type === 'lecture') {
@@ -404,14 +416,24 @@ const ProfilePage = () => {
         response = await udruzenjaService.deleteUdruzenje(profile._id);
       }
       
-      if (response?.success) {
+      if (response?.success || response?.message) {
         alert(`${type === 'lecture' ? 'Predavanje' : type === 'daija' ? 'Daija' : 'Organizacija'} je uspješno obrisano`);
         setShowDeleteDialog(false);
         // Redirect to list page
         router.push(`/${type === 'lecture' ? 'lectures' : type === 'daija' ? 'daije' : 'organizations'}`);
       }
     } catch (error) {
-      alert(`Greška pri brisanju ${type === 'lecture' ? 'predavanja' : type === 'daija' ? 'daije' : 'organizacije'}`);
+      console.error('Delete error:', error);
+      
+      // Handle specific error cases
+      if (error.response?.status === 401) {
+        alert('Vaša sesija je istekla. Molimo prijavite se ponovo.');
+        router.push('/login');
+      } else if (error.response?.status === 403) {
+        alert('Nemate dozvolu za brisanje ovog sadržaja');
+      } else {
+        alert(`Greška pri brisanju ${type === 'lecture' ? 'predavanja' : type === 'daija' ? 'daije' : 'organizacije'}: ${error.response?.data?.message || error.message}`);
+      }
     } finally {
       setIsDeleting(false);
     }

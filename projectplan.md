@@ -1,64 +1,42 @@
-# Plan za rješavanje iOS/Android kompatibilnosti problema
+# Popravke problema sa prikazivanjem podataka - RIJEŠENO ✓
 
-## TODO Lista:
+## 1. Problem sa prikazivanjem Udruženja u mobilnoj aplikaciji
 
-### Kritični problemi:
-- [x] 1. Popraviti StatusBar handling u App.js - dodati platform-specifičnu logiku ✅
-- [x] 2. Implementirati Safe Area handling u Header komponenti ✅
+### Analiza problema
+Udruženje se nije prikazivalo u kartici predavanja niti u profilu predavanja na mobilnoj aplikaciji.
 
-### Visoki prioritet:
-- [x] 3. Optimizovati Keyboard handling u formama za iOS ✅
-- [x] 4. Poboljšati Modal positioning u IOSCompatibleDropdown za Android ✅
+### Uzrok
+Server je vraćao podatke o organizaciji na različite načine:
+- Za liste predavanja: vraćao je `organization` kao string (ime organizacije)
+- Za pojedinačno predavanje: vraćao je samo `organizationId` kao populiran objekat
 
-## Detaljan plan:
+### Rješenje
+Dodao sam transformaciju u server endpoint koji vraća pojedinačno predavanje (`GET /api/lectures/:id`) da uključuje polje `organization` sa imenom organizacije.
 
-### 1. StatusBar handling (App.js)
-- Dodati Platform.OS provjeru
-- Postaviti različite stilove za iOS i Android
-- iOS: light-content sa transparentnom pozadinom
-- Android: dark-content sa bojom pozadine
+## 2. Problem sa prikazivanjem predavača na web aplikaciji
 
-### 2. Safe Area handling (Header.js)
-- Importovati useSafeAreaInsets iz react-native-safe-area-context
-- Dodati padding-top baziran na safe area insets
-- Osigurati da sadržaj ne ide ispod notch-a na iOS uređajima
+### Analiza problema
+Predavač se pojavljivao na sekundu i nestajao u profilu predavanja na web aplikaciji.
 
-### 3. Keyboard handling optimizacija
-- Pronaći sve forme koje koriste KeyboardAvoidingView
-- Prilagoditi keyboardVerticalOffset za iOS
-- Testirati sa različitim veličinama ekrana
+### Uzrok
+1. Server nije vraćao polja `speaker`, `daijaName` i `daijaTitle`
+2. useEffect za učitavanje "upcoming lectures" je prepisivao podatke profila
 
-### 4. Modal positioning za Android
-- Pregledati IOSCompatibleDropdown
-- Dodati Android-specifično pozicioniranje
-- Osigurati konzistentno ponašanje na obje platforme
+### Rješenje
+1. Proširio sam transformaciju u serveru da uključuje:
+   - `speaker` - formatiran prikaz predavača
+   - `daijaName` - ime daije
+   - `daijaTitle` - titula daije
+2. Spriječio nepotrebno učitavanje dodatnih podataka za profil predavanja
+3. Promijenjeno u `/predavanje/[slug].js` da redirektuje na pravi profil URL
 
-## Review sekcija:
+### Promjene u fajlovima:
+- `server/routes/lecturesRoutes.js` - linija 1520-1531
+- `web/pages/profile/[type]/[[...params]].js` - linija 196-201
+- `web/pages/predavanje/[slug].js` - kompletna reimplementacija
 
-### Završene promjene:
+## Status: ZAVRŠENO ✓
 
-1. **StatusBar handling (App.js)**
-   - Dodana Platform.OS provjera
-   - iOS: light-content sa transparentnom pozadinom
-   - Android: dark-content sa bojom pozadine (#022C43)
-   - translucent samo za iOS
-
-2. **Safe Area handling (Header.js)**
-   - Implementirana platform-specifična logika za padding-top
-   - iOS: koristi safe area insets + 10px
-   - Android: koristi safe area insets ili fallback na 20px
-
-3. **Keyboard handling optimizacija**
-   - Ažurirane sve forme sa KeyboardAvoidingView
-   - iOS keyboardVerticalOffset postavljen na 88px za glavne forme
-   - AuthScreen koristi 60px zbog drugačijeg layout-a
-   - Android zadržava 0px offset
-
-4. **Modal positioning (IOSCompatibleDropdown)**
-   - Dodana elevation i shadow za Android
-   - Različite animacije: iOS koristi 'slide', Android koristi 'fade'
-   - statusBarTranslucent postavljen za Android
-   - Poboljšano vizuelno iskustvo na obje platforme
-
-### Rezultat:
-Svi kritični i visoko prioritetni problemi kompatibilnosti između iOS i Android su riješeni. Aplikacija sada ima konzistentno ponašanje na obje platforme sa platform-specifičnim optimizacijama.
+Sada se pravilno prikazuju:
+- Ime udruženja na mobilnoj aplikaciji
+- Predavač na web aplikaciji (bez nestajanja)

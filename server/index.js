@@ -496,7 +496,7 @@ app.get('/api/lectures', async (req, res) => {
     });
 
     const lectures = await Lecture.find()
-      .populate('organization', 'name')
+      .populate('organizationId', 'name')
       .populate('daija', 'name title image')
       .populate('createdBy', 'firstName lastName email')
       .sort({ createdAt: -1 });
@@ -508,7 +508,9 @@ app.get('/api/lectures', async (req, res) => {
     // Transform lectures to include daijaId for frontend compatibility
     const transformedLectures = lectures.map(lecture => ({
       ...lecture.toObject(),
-      daijaId: lecture.daija?._id || lecture.daija || null
+      daijaId: lecture.daija?._id || lecture.daija || null,
+      // Ensure organization is populated from organizationId if empty
+      organization: lecture.organizationId?.name || lecture.organization || ''
     }));
 
     res.json(transformedLectures);

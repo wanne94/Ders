@@ -323,6 +323,8 @@ router.get('/public', async (req, res) => {
           : lecture.speaker,
         // Include populated daijaIds
         daijaIds: lecture.daijaIds,
+        // Map organization from populated organizationId if available
+        organization: lecture.organizationId?.name || lecture.organization || '',
         // Explicitly include weekly lecture fields
         isWeeklyLecture: lecture.isWeeklyLecture,
         weekNumber: lecture.weekNumber,
@@ -1517,10 +1519,17 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Lecture not found' });
     }
     
-    // Transform lecture to include daijaId for frontend compatibility
+    // Transform lecture to include daijaId and organization for frontend compatibility
     const transformedLecture = {
       ...lecture.toObject(),
-      daijaId: lecture.daija || null
+      daijaId: lecture.daija || null,
+      // Add organization name for mobile app compatibility
+      organization: lecture.organizationId?.name || lecture.organization || '',
+      // Add speaker field for web app compatibility
+      speaker: lecture.speaker || (lecture.daija ? `${lecture.daija.title ? lecture.daija.title + ' ' : ''}${lecture.daija.name}` : ''),
+      // Add daija name and title fields for web app profile page
+      daijaName: lecture.daija?.name || '',
+      daijaTitle: lecture.daija?.title || ''
     };
     
     res.json(transformedLecture);

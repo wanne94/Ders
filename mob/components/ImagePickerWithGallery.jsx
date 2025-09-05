@@ -5,9 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  ScrollView,
-  FlatList,
-  Modal,
   ActivityIndicator,
   Alert,
   Dimensions
@@ -15,7 +12,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImage, getImageUrl } from '../utils/imageUtils';
-import axiosInstance from '../utils/axiosConfig';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const imageSize = (screenWidth - 48) / 3; // 3 images per row with padding
@@ -44,9 +40,6 @@ const ImagePickerWithGallery = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
-  const [showGallery, setShowGallery] = useState(false);
-  const [existingImages, setExistingImages] = useState([]);
-  const [loadingImages, setLoadingImages] = useState(false);
   const [imageUri, setImageUri] = useState(null);
 
   useEffect(() => {
@@ -60,40 +53,6 @@ const ImagePickerWithGallery = ({
     }
   }, [value]);
 
-  // Fetch existing images when gallery opens
-  const fetchExistingImages = async () => {
-    try {
-      setLoadingImages(true);
-      console.log('📸 [ImagePickerWithGallery] Fetching existing images...');
-      const response = await axiosInstance.get('/existing-images?lecturesOnly=true');
-      console.log('📸 [ImagePickerWithGallery] Response:', {
-        hasData: !!response.data,
-        hasImages: !!response.data?.images,
-        imageCount: response.data?.images?.length,
-        source: response.data?.source,
-        firstImage: response.data?.images?.[0]
-      });
-      if (response.data?.images) {
-        // Filter out default/placeholder images
-        const defaultImages = ['predavanjeslika.jpg', 'daijaslika.jpg', 'udruzenjeslika.jpg', 
-                              'logo.jpg', 'favicon.png', 'icon.png', 'adaptive-icon.png', 
-                              'splash.png', 'splash-icon.png', 'maxresdefault.jpg'];
-        
-        const filteredImages = response.data.images.filter(img => {
-          const imageName = img.name || img.url.split('/').pop();
-          return !defaultImages.includes(imageName.toLowerCase());
-        });
-        
-        setExistingImages(filteredImages);
-        console.log(`✅ [ImagePickerWithGallery] Set ${filteredImages.length} lecture images (filtered from ${response.data.images.length})`);
-      }
-    } catch (error) {
-      console.error('❌ [ImagePickerWithGallery] Error fetching existing images:', error);
-      Alert.alert('Greška', 'Nije moguće učitati postojeće slike');
-    } finally {
-      setLoadingImages(false);
-    }
-  };
 
   const handlePickImage = async () => {
     try {
@@ -109,8 +68,7 @@ const ImagePickerWithGallery = ({
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions?.Images || 'Images',
-        allowsEditing: true,
-        aspect: [4, 3],
+        allowsEditing: false,
         quality: 0.8,
       });
 
@@ -145,22 +103,12 @@ const ImagePickerWithGallery = ({
     }
   };
 
-  const handleSelectExisting = (image) => {
-    const imageUrl = image.url.startsWith('http') ? image.url : getImageUrl(image.url);
-    setImageUri(imageUrl);
-    onChange(image.url);
-    setShowGallery(false);
-  };
 
   const handleRemoveImage = () => {
     setImageUri(null);
     onChange('');
   };
 
-  const openGallery = () => {
-    setShowGallery(true);
-    fetchExistingImages();
-  };
 
   return (
     <View style={styles.container}>
@@ -181,27 +129,14 @@ const ImagePickerWithGallery = ({
           )}
         </View>
       ) : (
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.button, disabled && styles.buttonDisabled]}
-            onPress={handlePickImage}
-            disabled={disabled || loading}
-          >
-            <Ionicons name="camera" size={20} color={COLORS.white} />
-            <Text style={styles.buttonText}>Nova slika</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, styles.buttonSecondary, disabled && styles.buttonDisabled]}
-            onPress={openGallery}
-            disabled={disabled || loading}
-          >
-            <Ionicons name="images" size={20} color={COLORS.primary} />
-            <Text style={[styles.buttonText, styles.buttonTextSecondary]}>
-              Postojeće slike
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.buttonSingle, disabled && styles.buttonDisabled]}
+          onPress={handlePickImage}
+          disabled={disabled || loading}
+        >
+          <Ionicons name="camera" size={20} color={COLORS.white} />
+          <Text style={styles.buttonText}>Odaberite sliku</Text>
+        </TouchableOpacity>
       )}
 
       {loading && (
@@ -211,55 +146,6 @@ const ImagePickerWithGallery = ({
         </View>
       )}
 
-      {/* Gallery Modal */}
-      <Modal
-        visible={showGallery}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowGallery(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Odaberite postojeću sliku</Text>
-              <TouchableOpacity onPress={() => setShowGallery(false)}>
-                <Ionicons name="close" size={24} color={COLORS.primary} />
-              </TouchableOpacity>
-            </View>
-
-            {loadingImages ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-                <Text style={styles.loadingText}>Učitavanje slika...</Text>
-              </View>
-            ) : existingImages.length > 0 ? (
-              <FlatList
-                data={existingImages}
-                numColumns={3}
-                keyExtractor={(item, index) => index.toString()}
-                contentContainerStyle={styles.gridContainer}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.gridItem}
-                    onPress={() => handleSelectExisting(item)}
-                  >
-                    <Image
-                      source={{ uri: item.url.startsWith('http') ? item.url : getImageUrl(item.url) }}
-                      style={styles.gridImage}
-                      resizeMode="cover"
-                    />
-                  </TouchableOpacity>
-                )}
-              />
-            ) : (
-              <View style={styles.emptyContainer}>
-                <Ionicons name="images-outline" size={48} color={COLORS.gray} />
-                <Text style={styles.emptyText}>Nema postojećih slika</Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -279,12 +165,7 @@ const styles = StyleSheet.create({
     fontWeight: 'normal',
     color: COLORS.gray,
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  button: {
-    flex: 1,
+  buttonSingle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -294,11 +175,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     gap: 8,
   },
-  buttonSecondary: {
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-  },
   buttonDisabled: {
     opacity: 0.5,
   },
@@ -306,9 +182,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: COLORS.white,
-  },
-  buttonTextSecondary: {
-    color: COLORS.primary,
   },
   imageContainer: {
     position: 'relative',
@@ -340,74 +213,6 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 14,
     color: COLORS.primary,
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-    paddingBottom: 20,
-    elevation: 10,
-    zIndex: 1000,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  loadingContainer: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: COLORS.gray,
-  },
-  gridContainer: {
-    padding: 8,
-    paddingBottom: 20,
-  },
-  gridItem: {
-    flex: 1/3,
-    aspectRatio: 1,
-    padding: 4,
-    margin: 4,
-  },
-  gridImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-    backgroundColor: COLORS.lightGray,
-  },
-  imageName: {
-    fontSize: 10,
-    color: COLORS.gray,
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  emptyContainer: {
-    padding: 60,
-    alignItems: 'center',
-  },
-  emptyText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: COLORS.gray,
   },
 });
 
