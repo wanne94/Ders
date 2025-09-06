@@ -11,9 +11,22 @@ import {
     Modal,
     Image,
     FlatList,
-    Dimensions
+    Dimensions,
+    Platform,
+    TouchableWithoutFeedback
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import {
+    format,
+    startOfMonth,
+    endOfMonth,
+    eachDayOfInterval,
+    isSameMonth,
+    isSameDay,
+    isBefore,
+    startOfDay,
+    parse
+} from 'date-fns';
 import predavanjaService from '../services/predavanjaService';
 import daijeService from '../services/daijeService';
 import udruzenjaService from '../services/udruzenjaService';
@@ -49,6 +62,11 @@ const AddContentScreen = ({ onBack }) => {
   const [showExistingImages, setShowExistingImages] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  
+  // Calendar state for end date
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [selectedEndDate, setSelectedEndDate] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const contentTypes = [
     {
@@ -415,6 +433,137 @@ const AddContentScreen = ({ onBack }) => {
     </View>
   );
 
+  const formatDateForDisplay = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}.${month}.${year}`;
+  };
+
+  const handleEndDateSelect = (date) => {
+    setSelectedEndDate(date);
+    const formattedDate = formatDateForDisplay(date);
+    handleInputChange('endDate', formattedDate);
+    setShowEndDatePicker(false);
+  };
+
+  const renderCalendar = () => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    
+    // Get the first Monday of the calendar view
+    const startDate = new Date(monthStart);
+    const dayOfWeek = monthStart.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startDate.setDate(monthStart.getDate() - daysToSubtract);
+    
+    // Get the last day to show
+    const endDate = new Date(monthEnd);
+    const lastDayOfWeek = monthEnd.getDay();
+    const daysToAdd = lastDayOfWeek === 0 ? 0 : 7 - lastDayOfWeek;
+    endDate.setDate(monthEnd.getDate() + daysToAdd);
+    
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    const today = startOfDay(new Date());
+    
+    // Parse start date if available
+    let minDate = today;
+    if (formData.date) {
+      try {
+        const parsedDate = parse(formData.date, 'dd.MM.yyyy', new Date());
+        if (!isNaN(parsedDate)) {
+          minDate = parsedDate;
+        }
+      } catch (e) {
+        // Keep today as minimum
+      }
+    }
+    
+    // Bosnian month names
+    const bosnianMonths = [
+      'Januar', 'Februar', 'Mart', 'April', 'Maj', 'Juni',
+      'Juli', 'August', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'
+    ];
+    
+    const previousMonth = () => {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+    };
+    
+    const nextMonth = () => {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+    };
+
+    return (
+      <View style={styles.calendar}>
+        <View style={styles.calendarHeader}>
+          <TouchableOpacity onPress={previousMonth} style={styles.calendarNavButton}>
+            <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+          <Text style={styles.calendarTitle}>
+            {bosnianMonths[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+          </Text>
+          <TouchableOpacity onPress={nextMonth} style={styles.calendarNavButton}>
+            <Ionicons name="chevron-forward" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.calendarGrid}>
+          {['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'].map(day => (
+            <Text key={day} style={styles.calendarDayHeader}>{day}</Text>
+          ))}
+          
+          {days.map(day => {
+            const dayStart = startOfDay(day);
+            const isPastDate = isBefore(dayStart, minDate);
+            const isCurrentMonth = isSameMonth(day, currentMonth);
+            const isSelected = isSameDay(day, selectedEndDate);
+            const isDisabled = !isCurrentMonth || isPastDate;
+            
+            return (
+              <TouchableOpacity
+                key={day.toISOString()}
+                style={[
+                  styles.calendarDay,
+                  isSelected && styles.calendarDaySelected,
+                  isDisabled && styles.calendarDayDisabled
+                ]}
+                onPress={() => handleEndDateSelect(day)}
+                disabled={isDisabled}
+              >
+                <Text style={[
+                  styles.calendarDayText,
+                  isSelected && styles.calendarDayTextSelected,
+                  isDisabled && styles.calendarDayTextDisabled
+                ]}>
+                  {format(day, 'd')}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
+
+  const renderEndDatePicker = (label, field, required = false) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.inputLabel}>
+        {label} {required && <Text style={styles.required}>*</Text>}
+      </Text>
+      <TouchableOpacity
+        style={styles.datePickerButton}
+        onPress={() => setShowEndDatePicker(true)}
+      >
+        <Text style={[styles.datePickerText, !formData[field] && styles.placeholderText]}>
+          {formData[field] || 'Izaberite datum završetka'}
+        </Text>
+        <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
+      </TouchableOpacity>
+    </View>
+  );
+
 
   const renderLectureForm = () => {
     console.log('🎯 Rendering lecture form with:', {
@@ -551,7 +700,7 @@ const AddContentScreen = ({ onBack }) => {
       {/* Seminar End Date */}
       {showSeminarOptions && (
         <View style={styles.seminarContainer}>
-          {renderInput('Datum završetka', 'endDate', 'DD.MM.YYYY (npr. 20.06.2024)', false, true)}
+          {renderEndDatePicker('Datum završetka', 'endDate', true)}
           
           {formData.date && formData.endDate && (
             <View style={styles.durationInfo}>
@@ -748,6 +897,33 @@ const AddContentScreen = ({ onBack }) => {
       
       {/* Existing Images Modal */}
       {renderExistingImagesModal()}
+      
+      {/* End Date Calendar Modal */}
+      <Modal
+        visible={showEndDatePicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowEndDatePicker(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowEndDatePicker(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Odaberite datum završetka</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowEndDatePicker(false)}
+                    style={styles.modalCloseButton}
+                  >
+                    <Ionicons name="close" size={24} color={COLORS.primary} />
+                  </TouchableOpacity>
+                </View>
+                {renderCalendar()}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -1046,6 +1222,109 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(2, 44, 67, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  datePickerButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: COLORS.white,
+  },
+  datePickerText: {
+    fontSize: 16,
+    color: COLORS.primary,
+  },
+  placeholderText: {
+    color: COLORS.gray,
+  },
+  // Calendar styles
+  calendar: {
+    width: '100%',
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  calendarNavButton: {
+    padding: 4,
+  },
+  calendarTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+  },
+  calendarDayHeader: {
+    width: '14.28%',
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.gray,
+    marginBottom: 8,
+  },
+  calendarDay: {
+    width: '14.28%',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarDaySelected: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 20,
+  },
+  calendarDayDisabled: {
+    opacity: 0.3,
+  },
+  calendarDayText: {
+    fontSize: 16,
+    color: COLORS.primary,
+  },
+  calendarDayTextSelected: {
+    color: COLORS.white,
+    fontWeight: '600',
+  },
+  calendarDayTextDisabled: {
+    color: COLORS.gray,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    width: '90%',
+    maxWidth: 400,
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  modalCloseButton: {
+    padding: 4,
   },
 });
 

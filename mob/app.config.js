@@ -2,7 +2,7 @@ export default {
   expo: {
     name: "Ders",
     slug: "ders-mobile",
-    version: "1.1.5",
+    version: "1.1.6",
     scheme: "ders",
     icon: "./assets/images/icon.png",
     splash: {

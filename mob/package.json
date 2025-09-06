@@ -1,6 +1,6 @@
 {
   "name": "mobile-app",
-  "version": "1.1.3",
+  "version": "1.1.6",
   "main": "index.js",
   "scripts": {
     "start": "expo start",
@@ -21,7 +21,10 @@
     "build-info": "cd android && ./gradlew app:dependencies",
     "prebuild": "expo prebuild --platform android",
     "prebuild:clean": "expo prebuild --platform android --clean",
-    "ios": "expo run:ios"
+    "ios": "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo run:ios",
+    "ios:simulator": "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo run:ios",
+    "ios:device": "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo run:ios --device",
+    "ios:start": "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo start --ios"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
