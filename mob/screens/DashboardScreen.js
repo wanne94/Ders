@@ -788,48 +788,6 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
           </TouchableOpacity>
         )}
       </View>
-      {/* Filter button */}
-      <TouchableOpacity
-        style={[styles.filterButton, getActiveFilterCount() > 0 && styles.filterButtonActive]}
-        onPress={() => setShowFilters(true)}
-      >
-        <Ionicons 
-          name="filter" 
-          size={20} 
-          color={getActiveFilterCount() > 0 ? COLORS.white : COLORS.primary} 
-        />
-        {getActiveFilterCount() > 0 && (
-          <View style={styles.filterBadge}>
-            <Text style={styles.filterBadgeText}>{getActiveFilterCount()}</Text>
-          </View>
-        )}
-      </TouchableOpacity>
-      {/* Drag mode toggle button */}
-      {(userRole === 'admin' || userRole === 'super_admin') && (
-        <TouchableOpacity
-          style={[styles.dragButton, dragMode && styles.dragButtonActive]}
-          onPress={toggleDragMode}
-        >
-          <Ionicons 
-            name="reorder-three" 
-            size={20} 
-            color={dragMode ? COLORS.white : COLORS.primary} 
-          />
-        </TouchableOpacity>
-      )}
-      {/* Bulk mode toggle button */}
-      {(userRole === 'admin' || userRole === 'super_admin') && (
-        <TouchableOpacity
-          style={[styles.bulkButton, bulkMode && styles.bulkButtonActive]}
-          onPress={toggleBulkMode}
-        >
-          <Ionicons 
-            name={bulkMode ? "checkbox" : "checkbox-outline"} 
-            size={20} 
-            color={bulkMode ? COLORS.white : COLORS.primary} 
-          />
-        </TouchableOpacity>
-      )}
       <TouchableOpacity
         style={styles.settingsButton}
         onPress={() => setShowSettingsModal(true)}
@@ -2599,16 +2557,6 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
 
   return (
     <View style={styles.container}>
-      {/* Undo/Redo Bar */}
-      <UndoRedoBar
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        message={undoMessage}
-        visible={showUndoBar && (canUndo || canRedo)}
-      />
-
       {/* Navigation */}
       {renderNavigationHeader()}
 
@@ -2618,9 +2566,6 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       {/* Content */}
       {renderContent()}
 
-      {/* Bulk Actions Bar */}
-      {renderBulkActionsBar()}
-
       {/* Modals */}
       {renderItemDetailsModal()}
       {renderApprovalModal()}
@@ -2628,18 +2573,6 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       {renderEditModal()}
       {renderCancelModal()}
       {renderReactivateModal()}
-      
-      {/* Advanced Filters Modal */}
-      <AdvancedFilters
-        visible={showFilters}
-        onClose={() => setShowFilters(false)}
-        onApply={handleFiltersApply}
-        filterConfig={{
-          showStatus: activeSection !== 'korisnici',
-          showSpeaker: activeSection === 'predavanja'
-        }}
-        data={getCurrentSectionData().items}
-      />
       
       {/* User Form Modal */}
       <UserForm

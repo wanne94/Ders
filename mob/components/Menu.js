@@ -42,11 +42,6 @@ const menuItems = [
     text: 'Daije',
     icon: 'person-outline',
     path: 'speakers'
-  },
-  {
-    text: 'Test Formi (Dev)',
-    icon: 'flask-outline',
-    path: 'testforms'
   }
 ];
 

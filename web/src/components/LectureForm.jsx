@@ -63,7 +63,6 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
     time: '', // Will be set in useEffect
     address: '',
     city: '',
-    shortDescription: '',
     image: '',
     isWeeklyLecture: false,
     totalWeeks: 2,
@@ -158,7 +157,6 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
         time: lecture.time || '',
         address: lecture.address || '',
         city: lecture.city || '',
-        shortDescription: lecture.shortDescription || '',
         image: lecture.image || '',
         isWeeklyLecture: lecture.isWeeklyLecture || false,
         totalWeeks: lecture.totalWeeks || 2,
@@ -193,7 +191,6 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
         time: '', // Will be set when dialog opens
         address: '',
         city: '',
-        shortDescription: '',
         image: '',
         isWeeklyLecture: false,
         totalWeeks: 2,
@@ -566,21 +563,6 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
                 helperText={`${formData.title.length}/80 karaktera`}
               />
 
-              {/* Short Description */}
-              <TextField
-                name="shortDescription"
-                label="Kratki opis (neobavezno)"
-                value={formData.shortDescription}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={3}
-                inputProps={{
-                  maxLength: 500
-                }}
-                helperText={`${formData.shortDescription.length}/500 karaktera`}
-                placeholder="Kratki opis predavanja koji će se prikazivati na kartici..."
-              />
 
               {/* Speaker Selection */}
               <FormControl fullWidth margin="normal" required={!useCustomSpeaker}>

@@ -31,6 +31,16 @@ const UniversalCard = React.memo(({ data }) => {
     
     const entityType = data.type?.toLowerCase() || 'unknown';
     
+    // Debug log for On je Allah lecture
+    if (data.title === 'On je Allah' && data.time === '20:15') {
+      console.log('🔍 On je Allah lecture data:', {
+        title: data.title,
+        organization: data.organization,
+        organizationId: data.organizationId,
+        hasOrg: !!(data.organization || data.organizationId?.name)
+      });
+    }
+    
     switch (entityType) {
       case 'predavanje':
         // Use new status calculation utility
@@ -52,7 +62,31 @@ const UniversalCard = React.memo(({ data }) => {
                 ? { icon: User, text: formatDaijaTitle(data.daija.name, data.daija.title) }
                 : data.speaker ? { icon: User, text: data.speaker }
                 : null,
-            data.organization && { icon: Briefcase, text: data.organization },
+            // Handle organization display - check all possible organization data sources
+            (() => {
+              // First check if we have organization as a string
+              if (data.organization) {
+                return { icon: Briefcase, text: data.organization };
+              }
+              // Then check if organizationId is populated as an object
+              if (data.organizationId && typeof data.organizationId === 'object' && data.organizationId.name) {
+                return { icon: Briefcase, text: data.organizationId.name };
+              }
+              // If organizationId exists but is not populated (just an ID string)
+              // We'll need to handle this case better - for now show generic text
+              if (data.organizationId && typeof data.organizationId === 'string') {
+                // Check for known organization IDs
+                const knownOrgs = {
+                  '684775e477bc84a3b3d79703': 'OU Palma',
+                  // Add more known organizations here as needed
+                };
+                return { 
+                  icon: Briefcase, 
+                  text: knownOrgs[data.organizationId] || 'Udruženje' 
+                };
+              }
+              return null;
+            })(),
             data.isSeminar && data.date && data.endDate ? 
               { icon: Calendar, text: `${formatDateWithDay(data.date)} - ${formatDateWithDay(data.endDate)}` } :
               data.date && { icon: Calendar, text: formatDateWithDay(data.date) },
@@ -63,9 +97,24 @@ const UniversalCard = React.memo(({ data }) => {
             data.city && { icon: Building2, text: data.city }
           ].filter(Boolean),
           onClick: () => {
-            const slug = generateSlug(data.title);
-            logLectureView(data._id, data.title, data.organization?._id, data.daija?._id);
-            router.push(`/predavanje/${slug}`);
+            console.log('🔍 Lecture card clicked!', data.title);
+            console.log('Data:', data);
+            console.log('Router available:', !!router);
+            
+            try {
+              const slug = generateSlug(data.title);
+              console.log('Generated slug:', slug);
+              console.log('Will navigate to:', `/predavanje/${slug}`);
+              
+              logLectureView(data._id, data.title, data.organization?._id, data.daija?._id);
+              console.log('Analytics logged');
+              
+              router.push(`/predavanje/${slug}`);
+              console.log('Router.push called successfully');
+              
+            } catch (error) {
+              console.error('❌ Error in lecture onClick:', error);
+            }
           }
         };
       
@@ -85,9 +134,24 @@ const UniversalCard = React.memo(({ data }) => {
             }
           ].filter(Boolean),
           onClick: () => {
-            const slug = generateSlug(data.name);
-            logDaijaProfileView(data._id, data.name);
-            router.push(`/daija/${slug}`);
+            console.log('🔍 Daija card clicked!', data.name);
+            console.log('Data:', data);
+            console.log('Router available:', !!router);
+            
+            try {
+              const slug = generateSlug(data.name);
+              console.log('Generated slug:', slug);
+              console.log('Will navigate to:', `/daija/${slug}`);
+              
+              logDaijaProfileView(data._id, data.name);
+              console.log('Analytics logged');
+              
+              router.push(`/daija/${slug}`);
+              console.log('Router.push called successfully');
+              
+            } catch (error) {
+              console.error('❌ Error in daija onClick:', error);
+            }
           }
         };
       
@@ -107,9 +171,24 @@ const UniversalCard = React.memo(({ data }) => {
             }
           ].filter(Boolean),
           onClick: () => {
-            const slug = generateSlug(data.name);
-            logOrganizationView(data._id, data.name);
-            router.push(`/udruzenje/${slug}`);
+            console.log('🔍 Organization card clicked!', data.name);
+            console.log('Data:', data);
+            console.log('Router available:', !!router);
+            
+            try {
+              const slug = generateSlug(data.name);
+              console.log('Generated slug:', slug);
+              console.log('Will navigate to:', `/udruzenje/${slug}`);
+              
+              logOrganizationView(data._id, data.name);
+              console.log('Analytics logged');
+              
+              router.push(`/udruzenje/${slug}`);
+              console.log('Router.push called successfully');
+              
+            } catch (error) {
+              console.error('❌ Error in organization onClick:', error);
+            }
           }
         };
       

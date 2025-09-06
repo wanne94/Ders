@@ -8,7 +8,7 @@ const udruzenjaService = {
   },
 
   getAllUdruzenjaForAdmin: async () => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.UDRUZENJA}/../admin/organizations`);
+    const response = await apiClient.get('/admin/organizations');
     return response.data;
   },
 

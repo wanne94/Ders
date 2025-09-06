@@ -1,18 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import dynamic from 'next/dynamic';
 import { predavanjaService } from '@/services';
 import { generateSlug } from '@/utils';
-
-// Dynamically import ProfilePage to avoid SSR issues
-const ProfilePage = dynamic(() => import('../profile/[type]/[[...params]]'), {
-  ssr: false
-});
 
 const PredavanjeProfilePage = () => {
   const router = useRouter();
   const { slug } = router.query;
-  const [lecture, setLecture] = useState(null);
+  const [lectureId, setLectureId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,11 +20,10 @@ const PredavanjeProfilePage = () => {
         const foundLecture = allLectures.find(l => generateSlug(l.title) === slug);
         
         if (foundLecture) {
-          // Mock the router query for ProfilePage
-          router.query.type = 'lecture';
-          router.query.params = [foundLecture._id];
-          setLecture(foundLecture);
-          setLoading(false);
+          // Instead of modifying router.query, just redirect to the proper profile page
+          setLectureId(foundLecture._id);
+          // Redirect to the proper profile URL
+          router.push(`/profile/lecture/${foundLecture._id}/${slug}`);
         } else {
           router.push('/404');
         }
@@ -41,14 +34,14 @@ const PredavanjeProfilePage = () => {
     };
 
     findLectureBySlug();
-  }, [slug]);
+  }, [slug, router]);
 
-  if (loading || !lecture) {
+  if (loading) {
     return <div>Loading...</div>;
   }
 
-  // ProfilePage will use the modified router.query
-  return <ProfilePage />;
+  // This will not be shown as we redirect
+  return null;
 };
 
 export default PredavanjeProfilePage;
