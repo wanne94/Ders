@@ -1,42 +1,58 @@
-# Popravke problema sa prikazivanjem podataka - RIJEŠENO ✓
+# Promjena verzije aplikacije i build produkcije bez Expo
 
-## 1. Problem sa prikazivanjem Udruženja u mobilnoj aplikaciji
+## Problem
+Potrebno je promijeniti verziju aplikacije za Play Store i izvršiti lokalni build produkcije bez korišćenja Expo servisa.
 
-### Analiza problema
-Udruženje se nije prikazivalo u kartici predavanja niti u profilu predavanja na mobilnoj aplikaciji.
+## Plan izvršavanja
 
-### Uzrok
-Server je vraćao podatke o organizaciji na različite načine:
-- Za liste predavanja: vraćao je `organization` kao string (ime organizacije)
-- Za pojedinačno predavanje: vraćao je samo `organizationId` kao populiran objekat
+### Todo stavke:
+- [ ] Analiziraj trenutnu strukturu projekta i konfiguracijske fajlove
+- [ ] Promijeni verziju aplikacije za Play Store  
+- [ ] Pripremi build konfiguraciju za produkciju bez Expo
+- [ ] Izvrši lokalni build produkcije
 
-### Rješenje
-Dodao sam transformaciju u server endpoint koji vraća pojedinačno predavanje (`GET /api/lectures/:id`) da uključuje polje `organization` sa imenom organizacije.
+### Detaljan opis:
 
-## 2. Problem sa prikazivanjem predavača na web aplikaciji
+1. **Analiza strukture** - Provjeri app.json/app.config.js, package.json i Android specifične fajlove
+2. **Promjena verzije** - Ažuriraj version i versionCode u odgovarajućim fajlovima
+3. **Build konfiguracija** - Osiguraj da su svi potrebni parametri podešeni za lokalni build
+4. **Lokalni build** - Kreiraj produkcijski APK/AAB fajl
 
-### Analiza problema
-Predavač se pojavljivao na sekundu i nestajao u profilu predavanja na web aplikaciji.
+## Review sekcija
 
-### Uzrok
-1. Server nije vraćao polja `speaker`, `daijaName` i `daijaTitle`
-2. useEffect za učitavanje "upcoming lectures" je prepisivao podatke profila
+### Izvršene promjene:
 
-### Rješenje
-1. Proširio sam transformaciju u serveru da uključuje:
-   - `speaker` - formatiran prikaz predavača
-   - `daijaName` - ime daije
-   - `daijaTitle` - titula daije
-2. Spriječio nepotrebno učitavanje dodatnih podataka za profil predavanja
-3. Promijenjeno u `/predavanje/[slug].js` da redirektuje na pravi profil URL
+✅ **Analiza projekta završena** - Identificirani svi konfiguracijski fajlovi:
+- `app.config.js` - glavna Expo konfiguracija 
+- `package.json` - npm dependencies i scripts
+- `android/app/build.gradle` - Android build konfiguracija
+- `android/gradle.properties` - Gradle svojstva i keystore
 
-### Promjene u fajlovima:
-- `server/routes/lecturesRoutes.js` - linija 1520-1531
-- `web/pages/profile/[type]/[[...params]].js` - linija 196-201
-- `web/pages/predavanje/[slug].js` - kompletna reimplementacija
+✅ **Verzija aplikacije ažurirana** sa 1.1.5 na 1.1.6:
+- `app.config.js`: version "1.1.6", versionCode 20
+- `android/app/build.gradle`: versionName "1.1.6", versionCode 20
+- `package.json`: version "1.1.6"
 
-## Status: ZAVRŠENO ✓
+✅ **Build konfiguracija pripremljena** - potvrđeno da su:
+- Keystore i kredencijali konfigurisani (`Ders-app-produkcija.keystore`)
+- Gradle 8.13 instaliran i funkcionalan
+- Android SDK i build tools dostupni
+- Proguard i optimizacije omogućene
 
-Sada se pravilno prikazuju:
-- Ime udruženja na mobilnoj aplikaciji
-- Predavač na web aplikaciji (bez nestajanja)
+✅ **Lokalni build uspješno izvršen**:
+- **APK**: `/home/avdo/Ders/mob/android/app/build/outputs/apk/release/app-release.apk` (70MB)
+- **AAB**: `/home/avdo/Ders/mob/android/app/build/outputs/bundle/release/app-release.aab` (48MB)
+
+### Tehnički detalji:
+- Build izvršen direktno preko Gradle bez EAS servisa
+- Korišćen production keystore za potpis
+- Hermes engine omogućen
+- ProGuard optimizacije aktivne  
+- Nova arhitektura (New Architecture) omogućena
+- Metro bundler uspješno kompajlirao 1919 modula
+
+### Fajlovi spremni za distribuciju:
+1. `app-release.apk` - za direktnu instalaciju ili testing
+2. `app-release.aab` - za upload na Google Play Console
+
+Aplikacija je uspješno kompajlirana u verziji 1.1.6 bez korišćenja Expo cloud servisa.

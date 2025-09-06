@@ -195,8 +195,8 @@ const Navigation = () => {
         "fixed top-0 left-0 right-0 z-50 bg-[#022C43] text-white shadow-lg transition-transform duration-300",
         !showNavigation && "-translate-y-full"
       )}>
-        <div className="container mx-auto">
-          <div className="flex items-center justify-between h-16 px-4 lg:px-8">
+        <div className="w-full mx-auto" style={{ maxWidth: '1900px' }}>
+          <div className="flex items-center justify-between h-16 px-2 sm:px-3 md:px-4">
             {/* Logo */}
             <div 
               className="flex items-center cursor-pointer"

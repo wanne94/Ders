@@ -62,10 +62,31 @@ const UniversalCard = React.memo(({ data }) => {
                 ? { icon: User, text: formatDaijaTitle(data.daija.name, data.daija.title) }
                 : data.speaker ? { icon: User, text: data.speaker }
                 : null,
-            (data.organization || data.organizationId?.name || (data.organizationId === "684775e477bc84a3b3d79703" ? "OU Palma" : null)) && { 
-              icon: Briefcase, 
-              text: data.organization || data.organizationId?.name || (data.organizationId === "684775e477bc84a3b3d79703" ? "OU Palma" : null) 
-            },
+            // Handle organization display - check all possible organization data sources
+            (() => {
+              // First check if we have organization as a string
+              if (data.organization) {
+                return { icon: Briefcase, text: data.organization };
+              }
+              // Then check if organizationId is populated as an object
+              if (data.organizationId && typeof data.organizationId === 'object' && data.organizationId.name) {
+                return { icon: Briefcase, text: data.organizationId.name };
+              }
+              // If organizationId exists but is not populated (just an ID string)
+              // We'll need to handle this case better - for now show generic text
+              if (data.organizationId && typeof data.organizationId === 'string') {
+                // Check for known organization IDs
+                const knownOrgs = {
+                  '684775e477bc84a3b3d79703': 'OU Palma',
+                  // Add more known organizations here as needed
+                };
+                return { 
+                  icon: Briefcase, 
+                  text: knownOrgs[data.organizationId] || 'Udruženje' 
+                };
+              }
+              return null;
+            })(),
             data.isSeminar && data.date && data.endDate ? 
               { icon: Calendar, text: `${formatDateWithDay(data.date)} - ${formatDateWithDay(data.endDate)}` } :
               data.date && { icon: Calendar, text: formatDateWithDay(data.date) },

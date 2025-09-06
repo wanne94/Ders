@@ -121,7 +121,7 @@ const Footer = () => {
               Napravljeno da koristi muslimanima.
             </p>
             <p className="text-sm opacity-50">
-              v1.0.0
+              v1.0.1
             </p>
           </div>
         </div>

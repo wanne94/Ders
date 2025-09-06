@@ -98,9 +98,9 @@ const authMiddleware = async (req, res, next) => {
     });
 
     const errorMessage = err.name === 'TokenExpiredError' ? 'Token je istekao' : 'Token nije validan';
-    console.log('🔧 Returning 403 with message:', errorMessage);
-    
-    return res.status(403).json({ 
+    const statusCode = err.name === 'TokenExpiredError' ? 401 : 403;
+    console.log('🔧 Returning', statusCode, 'with message:', errorMessage);
+    return res.status(statusCode).json({ 
       message: errorMessage
     });
   }

@@ -692,7 +692,7 @@ app.get('/api/lectures/admin/cancelled-reports', authenticateToken, isAdminOrSup
     // Get lectures with cancellation reports
     const lectures = await Lecture.find(filter)
       .populate('daija', 'name title image')
-      .populate('organization', 'name')
+      .populate('organizationId', 'name')
       .populate('createdBy', 'firstName lastName email')
       .sort({ 'cancellationReports.reportedAt': -1 })
       .skip(skip)
@@ -838,7 +838,7 @@ app.get('/api/lectures/dashboard/public', async (req, res) => {
       status: 'approved'
       // No date filtering - show all lectures for dashboard
     })
-      .populate('organization', 'name')
+      .populate('organizationId', 'name')
       .populate('daija', 'name title image')
       .sort({ date: 1 });
 
@@ -1415,7 +1415,7 @@ app.get('/api/lectures/public', async (req, res) => {
     try {
       lectures = await Lecture.find(statusFilter)
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isWeeklyLecture weekNumber totalWeeks weeklySeriesId lecturePart isCancelled cancelledAt cancellationReason isSeminar endDate seminarTheme totalDays')
-        .populate('organization', 'name')
+        .populate('organizationId', 'name')
         .populate('daija', 'name title image')
         .hint({ status: 1, date: 1 }) // 🚀 Force index usage
         .lean()
@@ -1426,7 +1426,7 @@ app.get('/api/lectures/public', async (req, res) => {
       // Fallback: Regular optimized query
       lectures = await Lecture.find(statusFilter)
         .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt isWeeklyLecture weekNumber totalWeeks weeklySeriesId lecturePart isCancelled cancelledAt cancellationReason isSeminar endDate seminarTheme totalDays')
-        .populate('organization', 'name')
+        .populate('organizationId', 'name')
         .populate('daija', 'name title image')
         .lean()
         .exec();
@@ -1664,7 +1664,7 @@ app.get('/api/lectures/approved', async (req, res) => {
       date: { $gte: startOfToday }  // Include today's lectures and future ones
     })
       .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
-      .populate('organization', 'name')
+      .populate('organizationId', 'name')
       .populate('daija', 'name title image')
       .sort({ date: 1 })
       .skip(skip)
@@ -1716,7 +1716,7 @@ app.get('/api/lectures/latest', async (req, res) => {
       date: { $gte: startOfToday }  // Include today's lectures and future ones
     })
       .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
-      .populate('organization', 'name')
+      .populate('organizationId', 'name')
       .populate('daija', 'name title image')
       .sort({ date: 1 })
       .limit(limit)
@@ -3437,7 +3437,7 @@ app.post('/api/admin/cleanup-database', authenticateToken, isSuperAdmin, async (
     // Find lectures with organization references that don't exist
     const orphanedByOrg = await Lecture.find({
       organizationId: { $exists: true, $ne: null }
-    }).populate('organization');
+    }).populate('organizationId');
     
     const orphanedOrgLectures = orphanedByOrg.filter(lecture => !lecture.organization);
     
@@ -3804,7 +3804,7 @@ app.get('/api/performance-test', async (req, res) => {
       status: 'approved',
       date: { $gte: new Date() }
     })
-      .populate('organization', 'name')
+      .populate('organizationId', 'name')
       .limit(10);
     results.populateQuery = {
       duration: Date.now() - populateQueryStart,
@@ -3818,7 +3818,7 @@ app.get('/api/performance-test', async (req, res) => {
       date: { $gte: new Date() }
     })
       .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
-      .populate('organization', 'name')
+      .populate('organizationId', 'name')
       .sort({ date: 1 })
       .lean()
       .limit(10);
@@ -4184,12 +4184,12 @@ app.get('/api/debug/on-je-allah', async (req, res) => {
     // Find all lectures with "On je Allah" in title
     const onJeAllahLectures = await Lecture.find({
       title: { $regex: /on je allah/i }
-    }).populate('organization', 'name');
+    }).populate('organizationId', 'name');
     
     // Also search for similar titles
     const similarLectures = await Lecture.find({
       title: { $regex: /(allah|on je)/i }
-    }).populate('organization', 'name').limit(10);
+    }).populate('organizationId', 'name').limit(10);
     
     // Get all active lectures for comparison
     const activeLectures = await Lecture.find({ status: 'approved' })
@@ -4514,7 +4514,7 @@ app.get('/api/lectures/search', async (req, res) => {
       score: { $meta: 'textScore' }
     })
       .select('title speaker daija organization organizationId address city date time shortDescription description image status createdAt')
-      .populate('organization', 'name')
+      .populate('organizationId', 'name')
       .sort({ score: { $meta: 'textScore' }, date: 1 })
       .lean()
       .exec();

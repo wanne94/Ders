@@ -3,7 +3,7 @@ import { ENV } from '../config';
 
 const daijeService = {
   getAllDaije: async () => {
-    const response = await apiClient.get(`${ENV.API_ENDPOINTS.DAIJE}/public`);
+    const response = await apiClient.get(ENV.API_ENDPOINTS.DAIJE);
     return response.data;
   },
 

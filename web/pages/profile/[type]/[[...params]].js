@@ -124,6 +124,9 @@ const ProfilePage = () => {
   useEffect(() => {
     if (!type || !id) return;
     
+    // Prevent multiple fetches
+    let isMounted = true;
+    
     const fetchProfile = async () => {
       try {
         setLoading(true);
@@ -132,6 +135,14 @@ const ProfilePage = () => {
         let data;
         if (type === 'lecture') {
           data = await predavanjaService.getPredavanjeById(id);
+          console.log('Fetched lecture data:', data);
+          console.log('Speaker info:', {
+            speaker: data.speaker,
+            daijaName: data.daijaName,
+            daijaTitle: data.daijaTitle,
+            daija: data.daija,
+            daijaIds: data.daijaIds
+          });
         } else if (type === 'daija') {
           data = await daijeService.getDaijaById(id);
         } else if (type === 'organization') {
@@ -140,22 +151,33 @@ const ProfilePage = () => {
           throw new Error('Nepoznat tip profila');
         }
 
-        setProfile(data);
+        if (isMounted) {
+          setProfile(data);
+        }
       } catch (err) {
-        console.error('Error fetching profile:', err);
-        setError(err.response?.data?.message || 'Greška pri učitavanju profila');
+        if (isMounted) {
+          console.error('Error fetching profile:', err);
+          setError(err.response?.data?.message || 'Greška pri učitavanju profila');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchProfile();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [type, id]);
 
   // Fetch related lectures for organizations and daijes
   useEffect(() => {
+    // Skip if not the right type or still loading
     if (!type || !id || type === 'lecture') return;
-    if (!profile) return; // Wait for profile to load first
+    if (loading || !profile) return; // Wait for profile to finish loading
     
     const fetchRelatedLectures = async () => {
       try {
@@ -175,12 +197,25 @@ const ProfilePage = () => {
           );
         }
         
-        // Normalize to array and sort by date
+        // Normalize to array
         lectures = normalizeToArray(lectures);
-        lectures.sort((a, b) => new Date(b.date) - new Date(a.date));
         
-        setRelatedLectures(lectures);
-        setTotalPages(Math.ceil(lectures.length / lecturesPerPage));
+        // Filter only approved lectures (not cancelled)
+        const approvedLectures = lectures.filter(lecture => {
+          // Check if lecture is approved
+          if (lecture.status !== 'approved') return false;
+          
+          // Check if lecture is not cancelled
+          if (lecture.isCancelled || lecture.status === 'cancelled') return false;
+          
+          return true;
+        });
+        
+        // Sort by date (descending - newest first)
+        approvedLectures.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        setRelatedLectures(approvedLectures);
+        setTotalPages(Math.ceil(approvedLectures.length / lecturesPerPage));
       } catch (err) {
         console.error('Error fetching related lectures:', err);
         setRelatedError('Greška pri učitavanju povezanih predavanja');
@@ -190,15 +225,13 @@ const ProfilePage = () => {
     };
     
     fetchRelatedLectures();
-  }, [type, id, profile]);
+  }, [type, id, loading]); // Added loading to dependencies
   
   // Fetch upcoming lectures for all profile types
   useEffect(() => {
-    // Skip if we're viewing a lecture profile - we don't need upcoming lectures for individual lectures
-    if (type === 'lecture') {
-      setUpcomingLoading(false);
-      return;
-    }
+    // Wait for profile to finish loading
+    if (loading) return;
+    if (!profile && type === 'lecture') return;
     
     const fetchUpcomingLectures = async () => {
       try {
@@ -269,7 +302,7 @@ const ProfilePage = () => {
     };
     
     fetchUpcomingLectures();
-  }, [type, profile]);
+  }, [type, id, loading]); // Added loading to dependencies
 
   const getTitle = () => {
     if (!profile) return '';
@@ -870,7 +903,7 @@ const ProfilePage = () => {
                             </CardHeader>
                             <CardContent className="text-white">
                               {/* Multiple daijas */}
-                              {profile.daijaIds && profile.daijaIds.length > 0 ? (
+                              {profile.daijaIds && profile.daijaIds.length > 0 && typeof profile.daijaIds[0] === 'object' ? (
                                 <div className="space-y-2">
                                   {profile.daijaIds.map((daija, index) => (
                                     <div key={daija._id || index}>
@@ -1203,45 +1236,17 @@ const ProfilePage = () => {
               </div>
             )}
 
-            {/* Daija's/Organization's Upcoming Lectures Section */}
-            {type === 'daija' && relatedLectures.length > 0 && (
+            {/* Daija's Upcoming Lectures Section */}
+            {type === 'daija' && (
               <div id="daija-lectures" className="mb-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Najavljeni dersovi ovog daije</h2>
                 
                 {relatedLoading ? (
                   <SkeletonGrid />
-                ) : (
+                ) : relatedLectures.length > 0 ? (
                   <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                      {/* Show all lectures for this daija */}
-                      {relatedLectures
-                        .slice(0, 10)
-                        .map((lecture) => (
-                          <UniversalCard
-                            key={lecture._id}
-                            data={{
-                              ...lecture,
-                              type: 'Predavanje'
-                            }}
-                          />
-                        ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Organization's Upcoming Lectures Section */}
-            {type === 'organization' && relatedLectures.length > 0 && (
-              <div id="organization-lectures" className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Najavljeni dersovi ovog udruženja</h2>
-                
-                {relatedLoading ? (
-                  <SkeletonGrid />
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                      {/* Show all lectures for this organization */}
+                      {/* Show upcoming lectures for this daija */}
                       {relatedLectures
                         .slice(0, 10)
                         .map((lecture) => (
@@ -1255,7 +1260,74 @@ const ProfilePage = () => {
                         ))}
                     </div>
                     
+                    {/* Show more button if there are more than 10 lectures */}
+                    {relatedLectures.length > 10 && (
+                      <div className="mt-6 text-center">
+                        <Button
+                          variant="outline"
+                          onClick={() => router.push(`/daija/${generateSlug(profile.name)}`)}
+                          className="hover:scale-105 transition-transform"
+                        >
+                          Prikaži sve dersove ovog daije
+                        </Button>
+                      </div>
+                    )}
                   </>
+                ) : (
+                  <Card className="p-8 text-center border-dashed">
+                    <CardContent>
+                      <CalendarDays className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p className="text-gray-500">Trenutno nema najavljenih dersova ovog daije</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {/* Organization's Upcoming Lectures Section */}
+            {type === 'organization' && (
+              <div id="organization-lectures" className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Najavljeni dersovi ovog udruženja</h2>
+                
+                {relatedLoading ? (
+                  <SkeletonGrid />
+                ) : relatedLectures.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                      {/* Show upcoming lectures for this organization */}
+                      {relatedLectures
+                        .slice(0, 10)
+                        .map((lecture) => (
+                          <UniversalCard
+                            key={lecture._id}
+                            data={{
+                              ...lecture,
+                              type: 'Predavanje'
+                            }}
+                          />
+                        ))}
+                    </div>
+                    
+                    {/* Show more button if there are more than 10 lectures */}
+                    {relatedLectures.length > 10 && (
+                      <div className="mt-6 text-center">
+                        <Button
+                          variant="outline"
+                          onClick={() => router.push(`/udruzenje/${generateSlug(profile.name)}`)}
+                          className="hover:scale-105 transition-transform"
+                        >
+                          Prikaži sve dersove ovog udruženja
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Card className="p-8 text-center border-dashed">
+                    <CardContent>
+                      <CalendarDays className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p className="text-gray-500">Trenutno nema najavljenih dersova ovog udruženja</p>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
             )}

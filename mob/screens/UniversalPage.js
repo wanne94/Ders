@@ -45,36 +45,8 @@ const fetchDaije = async (allLectures = []) => {
     const data = await daijeService.getAllDaije();
     const daije = Array.isArray(data) ? data : [];
     
-    // Filter only daije with at least one lecture (matching web implementation)
-    const daijeWithLectures = daije.filter(daija => {
-      // If daija has lectureCount from backend, use it
-      if (typeof daija.lectureCount === 'number') {
-        return daija.lectureCount > 0;
-      }
-      
-      // Fallback: Check if daija has any approved lectures
-      return allLectures.some(lecture => {
-        if (!lecture || lecture.isCancelled || lecture.status === 'cancelled') {
-          return false;
-        }
-        
-        // Check if lecture is by this daija
-        if (lecture.daija && typeof lecture.daija === 'object') {
-          return lecture.daija._id === daija._id;
-        } else if (lecture.daija) {
-          return lecture.daija === daija._id;
-        }
-        
-        // Check daijaIds array for multiple daija support
-        if (lecture.daijaIds && Array.isArray(lecture.daijaIds)) {
-          return lecture.daijaIds.includes(daija._id);
-        }
-        
-        return false;
-      });
-    });
-    
-    return daijeWithLectures;
+    // Return all daije without filtering (matching web implementation)
+    return daije;
   } catch (error) {
     // console.error('Error fetching daije:', error);
     return [];
@@ -202,10 +174,10 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
       const result = await pageConfig.fetchFunction();
       const rawData = Array.isArray(result) ? result : [];
       
-      // Apply centralized sorting
+      // Apply centralized sorting (matching web app logic)
       const sortedData = type === 'lectures' 
         ? sortLecturesByStatus(rawData)
-        : applySorting(rawData, type, allLectures);
+        : rawData; // No sorting for daije (matching web app)
 
       setData(sortedData);
       
