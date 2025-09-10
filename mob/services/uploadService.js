@@ -12,28 +12,33 @@ import axiosInstance from '../utils/axiosConfig';
 
 /**
  * Upload sliku na produkcijski server
- * @param {Object} imageUri - Image URI from picker
+ * @param {Object} imageAsset - Image asset from ImagePicker
  * @param {string} token - Auth token (optional)
  * @returns {Promise<Object>} - Upload response sa path-om slike
  */
-export const uploadImage = async (imageUri, token = null) => {
+export const uploadImage = async (imageAsset, token = null) => {
   try {
     console.log('📤 [MOBILE UPLOAD] Starting image upload to production server');
     console.log('🎯 [MOBILE UPLOAD] Target server:', ENV.UPLOAD_SERVER_URL);
-    console.log('📁 [MOBILE UPLOAD] Image URI:', imageUri);
+    console.log('📁 [MOBILE UPLOAD] Image asset:', imageAsset);
 
-    if (!imageUri) {
-      throw new Error('No image URI provided');
+    if (!imageAsset || !imageAsset.uri) {
+      throw new Error('No image asset or URI provided');
     }
 
     // Create FormData for React Native
     const formData = new FormData();
     
+    // Get file extension from URI or default to jpg
+    const uriParts = imageAsset.uri.split('.');
+    const fileExtension = uriParts[uriParts.length - 1];
+    const mimeType = imageAsset.mimeType || `image/${fileExtension}` || 'image/jpeg';
+    
     // For React Native, we need to format the file object properly
     const imageFile = {
-      uri: imageUri,
-      type: 'image/jpeg', // Default to jpeg, can be determined from URI
-      name: `image_${Date.now()}.jpg`
+      uri: imageAsset.uri,
+      type: mimeType,
+      name: imageAsset.fileName || `image_${Date.now()}.${fileExtension || 'jpg'}`
     };
 
     formData.append('image', imageFile);
@@ -106,32 +111,11 @@ export const getDefaultImages = () => {
   return ENV.getDefaultImages();
 };
 
-/**
- * Fetch existing images from server
- * @returns {Promise<Array>} - Array of existing images
- */
-export const fetchExistingImages = async () => {
-  try {
-    // Use axiosInstance for consistency
-    console.log('📸 [MOBILE] Fetching existing images');
-    
-    const response = await axiosInstance.get('/existing-images');
-    
-    const data = response.data;
-    console.log('✅ [MOBILE] Fetched', data.images?.length || 0, 'existing images');
-    
-    return data.images || [];
-  } catch (error) {
-    console.error('❌ [MOBILE] Error fetching existing images:', error);
-    return [];
-  }
-};
 
 export default {
   uploadImage,
   getImageUrl,
   getDefaultImages,
-  fetchExistingImages,
   UPLOAD_SERVER_URL: ENV.UPLOAD_SERVER_URL,
   IMAGE_SERVER_URL: ENV.IMAGE_SERVER_URL
 };

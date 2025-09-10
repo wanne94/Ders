@@ -42,9 +42,6 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
   const [useCustomOrganization, setUseCustomOrganization] = useState(false);
   const [showWeeklyOptions, setShowWeeklyOptions] = useState(false);
   const [showSeminarOptions, setShowSeminarOptions] = useState(false);
-  const [existingImages, setExistingImages] = useState([]);
-  const [showExistingImages, setShowExistingImages] = useState(false);
-  const [selectedExistingImage, setSelectedExistingImage] = useState(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -58,7 +55,6 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
     time: '',
     address: '',
     city: '',
-    shortDescription: '',
     description: '',
     image: null,
     isWeeklyLecture: false,
@@ -107,7 +103,6 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
         time: existingLecture.time || '',
         address: existingLecture.address || '',
         city: existingLecture.city || '',
-        shortDescription: existingLecture.shortDescription || '',
         description: existingLecture.description || '',
         image: existingLecture.image || null,
         isWeeklyLecture: existingLecture.isWeeklyLecture || false,
@@ -131,14 +126,13 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
     }
   }, [existingLecture]);
 
-  // Fetch daije, organizations and existing images
+  // Fetch daije and organizations
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [daijeResponse, orgsResponse, imagesResponse] = await Promise.all([
+        const [daijeResponse, orgsResponse] = await Promise.all([
           daijeService.getAllDaije(),
-          udruzenjaService.getAllUdruzenja(),
-          axiosInstance.get('/existing-images?lecturesOnly=true')
+          udruzenjaService.getAllUdruzenja()
         ]);
         
         if (daijeResponse) {
@@ -148,20 +142,6 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
         if (orgsResponse) {
           console.log('🏢 [LectureFormNew] Fetched', orgsResponse.length, 'organizations');
           setOrganizations(Array.isArray(orgsResponse) ? orgsResponse : []);
-        }
-        if (imagesResponse?.data?.images) {
-          // Filter out default/placeholder images
-          const defaultImages = ['predavanjeslika.jpg', 'daijaslika.jpg', 'udruzenjeslika.jpg', 
-                                'logo.jpg', 'favicon.png', 'icon.png', 'adaptive-icon.png', 
-                                'splash.png', 'splash-icon.png', 'maxresdefault.jpg'];
-          
-          const filteredImages = imagesResponse.data.images.filter(img => {
-            const imageName = img.name || img.url.split('/').pop();
-            return !defaultImages.includes(imageName.toLowerCase());
-          });
-          
-          console.log('🖼️ [LectureFormNew] Fetched', filteredImages.length, 'lecture images (filtered from', imagesResponse.data.images.length, ')');
-          setExistingImages(filteredImages);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -347,7 +327,6 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
       time: '',
       address: '',
       city: '',
-      shortDescription: '',
       description: '',
       image: null,
       isWeeklyLecture: false,
@@ -422,7 +401,6 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
                   onClick={() => {
                     setImageFile(null);
                     setImagePreview(null);
-                    setSelectedExistingImage(null);
                     setFormData(prev => ({ ...prev, image: null }));
                   }}
                   className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
@@ -432,8 +410,8 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
               </div>
             )}
             
-            <div className="grid grid-cols-2 gap-4">
-              {/* Upload new image */}
+            {/* Upload new image - prikaži samo ako nema slike */}
+            {!imagePreview && (
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
                 <input
                   ref={fileInputRef}
@@ -453,25 +431,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
                   </div>
                 </label>
               </div>
-              
-              {/* Select existing image */}
-              <div 
-                className="border-2 border-solid border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer"
-                onClick={() => setShowExistingImages(!showExistingImages)}
-              >
-                <div className="h-10 w-10 mx-auto mb-2 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div className="text-sm font-medium text-gray-700">
-                  Odaberi postojeću
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Iz galerije slika
-                </div>
-              </div>
-            </div>
+            )}
             
             
             <div className="bg-gray-50 rounded-md p-3 text-sm text-gray-600">
@@ -499,22 +459,6 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
             </span>
           </div>
 
-          {/* Short Description */}
-          <div className="space-y-2">
-            <Label htmlFor="shortDescription">Kratki opis (neobavezno)</Label>
-            <Textarea
-              id="shortDescription"
-              name="shortDescription"
-              value={formData.shortDescription}
-              onChange={handleChange}
-              rows={3}
-              maxLength={500}
-              placeholder="Kratki opis predavanja koji će se prikazivati na kartici..."
-            />
-            <span className="text-sm text-gray-500">
-              {formData.shortDescription.length}/500 karaktera
-            </span>
-          </div>
 
           {/* Multiple Speakers Section */}
           <div className="space-y-2">
@@ -908,83 +852,6 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
-    
-    {/* Existing Images Modal */}
-    <Dialog open={showExistingImages} onOpenChange={setShowExistingImages}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle>Odaberite postojeću sliku</DialogTitle>
-          <DialogDescription>
-            Kliknite na sliku koju želite koristiti za predavanje
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="overflow-y-auto max-h-[60vh] p-4">
-          {existingImages.length > 0 ? (
-            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {existingImages.map((img, index) => (
-                <div
-                  key={index}
-                  className="relative cursor-pointer group aspect-[3/4]"
-                  onClick={() => {
-                    // Always use the full URL for preview
-                    const fullImageUrl = img.url.startsWith('http') ? img.url : getImageUrl(img.url);
-                    setSelectedExistingImage(img.url);
-                    setImagePreview(fullImageUrl);
-                    // Store the path that will be saved to database
-                    const imagePath = img.url.startsWith('https://ders.ba') 
-                      ? img.url.replace('https://ders.ba', '') 
-                      : img.url;
-                    setFormData(prev => ({ ...prev, image: imagePath }));
-                    setImageFile(null);
-                    setShowExistingImages(false);
-                  }}
-                >
-                  <div className={`h-full border-2 rounded-lg overflow-hidden transition-all ${
-                    selectedExistingImage === img.url 
-                      ? 'border-blue-500 ring-2 ring-blue-200' 
-                      : 'border-gray-200 hover:border-blue-400'
-                  }`}>
-                    <Image
-                      src={img.url.startsWith('http') ? img.url : getImageUrl(img.url)}
-                      alt="Slika predavanja"
-                      width={300}
-                      height={400}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  
-                  {/* Overlay on hover */}
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity rounded-lg pointer-events-none" />
-                  
-                  {/* Check mark for selected */}
-                  {selectedExistingImage === img.url && (
-                    <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1.5 shadow-lg">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <p className="mt-2 text-sm text-gray-500">Nema dostupnih slika</p>
-            </div>
-          )}
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setShowExistingImages(false)}>
-            Zatvori
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
     </>

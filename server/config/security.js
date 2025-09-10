@@ -74,17 +74,20 @@ const rateLimitConfig = {
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
+    trustProxy: process.env.NODE_ENV === 'production'
   },
   auth: {
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5, // Limit auth attempts to 5 per windowMs
     message: 'Too many authentication attempts, please try again later.',
-    skipSuccessfulRequests: true
+    skipSuccessfulRequests: true,
+    trustProxy: process.env.NODE_ENV === 'production'
   },
   api: {
     windowMs: 1 * 60 * 1000, // 1 minute
     max: process.env.NODE_ENV === 'development' ? 200 : 60, // Higher limit for development
     message: 'API rate limit exceeded, please slow down.',
+    trustProxy: process.env.NODE_ENV === 'production'
   }
 };
 

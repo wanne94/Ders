@@ -56,7 +56,6 @@ import {
 } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import ContentContainer from '@/components/ContentContainer';
-import ShareButton from '@/components/ShareButton';
 import UniversalCard from '@/components/UniversalCard';
 import CancellationReportButton from '@/components/CancellationReportButton';
 import CancelledOverlay from '@/components/CancelledOverlay';
@@ -1018,18 +1017,6 @@ const ProfilePage = () => {
                         </Card>
                       )}
 
-                      {/* Share Section */}
-                      <Card className="bg-white/10 backdrop-blur-md border-white/20 mb-6">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-white text-sm font-medium flex items-center gap-2">
-                            <Share2 className="h-4 w-4" />
-                            Podijeli da se i drugi okoriste
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <ShareButton profileData={profile} type={type} />
-                        </CardContent>
-                      </Card>
 
                       {/* Social Media Links */}
                       {type === 'organization' && (profile.facebook || profile.instagram || profile.telegram || profile.viber) && (
