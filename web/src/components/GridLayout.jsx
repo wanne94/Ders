@@ -90,9 +90,14 @@ export const LecturesGrid = ({ children, ...props }) => (
     sx={{
       display: 'flex',
       flexWrap: 'wrap',
-      gap: 2.5,
-      justifyContent: 'flex-start',
+      gap: 2,
+      justifyContent: 'center',
       width: '100%',
+      '& > *': {
+        width: '320px',
+        height: '240px',
+        flexShrink: 0
+      },
       ...props.sx
     }}
     {...props}

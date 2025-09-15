@@ -23,7 +23,6 @@ import { getImageUrl } from '../utils/imageUtils';
 import { formatDateWithDay } from '../utils/dateUtils';
 import { formatDaijaTitle } from '../utils';
 import { isAuthenticated as checkIsAuthenticated } from '../utils/authHelpers';
-import ShareButton from './ShareButton';
 import CancellationReportButton from './CancellationReportButton';
 import UniverzalCard from './UniverzalCard';
 import { sortLecturesByTime } from '../utils/sortingUtils';
@@ -646,7 +645,6 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAu
           )}
           
           {type === 'lecture' && (
-            <ShareButton profileData={profile} type={type} />
           )}
           
           {/* Add to Calendar Button - Only for lectures that are not cancelled */}

@@ -26,11 +26,9 @@ import { getApiUrl } from '../config';
 import { getToken } from '../utils/authHelpers';
 import AddContentPopup from '../components/AddContentPopup';
 import DraggableList from '../components/DraggableList';
-import UndoRedoBar from '../components/UndoRedoBar';
 import AdvancedFilters from '../components/AdvancedFilters';
 import UserForm from '../components/forms/UserForm';
 import LoadingSkeleton from '../components/LoadingSkeleton';
-import useUndoRedo from '../hooks/useUndoRedo';
 import { getImageUrl } from '../utils/imageUtils';
 import { appEvents, AUTH_EVENTS } from '../utils/eventEmitter';
 
@@ -59,8 +57,8 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
   
-  // Data states with undo/redo support
-  const initialData = {
+  // Data states
+  const [data, setData] = useState({
     users: [],
     lectures: [],
     daije: [],
@@ -69,30 +67,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     archivedSuggestions: [],
     suggestionsCount: { total: 0, pending: 0, approved: 0, rejected: 0 },
     cancelledReports: []
-  };
-  
-  const {
-    state: data,
-    setState: setDataWithHistory,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    reset: resetHistory
-  } = useUndoRedo(initialData);
-  
-  const [undoMessage, setUndoMessage] = useState('');
-  const [showUndoBar, setShowUndoBar] = useState(false);
-  
-  // Wrapper for setData to track history
-  const setData = (newData) => {
-    if (typeof newData === 'function') {
-      const updatedData = newData(data);
-      setDataWithHistory(updatedData);
-    } else {
-      setDataWithHistory(newData);
-    }
-  };
+  });
 
   // Counts for badges
   const [counts, setCounts] = useState({
@@ -408,8 +383,6 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       setRejectionReason('');
     }
     setShowApprovalModal(true);
-    // Show undo bar for trackable actions
-    setShowUndoBar(true);
   };
 
   // Handle archive suggestion
@@ -424,10 +397,6 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
         archivedSuggestions: [...prev.archivedSuggestions, { ...item, archived: true }]
       }));
       
-      // Add to undo history
-      setDataHistory(data, 'Arhiviran prijedlog');
-      setLastAction('Arhiviran prijedlog');
-      setShowUndoBar(true);
       
       Alert.alert('Uspjeh', 'Prijedlog je arhiviran');
     } catch (error) {
@@ -1195,26 +1164,6 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     if (!dragMode) {
       setBulkMode(false);
       setSelectedItems([]);
-    }
-  };
-  
-  // Handle undo action
-  const handleUndo = () => {
-    const previousState = undo();
-    if (previousState) {
-      setUndoMessage('Akcija poništena');
-      setShowUndoBar(true);
-      setTimeout(() => setUndoMessage(''), 3000);
-    }
-  };
-  
-  // Handle redo action
-  const handleRedo = () => {
-    const nextState = redo();
-    if (nextState) {
-      setUndoMessage('Akcija ponovljena');
-      setShowUndoBar(true);
-      setTimeout(() => setUndoMessage(''), 3000);
     }
   };
   

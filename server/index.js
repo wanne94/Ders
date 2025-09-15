@@ -73,6 +73,11 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
+// Configure trust proxy for production
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Apply secure CORS configuration
 app.use(cors(getCorsOptions()));
 

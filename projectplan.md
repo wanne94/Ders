@@ -1,58 +1,34 @@
-# Promjena verzije aplikacije i build produkcije bez Expo
+# Plan: Deploy Web Aplikacije
 
-## Problem
-Potrebno je promijeniti verziju aplikacije za Play Store i izvršiti lokalni build produkcije bez korišćenja Expo servisa.
+## Cilj
+Izvršiti deploy web aplikacije na produkciju.
 
-## Plan izvršavanja
+## TODO Lista
 
-### Todo stavke:
-- [ ] Analiziraj trenutnu strukturu projekta i konfiguracijske fajlove
-- [ ] Promijeni verziju aplikacije za Play Store  
-- [ ] Pripremi build konfiguraciju za produkciju bez Expo
-- [ ] Izvrši lokalni build produkcije
+- [x] **1. Provjera trenutnog stanja aplikacije**
+  - Provjeriti da li su sve promjene komitovane ✓
+  - Provjeriti da li aplikacija radi lokalno bez grešaka
+  - Provjeriti konfiguraciju za produkciju
 
-### Detaljan opis:
+- [x] **2. Build aplikacije**
+  - Pokrenuti produkcijski build ✓
+  - Provjeriti da li build prođe bez grešaka ✓
+  - Provjeriti veličinu build fajlova ✓
 
-1. **Analiza strukture** - Provjeri app.json/app.config.js, package.json i Android specifične fajlove
-2. **Promjena verzije** - Ažuriraj version i versionCode u odgovarajućim fajlovima
-3. **Build konfiguracija** - Osiguraj da su svi potrebni parametri podešeni za lokalni build
-4. **Lokalni build** - Kreiraj produkcijski APK/AAB fajl
+- [x] **3. Provjera environment varijabli**
+  - Provjeriti .env.production fajl ✓
+  - Osigurati da su sve potrebne varijable postavljene ✓
+  - Provjeriti API endpointe za produkciju ✓
 
-## Review sekcija
+- [ ] **4. Deploy proces**
+  - Izvršiti deploy na hosting platformu
+  - Provjeriti da li je deploy uspješan
+  - Testirati aplikaciju na produkciji
 
-### Izvršene promjene:
+- [ ] **5. Post-deploy provjera**
+  - Testirati osnovne funkcionalnosti
+  - Provjeriti da li se učitavaju svi resursi
+  - Provjeriti konzolu za greške
 
-✅ **Analiza projekta završena** - Identificirani svi konfiguracijski fajlovi:
-- `app.config.js` - glavna Expo konfiguracija 
-- `package.json` - npm dependencies i scripts
-- `android/app/build.gradle` - Android build konfiguracija
-- `android/gradle.properties` - Gradle svojstva i keystore
-
-✅ **Verzija aplikacije ažurirana** sa 1.1.5 na 1.1.6:
-- `app.config.js`: version "1.1.6", versionCode 20
-- `android/app/build.gradle`: versionName "1.1.6", versionCode 20
-- `package.json`: version "1.1.6"
-
-✅ **Build konfiguracija pripremljena** - potvrđeno da su:
-- Keystore i kredencijali konfigurisani (`Ders-app-produkcija.keystore`)
-- Gradle 8.13 instaliran i funkcionalan
-- Android SDK i build tools dostupni
-- Proguard i optimizacije omogućene
-
-✅ **Lokalni build uspješno izvršen**:
-- **APK**: `/home/avdo/Ders/mob/android/app/build/outputs/apk/release/app-release.apk` (70MB)
-- **AAB**: `/home/avdo/Ders/mob/android/app/build/outputs/bundle/release/app-release.aab` (48MB)
-
-### Tehnički detalji:
-- Build izvršen direktno preko Gradle bez EAS servisa
-- Korišćen production keystore za potpis
-- Hermes engine omogućen
-- ProGuard optimizacije aktivne  
-- Nova arhitektura (New Architecture) omogućena
-- Metro bundler uspješno kompajlirao 1919 modula
-
-### Fajlovi spremni za distribuciju:
-1. `app-release.apk` - za direktnu instalaciju ili testing
-2. `app-release.aab` - za upload na Google Play Console
-
-Aplikacija je uspješno kompajlirana u verziji 1.1.6 bez korišćenja Expo cloud servisa.
+## Review
+(Biće ažurirano nakon završetka)
