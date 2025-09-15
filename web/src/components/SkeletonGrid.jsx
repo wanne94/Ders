@@ -1,18 +1,20 @@
 import React from 'react';
-import { Grid } from '@mui/material';
+import { Box } from '@mui/material';
 import SkeletonCard from './SkeletonCard';
 
-const SkeletonGrid = React.memo(({ 
-  count = 6, 
+const SkeletonGrid = React.memo(({
+  count = 6,
   type = 'lecture',
   gridProps = {}
 }) => {
   return (
-    <Grid 
-      container 
-      spacing={2} 
-      {...gridProps}
+    <Box
       sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 2,
+        justifyContent: 'center',
+        width: '100%',
         animation: 'slideUp 0.4s ease-out',
         '@keyframes slideUp': {
           '0%': {
@@ -26,15 +28,15 @@ const SkeletonGrid = React.memo(({
         },
         ...gridProps.sx
       }}
+      {...gridProps}
     >
       {Array.from({ length: count }, (_, index) => (
-        <Grid 
-          item 
-          xs={12} 
-          sm={6} 
-          md={4} 
+        <Box
           key={index}
           sx={{
+            width: '320px',
+            height: '240px',
+            flexShrink: 0,
             animationDelay: `${index * 0.05}s`,
             animation: 'fadeIn 0.5s ease-in-out',
             '@keyframes fadeIn': {
@@ -48,9 +50,9 @@ const SkeletonGrid = React.memo(({
           }}
         >
           <SkeletonCard type={type} />
-        </Grid>
+        </Box>
       ))}
-    </Grid>
+    </Box>
   );
 });
 

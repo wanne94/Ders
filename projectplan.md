@@ -1,33 +1,34 @@
-# Plan za deployment aplikacije
+# Plan: Deploy Web Aplikacije
 
 ## Cilj
-Deployati DERS.BA aplikaciju (web i server komponente) na produkciju.
+Izvršiti deploy web aplikacije na produkciju.
 
-## TODO Liste
+## TODO Lista
 
-### 1. [ ] Priprema za deployment
-- Provjeriti da li su sve promjene committovane
-- Provjeriti da li aplikacija radi lokalno bez grešaka
-- Provjeriti environment varijable
+- [ ] **1. Provjera trenutnog stanja aplikacije**
+  - Provjeriti da li su sve promjene komitovane
+  - Provjeriti da li aplikacija radi lokalno bez grešaka
+  - Provjeriti konfiguraciju za produkciju
 
-### 2. [ ] Build web aplikacije
-- Pokrenuti build proces za Next.js aplikaciju
-- Provjeriti da li build prođe bez grešaka
+- [ ] **2. Build aplikacije**
+  - Pokrenuti produkcijski build
+  - Provjeriti da li build prođe bez grešaka
+  - Provjeriti veličinu build fajlova
 
-### 3. [ ] Test prije deploya
-- Pokrenuti pre-deploy testove
-- Provjeriti da li svi testovi prolaze
+- [ ] **3. Provjera environment varijabli**
+  - Provjeriti .env.production fajl
+  - Osigurati da su sve potrebne varijable postavljene
+  - Provjeriti API endpointe za produkciju
 
-### 4. [ ] Deploy aplikacije
-- Deployati server aplikaciju
-- Deployati web aplikaciju
-- Provjeriti health status nakon deploya
+- [ ] **4. Deploy proces**
+  - Izvršiti deploy na hosting platformu
+  - Provjeriti da li je deploy uspješan
+  - Testirati aplikaciju na produkciji
 
-### 5. [ ] Verifikacija
-- Provjeriti da li aplikacija radi na produkciji
-- Provjeriti osnovne funkcionalnosti
-- Provjeriti logove za greške
+- [ ] **5. Post-deploy provjera**
+  - Testirati osnovne funkcionalnosti
+  - Provjeriti da li se učitavaju svi resursi
+  - Provjeriti konzolu za greške
 
-## Napomene
-- Koristićemo postojeći deploy script iz package.json
-- Deploy se vrši pomoću npm run deploy komande
+## Review
+(Biće ažurirano nakon završetka)

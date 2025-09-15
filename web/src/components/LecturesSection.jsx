@@ -15,7 +15,7 @@ const LecturesSection = ({
   viewAllButtonText = 'Prikaži sve dersove',
   viewAllPath = '/lectures',
   emptyMessage = 'Trenutno nema dostupnih dersova.',
-  cardHeight = '240px' // Povećana default visina sa 200px na 240px
+  cardHeight = '240px' // Fiksna visina kartice
 }) => {
   const router = useRouter();
   
@@ -82,24 +82,35 @@ const LecturesSection = ({
             sx={{
               display: 'flex',
               flexWrap: 'wrap',
-              gap: 1.5, // Smanjen gap sa 2.5 na 1.5
-              justifyContent: 'flex-start',
+              gap: 2, // 16px gap između kartica
+              justifyContent: 'center',
               width: '100%',
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              '&::-webkit-scrollbar': {
+                height: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                backgroundColor: '#f1f1f1',
+                borderRadius: '10px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: '#888',
+                borderRadius: '10px',
+                '&:hover': {
+                  backgroundColor: '#555',
+                },
+              },
             }}
           >
             {displayLectures.map((lecture) => {
               return (
-                <Box 
-                  key={lecture._id} 
-                  sx={{ 
-                    width: {
-                      xs: '100%',
-                      sm: 'calc(50% - 6px)', // Prilagođeno za novi gap
-                      md: 'calc(33.333% - 8px)', // Prilagođeno za novi gap
-                      lg: 'calc(25% - 9px)', // Prilagođeno za novi gap
-                      xl: 'calc(20% - 9.6px)' // Prilagođeno za novi gap
-                    },
-                    height: cardHeight
+                <Box
+                  key={lecture._id}
+                  sx={{
+                    width: '320px',
+                    height: '240px',
+                    flexShrink: 0
                   }}
                 >
                   <UniversalCard data={{ ...lecture, type: 'Predavanje' }} />
