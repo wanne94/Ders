@@ -57,7 +57,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const [formData, setFormData] = useState({
     title: '',
     date: format(new Date(), 'dd.MM.yyyy'),
-    time: '',
+    time: '18:00',
     address: '',
     city: '',
     speaker: '',
@@ -100,6 +100,12 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   // Hardcoded time options with 15-minute intervals (same as web version)
   const timeOptions = [
     { label: 'Odaberite vrijeme', value: '' },
+    { label: '00:00', value: '00:00' }, { label: '00:15', value: '00:15' }, { label: '00:30', value: '00:30' }, { label: '00:45', value: '00:45' },
+    { label: '01:00', value: '01:00' }, { label: '01:15', value: '01:15' }, { label: '01:30', value: '01:30' }, { label: '01:45', value: '01:45' },
+    { label: '02:00', value: '02:00' }, { label: '02:15', value: '02:15' }, { label: '02:30', value: '02:30' }, { label: '02:45', value: '02:45' },
+    { label: '03:00', value: '03:00' }, { label: '03:15', value: '03:15' }, { label: '03:30', value: '03:30' }, { label: '03:45', value: '03:45' },
+    { label: '04:00', value: '04:00' }, { label: '04:15', value: '04:15' }, { label: '04:30', value: '04:30' }, { label: '04:45', value: '04:45' },
+    { label: '05:00', value: '05:00' }, { label: '05:15', value: '05:15' }, { label: '05:30', value: '05:30' }, { label: '05:45', value: '05:45' },
     { label: '06:00', value: '06:00' }, { label: '06:15', value: '06:15' }, { label: '06:30', value: '06:30' }, { label: '06:45', value: '06:45' },
     { label: '07:00', value: '07:00' }, { label: '07:15', value: '07:15' }, { label: '07:30', value: '07:30' }, { label: '07:45', value: '07:45' },
     { label: '08:00', value: '08:00' }, { label: '08:15', value: '08:15' }, { label: '08:30', value: '08:30' }, { label: '08:45', value: '08:45' },
@@ -723,7 +729,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         setFormData({
           title: '',
           date: format(new Date(), 'dd.MM.yyyy'),
-          time: '',
+          time: '18:00',
           address: '',
           city: '',
           speaker: '',
@@ -795,12 +801,45 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     console.log('renderDaijaDropdown - daije array:', daije);
     console.log('renderDaijaDropdown - daije length:', daije.length);
     
-    const daijaOptions = daije.map(d => ({
-      label: formatDaijaTitle(d.name, d.title),
-      value: d._id
-    }));
+    const daijaOptions = [
+      ...daije.map(d => ({
+        label: formatDaijaTitle(d.name, d.title),
+        value: d._id
+      })),
+      { label: '➕ Unesi ručno ime predavača', value: 'custom' }
+    ];
     
     console.log('renderDaijaDropdown - daijaOptions:', daijaOptions);
+
+    // If using custom speaker, show input field
+    if (useCustomSpeaker) {
+      return (
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>
+            Daija/Predavač <Text style={styles.required}>*</Text>
+          </Text>
+          <View>
+            <TextInput
+              style={styles.input}
+              value={formData.speaker}
+              onChangeText={(value) => handleInputChange('speaker', value)}
+              placeholder="Unesite ime predavača..."
+              placeholderTextColor={COLORS.gray}
+            />
+            <TouchableOpacity
+              style={styles.switchToDropdown}
+              onPress={() => {
+                setUseCustomSpeaker(false);
+                handleInputChange('speaker', '');
+                handleInputChange('daijaId', '');
+              }}
+            >
+              <Text style={styles.switchToDropdownText}>Odaberite iz liste</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
 
     return (
       <IOSCompatibleDropdown
@@ -808,10 +847,16 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         items={daijaOptions}
         value={formData.daijaId}
         onChangeValue={(value) => {
-          handleInputChange('daijaId', value);
-          const selectedDaija = daije.find(d => d._id === value);
-          if (selectedDaija) {
-            handleInputChange('speaker', formatDaijaTitle(selectedDaija.name, selectedDaija.title));
+          if (value === 'custom') {
+            setUseCustomSpeaker(true);
+            handleInputChange('daijaId', '');
+            handleInputChange('speaker', '');
+          } else {
+            handleInputChange('daijaId', value);
+            const selectedDaija = daije.find(d => d._id === value);
+            if (selectedDaija) {
+              handleInputChange('speaker', formatDaijaTitle(selectedDaija.name, selectedDaija.title));
+            }
           }
         }}
         placeholder="Odaberite predavača"
@@ -1015,6 +1060,10 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
               // Disable weekly lectures if seminar is selected
               if (!showSeminarOptions) {
                 handleInputChange('isWeeklyLecture', false);
+                // Set end date to start date when seminar is selected
+                setSelectedEndDate(selectedDate);
+                setCurrentEndMonth(currentMonth);
+                handleInputChange('endDate', format(selectedDate, 'dd.MM.yyyy'));
               }
             }}
             disabled={editMode || formData.isWeeklyLecture}
@@ -1782,6 +1831,17 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     marginTop: 4,
     fontStyle: 'italic',
+  },
+  switchToDropdown: {
+    marginTop: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  switchToDropdownText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });
 

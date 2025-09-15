@@ -819,7 +819,7 @@ const ProfilePage = () => {
                             )}
                             {profile.cancelledAt && (
                               <span className="block text-sm opacity-80 mt-1">
-                                Otkazano: {formatDate(profile.cancelledAt)}
+                                Otkazano: {formatDateWithDay(profile.cancelledAt)}
                               </span>
                             )}
                           </AlertDescription>
