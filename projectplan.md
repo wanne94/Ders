@@ -5,20 +5,20 @@ Izvršiti deploy web aplikacije na produkciju.
 
 ## TODO Lista
 
-- [ ] **1. Provjera trenutnog stanja aplikacije**
-  - Provjeriti da li su sve promjene komitovane
+- [x] **1. Provjera trenutnog stanja aplikacije**
+  - Provjeriti da li su sve promjene komitovane ✓
   - Provjeriti da li aplikacija radi lokalno bez grešaka
   - Provjeriti konfiguraciju za produkciju
 
-- [ ] **2. Build aplikacije**
-  - Pokrenuti produkcijski build
-  - Provjeriti da li build prođe bez grešaka
-  - Provjeriti veličinu build fajlova
+- [x] **2. Build aplikacije**
+  - Pokrenuti produkcijski build ✓
+  - Provjeriti da li build prođe bez grešaka ✓
+  - Provjeriti veličinu build fajlova ✓
 
-- [ ] **3. Provjera environment varijabli**
-  - Provjeriti .env.production fajl
-  - Osigurati da su sve potrebne varijable postavljene
-  - Provjeriti API endpointe za produkciju
+- [x] **3. Provjera environment varijabli**
+  - Provjeriti .env.production fajl ✓
+  - Osigurati da su sve potrebne varijable postavljene ✓
+  - Provjeriti API endpointe za produkciju ✓
 
 - [ ] **4. Deploy proces**
   - Izvršiti deploy na hosting platformu
