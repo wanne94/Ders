@@ -1,37 +1,96 @@
-# Plan za rješavanje Xcode Build Phase upozorenja
+# Plan: Omogućavanje dodjeljivanja više predavača jednom predavanju u mobilnoj aplikaciji
 
-## Problem
-Xcode prikazuje 33 upozorenja vezana za build phase skripte koje se izvršavaju pri svakom build-u jer nemaju definirane output fajlove.
+## Analiza postojećeg stanja
 
-## Analiza
-Sva upozorenja su vezana za React Native i povezane biblioteke koje koriste "Create Symlinks to Header Folders" skripte bez definiranih output-a.
+### Web aplikacija (LectureFormNew.jsx)
+- ✅ Već podržava više predavača kroz:
+  - `daijaIds` - array ID-jeva daija
+  - `customSpeakers` - array prilagođenih predavača
+  - UI omogućava dodavanje/brisanje više predavača
+  - Lista predavača sa "X" dugmetom za brisanje
+
+### Mobilna aplikacija (LectureForm.jsx)
+- ❌ Trenutno podržava samo jednog predavača:
+  - `daijaId` - samo jedan ID
+  - `speaker` - jedno tekstualno polje
+  - Dropdown omogućava samo jedan izbor
 
 ## TODO Lista
 
-### ✅ 1. Kreirati suppression config fajl
-- Kreirati WarningSuppressions.xcconfig sa postavkama za potiskivanje upozorenja
-- Omogućiti kontrolu nad build upozorenjima
+### [✅] 1. Ažuriranje state strukture u mobilnoj aplikaciji
+- ✅ Dodati `daijaIds: []` array
+- ✅ Dodati `customSpeakers: []` array
+- ✅ Zadržati postojeća polja za kompatibilnost
 
-### ✅ 2. Ažurirati Podfile sa post_install hook-om  
-- Dodati skriptu koja automatski postavlja "Based on dependency analysis" na false
-- Primjeniti na sve React Native i povezane pod targete
-- NAPOMENA: Pokušao sam postaviti `always_out_of_date` atribut ali Cocoapods ne podržava ovu opciju direktno
+### [✅] 2. Kreiranje komponente za prikaz liste predavača
+- ✅ Prikaz dodanih daija sa nazivom i titulom
+- ✅ Prikaz custom predavača
+- ✅ Dugme za brisanje (X) za svaki element
 
-### ☐ 3. Testirati build proces
-- Provjeriti da li su upozorenja uklonjena
-- Potvrditi da build i dalje radi ispravno
+### [✅] 3. Modifikacija dropdown logike
+- ✅ Omogućiti dodavanje više daija u listu
+- ✅ Ne zatvarati dropdown nakon izbora
+- ✅ Dodati opciju za custom unos
 
-### ☐ 4. Dokumentovati promjene
-- Objasniti razlog promjena
-- Dokumentovati koje postavke su promijenjene
+### [✅] 4. Implementacija custom speaker inputa
+- ✅ TextInput za unos imena
+- ✅ Dugme "Dodaj" za dodavanje u listu
+- ✅ Opcija za prebacivanje između dropdown i custom inputa
 
-## Napomena
-- Pod install je uspješno završen
-- Xcode developer tools nisu potpuno konfigurisani (potreban je full Xcode, ne samo Command Line Tools)
-- Upozorenja o DEFINES_MODULE su normalna za expo-dev-menu i ne utiču na funkcionalnost
+### [✅] 5. Ažuriranje handleSubmit funkcije
+- ✅ Slanje `daijaIds` i `customSpeakers` na server
+- ✅ Zadržati kompatibilnost sa starim API-jem
+
+### [✅] 6. Validacija
+- ✅ Provjera da postoji bar jedan predavač
+- ✅ Prikaz odgovarajućih poruka greške
+
+### [✅] 7. Edit mode podrška
+- ✅ Učitavanje postojećih više predavača
+- ✅ Omogućavanje uređivanja liste
+
+### [✅] 8. UI poboljšanja
+- ✅ Stilizovanje liste predavača
+- ✅ Dodavanje ikona za brisanje
+- ✅ Helper text kada nema predavača
+
+### [✅] 9. Preurediti redoslijed polja
+- ✅ Slika
+- ✅ Naslov
+- ✅ Daije/Predavači (sada podržava više)
+- ✅ Datum
+- ✅ Vrijeme
+- ✅ Organizator
+- ✅ Adresa
+- ✅ Grad
 
 ## Review
-Promjene napravljene u Podfile-u:
-- Dodate postavke za potiskivanje upozorenja iz third-party biblioteka
-- Pokušan pristup sa `always_out_of_date` ali nije podržan direktno kroz Cocoapods API
-- Potrebno je ručno podesiti u Xcode projektu ili koristiti drugi pristup
+
+### Implementirane promjene:
+
+1. **Nova funkcionalnost - Više predavača**:
+   - Mobilna aplikacija sada podržava dodavanje više predavača jednom predavanju
+   - Korisnici mogu birati iz liste postojećih daija ili unijeti custom imena
+   - Lista predavača se prikazuje sa mogućnošću brisanja pojedinačnih stavki
+
+2. **Usklađen redoslijed polja**:
+   - Redoslijed polja u mobilnoj formi je usklađen sa web verzijom
+   - Novi redoslijed: Slika → Naslov → Daije → Datum → Vrijeme → Organizator → Adresa → Grad
+
+3. **Kompatibilnost**:
+   - Zadržana je kompatibilnost sa postojećim API-jem
+   - Stara polja (`daijaId`, `speaker`) se i dalje popunjavaju za backwards kompatibilnost
+   - Novi podaci se šalju kroz `daijaIds` i `customSpeakers` arrays
+
+4. **UI/UX poboljšanja**:
+   - Dodani stilovi za listu predavača
+   - Implementirane animacije i vizuelni indikatori
+   - Helper text koji pomaže korisniku
+
+### Testirane funkcionalnosti:
+- ✅ Dodavanje više daija iz liste
+- ✅ Dodavanje custom predavača
+- ✅ Brisanje predavača iz liste
+- ✅ Validacija (bar jedan predavač)
+- ✅ Edit mode sa postojećim podacima
+- ✅ Submit sa novim podacima
