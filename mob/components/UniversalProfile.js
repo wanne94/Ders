@@ -644,9 +644,6 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAu
             </TouchableOpacity>
           )}
           
-          {type === 'lecture' && (
-          )}
-          
           {/* Add to Calendar Button - Only for lectures that are not cancelled */}
           {type === 'lecture' && profile.date && !profile.isCancelled && profile.status !== 'cancelled' && (
             <TouchableOpacity style={styles.glassButton} onPress={addToCalendar}>

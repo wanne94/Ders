@@ -2,7 +2,7 @@ export default {
   expo: {
     name: "Ders",
     slug: "ders-mobile",
-    version: "1.1.6",
+    version: "1.1.7",
     scheme: "ders",
     icon: "./assets/images/icon.png",
     splash: {
@@ -12,7 +12,7 @@ export default {
     },
     android: {
       package: "com.daije.mobile",
-      versionCode: 21,
+      versionCode: 22,
       userInterfaceStyle: "automatic",
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",

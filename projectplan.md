@@ -1,34 +1,37 @@
-# Plan: Deploy Web Aplikacije
+# Plan za rješavanje Xcode Build Phase upozorenja
 
-## Cilj
-Izvršiti deploy web aplikacije na produkciju.
+## Problem
+Xcode prikazuje 33 upozorenja vezana za build phase skripte koje se izvršavaju pri svakom build-u jer nemaju definirane output fajlove.
+
+## Analiza
+Sva upozorenja su vezana za React Native i povezane biblioteke koje koriste "Create Symlinks to Header Folders" skripte bez definiranih output-a.
 
 ## TODO Lista
 
-- [x] **1. Provjera trenutnog stanja aplikacije**
-  - Provjeriti da li su sve promjene komitovane ✓
-  - Provjeriti da li aplikacija radi lokalno bez grešaka
-  - Provjeriti konfiguraciju za produkciju
+### ✅ 1. Kreirati suppression config fajl
+- Kreirati WarningSuppressions.xcconfig sa postavkama za potiskivanje upozorenja
+- Omogućiti kontrolu nad build upozorenjima
 
-- [x] **2. Build aplikacije**
-  - Pokrenuti produkcijski build ✓
-  - Provjeriti da li build prođe bez grešaka ✓
-  - Provjeriti veličinu build fajlova ✓
+### ✅ 2. Ažurirati Podfile sa post_install hook-om  
+- Dodati skriptu koja automatski postavlja "Based on dependency analysis" na false
+- Primjeniti na sve React Native i povezane pod targete
+- NAPOMENA: Pokušao sam postaviti `always_out_of_date` atribut ali Cocoapods ne podržava ovu opciju direktno
 
-- [x] **3. Provjera environment varijabli**
-  - Provjeriti .env.production fajl ✓
-  - Osigurati da su sve potrebne varijable postavljene ✓
-  - Provjeriti API endpointe za produkciju ✓
+### ☐ 3. Testirati build proces
+- Provjeriti da li su upozorenja uklonjena
+- Potvrditi da build i dalje radi ispravno
 
-- [ ] **4. Deploy proces**
-  - Izvršiti deploy na hosting platformu
-  - Provjeriti da li je deploy uspješan
-  - Testirati aplikaciju na produkciji
+### ☐ 4. Dokumentovati promjene
+- Objasniti razlog promjena
+- Dokumentovati koje postavke su promijenjene
 
-- [ ] **5. Post-deploy provjera**
-  - Testirati osnovne funkcionalnosti
-  - Provjeriti da li se učitavaju svi resursi
-  - Provjeriti konzolu za greške
+## Napomena
+- Pod install je uspješno završen
+- Xcode developer tools nisu potpuno konfigurisani (potreban je full Xcode, ne samo Command Line Tools)
+- Upozorenja o DEFINES_MODULE su normalna za expo-dev-menu i ne utiču na funkcionalnost
 
 ## Review
-(Biće ažurirano nakon završetka)
+Promjene napravljene u Podfile-u:
+- Dodate postavke za potiskivanje upozorenja iz third-party biblioteka
+- Pokušan pristup sa `always_out_of_date` ali nije podržan direktno kroz Cocoapods API
+- Potrebno je ručno podesiti u Xcode projektu ili koristiti drugi pristup
