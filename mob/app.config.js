@@ -20,7 +20,10 @@ export default {
       }
     },
     ios: {
-      bundleIdentifier: "com.daije.mobile"
+      bundleIdentifier: "com.daije.mobile",
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false
+      }
     },
     plugins: [
       [
