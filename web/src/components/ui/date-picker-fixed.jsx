@@ -1,5 +1,6 @@
 import * as React from "react"
 import { format } from "date-fns"
+import { bs } from "date-fns/locale"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -164,7 +165,15 @@ export function DatePickerFixed({
             }}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {internalDate ? format(internalDate, "dd.MM.yyyy") : <span>{placeholder}</span>}
+            {internalDate ? (
+              <>
+                {format(internalDate, "dd.MM.yyyy")}
+                {" "}
+                {format(internalDate, "EEEE", { locale: bs })}
+              </>
+            ) : (
+              <span>{placeholder}</span>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 z-[9999]" align="start">

@@ -5,12 +5,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
-  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width: screenWidth } = Dimensions.get('window');
 
 const COLORS = {
   primary: '#022C43',
@@ -39,7 +37,7 @@ const UpdateBanner = ({
       tension: 50,
       friction: 8,
     }).start();
-  }, []);
+  }, [slideAnim]);
 
   const handleDismiss = () => {
     Animated.timing(slideAnim, {

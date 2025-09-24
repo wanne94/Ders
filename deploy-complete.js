@@ -18,7 +18,9 @@ const deployType = args[0] || 'deploy';
 function exec(command, options = {}) {
     console.log(`Executing: ${command}`);
     try {
-        execSync(command, { stdio: 'inherit', ...options });
+        // Add SSHPASS environment variable for password authentication
+        const env = { ...process.env, SSHPASS: 'WanNeAvdo1994' };
+        execSync(command, { stdio: 'inherit', env, ...options });
         return true;
     } catch (error) {
         console.error(`Error executing: ${command}`);
@@ -35,17 +37,17 @@ function deployWeb() {
 
     console.log('\n🚀 Deploying web to server...');
     // Deploy the entire web directory including .next for SSR
-    if (!exec(`rsync -avz --exclude 'node_modules' --exclude '.env.local' -e "ssh -p ${DEPLOY_PORT}" web/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/web/`)) {
+    if (!exec(`sshpass -e rsync -avz --exclude 'node_modules' --exclude '.env.local' -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" web/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/web/`)) {
         throw new Error('Web deployment failed');
     }
 
     console.log('\n📦 Installing web dependencies on server...');
-    if (!exec(`ssh -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/web && npm install --production"`)) {
+    if (!exec(`sshpass -e ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/web && npm install --production"`)) {
         throw new Error('Web dependency installation failed');
     }
 
     console.log('\n🔄 Restarting web application...');
-    if (!exec(`ssh -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/web && pm2 restart ders-web || pm2 start npm --name ders-web -- start"`)) {
+    if (!exec(`sshpass -e ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/web && pm2 restart ders-web || pm2 start npm --name ders-web -- start"`)) {
         throw new Error('Web restart failed');
     }
 
@@ -56,17 +58,17 @@ function deployServer() {
     console.log('\n📦 Preparing server files...');
     
     console.log('\n🚀 Deploying server to production...');
-    if (!exec(`rsync -avz --exclude 'node_modules' --exclude '.env' -e "ssh -p ${DEPLOY_PORT}" server/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/server/`)) {
+    if (!exec(`sshpass -e rsync -avz --exclude 'node_modules' --exclude '.env' -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" server/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/server/`)) {
         throw new Error('Server deployment failed');
     }
 
     console.log('\n📦 Installing server dependencies...');
-    if (!exec(`ssh -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/server && npm install --production"`)) {
+    if (!exec(`sshpass -e ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/server && npm install --production"`)) {
         throw new Error('Server dependency installation failed');
     }
 
     console.log('\n🔄 Restarting server...');
-    if (!exec(`ssh -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/server && pm2 restart ders-server || pm2 start server.js --name ders-server"`)) {
+    if (!exec(`sshpass -e ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/server && pm2 restart ders-server || pm2 start server.js --name ders-server"`)) {
         throw new Error('Server restart failed');
     }
 
@@ -89,8 +91,8 @@ function createBackup() {
     console.log('\n💾 Creating backup...');
     const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
     
-    exec(`ssh -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} "mongodump --db Predavanja --out /backups/db-${timestamp}"`);
-    exec(`ssh -p ${DEPLOY_PORT} ${DEPLOY_USER}@${DEPLOY_HOST} "tar -czf /backups/files-${timestamp}.tar.gz ${DEPLOY_PATH}"`);
+    exec(`sshpass -e ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "mongodump --db Predavanja --out /backups/db-${timestamp}"`);
+    exec(`sshpass -e ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "tar -czf /backups/files-${timestamp}.tar.gz ${DEPLOY_PATH}"`);
     
     console.log('✅ Backup complete');
 }

@@ -1,7 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, StyleSheet, Dimensions } from 'react-native';
-
-const { width: screenWidth } = Dimensions.get('window');
+import { Animated, StyleSheet } from 'react-native';
 
 const SkeletonLoader = ({ 
   width = '100%', 

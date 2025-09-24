@@ -40,7 +40,6 @@ const ImageSelector = ({
 }) => {
   const [imageUri, setImageUri] = useState(null);
   const [showExistingModal, setShowExistingModal] = useState(false);
-  const [loadingExisting, setLoadingExisting] = useState(false);
 
   useEffect(() => {
     if (value) {
@@ -196,7 +195,7 @@ const ImageSelector = ({
               </TouchableOpacity>
             </View>
 
-            {loadingExisting ? (
+            {false ? (
               <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
             ) : (
               <FlatList

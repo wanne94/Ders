@@ -10,7 +10,7 @@
     "stop": "pkill -f 'npm run dev' || killall node nodemon || true",
     "build": "cd web && npm run build",
     "start": "cd web && npm start",
-    "lint": "next lint",
+    "lint": "cd web && npm run lint",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

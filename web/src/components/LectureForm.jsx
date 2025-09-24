@@ -514,7 +514,7 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 1 }}>
                         <CloudUploadIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                         <Typography variant="body2" color="text.secondary">
-                          Kliknite za promjenu slike
+                          Kliknite za promjenu slike iz galerije
                         </Typography>
                       </Box>
                     </>
@@ -522,7 +522,7 @@ const LectureForm = ({ open, onClose, onSuccess, approvalEnabled = true, lecture
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                       <CloudUploadIcon sx={{ fontSize: 48, color: 'text.secondary' }} />
                       <Typography variant="body1" sx={{ mt: 1 }}>
-                        Kliknite za dodavanje slike
+                        Odaberite sliku iz galerije
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         ili prevucite sliku ovdje

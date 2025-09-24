@@ -5,6 +5,7 @@ import {
   ChevronRightIcon,
 } from "lucide-react"
 import { DayPicker, getDefaultClassNames } from "react-day-picker";
+import { bs } from 'date-fns/locale';
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -21,8 +22,29 @@ function Calendar({
 }) {
   const defaultClassNames = getDefaultClassNames()
 
+  // Bosnian months
+  const bosnianMonths = [
+    'Januar', 'Februar', 'Mart', 'April', 'Maj', 'Juni',
+    'Juli', 'August', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'
+  ]
+
+  // Custom formatters for Bosnian language
+  const bosnianFormatters = {
+    formatCaption: (date) => {
+      return `${bosnianMonths[date.getMonth()]} ${date.getFullYear()}`
+    },
+    formatMonthDropdown: (date) => bosnianMonths[date.getMonth()],
+    formatWeekdayName: (date, options) => {
+      // Custom weekday names
+      const weekdays = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned']
+      return weekdays[date.getDay() === 0 ? 6 : date.getDay() - 1]
+    }
+  }
+
   return (
     <DayPicker
+      locale={bs}
+      weekStartsOn={1}
       showOutsideDays={showOutsideDays}
       className={cn(
         "bg-background group/calendar p-3 [--cell-size:2rem] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
@@ -32,8 +54,7 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+        ...bosnianFormatters,
         ...formatters,
       }}
       classNames={{

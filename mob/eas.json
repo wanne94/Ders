@@ -42,6 +42,10 @@
       },
       "android": {
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "simulator": false,
+        "distribution": "store"
       }
     }
   },

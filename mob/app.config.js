@@ -2,7 +2,7 @@ export default {
   expo: {
     name: "Ders",
     slug: "ders-mobile",
-    version: "1.1.7",
+    version: "1.1.8",
     scheme: "ders",
     icon: "./assets/images/icon.png",
     splash: {
@@ -12,7 +12,7 @@ export default {
     },
     android: {
       package: "com.daije.mobile",
-      versionCode: 22,
+      versionCode: 23,
       userInterfaceStyle: "automatic",
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
@@ -21,11 +21,13 @@ export default {
     },
     ios: {
       bundleIdentifier: "com.daije.mobile",
+      buildNumber: "24",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
       }
     },
     plugins: [
+      "expo-font",
       [
         "expo-build-properties",
         {

@@ -16,90 +16,90 @@ const UpdateChecker = () => {
   const [isForceUpdate, setIsForceUpdate] = useState(false);
 
   useEffect(() => {
-    checkForUpdate();
-  }, []);
-
-  const checkForUpdate = async () => {
-    try {
-      // Check if we should check for updates
-      const lastCheck = await AsyncStorage.getItem(UPDATE_CHECK_KEY);
-      const now = Date.now();
-      
-      if (lastCheck && (now - parseInt(lastCheck)) < CHECK_INTERVAL) {
-        return; // Don't check too frequently
-      }
-
-      // Save current check time
-      await AsyncStorage.setItem(UPDATE_CHECK_KEY, now.toString());
-
-      // Get current version
-      let currentVersion = null;
+    const checkForUpdate = async () => {
       try {
-        currentVersion = VersionCheck.getCurrentVersion();
-      } catch (error) {
-        console.log('Error getting current version:', error);
-        return;
-      }
-      
-      // Check if currentVersion is valid
-      if (!currentVersion) {
-        console.log('Could not get current version');
-        return;
-      }
-      
-      // Get latest version from store
-      const latestVersion = await VersionCheck.getLatestVersion({
-        provider: Platform.OS === 'ios' ? 'appStore' : 'playStore',
-        packageName: 'com.daije.mobile', // Your actual package name from app.config.js
-        ignoreErrors: true,
-      });
+        // Check if we should check for updates
+        const lastCheck = await AsyncStorage.getItem(UPDATE_CHECK_KEY);
+        const now = Date.now();
 
-      if (!latestVersion || !latestVersion.version) {
-        return;
-      }
+        if (lastCheck && (now - parseInt(lastCheck)) < CHECK_INTERVAL) {
+          return; // Don't check too frequently
+        }
 
-      // Compare versions
-      let needUpdate = null;
-      try {
-        needUpdate = await VersionCheck.needUpdate({
-          currentVersion,
-          latestVersion: latestVersion.version,
-        });
-      } catch (error) {
-        console.log('Error comparing versions:', error);
-        return;
-      }
+        // Save current check time
+        await AsyncStorage.setItem(UPDATE_CHECK_KEY, now.toString());
 
-      if (needUpdate && needUpdate.isNeeded) {
-        // Check if user already dismissed this version
-        const dismissedVersion = await AsyncStorage.getItem(UPDATE_DISMISSED_KEY);
-        if (dismissedVersion === latestVersion.version && !isForceUpdate) {
+        // Get current version
+        let currentVersion = null;
+        try {
+          currentVersion = VersionCheck.getCurrentVersion();
+        } catch (error) {
+          console.log('Error getting current version:', error);
           return;
         }
 
-        setUpdateInfo({
-          currentVersion,
-          latestVersion: latestVersion.version,
-          storeUrl: latestVersion.storeUrl || getStoreUrl(),
+        // Check if currentVersion is valid
+        if (!currentVersion) {
+          console.log('Could not get current version');
+          return;
+        }
+
+        // Get latest version from store
+        const latestVersion = await VersionCheck.getLatestVersion({
+          provider: Platform.OS === 'ios' ? 'appStore' : 'playStore',
+          packageName: 'com.daije.mobile', // Your actual package name from app.config.js
+          ignoreErrors: true,
         });
 
-        // Determine if it's a force update (major version change)
-        const currentParts = currentVersion ? currentVersion.split('.') : ['0'];
-        const latestParts = latestVersion.version ? latestVersion.version.split('.') : ['0'];
-        const currentMajor = parseInt(currentParts[0]) || 0;
-        const latestMajor = parseInt(latestParts[0]) || 0;
-        
-        if (latestMajor > currentMajor) {
-          setIsForceUpdate(true);
-          setShowModal(true);
-        } else {
-          setShowBanner(true);
+        if (!latestVersion || !latestVersion.version) {
+          return;
         }
+
+        // Compare versions
+        let needUpdate = null;
+        try {
+          needUpdate = await VersionCheck.needUpdate({
+            currentVersion,
+            latestVersion: latestVersion.version,
+          });
+        } catch (error) {
+          console.log('Error comparing versions:', error);
+          return;
+        }
+
+        if (needUpdate && needUpdate.isNeeded) {
+          // Check if user already dismissed this version
+          const dismissedVersion = await AsyncStorage.getItem(UPDATE_DISMISSED_KEY);
+          if (dismissedVersion === latestVersion.version && !isForceUpdate) {
+            return;
+          }
+
+          setUpdateInfo({
+            currentVersion,
+            latestVersion: latestVersion.version,
+            storeUrl: latestVersion.storeUrl || getStoreUrl(),
+          });
+
+          // Determine if it's a force update (major version change)
+          const currentParts = currentVersion ? currentVersion.split('.') : ['0'];
+          const latestParts = latestVersion.version ? latestVersion.version.split('.') : ['0'];
+          const currentMajor = parseInt(currentParts[0]) || 0;
+          const latestMajor = parseInt(latestParts[0]) || 0;
+
+          if (latestMajor > currentMajor) {
+            setIsForceUpdate(true);
+            setShowModal(true);
+          } else {
+            setShowBanner(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking for update:', error);
       }
-    } catch (error) {
-      console.error('Error checking for update:', error);
-    }
-  };
+    };
+
+    checkForUpdate();
+  }, [isForceUpdate]);
 
   const getStoreUrl = () => {
     const packageName = 'com.daije.mobile'; // Your actual package name

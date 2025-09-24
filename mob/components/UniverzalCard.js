@@ -110,7 +110,7 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
         }
       };
     }
-  }, [data?._id, data?.date, data?.time]); // Only recalculate when these critical fields change
+  }, [data]); // Only recalculate when data changes
 
   // Handle null or undefined data
   if (!data) {

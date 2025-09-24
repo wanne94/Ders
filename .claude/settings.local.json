@@ -5,7 +5,20 @@
       "Bash(pod install:*)",
       "Bash(chmod:*)",
       "Bash(./build-ios-appstore.sh:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(npx expo prebuild:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run lint)",
+      "Bash(npx:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Read(//Users/wanne/react-app/**)",
+      "Bash(npm run deploy:web:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(export SSHPASS=\"WanNeAvdo1994\")",
+      "Bash(sshpass -e ssh -p 22 -o StrictHostKeyChecking=no root@194.163.176.171 \"cd /var/www/ders.ba/web && pm2 restart ders-web\")"
     ],
     "deny": [],
     "ask": []

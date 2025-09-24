@@ -7,7 +7,7 @@ import {
     TouchableOpacity,
     TextInput,
     Alert,
-    Modal, Image,
+    Modal,
     KeyboardAvoidingView,
     Platform,
     TouchableWithoutFeedback,
@@ -16,7 +16,6 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
 import IOSCompatibleDropdown from '../IOSCompatibleDropdown';
 import {
     format,
@@ -54,9 +53,16 @@ const COLORS = {
 };
 
 const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) => {
+  // Helper function to format date with day name
+  const formatDateWithDay = (date) => {
+    const bosnianDays = ['Nedjelja', 'Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota'];
+    const dayName = bosnianDays[date.getDay()];
+    return `${format(date, 'dd.MM.yyyy')} ${dayName}`;
+  };
+
   const [formData, setFormData] = useState({
     title: '',
-    date: format(new Date(), 'dd.MM.yyyy'),
+    date: formatDateWithDay(new Date()),
     time: '18:00',
     address: '',
     city: '',
@@ -81,14 +87,12 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   const [imageUri, setImageUri] = useState(null);
   
   // Separate state for picker selected values to ensure proper updates
-  const [selectedDaijaId, setSelectedDaijaId] = useState('');
-  
+
   // Calendar and time picker states
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [tempTimeValue, setTempTimeValue] = useState('');
   
   // Seminar states
   const [showSeminarOptions, setShowSeminarOptions] = useState(false);
@@ -174,7 +178,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     
     setFormData({
       title: editData.title || '',
-      date: editData.date || format(new Date(), 'dd.MM.yyyy'),
+      date: editData.date || formatDateWithDay(new Date()),
       time: editData.time || '',
       address: editData.address || '',
       city: editData.city || '',
@@ -186,7 +190,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       isWeeklyLecture: editData.isWeeklyLecture || false,
       totalWeeks: editData.totalWeeks || 2,
       isSeminar: editData.isSeminar || false,
-      endDate: editData.endDate ? format(new Date(editData.endDate), 'dd.MM.yyyy') : ''
+      endDate: editData.endDate ? formatDateWithDay(new Date(editData.endDate)) : ''
     });
 
     // Set image URI if exists
@@ -216,9 +220,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     // Set custom speaker/organization flags and picker values
     if (editData.speaker && !editData.daijaId) {
       setUseCustomSpeaker(true);
-      setSelectedDaijaId('custom');
-    } else if (editData.daijaId) {
-      setSelectedDaijaId(editData.daijaId);
     }
     if (editData.organization && !editData.organizationId) {
       setUseCustomOrganization(true);
@@ -267,21 +268,11 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     setShowDatePicker(false);
     if (selectedDate) {
       setSelectedDate(selectedDate);
-      handleInputChange('date', format(selectedDate, 'dd.MM.yyyy'));
+      handleInputChange('date', formatDateWithDay(selectedDate));
     }
   };
   
-  const handleEndDateChange = (event, selectedDate) => {
-    // Ne zatvarati modal automatski - čeka se klik na dugme Potvrdi
-    if (selectedDate) {
-      setSelectedEndDate(selectedDate);
-    }
-  };
   
-  const confirmEndDate = () => {
-    setShowEndDatePicker(false);
-    handleInputChange('endDate', format(selectedEndDate, 'dd.MM.yyyy'));
-  };
   
   const confirmTime = () => {
     setShowTimePicker(false);
@@ -292,9 +283,11 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
   
   const calculateSeminarDays = (startDate, endDate) => {
     if (!startDate || !endDate) return 0;
-    
+
     const parseDate = (dateStr) => {
-      const parts = dateStr.split('.');
+      // Extract just the date part (before the space if day name is present)
+      const dateOnly = dateStr.split(' ')[0];
+      const parts = dateOnly.split('.');
       if (parts.length === 3) {
         const [day, month, year] = parts;
         return new Date(year, month - 1, day);
@@ -471,7 +464,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
                 onPress={() => {
                   if (!isDisabled) {
                     setSelectedEndDate(day);
-                    handleInputChange('endDate', format(day, 'dd.MM.yyyy'));
+                    handleInputChange('endDate', formatDateWithDay(day));
                     setShowEndDatePicker(false);
                   }
                 }}
@@ -492,68 +485,13 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     );
   };
 
-  const handleDaijaSelect = (daijaId) => {
-    setSelectedDaijaId(daijaId); // Update picker state
-    
-    if (daijaId === 'custom') {
-      setUseCustomSpeaker(true);
-      setFormData(prev => ({ 
-        ...prev, 
-        daijaId: '',
-        speaker: ''
-      }));
-    } else if (daijaId === '') {
-      setUseCustomSpeaker(false);
-      setFormData(prev => ({ 
-        ...prev, 
-        daijaId: '',
-        speaker: ''
-      }));
-    } else {
-      setUseCustomSpeaker(false);
-      const selectedDaija = daije.find(d => d._id === daijaId);
-      setFormData(prev => ({ 
-        ...prev, 
-        daijaId: daijaId,
-        speaker: selectedDaija ? formatDaijaTitle(selectedDaija.name, selectedDaija.title) : ''
-      }));
-    }
-  };
-
-  const handleOrganizationSelect = (orgId) => {
-    if (orgId === 'custom') {
-      setUseCustomOrganization(true);
-      setFormData(prev => ({ 
-        ...prev, 
-        organizationId: '',
-        organization: '',
-        city: prev.city || '',
-        address: prev.address || ''
-      }));
-    } else if (orgId === '') {
-      setUseCustomOrganization(false);
-      setFormData(prev => ({ 
-        ...prev, 
-        organizationId: '',
-        organization: ''
-      }));
-    } else {
-      setUseCustomOrganization(false);
-      const selectedOrg = organizations.find(o => o._id === orgId);
-      setFormData(prev => ({ 
-        ...prev, 
-        organizationId: orgId,
-        organization: selectedOrg ? selectedOrg.name : '',
-        city: selectedOrg ? selectedOrg.city || prev.city : prev.city,
-        address: selectedOrg ? selectedOrg.address || prev.address : prev.address
-      }));
-    }
-  };
 
   const validateDate = (dateString) => {
-    if (!dateString || dateString.length !== 10) return false;
-    
-    const parts = dateString.split('.');
+    // Extract just the date part (before the space if day name is present)
+    const dateOnly = dateString.split(' ')[0];
+    if (!dateOnly || dateOnly.length !== 10) return false;
+
+    const parts = dateOnly.split('.');
     if (parts.length !== 3) return false;
     
     const day = parseInt(parts[0], 10);
@@ -624,8 +562,11 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       }
       
       // Provjeri da li je datum završetka nakon datuma početka
-      const startParts = formData.date.split('.');
-      const endParts = formData.endDate.split('.');
+      // Extract date parts (remove day names if present)
+      const startDateOnly = formData.date.split(' ')[0];
+      const endDateOnly = formData.endDate.split(' ')[0];
+      const startParts = startDateOnly.split('.');
+      const endParts = endDateOnly.split('.');
       if (startParts.length === 3 && endParts.length === 3) {
         const startDate = new Date(startParts[2], startParts[1] - 1, startParts[0]);
         const endDate = new Date(endParts[2], endParts[1] - 1, endParts[0]);
@@ -681,17 +622,21 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         }
       }
 
-      // Convert date from DD.MM.YYYY to YYYY-MM-DD format
+      // Convert date from DD.MM.YYYY format (remove day name) to YYYY-MM-DD format
       let formattedDate = formData.date;
       if (formData.date && formData.date.includes('.')) {
-        const [day, month, year] = formData.date.split('.');
+        // Extract just the date part (before the space)
+        const dateOnly = formData.date.split(' ')[0];
+        const [day, month, year] = dateOnly.split('.');
         formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       }
       
       // Format end date for seminars
       let formattedEndDate = formData.endDate;
       if (showSeminarOptions && formData.endDate && formData.endDate.includes('.')) {
-        const [day, month, year] = formData.endDate.split('.');
+        // Extract just the date part (before the space)
+        const dateOnly = formData.endDate.split(' ')[0];
+        const [day, month, year] = dateOnly.split('.');
         formattedEndDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       }
 
@@ -728,7 +673,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       if (!editMode) {
         setFormData({
           title: '',
-          date: format(new Date(), 'dd.MM.yyyy'),
+          date: formatDateWithDay(new Date()),
           time: '18:00',
           address: '',
           city: '',
@@ -745,7 +690,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         setImageUri(null);
         setSelectedDate(new Date());
         setSelectedEndDate(new Date());
-        setSelectedDaijaId('');
         setUseCustomSpeaker(false);
         setShowSeminarOptions(false);
       }
@@ -900,35 +844,6 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
     );
   };
 
-  const renderDropdown = (label, selectedValue, onValueChange, items, required = false) => {
-    return (
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>
-          {label} {required && <Text style={styles.required}>*</Text>}
-        </Text>
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={selectedValue}
-            onValueChange={onValueChange}
-            style={styles.picker}
-            mode="dropdown"
-            itemStyle={styles.pickerItem}
-            dropdownIconColor="#000000"
-          >
-            {items.map((item, index) => (
-              <Picker.Item
-                key={item.value || `item-${index}`}
-                label={item.label}
-                value={item.value}
-                style={styles.pickerItem}
-                color="#000000"
-              />
-            ))}
-          </Picker>
-        </View>
-      </View>
-    );
-  };
 
 
   return (
@@ -1063,7 +978,7 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
                 // Set end date to start date when seminar is selected
                 setSelectedEndDate(selectedDate);
                 setCurrentEndMonth(currentMonth);
-                handleInputChange('endDate', format(selectedDate, 'dd.MM.yyyy'));
+                handleInputChange('endDate', formatDateWithDay(selectedDate));
               }
             }}
             disabled={editMode || formData.isWeeklyLecture}

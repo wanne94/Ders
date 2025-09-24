@@ -1,9 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import SkeletonLoader from './SkeletonLoader';
 
-const { width: screenWidth } = Dimensions.get('window');
-const cardWidth = screenWidth - 40;
 
 const COLORS = {
   white: '#ffffff',

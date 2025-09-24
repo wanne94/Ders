@@ -410,7 +410,7 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
               </div>
             )}
             
-            {/* Upload new image - prikaži samo ako nema slike */}
+            {/* Upload new image - samo odabir iz galerije */}
             {!imagePreview && (
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
                 <input
@@ -424,10 +424,10 @@ const LectureFormNew = ({ open, onClose, onSuccess, lecture: existingLecture }) 
                 <label htmlFor="image-upload" className="cursor-pointer block">
                   <CloudUpload className="h-10 w-10 mx-auto text-gray-400 mb-2" />
                   <div className="text-sm font-medium text-gray-700">
-                    Dodaj novu sliku
+                    Odaberite sliku iz galerije
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
-                    Kliknite ili prevucite
+                    Kliknite za odabir
                   </div>
                 </label>
               </div>

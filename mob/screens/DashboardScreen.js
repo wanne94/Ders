@@ -25,7 +25,6 @@ import { applySorting, sortLecturesByStatus } from '../utils/sortingUtils';
 import { getApiUrl } from '../config';
 import { getToken } from '../utils/authHelpers';
 import AddContentPopup from '../components/AddContentPopup';
-import DraggableList from '../components/DraggableList';
 import AdvancedFilters from '../components/AdvancedFilters';
 import UserForm from '../components/forms/UserForm';
 import LoadingSkeleton from '../components/LoadingSkeleton';
@@ -104,9 +103,6 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [showBulkActionsModal, setShowBulkActionsModal] = useState(false);
   
-  // Drag & Drop states
-  const [dragMode, setDragMode] = useState(false);
-  const [reorderedItems, setReorderedItems] = useState([]);
 
   // Helper function for date formatting
   const formatDate = (dateString) => {
@@ -1152,65 +1148,9 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
     setBulkMode(!bulkMode);
     setSelectedItems([]);
     // Disable drag mode when entering bulk mode
-    if (!bulkMode) {
-      setDragMode(false);
-    }
   };
   
-  // Toggle drag mode
-  const toggleDragMode = () => {
-    setDragMode(!dragMode);
-    // Disable bulk mode when entering drag mode
-    if (!dragMode) {
-      setBulkMode(false);
-      setSelectedItems([]);
-    }
-  };
   
-  // Handle reorder of items
-  const handleReorder = async (reorderedData) => {
-    setReorderedItems(reorderedData);
-    
-    // Save new order to backend
-    try {
-      const { type } = getCurrentSectionData();
-      const orderData = reorderedData.map((item, index) => ({
-        id: item._id,
-        order: index
-      }));
-      
-      // TODO: Implement backend endpoint for saving order
-      console.log('New order:', orderData);
-      
-      // Update local state
-      switch (type) {
-        case 'lectures':
-        case 'lecture':
-          setData(prev => ({
-            ...prev,
-            lectures: reorderedData
-          }));
-          break;
-        case 'daije':
-        case 'daija':
-          setData(prev => ({
-            ...prev,
-            daije: reorderedData
-          }));
-          break;
-        case 'organizations':
-        case 'organization':
-          setData(prev => ({
-            ...prev,
-            organizations: reorderedData
-          }));
-          break;
-      }
-    } catch (error) {
-      console.error('Error saving new order:', error);
-      Alert.alert('Greška', 'Došlo je do greške prilikom spremanja redoslijeda');
-    }
-  };
 
   // Toggle item selection in bulk mode
   const toggleItemSelection = (itemId) => {
@@ -1490,26 +1430,7 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
       );
     }
 
-    // Use DraggableList when in drag mode
-    if (dragMode && type !== 'mixed' && type !== 'user' && type !== 'suggestion') {
-      return (
-        <DraggableList
-          data={items}
-          onReorder={handleReorder}
-          onItemPress={(item) => {
-            setSelectedItem({ ...item, type: type === 'lectures' ? 'lecture' : type });
-            setShowItemModal(true);
-          }}
-          onEdit={canEdit ? (item) => handleEditItem(item, type === 'lectures' ? 'lecture' : type) : undefined}
-          onDelete={canDelete ? (item) => handleDeleteItem(item, type === 'lectures' ? 'lecture' : type) : undefined}
-          itemType={type === 'lectures' ? 'lecture' : type}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-        />
-      );
-    }
-
-    // Use regular FlatList for normal mode, bulk mode, or unsupported sections
+    // Use FlatList for rendering items
     return (
       <FlatList
         data={items}

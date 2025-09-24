@@ -3,11 +3,9 @@ import {
   View,
   StyleSheet,
   Animated,
-  Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const { width } = Dimensions.get('window');
 
 const COLORS = {
   skeleton: '#e0e0e0',

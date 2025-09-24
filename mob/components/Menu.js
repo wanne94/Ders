@@ -45,9 +45,6 @@ const menuItems = [
   }
 ];
 
-const userMenuItems = [
-  // Settings removed as notifications are not implemented
-];
 
 const adminMenuItems = [
   {

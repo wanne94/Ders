@@ -13,8 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImage, getImageUrl } from '../utils/imageUtils';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const imageSize = (screenWidth - 48) / 3; // 3 images per row with padding
+const { height: screenHeight } = Dimensions.get('window');
 
 const COLORS = {
   primary: '#022C43',
@@ -57,7 +56,7 @@ const ImagePickerWithGallery = ({
   const handlePickImage = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
+
       if (status !== 'granted') {
         Alert.alert(
           'Dozvola potrebna',
@@ -66,16 +65,19 @@ const ImagePickerWithGallery = ({
         return;
       }
 
+      // Direktno otvori galeriju bez drugih opcija
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions?.Images || 'Images',
         allowsEditing: false,
         quality: 0.8,
+        // Forsiraj samo galeriju, bez opcije kamere
+        allowsMultipleSelection: false,
       });
 
       if (!result.canceled && result.assets[0]) {
         const localUri = result.assets[0].uri;
         setImageUri(localUri);
-        
+
         // Upload the image
         if (onUpload) {
           setLoading(true);
@@ -134,8 +136,8 @@ const ImagePickerWithGallery = ({
           onPress={handlePickImage}
           disabled={disabled || loading}
         >
-          <Ionicons name="camera" size={20} color={COLORS.white} />
-          <Text style={styles.buttonText}>Odaberite sliku</Text>
+          <Ionicons name="images" size={20} color={COLORS.white} />
+          <Text style={styles.buttonText}>Odaberite iz galerije</Text>
         </TouchableOpacity>
       )}
 

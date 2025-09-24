@@ -30,7 +30,6 @@ import PageLayout from '@/components/PageLayout';
 import DashSidebar from '@/components/DashSidebar';
 
 import DataTable from '@/components/DataTable';
-import DraggableDataTable from '@/components/DraggableDataTable';
 import Settings from '@/components/dashboard/Settings';
 import LectureFormNew from '@/components/LectureFormNew';
 import UnifiedFormNew from '@/components/UnifiedFormNew';
@@ -39,8 +38,6 @@ import UserForm from '@/components/UserForm';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 import SearchBar from '@/components/SearchBar';
 import AdvancedFilters, { FilterButton } from '@/components/AdvancedFilters';
-import UndoRedoBar from '@/components/UndoRedoBar';
-import useUndoRedo from '@/hooks/useUndoRedo';
 
 import { predavanjaService, daijeService, udruzenjaService, suggestionsService, usersService, settingsService } from '@/services';
 import axiosInstance from '@/utils/axiosConfig';
@@ -288,12 +285,7 @@ const Dashboard = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
   
-  // Drag & Drop state
-  const [dragMode, setDragMode] = useState(false);
   
-  // Undo/Redo state
-  const [dataHistory, setDataHistory, undoRedoControls] = useUndoRedo(null);
-  const [lastAction, setLastAction] = useState('');
 
   const fetchDataCalledRef = useRef(false);
 
@@ -403,42 +395,7 @@ const Dashboard = () => {
     setFiltersOpen(false);
   };
   
-  const handleReorder = useCallback((reorderedItems, type) => {
-    // Update local state with reordered items
-    const dataKey = type === 'daija' ? 'daije' : 
-                   type === 'organization' ? 'organizations' : 
-                   type === 'user' ? 'users' : 
-                   type === 'lecture' ? 'lectures' : type;
-    
-    setData(prev => {
-      const newData = {
-        ...prev,
-        [dataKey]: reorderedItems
-      };
-      
-      // Add to undo/redo history
-      setDataHistory(newData, `Reorganizovano ${dataKey}`);
-      setLastAction(`Reorganizovano ${dataKey}`);
-      
-      return newData;
-    });
-  }, [setDataHistory]);
   
-  const handleUndo = useCallback(() => {
-    const action = undoRedoControls.undo();
-    if (action && dataHistory) {
-      setData(dataHistory);
-      setLastAction(`Poništeno: ${action}`);
-    }
-  }, [undoRedoControls, dataHistory]);
-  
-  const handleRedo = useCallback(() => {
-    const action = undoRedoControls.redo();
-    if (action && dataHistory) {
-      setData(dataHistory);
-      setLastAction(`Ponovljeno: ${action}`);
-    }
-  }, [undoRedoControls, dataHistory]);
 
   const handleSearchChange = (section, value) => {
     setSearchQueries(prev => ({
@@ -980,17 +937,6 @@ const Dashboard = () => {
             {title}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={dragMode}
-                  onChange={(e) => setDragMode(e.target.checked)}
-                  size="small"
-                />
-              }
-              label="Reorganizuj"
-              sx={{ mr: 2 }}
-            />
             <SearchBar
               placeholder={`Pretraži ${title.toLowerCase()}...`}
               onSearch={(value) => handleSearchChange(sectionKey, value)}
@@ -1012,7 +958,7 @@ const Dashboard = () => {
             </Typography>
           </Paper>
         ) : (
-          <DraggableDataTable
+          <DataTable
             data={items}
             type={type || getTypeFromSection(activeSection)}
             onEdit={isAdmin ? handleEdit : undefined}
@@ -1022,12 +968,10 @@ const Dashboard = () => {
             onStatusChange={isAdmin ? (item, newStatus) => handleStatusChange(item, newStatus, type || getTypeFromSection(activeSection)) : undefined}
             onBulkStatusChange={isAdmin ? handleBulkStatusChange : undefined}
             onBulkDelete={canDelete ? handleBulkDelete : undefined}
-            onReorder={(reorderedItems) => handleReorder(reorderedItems, type || getTypeFromSection(activeSection))}
             hideActions={!isAdmin}
             showActions={true}
             showStatus={true}
             showRejectionReason={showRejectionReason}
-            dragEnabled={dragMode}
           />
         )}
       </Box>
@@ -1127,17 +1071,15 @@ const Dashboard = () => {
                 </Typography>
               </Paper>
             ) : (
-              <DraggableDataTable
+              <DataTable
                 data={filteredUsers}
                 type="users"
                 onEdit={isAdmin ? handleEdit : undefined}
                 onDelete={canDelete ? handleDelete : undefined}
                 onBulkDelete={canDelete ? handleBulkDelete : undefined}
-                onReorder={(reorderedItems) => handleReorder(reorderedItems, 'users')}
                 hideActions={!isAdmin}
                 showActions={true}
                 showStatus={false}
-                dragEnabled={dragMode}
               />
             )}
           </Box>
@@ -1534,16 +1476,6 @@ const Dashboard = () => {
                 }}>
                   {renderContent()}
                   
-                  {/* Undo/Redo Bar */}
-                  <UndoRedoBar
-                    canUndo={undoRedoControls.canUndo}
-                    canRedo={undoRedoControls.canRedo}
-                    onUndo={handleUndo}
-                    onRedo={handleRedo}
-                    onReset={undoRedoControls.reset}
-                    lastAction={lastAction}
-                    visible={isAdmin}
-                  />
                 </Box>
               )}
             </Box>

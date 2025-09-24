@@ -12,7 +12,6 @@ import {
   Dimensions,
   Alert,
   TextInput,
-  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -268,7 +267,7 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAu
       await Calendar.createEventAsync(defaultCalendar.id, eventDetails);
       
       Alert.alert('Uspjeh', 'Događaj je dodat u kalendar!');
-    } catch (error) {
+    } catch (_error) {
       console.error('Error adding to calendar:', error);
       Alert.alert('Greška', 'Nije moguće dodati događaj u kalendar.');
     }
@@ -323,7 +322,7 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAu
         setShowEditModal(false);
         Alert.alert('Uspjeh', `${type === 'lecture' ? 'Predavanje' : type === 'daija' ? 'Daija' : 'Organizacija'} je uspješno ažurirano`);
       }
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Greška', `Greška pri ažuriranju ${type === 'lecture' ? 'predavanja' : type === 'daija' ? 'daije' : 'organizacije'}`);
     }
   };
@@ -349,7 +348,7 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAu
           onBack();
         }
       }
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Greška', `Greška pri brisanju ${type === 'lecture' ? 'predavanja' : type === 'daija' ? 'daije' : 'organizacije'}`);
     } finally {
       setIsDeleting(false);
@@ -1021,7 +1020,7 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAu
               </View>
               <Text style={styles.deleteTitle}>Potvrda brisanja</Text>
               <Text style={styles.deleteMessage}>
-                Da li ste sigurni da želite obrisati {type === 'lecture' ? 'predavanje' : type === 'daija' ? 'daiju' : 'organizaciju'} "{type === 'daija' || type === 'organization' ? profile?.name : profile?.title}"?
+                Da li ste sigurni da želite obrisati {type === 'lecture' ? 'predavanje' : type === 'daija' ? 'daiju' : 'organizaciju'} &quot;{type === 'daija' || type === 'organization' ? profile?.name : profile?.title}&quot;?
               </Text>
               <Text style={styles.deleteWarning}>
                 Ova akcija ne može biti poništena!
