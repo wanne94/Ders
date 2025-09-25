@@ -35,7 +35,10 @@
     "production": {
       "developmentClient": false,
       "env": {
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "ANDROID_HOME": "/Users/wanne/Library/Android/sdk",
+        "ANDROID_SDK_ROOT": "/Users/wanne/Library/Android/sdk",
+        "JAVA_HOME": "/opt/homebrew/opt/openjdk@17"
       },
       "cache": {
         "disabled": false

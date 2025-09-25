@@ -18,7 +18,17 @@
       "Bash(npm run build:*)",
       "Bash(npm run deploy:*)",
       "Bash(export SSHPASS=\"WanNeAvdo1994\")",
-      "Bash(sshpass -e ssh -p 22 -o StrictHostKeyChecking=no root@194.163.176.171 \"cd /var/www/ders.ba/web && pm2 restart ders-web\")"
+      "Bash(sshpass -e ssh -p 22 -o StrictHostKeyChecking=no root@194.163.176.171 \"cd /var/www/ders.ba/web && pm2 restart ders-web\")",
+      "Bash(/usr/libexec/java_home:*)",
+      "Bash(brew list:*)",
+      "Bash(brew link:*)",
+      "Bash(export:*)",
+      "Bash(java:*)",
+      "Bash(./gradlew:*)",
+      "Bash(eas build:*)",
+      "Bash(yes)",
+      "Bash(sdkmanager:*)",
+      "Bash(eas credentials:*)"
     ],
     "deny": [],
     "ask": []
