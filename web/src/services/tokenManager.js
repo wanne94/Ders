@@ -108,7 +108,7 @@ class TokenManager {
         }
 
         // Pozovi refresh endpoint
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5003/api'}/users/refresh-token`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5004/api'}/users/refresh-token`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

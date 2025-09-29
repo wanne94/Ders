@@ -2,6 +2,23 @@
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Import shared constants
+// TODO: Fix ESM/CJS interop - temporarily commented out
+// const { getImageUrl, getDefaultImages } = require('@ders-ba/shared');
+
+// Temporary placeholder functions until ESM/CJS interop is fixed
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  return `https://ders.ba${path.startsWith('/') ? '' : '/'}${path}`;
+};
+
+const getDefaultImages = () => ({
+  lecture: '/images/default-lecture.jpg',
+  daija: '/images/default-daija.jpg',
+  organization: '/images/default-organization.jpg'
+});
+
 // Base URLs based on environment
 const config = {
   development: {
@@ -48,44 +65,44 @@ const config = {
 const currentEnv = isDevelopment ? 'development' : 'production';
 const envConfig = config[currentEnv];
 
+// Define API endpoints
+const API_BASE = envConfig.API_URL;
+const API_ENDPOINTS = {
+  // Auth
+  AUTH: `${API_BASE}/users/auth`,
+  REGISTER: `${API_BASE}/users/register`,
+
+  // Resources
+  PREDAVANJA: `${API_BASE}/lectures`,
+  USERS: `${API_BASE}/users`,
+  DAIJE: `${API_BASE}/daije`,
+  ORGANIZATIONS: `${API_BASE}/organizations`,
+  SUGGESTIONS: `${API_BASE}/suggestions`,
+  SETTINGS: `${API_BASE}/settings`,
+
+  // Admin
+  ADMIN: {
+    PREDAVANJA: `${API_BASE}/admin/lectures`,
+    USERS: `${API_BASE}/admin/users`,
+    DAIJE: `${API_BASE}/admin/daije`,
+    ORGANIZATIONS: `${API_BASE}/admin/organizations`,
+  }
+};
+
 // Export environment variables
 module.exports = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   IS_DEVELOPMENT: isDevelopment,
   IS_PRODUCTION: isProduction,
   ...envConfig,
-  
-  // Image server configuration - always use production server for images
+  API_ENDPOINTS,
+
+  // Image server configuration - use shared constants
   IMAGE_SERVER_URL: 'https://ders.ba',
-  
-  // Helper functions
-  getImageUrl: (imagePath) => {
-    if (!imagePath) return null;
-    
-    // If it's already a full URL, return as is
-    if (imagePath.startsWith('http')) return imagePath;
-    
-    // Unified path handling for both environments - always use production server for images
-    let cleanPath = imagePath;
-    
-    // Ensure /uploads/images/ format for both development and production
-    cleanPath = imagePath.replace('/upload/images/', '/uploads/images/');
-    if (!cleanPath.startsWith('/uploads/images/')) {
-      cleanPath = `/uploads/images/${cleanPath.replace(/^\/+/, '')}`;
-    }
-    
-    // Always use production server for images regardless of environment
-    return `https://ders.ba${cleanPath}`;
-  },
-  
-  getDefaultImages: () => ({
-    lecture: `https://ders.ba/uploads/images/predavanjeslika.jpg`,
-    daija: `https://ders.ba/uploads/images/daijaslika.jpg`,
-    organization: `https://ders.ba/uploads/images/udruzenjeslika.jpg`,
-    default: `https://ders.ba/uploads/images/default.jpg`,
-    logo: `https://ders.ba/uploads/images/logo.jpg`,
-    favicon: `https://ders.ba/uploads/images/favicon.png`
-  })
+
+  // Use shared helper functions
+  getImageUrl,
+  getDefaultImages
 };
 
 // Log current configuration

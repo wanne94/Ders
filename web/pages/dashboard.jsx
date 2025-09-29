@@ -179,17 +179,41 @@ const Dashboard = () => {
       // Only call admin endpoints if user is admin
       const promises = [];
       
-      if (isAdmin) {
+      if (isAdmin && token) {
         console.log('📊 User is admin, calling admin endpoints...');
         promises.push(
-          usersService.getAllUsers(),
-          predavanjaService.getAllPredavanjaForAdmin(),
-          daijeService.getAllDaijeForAdmin(),
-          udruzenjaService.getAllUdruzenjaForAdmin(),
-          suggestionsService.getAllSuggestions(),
-          suggestionsService.getArchivedSuggestions(),
-          suggestionsService.getSuggestionsCount(),
-          axiosInstance.get('/lectures/admin/cancellation-reports').then(res => res.data) // Fetch cancellation reports
+          usersService.getAllUsers().catch(err => {
+            console.error('Error fetching users:', err);
+            return [];
+          }),
+          predavanjaService.getAllPredavanjaForAdmin().catch(err => {
+            console.error('Error fetching admin lectures:', err);
+            return predavanjaService.getAllPredavanja();
+          }),
+          daijeService.getAllDaijeForAdmin().catch(err => {
+            console.error('Error fetching admin daije:', err);
+            return daijeService.getAllDaije();
+          }),
+          udruzenjaService.getAllUdruzenjaForAdmin().catch(err => {
+            console.error('Error fetching admin orgs:', err);
+            return udruzenjaService.getAllUdruzenja();
+          }),
+          suggestionsService.getAllSuggestions().catch(err => {
+            console.error('Error fetching suggestions:', err);
+            return [];
+          }),
+          suggestionsService.getArchivedSuggestions().catch(err => {
+            console.error('Error fetching archived suggestions:', err);
+            return [];
+          }),
+          suggestionsService.getSuggestionsCount().catch(err => {
+            console.error('Error fetching suggestions count:', err);
+            return { total: 0, pending: 0, approved: 0, rejected: 0 };
+          }),
+          axiosInstance.get('/lectures/admin/cancellation-reports').then(res => res.data).catch(err => {
+            console.error('Error fetching cancellation reports:', err);
+            return { total: 0, pending: 0, autoCancelled: 0, manuallyCancelled: 0, lectures: [] };
+          })
         );
       } else {
         console.log('📊 User is not admin, using public endpoints...');
@@ -572,15 +596,17 @@ const Dashboard = () => {
     if (!selectedItem) return;
 
     try {
-      const endpoints = {
-        user: '/users',
-        users: '/users',
-        lecture: '/lectures',
-        daija: '/daije',
-        organization: '/organizations'
-      };
-
-      await axiosInstance.delete(`${endpoints[selectedItem.type]}/${selectedItem._id}`);
+      // Use appropriate service for each type
+      if (selectedItem.type === 'user' || selectedItem.type === 'users') {
+        await usersService.deleteUser(selectedItem._id);
+      } else {
+        const endpoints = {
+          lecture: '/lectures',
+          daija: '/daije',
+          organization: '/organizations'
+        };
+        await axiosInstance.delete(`${endpoints[selectedItem.type]}/${selectedItem._id}`);
+      }
       
       const dataKey = selectedItem.type === 'daija' ? 'daije' : 
                      selectedItem.type === 'organization' ? 'organizations' : 
@@ -883,30 +909,36 @@ const Dashboard = () => {
 
   const handleBulkDelete = useCallback(async (selectedIds, itemType = null) => {
     try {
-      const endpoints = {
-        users: '/users',
-        user: '/users',
-        lecture: '/lectures',
-        lectures: '/lectures',
-        daija: '/daije',
-        organization: '/organizations',
-        suggestion: '/suggestions',
-        suggestions: '/suggestions'
-      };
-
       const actualType = itemType || getTypeFromSection(activeSection);
-      const endpoint = endpoints[actualType];
       
-      if (!endpoint) {
-        console.error('No endpoint found for type:', actualType);
-        return;
-      }
+      if (actualType === 'users' || actualType === 'user') {
+        // Use usersService for users
+        await Promise.all(
+          selectedIds.map(id => usersService.deleteUser(id))
+        );
+      } else {
+        const endpoints = {
+          lecture: '/lectures',
+          lectures: '/lectures',
+          daija: '/daije',
+          organization: '/organizations',
+          suggestion: '/suggestions',
+          suggestions: '/suggestions'
+        };
 
-      await Promise.all(
-        selectedIds.map(id => 
-          axiosInstance.delete(`${endpoint}/${id}`)
-        )
-      );
+        const endpoint = endpoints[actualType];
+        
+        if (!endpoint) {
+          console.error('No endpoint found for type:', actualType);
+          return;
+        }
+
+        await Promise.all(
+          selectedIds.map(id => 
+            axiosInstance.delete(`${endpoint}/${id}`)
+          )
+        );
+      }
 
       const dataKey = actualType === 'daija' ? 'daije' : 
                      actualType === 'organization' ? 'organizations' : 

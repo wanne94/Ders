@@ -1,37 +1,36 @@
 /**
- * Client-only date utilities to avoid SSR issues
+ * Date utilities for web application
+ * 
+ * This file now acts as a bridge to the shared date utilities
+ * while maintaining backward compatibility with existing code
  */
+
+import {
+  getTodayString,
+  getDefaultTime,
+  formatDate,
+  formatDateWithDay
+} from '@ders-ba/shared';
 
 /**
  * Get today's date string - safe for client-side only
  * @returns {string} YYYY-MM-DD format
  */
 export const getClientTodayString = () => {
-  // Only run on client side
-  if (typeof window === 'undefined') {
-    console.log('⚠️ [getClientTodayString] Called during SSR, returning empty string');
-    return '';
-  }
-  
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  const dateString = `${year}-${month}-${day}`;
-  
-  console.log('📅 [getClientTodayString] Generated date on client:', {
-    dateString,
-    hostname: window.location.hostname,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-  });
-  
-  return dateString;
+  // Use shared function with clientOnly flag
+  return getTodayString(true);
 };
 
-/**
- * Get default time - always returns 12:00
- * @returns {string} HH:MM format
- */
-export const getDefaultTime = () => {
-  return '12:00';
+// Re-export shared function for backward compatibility
+export { getDefaultTime };
+
+// Also export shared date formatting functions
+export { formatDate, formatDateWithDay };
+
+// Default export for backward compatibility
+export default {
+  getClientTodayString,
+  getDefaultTime,
+  formatDate,
+  formatDateWithDay
 };

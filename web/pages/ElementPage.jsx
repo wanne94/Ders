@@ -36,7 +36,7 @@ import LecturesSection from '@/components/LecturesSection';
 import BulkActionsToolbar from '@/components/BulkActionsToolbar';
 import { safeApiCall, normalizeToArray } from '@/utils/dataHelpers';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
-import { useDebounce } from '@/utils/useDebounce';
+import { useDebounce } from '@ders-ba/shared';
 import { DaijeGrid, LecturesGrid, OrganizationsGrid } from '@/components/GridLayout';
 import predavanjaService from '@/services/predavanjaService';
 import daijeService from '@/services/daijeService';
@@ -641,28 +641,26 @@ const ElementPage = ({ type }) => {
             {type === 'daije' && (
               <DaijeGrid>
                 {currentItems.map((item) => (
-                  <Box key={item._id} sx={{ height: '200px' }}>
-                    <SelectableCard 
-                      data={item}
-                      isSelected={selectedItems.includes(item._id)}
-                      onSelect={handleSelectItem}
-                      isAdmin={isAdmin}
-                    />
-                  </Box>
+                  <SelectableCard
+                    key={item._id}
+                    data={item}
+                    isSelected={selectedItems.includes(item._id)}
+                    onSelect={handleSelectItem}
+                    isAdmin={isAdmin}
+                  />
                 ))}
               </DaijeGrid>
             )}
             {type === 'organizations' && (
               <OrganizationsGrid>
                 {currentItems.map((item) => (
-                  <Box key={item._id} sx={{ height: '200px' }}>
-                    <SelectableCard 
-                      data={item}
-                      isSelected={selectedItems.includes(item._id)}
-                      onSelect={handleSelectItem}
-                      isAdmin={isAdmin}
-                    />
-                  </Box>
+                  <SelectableCard
+                    key={item._id}
+                    data={item}
+                    isSelected={selectedItems.includes(item._id)}
+                    onSelect={handleSelectItem}
+                    isAdmin={isAdmin}
+                  />
                 ))}
               </OrganizationsGrid>
             )}

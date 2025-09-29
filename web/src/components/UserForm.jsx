@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { validateUserForm, sanitizeUserData, isUserFormValid } from '@ders-ba/shared';
 import {
   Dialog,
   DialogTitle,
@@ -103,33 +104,26 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
     e.preventDefault();
     setError(null);
 
-    // Validacija forme
+    // Validacija forme using shared validation
     const isEditing = !!user;
-
-    if (!formData.username || formData.username.length < 2) {
-      setError('Korisničko ime mora imati najmanje 2 karaktera');
+    const validationErrors = validateUserForm(formData, { isNewUser: !isEditing });
+    
+    if (Object.keys(validationErrors).length > 0) {
+      // Show first error
+      const firstErrorField = Object.keys(validationErrors)[0];
+      setError(validationErrors[firstErrorField]);
       return;
     }
-
-    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
-      setError('Email adresa nije validna');
-      return;
-    }
-
-    if (!isEditing && (!formData.password || formData.password.length < 6)) {
-      setError('Šifra mora imati najmanje 6 karaktera');
-      return;
-    }
+    
+    // Sanitize data
+    const sanitizedData = sanitizeUserData(formData);
 
     try {
       let response;
       if (user) {
         // Update existing user
-        const updateData = { ...formData };
-        // Ukloni password ako je prazan (ne mijenjamo lozinku)
-        if (!updateData.password) {
-          delete updateData.password;
-        }
+        const updateData = { ...sanitizedData };
+        // Password is already removed in sanitization if empty
         // Ukloni role ako korisnik nije super_admin
         if (!isSuperAdmin) {
           delete updateData.role;
@@ -137,7 +131,7 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
         response = await axiosInstance.put(`/users/${user._id}`, updateData);
       } else {
         // Create new user
-        const createData = { ...formData };
+        const createData = { ...sanitizedData };
         // Ukloni role ako korisnik nije super_admin
         if (!isSuperAdmin) {
           delete createData.role;

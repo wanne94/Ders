@@ -5,7 +5,7 @@ const GridLayout = ({
   variant = 'default',
   minWidth,
   maxWidth,
-  gap = 2,
+  gap = 1,
   sx = {},
   ...props
 }) => {
@@ -61,7 +61,7 @@ const GridLayout = ({
           lg: 'repeat(4, 1fr)',
           xl: 'repeat(5, 1fr)'
         },
-        gap: { xs: 2, sm: 2.5, md: gap },
+        gap: { xs: 1, sm: 1.5, md: gap },
         width: '100%',
         maxWidth: '100%',
         overflow: 'hidden',
@@ -86,24 +86,9 @@ export const DaijeGrid = ({ children, ...props }) => (
 );
 
 export const LecturesGrid = ({ children, ...props }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: 2,
-      justifyContent: 'center',
-      width: '100%',
-      '& > *': {
-        width: '320px',
-        height: '240px',
-        flexShrink: 0
-      },
-      ...props.sx
-    }}
-    {...props}
-  >
+  <GridLayout variant="lectures" {...props}>
     {children}
-  </Box>
+  </GridLayout>
 );
 
 export const OrganizationsGrid = ({ children, ...props }) => (

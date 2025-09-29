@@ -3,10 +3,11 @@ import { Box, Typography, Button, Alert } from '@mui/material';
 import { useRouter } from 'next/router';
 import UniversalCard from './UniversalCard';
 import SkeletonGrid from './SkeletonGrid';
+import { LecturesGrid } from './GridLayout';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
 
-const LecturesSection = ({ 
-  lectures = [], 
+const LecturesSection = ({
+  lectures = [],
   isLoading = false,
   limit = null,
   title = 'Dersovi',
@@ -18,22 +19,29 @@ const LecturesSection = ({
   cardHeight = '240px' // Fiksna visina kartice
 }) => {
   const router = useRouter();
-  
+
+  console.log('🎯 LecturesSection received lectures:', lectures?.length || 0);
+  console.log('🎯 First lecture in component:', lectures?.[0]);
+
   // Debug logging
   const cancelledInRaw = lectures.filter(l => l.status === 'cancelled' || l.isCancelled);
   if (cancelledInRaw.length > 0) {
   }
-  
+
   // Filtriramo approved i cancelled predavanja
-  const filteredLectures = lectures.filter(lecture => 
+  const filteredLectures = lectures.filter(lecture =>
     lecture.status === 'approved' || lecture.status === 'cancelled'
   );
-  
+
+  console.log('🎯 Filtered lectures (approved/cancelled):', filteredLectures.length);
+
   // Sortiramo predavanja
   const sortedLectures = sortLecturesByStatus(filteredLectures);
-  
+
   // Primenjujemo limit ako je potrebno
   const displayLectures = limit ? sortedLectures.slice(0, limit) : sortedLectures;
+
+  console.log('🎯 Display lectures after filtering and limiting:', displayLectures.length);
   
   // Check if Diskriminacija lecture is in display
   const diskriminacija = displayLectures.find(l => l.title && l.title.includes('Diskriminacija žena'));
@@ -48,7 +56,7 @@ const LecturesSection = ({
   if (isLoading) {
     return (
       <Box sx={{ width: '100%' }}>
-        <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1, mt: 3, textAlign: 'center' }}>
+        <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1, textAlign: 'center' }}>
           {title}
         </Typography>
         {subtitle && (
@@ -63,7 +71,7 @@ const LecturesSection = ({
 
   return (
     <Box sx={{ width: '100%', textAlign: 'center' }}>
-      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1, mt: 3 }}>
+      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
         {title}
       </Typography>
       {subtitle && (
@@ -78,46 +86,23 @@ const LecturesSection = ({
         </Alert>
       ) : (
         <>
-          <Box
+          <LecturesGrid
+            gap={1.5}
             sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 2, // 16px gap između kartica
-              justifyContent: 'center',
               width: '100%',
-              overflowX: 'auto',
-              overflowY: 'hidden',
-              '&::-webkit-scrollbar': {
-                height: '8px',
-              },
-              '&::-webkit-scrollbar-track': {
-                backgroundColor: '#f1f1f1',
-                borderRadius: '10px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                backgroundColor: '#888',
-                borderRadius: '10px',
-                '&:hover': {
-                  backgroundColor: '#555',
-                },
-              },
+              maxWidth: '100%',
+              overflow: 'hidden',
             }}
           >
             {displayLectures.map((lecture) => {
               return (
-                <Box
+                <UniversalCard
                   key={lecture._id}
-                  sx={{
-                    width: '320px',
-                    height: '240px',
-                    flexShrink: 0
-                  }}
-                >
-                  <UniversalCard data={{ ...lecture, type: 'Predavanje' }} />
-                </Box>
+                  data={{ ...lecture, type: 'Predavanje' }}
+                />
               );
             })}
-          </Box>
+          </LecturesGrid>
           
           {showViewAllButton && sortedLectures.length > displayLectures.length && (
             <Box sx={{ mt: 4, mb: 0 }}>

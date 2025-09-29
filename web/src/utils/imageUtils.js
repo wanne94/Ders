@@ -1,152 +1,38 @@
 /**
  * Simple Image Utilities for consistent image handling
  * 
- * All images are loaded from server/uploads directory in both development and production
+ * This file now acts as a bridge to the shared image utilities
+ * while maintaining backward compatibility with existing code
  * 
  * NOTE: Base64 support is maintained for backward compatibility with:
  * - Existing database records that may still contain base64 images
  * - Any legacy data that hasn't been migrated yet
  */
 
-// Always use production server for images in both development and production
-const IMAGE_SERVER_URL = 'https://ders.ba';
+import { 
+  IMAGE_CONFIG,
+  getImageUrl as getImageUrlShared,
+  getImageFallbackUrl as getImageFallbackUrlShared,
+  getDefaultLectureImage as getDefaultLectureImageShared,
+  getDefaultDaijaImage as getDefaultDaijaImageShared,
+  getDefaultOrganizationImage as getDefaultOrganizationImageShared,
+  getLogoUrl as getLogoUrlShared,
+  getFaviconUrl as getFaviconUrlShared
+} from '@ders-ba/shared';
 
-/**
- * Get the full URL for an image
- * @param {string} imagePath - The image path (can be relative or full URL or base64 data)
- * @returns {string} - The full image URL or base64 data string
- */
-export const getImageUrl = (imagePath, preferOptimized = false) => {
-  // Always load from server - unified /uploads/images/ path for both development and production
-  const defaultImage = '/uploads/images/default.jpg';
-  
-  if (!imagePath) return `${IMAGE_SERVER_URL}${defaultImage}`;
-  
-  // If it's a base64 data URL, return as is
-  if (imagePath.startsWith('data:')) {
-    return imagePath;
-  }
-  
-  // If it's already a full URL, check if it's a valid image URL
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    // Check if it's a social media URL (which won't work as an image)
-    const socialMediaDomains = [
-      'facebook.com', 'fb.com', 'twitter.com', 'x.com', 
-      'instagram.com', 'linkedin.com', 'youtube.com', 
-      'youtu.be', 'tiktok.com'
-    ];
-    
-    const isSocialMediaUrl = socialMediaDomains.some(domain => 
-      imagePath.toLowerCase().includes(domain)
-    );
-    
-    if (isSocialMediaUrl) {
-      // Return default image for social media links
-      return `${IMAGE_SERVER_URL}${defaultImage}`;
-    }
-    return imagePath;
-  }
-  
-  // Remove 'public' from the path if it exists (legacy cleanup)
-  let cleanPath = imagePath;
-  if (cleanPath.startsWith('public/')) {
-    cleanPath = cleanPath.substring(7); // Remove 'public/' prefix
-  }
-  
-  // Ensure we use unified /uploads/images/ path for both environments
-  if (cleanPath.startsWith('/upload/images/')) {
-    cleanPath = cleanPath.replace('/upload/images/', '/uploads/images/');
-  } else if (cleanPath.startsWith('upload/images/')) {
-    cleanPath = cleanPath.replace('upload/images/', '/uploads/images/');
-  }
-  
-  // Ensure path starts with /uploads/images/ if it contains images
-  if (!cleanPath.startsWith('/uploads/')) {
-    // If it's just a filename or doesn't have the full path, add it
-    if (!cleanPath.includes('/')) {
-      cleanPath = `/uploads/images/${cleanPath}`;
-    } else if (cleanPath.includes('images/')) {
-      cleanPath = `/uploads/images/${cleanPath.replace(/^\/+/, '').replace(/^images\//, '')}`;
-    }
-  }
-  
-  // Ensure path starts with /
-  cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
-  
-  // For images in /uploads/images/, try optimized version first if preferred
-  // Optimized images are stored in /uploads/images/optimized/
-  if (preferOptimized && cleanPath.startsWith('/uploads/images/') && !cleanPath.includes('/optimized/')) {
-    const filename = cleanPath.replace('/uploads/images/', '');
-    const optimizedPath = `/uploads/images/optimized/${filename}`;
-    return `${IMAGE_SERVER_URL}${optimizedPath}`;
-  }
-  
-  // Always return server URL - no local public folder usage
-  return `${IMAGE_SERVER_URL}${cleanPath}`;
-};
+// Re-export from shared for backward compatibility
+export const IMAGE_SERVER_URL = IMAGE_CONFIG.IMAGE_SERVER_URL;
 
-/**
- * Get the fallback URL for an image (non-optimized version)
- * @param {string} imagePath - The image path
- * @returns {string} - The fallback image URL
- */
-export const getImageFallbackUrl = (imagePath) => {
-  return getImageUrl(imagePath, false);
-};
+// Use shared functions directly
+export const getImageUrl = getImageUrlShared;
+export const getImageFallbackUrl = getImageFallbackUrlShared;
+export const getDefaultLectureImage = getDefaultLectureImageShared;
+export const getDefaultDaijaImage = getDefaultDaijaImageShared;
+export const getDefaultOrganizationImage = getDefaultOrganizationImageShared;
+export const getLogoUrl = getLogoUrlShared;
+export const getFaviconUrl = getFaviconUrlShared;
 
-/**
- * Get the default image URL for lectures
- * @returns {string} - The default lecture image URL
- */
-export const getDefaultLectureImage = () => {
-  const imagePath = '/uploads/images/predavanjeslika.jpg';
-  return `${IMAGE_SERVER_URL}${imagePath}`;
-};
-
-/**
- * Get the default image URL for daijas
- * @returns {string} - The default daija image URL
- */
-export const getDefaultDaijaImage = () => {
-  const imagePath = '/uploads/images/daijaslika.jpg';
-  return `${IMAGE_SERVER_URL}${imagePath}`;
-};
-
-/**
- * Get the default image URL for organizations
- * @returns {string} - The default organization image URL
- */
-export const getDefaultOrganizationImage = () => {
-  const imagePath = '/uploads/images/udruzenjeslika.jpg';
-  return `${IMAGE_SERVER_URL}${imagePath}`;
-};
-
-/**
- * Get the logo URL
- * @returns {string} - The logo URL
- */
-export const getLogoUrl = () => {
-  const logoPath = '/uploads/logo.jpg';
-  
-  // U development modu, preferiraj lokalnu verziju
-  if (process.env.NODE_ENV === 'development') {
-    // Koristi lokalnu verziju ako postoji
-    return logoPath;
-  }
-  
-  // U produkciji ili ako lokalna ne postoji, koristi server verziju
-  return `${IMAGE_SERVER_URL}${logoPath}`;
-};
-
-/**
- * Get the favicon URL
- * @returns {string} - The favicon URL
- */
-export const getFaviconUrl = () => {
-  const faviconPath = '/uploads/images/favicon.png';
-  return `${IMAGE_SERVER_URL}${faviconPath}`;
-};
-
+// Export as default for backward compatibility
 const imageUtils = {
   getImageUrl,
   getDefaultLectureImage,

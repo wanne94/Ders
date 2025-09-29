@@ -1,5 +1,5 @@
 import { createTheme } from '@mui/material/styles';
-import { BRAND_COLORS, COLOR_USAGE } from './colors';
+import { BRAND_COLORS, COLOR_USAGE } from '@ders-ba/shared';
 
 const theme = createTheme({
   palette: {

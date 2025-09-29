@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { USER_ROLES, hasPermission } from '@ders-ba/shared';
 import { Button } from './ui/button';
 import {
   Sheet,
@@ -147,7 +148,7 @@ const Navigation = () => {
     }, 500);
   };
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+  const isAdmin = hasPermission(user?.role, 'manage_content');
 
   const baseMenuItems = [
     ...menuItems,

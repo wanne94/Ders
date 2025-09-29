@@ -3,33 +3,21 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Image from 'next/image';
 import {
-  Box,
-  Typography,
-  Button,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  Alert,
-  Divider,
-  Container,
-  IconButton,
-  Checkbox,
-  FormControlLabel,
-} from '@mui/material';
-import {
-  School as SchoolIcon,
-  Business as BusinessIcon,
-  Person as PersonIcon,
-  CheckCircle as CheckCircleIcon,
-  Notifications as NotificationsIcon,
-  Bookmark as BookmarkIcon,
-  Event as EventIcon,
-  PersonAdd as PersonAddIcon,
-  Star as StarIcon,
-  Facebook as FacebookIcon,
-  Instagram as InstagramIcon
-} from '@mui/icons-material';
+  School,
+  Building2,
+  User,
+  CheckCircle,
+  Bell,
+  Bookmark,
+  Calendar,
+  UserPlus,
+  Star,
+  Facebook,
+  Instagram
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import PageLayout from '@/components/PageLayout';
 import ContentContainer from '@/components/ContentContainer';
 import { OrganizationsGrid, DaijeGrid, LecturesGrid } from '@/components/GridLayout';
@@ -43,156 +31,67 @@ import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
 import { logNavigation, logSocialShare } from '@/services/analytics';
 import { usePerformanceTracking, measureAsyncOperation } from '@/hooks/usePerformanceTracking';
 
-
-
 // HeroSection Component
 const HeroSection = () => {
   return (
-    <Box 
-      sx={{ 
-        width: '100vw',
-        position: 'relative',
-        left: '50%',
-        marginLeft: '-50vw',
-        pt: 5, 
-        pb: 5, 
-        background: 'linear-gradient(135deg, #022C43 0%, #055A87 100%)',
-        color: 'white',
-        textAlign: 'center'
-      }}
-    >
+    <div className="w-screen relative left-[50%] -ml-[50vw] -mt-16 pt-24 pb-20 bg-gradient-to-br from-[#022C43] to-[#055A87] text-white text-center">
       <ContentContainer>
-        <Typography variant="h2" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
+        <h1 className="text-4xl md:text-5xl font-bold mb-4">
           Islamska predavanja - Ders.ba
-        </Typography>
-        <Divider color="white" sx={{ width: '20%', margin: '1rem auto', opacity: 0.5 }} />
-        <Typography variant="h5" sx={{ mb: 3, opacity: 0.9, fontSize: '1.5rem' }}>
-        Digitalna platforma za promociju islamskih predavanja
-        </Typography>
-        
+        </h1>
+        <div className="w-1/5 h-px bg-white/50 mx-auto my-4" />
+        <h2 className="text-xl md:text-2xl mb-8 opacity-90">
+          Digitalna platforma za promociju islamskih predavanja
+        </h2>
+
         {/* Download App Section */}
-        <Box sx={{ mt: 5 }}>
-          <Typography 
-            variant="h6" 
-            sx={{ 
-              opacity: 0.9,
-              mb: 3,
-              fontWeight: 400
-            }}
-          >
+        <div className="mt-12">
+          <h3 className="text-lg opacity-90 mb-6 font-normal">
             Preuzmi DERS mobilnu aplikaciju
-          </Typography>
-          
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              gap: 3, 
-              justifyContent: 'center', 
-              flexWrap: 'wrap',
-              alignItems: 'flex-start'
-            }}
-          >
+          </h3>
+
+          <div className="flex gap-2 justify-center flex-wrap items-start">
             {/* Google Play Button */}
-            <Box
-              component="a"
+            <a
               href="https://play.google.com/store/apps/details?id=com.daije.mobile"
               target="_blank"
               rel="noopener noreferrer"
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)'
-                }
-              }}
+              className="flex flex-col items-center transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
             >
-              <Box
-                sx={{
-                  position: 'relative',
-                  width: { xs: 160, md: 180 },
-                  height: { xs: 48, md: 54 },
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
+              <div className="relative w-40 md:w-44 h-12 md:h-14 rounded-lg overflow-hidden shadow-lg cursor-pointer flex items-center justify-center">
                 <Image
                   src="/google-play-badge.png"
                   alt="Download on Google Play"
                   width={180}
                   height={54}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
+                  className="w-full h-full object-cover"
                 />
-              </Box>
-            </Box>
-            
-            {/* App Store Button - Disabled */}
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                opacity: 0.5,
-                cursor: 'not-allowed'
-              }}
+              </div>
+            </a>
+
+            {/* App Store Button */}
+            <a
+              href="https://apps.apple.com/id/app/ders-ba/id6748257017"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
             >
-              <Box
-                sx={{
-                  position: 'relative',
-                  width: { xs: 160, md: 180 },
-                  height: { xs: 48, md: 54 },
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
+              <div className="relative w-40 md:w-44 h-12 md:h-14 rounded-lg overflow-hidden shadow-lg cursor-pointer flex items-center justify-center">
                 <Image
                   src="/app shore download.png"
-                  alt="Download on App Store - Coming Soon"
+                  alt="Download on App Store"
                   width={180}
                   height={54}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
+                  className="w-full h-full object-cover"
                 />
-              </Box>
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  mt: 1, 
-                  opacity: 0.7,
-                  fontSize: '0.9rem',
-                  textAlign: 'center',
-                  color: 'white'
-                }}
-              >
-                Uskoro dostupno
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
+              </div>
+            </a>
+          </div>
+        </div>
       </ContentContainer>
-    </Box>
+    </div>
   );
 };
-
-
 
 // QuickActions Component
 const QuickActions = () => {
@@ -202,77 +101,72 @@ const QuickActions = () => {
     {
       title: 'Dersovi',
       description: 'Pregledajte sva dostupna predavanja',
-      icon: <SchoolIcon />,
-      color: 'success',
+      icon: School,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-600',
+      hoverBg: 'hover:bg-green-100',
       path: '/lectures'
     },
     {
       title: 'Udruženja',
       description: 'Istražite udruženja i njihove aktivnosti',
-      icon: <BusinessIcon />,
-      color: 'info',
+      icon: Building2,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-600',
+      hoverBg: 'hover:bg-blue-100',
       path: '/organizations'
     },
     {
       title: 'Daije',
       description: 'Upoznajte naše daije',
-      icon: <PersonIcon />,
-      color: 'warning',
+      icon: User,
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-600',
+      hoverBg: 'hover:bg-amber-100',
       path: '/daije'
     }
   ];
 
   return (
     <ContentContainer>
-      <Box sx={{ textAlign: 'center', mt: 4, mb: 4 }}>
-        <Typography variant="h4" component="h2" sx={{ mb: 2 }}>
-          Navigacija
-        </Typography>
-      <Grid container spacing={3} justifyContent="center" sx={{ mb: 1 }}>
-        {quickActions.map((action, index) => (
-          <Grid item xs={12} sm={6} md={3.5} key={index}>
-            <Card
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 4
-                },
-                cursor: 'pointer'
-              }}
-              onClick={() => router.push(action.path)}
-            >
-              <CardContent sx={{ flexGrow: 1, textAlign: 'center', p: 3 }}>
-                <Box sx={{ color: `${action.color}.main`, mb: 2 }}>
-                  {React.cloneElement(action.icon, { sx: { fontSize: 40 } })}
-                </Box>
-                <Typography variant="h6" component="h3" gutterBottom>
-                  {action.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {action.description}
-                </Typography>
-              </CardContent>
-              <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
-                <Button
-                  variant="outlined"
-                  color={action.color}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(action.path);
-                  }}
-                >
-                  Otvori
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-      </Box>
+      <div className="text-center mt-8 mb-8">
+        <h2 className="text-3xl font-semibold mb-4">Navigacija</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 justify-center mb-4 max-w-5xl mx-auto">
+          {quickActions.map((action, index) => {
+            const Icon = action.icon;
+            return (
+              <Card
+                key={index}
+                className="h-full flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-pointer"
+                onClick={() => router.push(action.path)}
+              >
+                <CardContent className="flex-grow text-center p-6">
+                  <div className={`${action.color} mb-4 flex justify-center`}>
+                    <Icon size={40} />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">{action.title}</h3>
+                  <p className="text-gray-600">{action.description}</p>
+                </CardContent>
+                <CardFooter className="justify-center pb-4">
+                  <Button
+                    variant="outline"
+                    className={`${action.borderColor} ${action.color} ${action.hoverBg}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(action.path);
+                    }}
+                  >
+                    Otvori
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
     </ContentContainer>
   );
 };
@@ -283,212 +177,87 @@ const BenefitsSection = () => {
 
   const benefits = [
     {
-      icon: <CheckCircleIcon />,
+      icon: CheckCircle,
       title: 'Dodavanje sadržaja',
       description: 'Registrirani korisnici mogu objavljivati nova predavanja, kao i predlagati daije i udruženja za dodavanje na platformu.'
     },
     {
-      icon: <StarIcon />,
+      icon: Star,
       title: 'Doprinos znanju i sticanje sevapa',
       description: 'Svako korisno predavanje koje podijeliš može nekome koristiti – a za to ti se piše nagrada kod Allaha. "Ko uputi na dobro, ima nagradu kao i onaj koji to dobro čini." (Muslim)'
     },
     {
-      icon: <BookmarkIcon />,
+      icon: Bookmark,
       title: 'Predlaganje izmjena postojećih informacija',
       description: 'Ako primijetiš netačne ili zastarjele podatke, možeš predložiti izmjene koje će biti pregledane od strane admin tima.'
     },
     {
-      icon: <EventIcon />,
+      icon: Calendar,
       title: 'Mogućnost da postaneš dio admin tima',
       description: 'Registracijom imaš priliku da, kada se ukaže potreba, postaneš dio tima koji aktivno uređuje i razvija platformu.'
     }
   ];
 
-  const handleRegister = () => {
-    router.push('/register');
-  };
-
-  const handleLogin = () => {
-    router.push('/login');
-  };
-
   return (
-    <Box 
-      sx={{ 
-        width: 'calc(100vw)',
-        py: 8,
-        background: 'linear-gradient(135deg, #022C43 0%, #055A87 100%)',
-        color: 'white',
-        mt: 6,
-        mb: 1,
-        mx: 'calc(-50vw + 50%)',
-        position: 'relative'
-      }}
-    >
-      <ContentContainer 
-        sx={{ 
-          maxWidth: '1900px !important',
-          width: '100%',
-          mx: 'auto'
-        }}
-      >
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <Typography 
-            variant="h3" 
-            component="h2" 
-            gutterBottom 
-            sx={{ 
-              fontWeight: 'bold',
-              mb: 2
-            }}
-          >
+    <div className="w-[calc(100vw)] py-16 bg-gradient-to-br from-[#022C43] to-[#055A87] text-white mt-12 mb-2 mx-[calc(-50vw+50%)] relative">
+      <ContentContainer className="max-w-7xl mx-auto">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold mb-4">
             Zašto se registrovati?
-          </Typography>
-          <Typography 
-            variant="h6" 
-            sx={{ 
-              opacity: 0.9,
-              maxWidth: '600px',
-              margin: '0 auto',
-              lineHeight: 1.6
-            }}
-          >
+          </h2>
+          <p className="text-lg opacity-90 max-w-2xl mx-auto leading-relaxed">
             Registracija vam omogućava pristup ekskluzivnim funkcijama koje će poboljšati vaše iskustvo na našoj platformi
-          </Typography>
-        </Box>
+          </p>
+        </div>
 
-        <Grid 
-          container 
-          spacing={3} 
-          sx={{ 
-            mb: 6,
-            maxWidth: '100%',
-            width: '100%',
-            overflow: 'hidden'
-          }}
-        >
-          {benefits.map((benefit, index) => (
-            <Grid item xs={12} md={6} key={index}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  p: 3,
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: 3,
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.2)'
-                  }
-                }}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-12 max-w-full overflow-hidden">
+          {benefits.map((benefit, index) => {
+            const Icon = benefit.icon;
+            return (
+              <div
+                key={index}
+                className="flex items-start p-6 bg-white/10 rounded-2xl backdrop-blur-lg border border-white/20 transition-all duration-300 hover:bg-white/15 hover:-translate-y-1 hover:shadow-2xl"
               >
-                <Box
-                  sx={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '50%',
-                    p: 2,
-                    mr: 3,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minWidth: 60,
-                    height: 60
-                  }}
-                >
-                  {React.cloneElement(benefit.icon, { sx: { fontSize: 28, color: 'white' } })}
-                </Box>
-                <Box>
-                  <Typography 
-                    variant="h6" 
-                    gutterBottom 
-                    sx={{ 
-                      fontWeight: 600,
-                      mb: 1
-                    }}
-                  >
+                <div className="bg-white/20 rounded-full p-4 mr-6 flex items-center justify-center min-w-[60px] h-[60px]">
+                  <Icon size={28} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">
                     {benefit.title}
-                  </Typography>
-                  <Typography 
-                    variant="body1" 
-                    sx={{ 
-                      opacity: 0.9,
-                      lineHeight: 1.6
-                    }}
-                  >
+                  </h3>
+                  <p className="opacity-90 leading-relaxed">
                     {benefit.description}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography 
-            variant="h5" 
-            gutterBottom 
-            sx={{ 
-              mb: 4,
-              fontWeight: 500
-            }}
-          >
+        <div className="text-center">
+          <h3 className="text-2xl mb-8 font-medium">
             Pridružite se našoj zajednici danas!
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
+          </h3>
+          <div className="flex gap-2 justify-center flex-wrap">
             <Button
-              variant="contained"
-              size="large"
+              size="lg"
+              className="bg-[#dc004e] hover:bg-[#b8003d] text-white px-8 py-6 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
               onClick={() => router.push('/auth')}
-              sx={{
-                backgroundColor: '#dc004e',
-                color: 'white',
-                px: 4,
-                py: 1.5,
-                fontSize: '1.1rem',
-                fontWeight: 600,
-                borderRadius: 3,
-                textTransform: 'none',
-                boxShadow: '0 4px 15px rgba(220, 0, 78, 0.3)',
-                '&:hover': {
-                  backgroundColor: '#b8003d',
-                  boxShadow: '0 6px 20px rgba(220, 0, 78, 0.4)',
-                  transform: 'translateY(-2px)'
-                }
-              }}
             >
               Registrujte se
             </Button>
             <Button
-              variant="outlined"
-              size="large"
+              variant="outline"
+              size="lg"
+              className="border-2 border-white text-white bg-transparent hover:bg-white/10 px-8 py-6 text-lg font-semibold rounded-xl"
               onClick={() => router.push('/auth')}
-              sx={{
-                borderColor: 'white',
-                color: 'white',
-                px: 4,
-                py: 1.5,
-                fontSize: '1.1rem',
-                fontWeight: 600,
-                borderRadius: 3,
-                textTransform: 'none',
-                borderWidth: 2,
-                '&:hover': {
-                  borderColor: 'white',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderWidth: 2
-                }
-              }}
             >
               Prijavite se
             </Button>
-          </Box>
-        </Box>
+          </div>
+        </div>
       </ContentContainer>
-    </Box>
+    </div>
   );
 };
 
@@ -499,46 +268,34 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
 
   useEffect(() => {
     if (organizations && lectures) {
-      // Filtriramo samo odobrena udruženja koja imaju bar jedno predavanje
       const approvedOrgs = (organizations || []).filter(org => {
         if (org.status !== 'approved') return false;
-        
-        // Ako organizacija već ima lectureCount iz backend-a, koristi ga
-        // Backend računa samo odobrena predavanja
+
         if (typeof org.lectureCount === 'number') {
           return org.lectureCount > 0;
         }
-        
-        // Fallback: Provjeri da li udruženje ima bar jedno odobreno predavanje
-        // Organizacije u predavanjima su sačuvane kao stringovi (imena), ne kao ID reference
+
         const hasPredavanje = lectures.some(lecture => {
-          // Provjeri da li je predavanje odobreno
           if (lecture.status !== 'approved') return false;
           if (!lecture.organization) return false;
-          
-          // Ako je organizacija string, poredi sa imenom
+
           if (typeof lecture.organization === 'string') {
             return lecture.organization === org.name;
           }
-          
-          // Ako je organizacija objekat, poredi ID ili ime
+
           if (typeof lecture.organization === 'object') {
-            return lecture.organization._id === org._id || 
+            return lecture.organization._id === org._id ||
                    lecture.organization.name === org.name;
           }
-          
+
           return false;
         });
-        
+
         return hasPredavanje;
       });
-      
-      // Nasumično mešamo array
-      const shuffled = [...approvedOrgs].sort(() => Math.random() - 0.5);
-      
-      // Uzimamo prvih 10
-      const sortedOrganizations = shuffled.slice(0, 10);
 
+      const shuffled = [...approvedOrgs].sort(() => Math.random() - 0.5);
+      const sortedOrganizations = shuffled.slice(0, 10);
       setDisplayOrganizations(sortedOrganizations || []);
     }
   }, [organizations, lectures]);
@@ -547,66 +304,49 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
     router.push('/organizations');
   };
 
-  // Inside the component, filter data before using it
   const approvedOrganizations = (displayOrganizations || []).filter(item => item.status === 'approved');
 
   return (
     <ContentContainer>
-      <Box sx={{ mt: 0, textAlign: 'center' }}>
-        <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
-          Udruženja
-        </Typography>
-        <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
+      <div className="mt-0 text-center">
+        <h2 className="text-3xl font-semibold mb-2">Udruženja</h2>
+        <p className="mb-4">
           Upoznaj 10 nasumično odabranih udruženja koja su imala najavljeno predavanje.
-        </Typography>
+        </p>
 
-      {isLoading ? (
-        <SkeletonGrid count={6} type="organization" />
-      ) : approvedOrganizations.length === 0 ? (
-        <Typography variant="body1" color="text.secondary">
-          Trenutno nema dostupnih udruženja.
-        </Typography>
-      ) : (
-        <>
-          <OrganizationsGrid
-            gap={3}
-            sx={{
-              width: '100%',
-              maxWidth: '100%',
-              overflow: 'hidden',
-            }}
-          >
-            {approvedOrganizations.map((organization) => (
-              <Box key={organization._id} sx={{ 
-                height: '200px',
-                width: '100%',
-                maxWidth: '100%',
-                overflow: 'hidden'
-              }}>
-                <UniversalCard data={{ ...organization, type: 'Udruženje' }} />
-              </Box>
-            ))}
-          </OrganizationsGrid>
-
-          <Box sx={{ mt: 2 }}>
-            <Button 
-              variant="outlined" 
-              size="large"
-              onClick={handleViewAllOrganizations}
-              sx={{ 
-                px: 4, 
-                py: 1.5,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontSize: '1.1rem'
-              }}
+        {isLoading ? (
+          <SkeletonGrid count={6} type="organization" />
+        ) : approvedOrganizations.length === 0 ? (
+          <p className="text-gray-600">
+            Trenutno nema dostupnih udruženja.
+          </p>
+        ) : (
+          <>
+            <OrganizationsGrid
+              gap={3}
+              className="w-full max-w-full overflow-hidden"
             >
-              Prikaži sva udruženja
-            </Button>
-          </Box>
-        </>
-      )}
-      </Box>
+              {approvedOrganizations.map((organization) => (
+                <UniversalCard
+                  key={organization._id}
+                  data={{ ...organization, type: 'Udruženje' }}
+                />
+              ))}
+            </OrganizationsGrid>
+
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleViewAllOrganizations}
+                className="px-8 py-6 rounded-lg text-base"
+              >
+                Prikaži sva udruženja
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
     </ContentContainer>
   );
 };
@@ -615,97 +355,46 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
 const SocialMediaSection = () => {
   return (
     <ContentContainer>
-      <Box sx={{ mt: 2, mb: 2, textAlign: 'center' }}>
-      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 2 }}>
-        Pratite nas na društvenim mrežama
-      </Typography>
-      <Typography 
-        variant="h6" 
-        sx={{ 
-          mb: 4, 
-          opacity: 0.8, 
-          maxWidth: '300px', 
-          margin: '0 auto 2rem auto',
-          lineHeight: 1.6,
-          fontWeight: 300
-        }}
-      >
-        Budi u toku s najnovijim predavanjima, događajima i korisnim sadržajem.
-        
-      </Typography>
-      
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          gap: 4,
-          flexWrap: 'wrap'
-        }}
-      >
-        {/* Facebook */}
-        <Box sx={{ textAlign: 'center' }}>
-          <IconButton
-            component="a"
-            href="https://www.facebook.com/profile.php?id=61561889404089"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => logSocialShare('social_media', 'ders_page', 'facebook')}
-            sx={{
-              backgroundColor: '#1877F2',
-              color: 'white',
-              width: 80,
-              height: 80,
-              mb: 2,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                backgroundColor: '#166FE5',
-                transform: 'translateY(-4px)',
-                boxShadow: '0 8px 25px rgba(24, 119, 242, 0.3)'
-              }
-            }}
-          >
-            <FacebookIcon sx={{ fontSize: 40 }} />
-          </IconButton>
-          <Typography variant="h6" gutterBottom>
-            Facebook
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Zaprati nas na Facebooku
-          </Typography>
-        </Box>
+      <div className="mt-4 mb-4 text-center">
+        <h2 className="text-3xl font-semibold mb-4">
+          Pratite nas na društvenim mrežama
+        </h2>
+        <p className="text-lg mb-8 opacity-80 max-w-xs mx-auto leading-relaxed font-light">
+          Budi u toku s najnovijim predavanjima, događajima i korisnim sadržajem.
+        </p>
 
-        {/* Instagram */}
-        <Box sx={{ textAlign: 'center' }}>
-          <IconButton
-            component="a"
-            href="https://www.instagram.com/ders_ba/"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => logSocialShare('social_media', 'ders_page', 'instagram')}
-            sx={{
-              background: 'linear-gradient(45deg, #F56040 0%, #E1306C 25%, #C13584 50%, #833AB4 75%, #5851DB 100%)',
-              color: 'white',
-              width: 80,
-              height: 80,
-              mb: 2,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 8px 25px rgba(225, 48, 108, 0.3)'
-              }
-            }}
-          >
-            <InstagramIcon sx={{ fontSize: 40 }} />
-          </IconButton>
-          <Typography variant="h6" gutterBottom>
-            Instagram
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Zaprati nas na Instagramu
-          </Typography>
-        </Box>
-      </Box>
-      </Box>
+        <div className="flex justify-center gap-3 flex-wrap">
+          {/* Facebook */}
+          <div className="text-center">
+            <a
+              href="https://www.facebook.com/profile.php?id=61561889404089"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => logSocialShare('social_media', 'ders_page', 'facebook')}
+              className="inline-flex items-center justify-center w-20 h-20 mb-4 bg-[#1877F2] text-white rounded-full transition-all duration-300 hover:bg-[#166FE5] hover:-translate-y-1 hover:shadow-xl"
+            >
+              <Facebook size={40} />
+            </a>
+            <h3 className="text-lg font-semibold mb-1">Facebook</h3>
+            <p className="text-gray-600 text-sm">Zaprati nas na Facebooku</p>
+          </div>
+
+          {/* Instagram */}
+          <div className="text-center">
+            <a
+              href="https://www.instagram.com/ders_ba/"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => logSocialShare('social_media', 'ders_page', 'instagram')}
+              className="inline-flex items-center justify-center w-20 h-20 mb-4 bg-gradient-to-br from-[#F56040] via-[#E1306C] via-[#C13584] via-[#833AB4] to-[#5851DB] text-white rounded-full transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+            >
+              <Instagram size={40} />
+            </a>
+            <h3 className="text-lg font-semibold mb-1">Instagram</h3>
+            <p className="text-gray-600 text-sm">Zaprati nas na Instagramu</p>
+          </div>
+        </div>
+      </div>
     </ContentContainer>
   );
 };
@@ -717,30 +406,23 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
 
   useEffect(() => {
     if (daije && lectures) {
-      // Filtriramo samo odobrene daije koji imaju bar jedno predavanje
       const approvedDaije = (daije || []).filter(daija => {
         if (daija.status !== 'approved') return false;
-        
-        // Ako daija već ima lectureCount iz backend-a, koristi ga
-        // Backend računa samo odobrena predavanja
+
         if (typeof daija.lectureCount === 'number') {
           return daija.lectureCount > 0;
         }
-        
-        // Fallback: Provjeri da li daija ima bar jedno odobreno predavanje
-        const hasPredavanje = lectures.some(lecture => 
+
+        const hasPredavanje = lectures.some(lecture =>
           lecture.status === 'approved' &&
-          lecture.daija && 
+          lecture.daija &&
           (lecture.daija._id === daija._id || lecture.daija === daija._id)
         );
-        
+
         return hasPredavanje;
       });
-      
-      // Nasumično mešamo array
+
       const shuffled = [...approvedDaije].sort(() => Math.random() - 0.5);
-      
-      // Uzimamo prvih 10
       const randomDaije = shuffled.slice(0, 10);
       setDisplayDaije(randomDaije || []);
     }
@@ -750,71 +432,54 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
     router.push('/daije');
   };
 
-  // displayDaije already contains only approved daije from the sorting function
   const approvedDaije = displayDaije;
 
   return (
     <ContentContainer>
-      <Box sx={{ mt: 1, textAlign: 'center' }}>
-        <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
-          Daije
-        </Typography>
-        <Typography variant="p" component="p" gutterBottom sx={{ mb: 2 }}>
-        Upoznaj 10 nasumično odabranih daija koji su imali najavljeno predavanje.
-        </Typography>
+      <div className="mt-2 text-center">
+        <h2 className="text-3xl font-semibold mb-2">Daije</h2>
+        <p className="mb-4">
+          Upoznaj 10 nasumično odabranih daija koji su imali najavljeno predavanje.
+        </p>
 
-      {isLoading ? (
-        <SkeletonGrid count={6} type="daija" />
-      ) : approvedDaije.length === 0 ? (
-        <Typography variant="body1" color="text.secondary" >
-          Trenutno nema dostupnih daija.
-        </Typography>
-      ) : (
-        <>
-          <DaijeGrid 
-            gap={3}
-            sx={{
-              width: '100%',
-              maxWidth: '100%',
-              overflow: 'hidden',
-            }}
-          >
-            {approvedDaije.map((daija) => (
-              <Box key={daija._id} sx={{ 
-                height: '200px',
-                width: '100%',
-                maxWidth: '100%',
-                overflow: 'hidden'
-              }}>
-                <UniversalCard data={{ ...daija, type: 'Daija' }} />
-              </Box>
-            ))}
-          </DaijeGrid>
-          <Box sx={{ mt: 4, mb: 0 }}>
-            <Button 
-              variant="outlined" 
-              size="large"
-              onClick={handleViewAllDaije}
-              sx={{ 
-                px: 4, 
-                py: 1.5,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontSize: '1.1rem'
-              }}
+        {isLoading ? (
+          <SkeletonGrid count={6} type="daija" />
+        ) : approvedDaije.length === 0 ? (
+          <p className="text-gray-600">
+            Trenutno nema dostupnih daija.
+          </p>
+        ) : (
+          <>
+            <DaijeGrid
+              gap={3}
+              className="w-full max-w-full overflow-hidden"
             >
-              Prikaži sve daije
-            </Button>
-          </Box>
-        </>
-      )}
-      </Box>
+              {approvedDaije.map((daija) => (
+                <UniversalCard
+                  key={daija._id}
+                  data={{ ...daija, type: 'Daija' }}
+                />
+              ))}
+            </DaijeGrid>
+            <div className="mt-8 mb-0">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleViewAllDaije}
+                className="px-8 py-6 rounded-lg text-base"
+              >
+                Prikaži sve daije
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
     </ContentContainer>
   );
 };
 
 // Filter function for approved items
-const filterApproved = (items) => (items || []).filter(item => 
+const filterApproved = (items) => (items || []).filter(item =>
   item.status === 'approved'
 );
 
@@ -827,8 +492,7 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
   const router = useRouter();
-  
-  // Track page performance
+
   usePerformanceTracking('home_page_render');
 
   useEffect(() => {
@@ -836,52 +500,45 @@ export default function Home() {
       try {
         setIsLoading(true);
         setError(null);
-        
-        // Fetch lectures with performance tracking
+
         const allLectures = await measureAsyncOperation('fetch_lectures', async () => {
           return await predavanjaService.getAllPredavanja(1, 100, 'all');
         });
-        
-        // Debug cancelled lectures
+
+        console.log('🔍 Fetched lectures from API:', allLectures?.length || 0);
+        console.log('🔍 First lecture:', allLectures?.[0]);
+
         const cancelledLectures = allLectures.filter(l => l.status === 'cancelled' || l.isCancelled);
-        
-        // Look for specific lecture
         const diskriminacija = allLectures.find(l => l.title && l.title.includes('Diskriminacija žena'));
-        
-        // Debug weekly lectures
         const weeklyLectures = allLectures.filter(l => l.isWeeklyLecture);
 
-        // Normalize lectures data and add type field
         const lecturesData = (allLectures || []).map(lecture => ({
           ...lecture,
-          type: 'Predavanje', // Add type field for UniversalCard
+          type: 'Predavanje',
           daija: lecture.daija || null,
           organization: lecture.organization || null
         }));
 
-        // Debug each lecture's structure
         lecturesData.forEach(lecture => {
           // Structure validation without logging
         });
 
+        console.log('🔍 Processed lectures:', lecturesData?.length || 0);
         setLectures(lecturesData);
-        
-        // Fetch organizations with performance tracking
+
         const organizationsData = await measureAsyncOperation('fetch_organizations', async () => {
           return await udruzenjaService.getAllUdruzenja();
         });
         setOrganizations(organizationsData || []);
-        
-        // Fetch daije with performance tracking
+
         const daijeData = await measureAsyncOperation('fetch_daije', async () => {
           return await daijeService.getAllDaije();
         });
         setDaije(daijeData || []);
-        
+
       } catch (err) {
         console.error('Greška pri dohvaćanju podataka:', err);
         setError('Greška pri učitavanju podataka');
-        // Set empty arrays in case of error
         setLectures([]);
         setOrganizations([]);
         setDaije([]);
@@ -893,9 +550,7 @@ export default function Home() {
     fetchData();
   }, []);
 
-
   useEffect(() => {
-    // Provjeri da li treba prikazati poruku o uspješnoj registraciji
     if (typeof window !== 'undefined') {
       if (localStorage.getItem('registrationSuccess') === 'true') {
         setShowRegistrationSuccess(true);
@@ -904,16 +559,12 @@ export default function Home() {
     }
   }, []);
 
-
-  // Inside the component, filter data before using it with safety checks
   const approvedOrganizations = (organizations || []).filter(item => item.status === 'approved');
-
   const approvedDaije = (daije || []).filter(item => item.status === 'approved');
-
   const approvedLectures = (lectures || []).filter(item => item.status === 'approved');
 
   return (
-    <PageLayout 
+    <PageLayout
       disableGutters
       containerSx={{
         px: 0,
@@ -926,79 +577,70 @@ export default function Home() {
         <meta name="description" content="Pronađite najnovija predavanja, pratite omiljene daije i organizacije na jednom mjestu." />
         <link rel="canonical" href="https://ders.ba" />
       </Head>
+
       {/* Poruka o uspješnoj registraciji/prijavi */}
       {showRegistrationSuccess && (
-        <Alert severity="success" sx={{ mb: 4, width: '100%', maxWidth: '600px', margin: '0 auto' }}>
-          Uspješno ste registrovani i prijavljeni u sistem.
+        <Alert className="mb-8 w-full max-w-2xl mx-auto">
+          <AlertDescription>
+            Uspješno ste registrovani i prijavljeni u sistem.
+          </AlertDescription>
         </Alert>
       )}
 
       {/* Hero Section */}
-      <Box sx={{ width: '100%', mb: 4 }}>
+      <div className="w-full">
         <HeroSection />
-      </Box>
+      </div>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 4, width: '100%', maxWidth: '600px' }}>
-          {error}
+        <Alert variant="destructive" className="mb-8 w-full max-w-2xl">
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {/* 10 Lectures */}
-      <Box sx={{ width: '100%', mb: 4, mt: 4 }}>
+      <div className="w-full mb-8">
         <ContentContainer>
-          <LecturesSection 
-            lectures={lectures} 
+          <LecturesSection
+            lectures={lectures}
             isLoading={isLoading}
             limit={10}
             subtitle="Posljednjih 10 najavljenih dersova"
             showViewAllButton={true}
           />
         </ContentContainer>
-      </Box>
-      
+      </div>
 
       {/* Benefits Section */}
       <BenefitsSection />
 
       {/* Active Daije */}
-      <Box sx={{ width: '100%', mb: 4 }}>
+      <div className="w-full mb-8">
         <ActiveDaije daije={daije} lectures={lectures} isLoading={isLoading} />
-      </Box>
+      </div>
 
       {/* Social Media Section */}
-      <Box sx={{ width: '100%', mb: 4 }}>
+      <div className="w-full mb-8">
         <SocialMediaSection />
-      </Box>
+      </div>
 
       {/* Active Organizations */}
-      <Box sx={{ width: '100%', mb: 4 }}>
+      <div className="w-full mb-8">
         <ActiveOrganizations organizations={organizations} lectures={lectures} isLoading={isLoading} />
-      </Box>
-
-
-      {/* Quick Actions - REMOVED
-      <Box sx={{ width: '100%', mb: 4 }}>
-        <QuickActions />
-      </Box> */}
+      </div>
 
       {/* Lecture Statistics */}
-      <Box sx={{ width: '100%', mb: 4 }}>
+      <div className="w-full mb-8">
         <SimplifiedStatistics />
-      </Box>
-
-     
+      </div>
     </PageLayout>
   );
 }
 
 // Force server-side rendering to ensure fresh content on every request
 export async function getServerSideProps() {
-  // This function runs on every request, forcing server-side rendering
-  // We don't need to fetch data here since the component fetches it client-side
   return {
     props: {
-      // Add a timestamp to verify fresh rendering
       timestamp: new Date().toISOString()
     }
   };

@@ -3,7 +3,7 @@ import { ENV } from './config';
 
 const udruzenjaService = {
   getAllUdruzenja: async () => {
-    const response = await axiosInstance.get(ENV.API_ENDPOINTS.UDRUZENJA);
+    const response = await axiosInstance.get(ENV.API_ENDPOINTS.ORGANIZATIONS);
     return response.data;
   },
 
@@ -13,7 +13,7 @@ const udruzenjaService = {
   },
 
   getUdruzenjeById: async (id) => {
-    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.UDRUZENJA}/${id}`);
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.ORGANIZATIONS}/${id}`);
     return response.data;
   },
 
@@ -23,22 +23,22 @@ const udruzenjaService = {
   },
 
   searchUdruzenja: async (query) => {
-    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.UDRUZENJA}/search?q=${encodeURIComponent(query)}`);
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.ORGANIZATIONS}/search?q=${encodeURIComponent(query)}`);
     return response.data;
   },
 
   createUdruzenje: async (udruzenjeData) => {
-    const response = await axiosInstance.post(ENV.API_ENDPOINTS.UDRUZENJA, udruzenjeData);
+    const response = await axiosInstance.post(ENV.API_ENDPOINTS.ORGANIZATIONS, udruzenjeData);
     return response.data;
   },
 
   updateUdruzenje: async (id, udruzenjeData) => {
-    const response = await axiosInstance.put(`${ENV.API_ENDPOINTS.UDRUZENJA}/${id}`, udruzenjeData);
+    const response = await axiosInstance.put(`${ENV.API_ENDPOINTS.ORGANIZATIONS}/${id}`, udruzenjeData);
     return response.data;
   },
 
   deleteUdruzenje: async (id) => {
-    const response = await axiosInstance.delete(`${ENV.API_ENDPOINTS.UDRUZENJA}/${id}`);
+    const response = await axiosInstance.delete(`${ENV.API_ENDPOINTS.ORGANIZATIONS}/${id}`);
     return response.data;
   },
 
@@ -46,23 +46,23 @@ const udruzenjaService = {
     const payload = { status };
     if (reason) payload.rejectionReason = reason;
 
-    const response = await axiosInstance.patch(`${ENV.API_ENDPOINTS.UDRUZENJA}/${id}`, payload);
+    const response = await axiosInstance.patch(`${ENV.API_ENDPOINTS.ORGANIZATIONS}/${id}`, payload);
     return response.data;
   },
 
   // Bulk operations
   bulkApprove: async (ids) => {
-    const response = await axiosInstance.post(`${ENV.API_ENDPOINTS.UDRUZENJA}/bulk/approve`, { ids });
+    const response = await axiosInstance.post(`${ENV.API_ENDPOINTS.ORGANIZATIONS}/bulk/approve`, { ids });
     return response.data;
   },
 
   bulkReject: async (ids) => {
-    const response = await axiosInstance.post(`${ENV.API_ENDPOINTS.UDRUZENJA}/bulk/reject`, { ids });
+    const response = await axiosInstance.post(`${ENV.API_ENDPOINTS.ORGANIZATIONS}/bulk/reject`, { ids });
     return response.data;
   },
 
   bulkDelete: async (ids) => {
-    const response = await axiosInstance.post(`${ENV.API_ENDPOINTS.UDRUZENJA}/bulk/delete`, { ids });
+    const response = await axiosInstance.post(`${ENV.API_ENDPOINTS.ORGANIZATIONS}/bulk/delete`, { ids });
     return response.data;
   }
 };

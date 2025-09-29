@@ -114,8 +114,8 @@ const RelatedLecturesSimple = ({ currentLectureId }) => {
             <Box
               sx={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 350px))',
-                gap: 3,
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: 1.5,
                 justifyContent: 'center',
                 width: '100%',
               }}
