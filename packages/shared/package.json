@@ -2,6 +2,7 @@
   "name": "@ders-ba/shared",
   "version": "1.0.0",
   "description": "Shared code for DERS.BA web and mobile applications",
+  "type": "module",
   "main": "index.js",
   "private": true,
   "dependencies": {

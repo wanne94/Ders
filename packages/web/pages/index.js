@@ -50,7 +50,7 @@ const HeroSection = () => {
             Preuzmi DERS mobilnu aplikaciju
           </h3>
 
-          <div className="flex gap-6 justify-center flex-wrap items-start">
+          <div className="flex gap-2 justify-center flex-wrap items-start">
             {/* Google Play Button */}
             <a
               href="https://play.google.com/store/apps/details?id=com.daije.mobile"
@@ -134,7 +134,7 @@ const QuickActions = () => {
     <ContentContainer>
       <div className="text-center mt-8 mb-8">
         <h2 className="text-3xl font-semibold mb-4">Navigacija</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-center mb-4 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 justify-center mb-4 max-w-5xl mx-auto">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
             return (
@@ -210,7 +210,7 @@ const BenefitsSection = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-full overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-12 max-w-full overflow-hidden">
           {benefits.map((benefit, index) => {
             const Icon = benefit.icon;
             return (
@@ -238,7 +238,7 @@ const BenefitsSection = () => {
           <h3 className="text-2xl mb-8 font-medium">
             Pridružite se našoj zajednici danas!
           </h3>
-          <div className="flex gap-6 justify-center flex-wrap">
+          <div className="flex gap-2 justify-center flex-wrap">
             <Button
               size="lg"
               className="bg-[#dc004e] hover:bg-[#b8003d] text-white px-8 py-6 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
@@ -327,9 +327,10 @@ const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
               className="w-full max-w-full overflow-hidden"
             >
               {approvedOrganizations.map((organization) => (
-                <div key={organization._id} className="h-48 w-full max-w-full overflow-hidden">
-                  <UniversalCard data={{ ...organization, type: 'Udruženje' }} />
-                </div>
+                <UniversalCard
+                  key={organization._id}
+                  data={{ ...organization, type: 'Udruženje' }}
+                />
               ))}
             </OrganizationsGrid>
 
@@ -362,7 +363,7 @@ const SocialMediaSection = () => {
           Budi u toku s najnovijim predavanjima, događajima i korisnim sadržajem.
         </p>
 
-        <div className="flex justify-center gap-8 flex-wrap">
+        <div className="flex justify-center gap-3 flex-wrap">
           {/* Facebook */}
           <div className="text-center">
             <a
@@ -454,9 +455,10 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
               className="w-full max-w-full overflow-hidden"
             >
               {approvedDaije.map((daija) => (
-                <div key={daija._id} className="h-48 w-full max-w-full overflow-hidden">
-                  <UniversalCard data={{ ...daija, type: 'Daija' }} />
-                </div>
+                <UniversalCard
+                  key={daija._id}
+                  data={{ ...daija, type: 'Daija' }}
+                />
               ))}
             </DaijeGrid>
             <div className="mt-8 mb-0">
@@ -503,6 +505,9 @@ export default function Home() {
           return await predavanjaService.getAllPredavanja(1, 100, 'all');
         });
 
+        console.log('🔍 Fetched lectures from API:', allLectures?.length || 0);
+        console.log('🔍 First lecture:', allLectures?.[0]);
+
         const cancelledLectures = allLectures.filter(l => l.status === 'cancelled' || l.isCancelled);
         const diskriminacija = allLectures.find(l => l.title && l.title.includes('Diskriminacija žena'));
         const weeklyLectures = allLectures.filter(l => l.isWeeklyLecture);
@@ -518,6 +523,7 @@ export default function Home() {
           // Structure validation without logging
         });
 
+        console.log('🔍 Processed lectures:', lecturesData?.length || 0);
         setLectures(lecturesData);
 
         const organizationsData = await measureAsyncOperation('fetch_organizations', async () => {
@@ -560,7 +566,11 @@ export default function Home() {
   return (
     <PageLayout
       disableGutters
-      containerClassName="px-0 text-center items-center"
+      containerSx={{
+        px: 0,
+        textAlign: 'center',
+        alignItems: 'center'
+      }}
     >
       <Head>
         <title>Islamska predavanja - Ders.ba</title>

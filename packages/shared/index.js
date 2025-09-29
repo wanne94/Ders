@@ -4,34 +4,34 @@
  */
 
 // Navigation exports
-export * from './navigation/navigationConfig';
+export * from './navigation/navigationConfig.js';
 
 // Dashboard exports
-export * from './dashboard/dashboardLogic';
+export * from './dashboard/dashboardLogic.js';
 
 // Constants exports
-export * from './constants/roles';
-export * from './constants/statuses';
-export * from './constants/endpoints';
-export * from './constants/colors';
-export * from './constants/images';
-export * from './constants/security';
-export * from './constants/ui';
+export * from './constants/roles.js';
+export * from './constants/statuses.js';
+export * from './constants/endpoints.js';
+export * from './constants/colors.js';
+export * from './constants/images.js';
+export * from './constants/security.js';
+export * from './constants/ui.js';
 
 // Validation exports
-export * from './validation/lectureValidation';
+export * from './validation/lectureValidation.js';
 
 // Utils exports
-export * from './utils';
+export * from './utils/index.js';
 
 // Re-export default exports
-import navigationConfig from './navigation/navigationConfig';
-import dashboardLogic from './dashboard/dashboardLogic';
-import endpoints from './constants/endpoints';
-import colors from './constants/colors';
-import images from './constants/images';
-import security from './constants/security';
-import ui from './constants/ui';
+import navigationConfig from './navigation/navigationConfig.js';
+import dashboardLogic from './dashboard/dashboardLogic.js';
+import endpoints from './constants/endpoints.js';
+import colors from './constants/colors.js';
+import images from './constants/images.js';
+import security from './constants/security.js';
+import ui from './constants/ui.js';
 
 export {
   navigationConfig,

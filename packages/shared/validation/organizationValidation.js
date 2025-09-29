@@ -3,7 +3,7 @@
  * Provides consistent organization data validation across all platforms
  */
 
-import { CONTENT_STATUS } from '../constants/statuses';
+import { CONTENT_STATUS } from '../constants/statuses.js';
 
 // Validation rules configuration
 export const ORGANIZATION_VALIDATION_RULES = {

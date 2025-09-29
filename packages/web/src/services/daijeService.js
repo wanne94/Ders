@@ -1,10 +1,10 @@
 import axiosInstance from '@/utils/axiosConfig';
-import { API_ENDPOINTS } from '@ders-ba/shared';
+import { ENV } from './config';
 
 const daijeService = {
   // Public endpoint - returns only approved daije with lecture count
   getAllDaije: async () => {
-    const response = await axiosInstance.get(API_ENDPOINTS.DAIJE);
+    const response = await axiosInstance.get(ENV.API_ENDPOINTS.DAIJE);
     return response.data;
   },
 
@@ -15,17 +15,17 @@ const daijeService = {
   },
 
   getDaijaById: async (id) => {
-    const response = await axiosInstance.get(`${API_ENDPOINTS.DAIJE}/${id}`);
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.DAIJE}/${id}`);
     return response.data;
   },
 
   getDaijaPredavanja: async (id) => {
-    const response = await axiosInstance.get(`${API_ENDPOINTS.LECTURES}?daija=${id}`);
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.PREDAVANJA}?daija=${id}`);
     return response.data;
   },
 
   searchDaije: async (query) => {
-    const response = await axiosInstance.get(`${API_ENDPOINTS.DAIJE}/search?q=${encodeURIComponent(query)}`);
+    const response = await axiosInstance.get(`${ENV.API_ENDPOINTS.DAIJE}/search?q=${encodeURIComponent(query)}`);
     return response.data;
   },
 

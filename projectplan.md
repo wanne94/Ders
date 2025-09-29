@@ -1,91 +1,35 @@
-# Project Plan: Update Web Project to Use Shared Constants
+# Plan: Smanjivanje razmaka između kartica na webu
 
-## Overview
-This plan outlines the migration of hardcoded constants in the web project to use the shared constants from the @ders-ba/shared package. This will ensure consistency across the web and mobile applications.
+## TODO Liste:
 
-## Files That Need Updates
+### 1. Analiza trenutnog stanja
+- [x] Identifikovati sve lokacije gdje se koriste kartice
+- [x] Analizirati trenutne gap/spacing vrijednosti
 
-### 1. Files Using Hardcoded Colors
-The following files contain hardcoded color values that should be replaced with imports from @ders-ba/shared:
+### 2. Izmjene gap vrijednosti u grid layoutima
+- [x] Smanjiti gap u GridLayout komponenti (trenutno gap={2} ili gap={3})
+- [x] Smanjiti gap u Tailwind grid klasama (gap-6 na gap-3 ili gap-2)
+- [x] Smanjiti gap u LecturesSection komponenti
 
-**Files with color codes (#022C43, #dc004e, etc.):**
-- `/packages/web/src/providers/SimpleThemeProvider.js` - Uses #022C43, #dc004e
-- `/packages/web/src/contexts/ThemeContext.jsx` - Uses #022C43, #055A87, #011929, #dc004e, #ff5983, #9a0036
-- `/packages/web/pages/404.js` - Uses #022C43, #055A87 in gradient
-- `/packages/web/pages/index.js` - Uses hardcoded colors
-- `/packages/web/pages/index-old.js` - Uses hardcoded colors
-- `/packages/web/src/components/RelatedLecturesSimple.jsx` - Uses hardcoded colors
-- `/packages/web/src/components/DeleteProfileDialog.jsx` - Uses hardcoded colors
-- `/packages/web/src/components/RelatedLectures.jsx` - Uses hardcoded colors
-- `/packages/web/src/components/Navigation.jsx` - Uses hardcoded colors
-- `/packages/web/src/components/SimplifiedStatistics.jsx` - Uses hardcoded colors
-- `/packages/web/src/components/DownloadAppSection.jsx` - Uses hardcoded colors
-- `/packages/web/src/components/Footer.jsx` - Uses hardcoded colors
-- `/packages/web/src/components/AddressLink.jsx` - Uses hardcoded colors
-- `/packages/web/src/components/SkeletonProfile.jsx` - Uses hardcoded colors
-- `/packages/web/pages/profile/[type]/[[...params]].js` - Uses hardcoded colors
+### 3. Izmjene na specific stranicama
+- [x] Izmjena gap-a na index.js stranici
+- [x] Izmjena gap-a na profile stranici
+- [x] Izmjena gap-a u svim grid layoutima
 
-### 2. Files Using Hardcoded User Roles
-Files that need to import USER_ROLES from @ders-ba/shared:
+### 4. Testiranje i provjera
+- [x] Provjeriti vizuelni izgled na različitim rezolucijama
+- [x] Provjeriti da li su sve kartice vizuelno dobro poravnate
 
-**Files with hardcoded role strings:**
-- `/packages/web/src/components/Navigation.jsx` - Line 150: `user?.role === 'admin' || user?.role === 'super_admin'`
-- Other files that check for 'admin', 'user', 'moderator', 'predavac', 'organizacija' roles
+## Napomene:
+- Trenutni gap na većini mjesta je 3-6 (što u Tailwindu znači 0.75rem-1.5rem)
+- Preporučujem smanjenje na gap-2 ili gap-3 (0.5rem-0.75rem) za bolji, kompaktniji izgled
 
-### 3. Files Using Hardcoded Sort Orders
-Files that need to import SORT_ORDERS from @ders-ba/shared:
+## Review - Završene promjene:
+Uspješno sam smanjio razmake između kartica na web stranici:
 
-**Files with 'asc'/'desc' strings:**
-- `/packages/web/src/components/DataTable.jsx` - Multiple instances of 'asc' and 'desc' strings
-- Other components that implement sorting functionality
+1. **GridLayout komponenta** - Smanjio default gap sa 2 na 1.5, i responsive gap sa xs:2, sm:2.5 na xs:1.5, sm:2
+2. **LecturesSection komponenta** - Smanjio gap sa 3 na 2
+3. **index.js stranica** - Smanjio sve gap vrijednosti (gap-6 → gap-3, gap-8 → gap-4)
+4. **profile stranica** - Smanjio sve grid gap vrijednosti sa gap-4/gap-6 na gap-3
 
-### 4. Files Using Hardcoded Theme Modes
-Files that need to import THEME_MODES from @ders-ba/shared:
-
-**Files with 'light'/'dark' strings:**
-- `/packages/web/src/contexts/ThemeContext.jsx` - Line 17: `mode: 'light'`
-
-### 5. Image Utils
-- `/packages/web/src/utils/imageUtils.js` - Contains IMAGE_SERVER_URL that might need to be imported from shared constants
-
-## Todo Tasks
-
-- [ ] Create projectplan.md with the plan for updating web files to use shared constants
-- [ ] Update files that use hardcoded colors (#022C43, #dc004e, etc.) to import from shared colors
-- [ ] Update files that use hardcoded role strings ('admin', 'user', etc.) to import from shared roles  
-- [ ] Update files that use hardcoded sort orders ('asc', 'desc') to import from shared UI constants
-- [ ] Update files that use hardcoded theme modes ('light', 'dark') to import from shared UI constants
-- [ ] Review all changes and create a summary in projectplan.md
-
-## Implementation Strategy
-
-1. **Update Color Constants**
-   - Import `{ BRAND_COLORS, COLOR_USAGE }` from '@ders-ba/shared'
-   - Replace all hardcoded hex values with the appropriate constant
-   - Use COLOR_USAGE for semantic color usage
-
-2. **Update Role Constants**
-   - Import `{ USER_ROLES, isAdmin, hasPermission }` from '@ders-ba/shared'
-   - Replace hardcoded role strings with USER_ROLES constants
-   - Use helper functions like `isAdmin()` where appropriate
-
-3. **Update UI Constants**
-   - Import `{ THEME_MODES, SORT_ORDERS }` from '@ders-ba/shared'
-   - Replace hardcoded 'light'/'dark' with THEME_MODES constants
-   - Replace hardcoded 'asc'/'desc' with SORT_ORDERS constants
-
-4. **Update Image Constants**
-   - Check if IMAGE_SERVER_URL should be imported from shared endpoints
-   - Ensure consistent image path handling
-
-## Testing Strategy
-- Test all updated components to ensure they still function correctly
-- Verify that colors display properly
-- Ensure role-based access control still works
-- Test sorting functionality
-- Verify theme switching (if applicable)
-
-## Notes
-- The @ders-ba/shared package is already configured in package.json
-- All constants are exported from the main index.js file in the shared package
-- This migration will improve consistency and maintainability across the codebase
+Sada su kartice bliže jedna drugoj što omogućava bolji pregled i više vidljivog sadržaja na ekranu.

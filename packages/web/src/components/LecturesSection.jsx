@@ -6,8 +6,8 @@ import SkeletonGrid from './SkeletonGrid';
 import { LecturesGrid } from './GridLayout';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
 
-const LecturesSection = ({ 
-  lectures = [], 
+const LecturesSection = ({
+  lectures = [],
   isLoading = false,
   limit = null,
   title = 'Dersovi',
@@ -19,22 +19,29 @@ const LecturesSection = ({
   cardHeight = '240px' // Fiksna visina kartice
 }) => {
   const router = useRouter();
-  
+
+  console.log('🎯 LecturesSection received lectures:', lectures?.length || 0);
+  console.log('🎯 First lecture in component:', lectures?.[0]);
+
   // Debug logging
   const cancelledInRaw = lectures.filter(l => l.status === 'cancelled' || l.isCancelled);
   if (cancelledInRaw.length > 0) {
   }
-  
+
   // Filtriramo approved i cancelled predavanja
-  const filteredLectures = lectures.filter(lecture => 
+  const filteredLectures = lectures.filter(lecture =>
     lecture.status === 'approved' || lecture.status === 'cancelled'
   );
-  
+
+  console.log('🎯 Filtered lectures (approved/cancelled):', filteredLectures.length);
+
   // Sortiramo predavanja
   const sortedLectures = sortLecturesByStatus(filteredLectures);
-  
+
   // Primenjujemo limit ako je potrebno
   const displayLectures = limit ? sortedLectures.slice(0, limit) : sortedLectures;
+
+  console.log('🎯 Display lectures after filtering and limiting:', displayLectures.length);
   
   // Check if Diskriminacija lecture is in display
   const diskriminacija = displayLectures.find(l => l.title && l.title.includes('Diskriminacija žena'));
@@ -80,7 +87,7 @@ const LecturesSection = ({
       ) : (
         <>
           <LecturesGrid
-            gap={3}
+            gap={1.5}
             sx={{
               width: '100%',
               maxWidth: '100%',
@@ -89,17 +96,10 @@ const LecturesSection = ({
           >
             {displayLectures.map((lecture) => {
               return (
-                <Box
+                <UniversalCard
                   key={lecture._id}
-                  sx={{
-                    height: '240px',
-                    width: '100%',
-                    maxWidth: '100%',
-                    overflow: 'hidden'
-                  }}
-                >
-                  <UniversalCard data={{ ...lecture, type: 'Predavanje' }} />
-                </Box>
+                  data={{ ...lecture, type: 'Predavanje' }}
+                />
               );
             })}
           </LecturesGrid>

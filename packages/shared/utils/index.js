@@ -4,17 +4,17 @@
  */
 
 // React hooks
-export { useDebounce } from './useDebounce';
+export { useDebounce } from './useDebounce.js';
 
 // Date utilities
-export * from './dateUtils';
+export * from './dateUtils.js';
 
 // Image helpers
-export * from './imageHelpers';
+export * from './imageHelpers.js';
 
 // Re-export default exports
-import dateUtils from './dateUtils';
-import imageHelpers from './imageHelpers';
+import dateUtils from './dateUtils.js';
+import imageHelpers from './imageHelpers.js';
 
 export {
   dateUtils,

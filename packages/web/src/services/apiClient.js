@@ -1,7 +1,7 @@
 import tokenManager from './tokenManager';
 import { getCachedResponse, setCachedResponse, getPendingRequest, setPendingRequest } from './apiCache';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5003/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5004/api';
 
 class ApiClient {
   constructor() {

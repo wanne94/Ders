@@ -30,7 +30,8 @@
       "Bash(rm:*)",
       "WebFetch(domain:localhost)",
       "Bash(touch:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []

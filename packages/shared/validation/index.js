@@ -4,16 +4,16 @@
  */
 
 // Export all validation modules
-export * from './lectureValidation';
-export * from './userValidation';
-export * from './organizationValidation';
-export * from './validationHelpers';
+export * from './lectureValidation.js';
+export * from './userValidation.js';
+export * from './organizationValidation.js';
+export * from './validationHelpers.js';
 
 // Re-export default exports
-import lectureValidation from './lectureValidation';
-import userValidation from './userValidation';
-import organizationValidation from './organizationValidation';
-import validationHelpers from './validationHelpers';
+import lectureValidation from './lectureValidation.js';
+import userValidation from './userValidation.js';
+import organizationValidation from './organizationValidation.js';
+import validationHelpers from './validationHelpers.js';
 
 export {
   lectureValidation,

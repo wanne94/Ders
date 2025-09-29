@@ -221,7 +221,7 @@ const UniversalCard = React.memo(({ data }) => {
 
   return (
     <Card
-      className="flex flex-col relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer min-w-[320px] w-[320px] h-[240px]"
+      className="flex flex-col relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer w-full h-[240px]"
       onClick={displayData.onClick}
     >
       {/* Seminar badge - left side */}

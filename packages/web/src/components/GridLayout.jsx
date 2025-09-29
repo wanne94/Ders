@@ -5,7 +5,7 @@ const GridLayout = ({
   variant = 'default',
   minWidth,
   maxWidth,
-  gap = 2,
+  gap = 1,
   sx = {},
   ...props
 }) => {
@@ -61,7 +61,7 @@ const GridLayout = ({
           lg: 'repeat(4, 1fr)',
           xl: 'repeat(5, 1fr)'
         },
-        gap: { xs: 2, sm: 2.5, md: gap },
+        gap: { xs: 1, sm: 1.5, md: gap },
         width: '100%',
         maxWidth: '100%',
         overflow: 'hidden',

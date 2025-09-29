@@ -681,7 +681,7 @@ const ProfilePage = () => {
               <ContentContainer>
                 <div className="relative z-10 py-8">
                   {/* Main Content Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
                     {/* Left Column - Image and Quick Info */}
                     <div className="lg:col-span-4">
                       {/* Profile Image */}
@@ -827,7 +827,7 @@ const ProfilePage = () => {
                       )}
 
                       {/* Information Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
                         {/* Date & Time Card */}
                         {type === 'lecture' && (profile.date || profile.time) && (
                           <Card className="bg-white/10 backdrop-blur-md border-white/20">
@@ -1169,7 +1169,7 @@ const ProfilePage = () => {
                   )}
                 </h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                   {profile.seminarSessions
                     .sort((a, b) => new Date(a.date) - new Date(b.date))
                     .map((session, index) => (
@@ -1232,7 +1232,7 @@ const ProfilePage = () => {
                   <SkeletonGrid />
                 ) : relatedLectures.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
                       {/* Show upcoming lectures for this daija */}
                       {relatedLectures
                         .slice(0, 10)
@@ -1280,7 +1280,7 @@ const ProfilePage = () => {
                   <SkeletonGrid />
                 ) : relatedLectures.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
                       {/* Show upcoming lectures for this organization */}
                       {relatedLectures
                         .slice(0, 10)
@@ -1325,7 +1325,7 @@ const ProfilePage = () => {
               
               {upcomingLoading ? (
                 // Show skeleton loaders while loading
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
                   {Array.from({ length: 10 }).map((_, index) => (
                     <Skeleton key={index} className="h-64 rounded-lg" />
                   ))}
@@ -1377,7 +1377,7 @@ const ProfilePage = () => {
 
             {/* Additional Information Section */}
             {type === 'lecture' && (profile.topics || profile.requirements || profile.targetAudience) && (
-              <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-2">
                 {profile.topics && (
                   <Card>
                     <CardHeader>

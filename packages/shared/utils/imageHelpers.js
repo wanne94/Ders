@@ -3,11 +3,11 @@
  * Extends the constants/images.js with additional helper functions
  */
 
-import { 
+import {
   getImageUrl as getImageUrlBase,
   getDefaultImageByType,
-  IMAGE_CONFIG 
-} from '../constants/images';
+  IMAGE_CONFIG
+} from '../constants/images.js';
 
 /**
  * Check if image exists (not a default image)

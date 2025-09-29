@@ -3,7 +3,7 @@
  * Provides consistent user data validation across all platforms
  */
 
-import { USER_ROLES } from '../constants/roles';
+import { USER_ROLES } from '../constants/roles.js';
 
 // Validation rules configuration
 export const USER_VALIDATION_RULES = {
