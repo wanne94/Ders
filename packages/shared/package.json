@@ -1,0 +1,12 @@
+{
+  "name": "@ders-ba/shared",
+  "version": "1.0.0",
+  "description": "Shared code for DERS.BA web and mobile applications",
+  "main": "index.js",
+  "private": true,
+  "dependencies": {
+    "axios": "^1.11.0",
+    "date-fns": "^2.30.0",
+    "jwt-decode": "^4.0.0"
+  }
+}

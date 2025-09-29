@@ -5,6 +5,7 @@
 /server/node_modules/
 /web/node_modules/
 /mob/node_modules/
+/packages/*/node_modules/
 /.pnp
 .pnp.js
 .pnpm-store/

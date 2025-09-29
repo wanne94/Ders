@@ -4335,7 +4335,7 @@ app.get('/api/admin/lectures/organization/:organizationId', authenticateToken, i
 // Update user endpoint - protected for admin access
 app.put('/api/users/:id', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { username, email, password, role, firstName, phone } = req.body;
     const userId = req.params.id;
     
     logger.info('Updating user via admin dashboard:', {
@@ -4389,6 +4389,19 @@ app.put('/api/users/:id', authenticateToken, isAdminOrSuperAdmin, async (req, re
       errors.push('Nemate dozvolu za ažuriranje super admin korisnika');
     }
 
+    // Prevent super_admin from changing their own role
+    if (req.user.id === userId && role && role !== req.user.role) {
+      errors.push('Ne možete mijenjati svoju vlastitu ulogu');
+    }
+
+    // Check if this is the last super_admin - prevent downgrade
+    if (existingUser.role === 'super_admin' && role !== 'super_admin') {
+      const superAdminCount = await User.countDocuments({ role: 'super_admin' });
+      if (superAdminCount <= 1) {
+        errors.push('Ne možete degradirati poslednjeg super admin korisnika');
+      }
+    }
+
     if (errors.length > 0) {
       return res.status(400).json({ message: errors[0] });
     }
@@ -4414,6 +4427,23 @@ app.put('/api/users/:id', authenticateToken, isAdminOrSuperAdmin, async (req, re
       email: email.trim().toLowerCase(),
       role: role || existingUser.role
     };
+
+    // Add firstName and phone if provided
+    if (firstName !== undefined) {
+      updateData.firstName = firstName.trim();
+    }
+    if (phone !== undefined) {
+      updateData.phone = phone.trim();
+    }
+
+    logger.info('Update data prepared:', {
+      userId,
+      existingRole: existingUser.role,
+      newRole: role,
+      finalRole: updateData.role,
+      requestedBy: req.user.username,
+      requesterRole: req.user.role
+    });
 
     // Hash new password if provided
     if (password && password.trim()) {

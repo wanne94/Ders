@@ -9,14 +9,21 @@ import {
   Box,
   Alert,
   Snackbar,
-  MenuItem
+  MenuItem,
+  Typography
 } from '@mui/material';
 import axiosInstance from '@/utils/axiosConfig';
-import { validateUserForm, getInitialUserForm } from '@/utils/userHelpers';
 import { jwtDecode } from 'jwt-decode';
 
 const UserForm = ({ open, onClose, onSuccess, user }) => {
-  const [formData, setFormData] = useState(getInitialUserForm());
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    role: 'user',
+    firstName: '',
+    phone: ''
+  });
   const [currentUser, setCurrentUser] = useState(null);
 
   const [error, setError] = useState(null);
@@ -29,11 +36,20 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
         username: user.username || '',
         email: user.email || '',
         password: '', // Ne prikazujemo postojeću lozinku
-        role: user.role || 'user'
+        role: user.role || 'user',
+        firstName: user.firstName || '',
+        phone: user.phone || ''
       });
     } else {
       // Reset form when not editing
-      setFormData(getInitialUserForm());
+      setFormData({
+        username: '',
+        email: '',
+        password: '',
+        role: 'user',
+        firstName: '',
+        phone: ''
+      });
     }
   }, [user, open]);
 
@@ -44,6 +60,8 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
       if (storedToken) {
         try {
           const decodedUser = jwtDecode(storedToken);
+          console.log('Decoded user in UserForm:', decodedUser);
+          console.log('User role:', decodedUser?.role);
           setCurrentUser(decodedUser);
         } catch (error) {
           console.error('Error decoding token:', error);
@@ -54,10 +72,20 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
   }, []);
 
   const isSuperAdmin = currentUser?.role === 'super_admin';
+  console.log('Is Super Admin:', isSuperAdmin, 'Current user:', currentUser);
+  console.log('Open state:', open, 'User to edit:', user);
 
   const handleClose = () => {
     // Resetuj formu i greške kad se zatvara dialog
-    setFormData(getInitialUserForm());
+    setFormData({
+      username: '',
+      email: '',
+      password: '',
+      role: 'user',
+      firstName: '',
+      lastName: '',
+      phone: ''
+    });
     setError(null);
     setSuccess(false);
     onClose();
@@ -76,9 +104,20 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
     setError(null);
 
     // Validacija forme
-    const validationErrors = validateUserForm(formData, !!user); // Proslijedi da li je edit mode
-    if (validationErrors.length > 0) {
-      setError(validationErrors[0]); // Prikaži prvu grešku
+    const isEditing = !!user;
+
+    if (!formData.username || formData.username.length < 2) {
+      setError('Korisničko ime mora imati najmanje 2 karaktera');
+      return;
+    }
+
+    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
+      setError('Email adresa nije validna');
+      return;
+    }
+
+    if (!isEditing && (!formData.password || formData.password.length < 6)) {
+      setError('Šifra mora imati najmanje 6 karaktera');
       return;
     }
 
@@ -171,6 +210,28 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
               required={!isEditing}
               helperText={isEditing ? "Ostavite prazno ako ne želite mijenjati lozinku" : "Šifra mora imati najmanje 6 karaktera"}
             />
+
+            {/* Personal Information */}
+            <Typography variant="subtitle1" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
+              Lične informacije
+            </Typography>
+            <TextField
+              fullWidth
+              label="Ime"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              label="Telefon"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              margin="normal"
+            />
+
             {isSuperAdmin && (
               <TextField
                 fullWidth

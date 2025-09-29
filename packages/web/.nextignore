@@ -1,0 +1,34 @@
+# Exclude mobile app (removed)
+
+# Exclude server
+../server/**
+server/**
+
+# Exclude scripts
+../scripts/**
+scripts/**
+
+# Exclude test files
+../cypress/**
+cypress/**
+
+# Exclude git and expo
+../.git/**
+.git/**
+../.expo/**
+.expo/**
+
+# Exclude documentation
+../*.md
+*.md
+
+# Exclude config files
+../package.json
+../package-lock.json
+../app.json
+../shared-colors.js
+
+# Exclude logs
+../combined.log
+../error.log
+*.log 
