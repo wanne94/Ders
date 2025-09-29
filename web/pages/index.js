@@ -945,7 +945,7 @@ export default function Home() {
       )}
 
       {/* 10 Lectures */}
-      <Box sx={{ width: '100%', mb: 4 }}>
+      <Box sx={{ width: '100%', mb: 4, mt: 4 }}>
         <ContentContainer>
           <LecturesSection 
             lectures={lectures} 

@@ -48,7 +48,7 @@ const LecturesSection = ({
   if (isLoading) {
     return (
       <Box sx={{ width: '100%' }}>
-        <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1, textAlign: 'center' }}>
+        <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1, mt: 3, textAlign: 'center' }}>
           {title}
         </Typography>
         {subtitle && (
@@ -63,7 +63,7 @@ const LecturesSection = ({
 
   return (
     <Box sx={{ width: '100%', textAlign: 'center' }}>
-      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1 }}>
+      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 1, mt: 3 }}>
         {title}
       </Typography>
       {subtitle && (
