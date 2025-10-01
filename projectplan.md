@@ -1,35 +1,72 @@
-# Plan: Smanjivanje razmaka između kartica na webu
+# Plan za rješavanje App Store Upload grešaka
 
-## TODO Liste:
+## ✅ ZAVRŠENE IZMJENE ZA EAS BUILD
 
-### 1. Analiza trenutnog stanja
-- [x] Identifikovati sve lokacije gdje se koriste kartice
-- [x] Analizirati trenutne gap/spacing vrijednosti
+### Identifikovani problemi (iz Transporter loga):
+1. ❌ **CFBundleShortVersionString** - verzija 1.0.0 mora biti veća od 1.0.4
+2. ❌ **Build broj konflikt** - build sa brojem "2" je premali
+3. ❌ **Device compatibility** - aplikacija mora podržavati sve uređaje
 
-### 2. Izmjene gap vrijednosti u grid layoutima
-- [x] Smanjiti gap u GridLayout komponenti (trenutno gap={2} ili gap={3})
-- [x] Smanjiti gap u Tailwind grid klasama (gap-6 na gap-3 ili gap-2)
-- [x] Smanjiti gap u LecturesSection komponenti
+### Status: RIJEŠENO ✅
 
-### 3. Izmjene na specific stranicama
-- [x] Izmjena gap-a na index.js stranici
-- [x] Izmjena gap-a na profile stranici
-- [x] Izmjena gap-a u svim grid layoutima
+## Ažurirane verzije (na osnovu zadnje uploadovane 1.2.0 build 28):
 
-### 4. Testiranje i provjera
-- [x] Provjeriti vizuelni izgled na različitim rezolucijama
-- [x] Provjeriti da li su sve kartice vizuelno dobro poravnate
+### 1. **Info.plist** (`packages/mobile/ios/Ders/Info.plist`)
+   - CFBundleShortVersionString: **1.2.1** ✅
+   - CFBundleVersion: **29** ✅
 
-## Napomene:
-- Trenutni gap na većini mjesta je 3-6 (što u Tailwindu znači 0.75rem-1.5rem)
-- Preporučujem smanjenje na gap-2 ili gap-3 (0.5rem-0.75rem) za bolji, kompaktniji izgled
+### 2. **app.json** (root folder)
+   - ios.buildNumber: **29** ✅
 
-## Review - Završene promjene:
-Uspješno sam smanjio razmake između kartica na web stranici:
+### 3. **Targeted Device Family**
+   - TARGETED_DEVICE_FAMILY = "1,2" (iPhone i iPad) ✅
 
-1. **GridLayout komponenta** - Smanjio default gap sa 2 na 1.5, i responsive gap sa xs:2, sm:2.5 na xs:1.5, sm:2
-2. **LecturesSection komponenta** - Smanjio gap sa 3 na 2
-3. **index.js stranica** - Smanjio sve gap vrijednosti (gap-6 → gap-3, gap-8 → gap-4)
-4. **profile stranica** - Smanjio sve grid gap vrijednosti sa gap-4/gap-6 na gap-3
+## Kada koristiš EAS build --local za iOS:
 
-Sada su kartice bliže jedna drugoj što omogućava bolji pregled i više vidljivog sadržaja na ekranu.
+### Konfiguracija verzija:
+
+#### 1. **app.json / app.config.js** (Primarna lokacija)
+```json
+{
+  "expo": {
+    "version": "1.2.1",  // CFBundleShortVersionString
+    "ios": {
+      "buildNumber": "29",  // CFBundleVersion
+      "bundleIdentifier": "com.daije.mobile"
+    }
+  }
+}
+```
+
+#### 2. **Info.plist** (Ako postoji ios/ folder nakon prebuild)
+- CFBundleShortVersionString: 1.2.1
+- CFBundleVersion: 29
+
+#### 3. **eas.json** konfiguracija
+```json
+{
+  "cli": {
+    "appVersionSource": "local"  // Koristi lokalne verzije iz app.json
+  }
+}
+```
+
+## Komande za build:
+
+1. **Sinkronizacija verzija (opciono):**
+   ```bash
+   npx expo prebuild --clean
+   ```
+
+2. **Lokalni EAS build za iOS:**
+   ```bash
+   eas build --platform ios --local
+   ```
+
+## Status:
+✅ **SVE VERZIJE SU ISPRAVNO POSTAVLJENE I SPREMNE ZA BUILD!**
+
+Aplikacija će imati:
+- Verziju **1.2.1** (veća od zadnje uploadovane 1.2.0)
+- Build broj **29** (veći od zadnjeg 28)
+- Podršku za iPhone i iPad

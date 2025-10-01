@@ -426,6 +426,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
           }}
           onBlur={() => validateLoginField('email', loginData.email)}
           placeholder="Unesite email ili korisničko ime"
+          placeholderTextColor={COLORS.gray}
           autoCapitalize="none"
           keyboardType="email-address"
         />
@@ -446,6 +447,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
             }}
             onBlur={() => validateLoginField('password', loginData.password)}
             placeholder="Unesite lozinku"
+            placeholderTextColor={COLORS.gray}
             secureTextEntry={!showPassword}
           />
           <TouchableOpacity
@@ -507,6 +509,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
           value={registerData.username}
           onChangeText={(text) => setRegisterData({ ...registerData, username: text })}
           placeholder="Unesite korisničko ime"
+          placeholderTextColor={COLORS.gray}
           autoCapitalize="none"
         />
       </View>
@@ -518,6 +521,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
           value={registerData.email}
           onChangeText={(text) => setRegisterData({ ...registerData, email: text })}
           placeholder="Unesite email"
+          placeholderTextColor={COLORS.gray}
           autoCapitalize="none"
           keyboardType="email-address"
         />
@@ -531,6 +535,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
             value={registerData.password}
             onChangeText={(text) => setRegisterData({ ...registerData, password: text })}
             placeholder="Unesite lozinku"
+            placeholderTextColor={COLORS.gray}
             secureTextEntry={!showPassword}
           />
           <TouchableOpacity
@@ -554,6 +559,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
             value={registerData.confirmPassword}
             onChangeText={(text) => setRegisterData({ ...registerData, confirmPassword: text })}
             placeholder="Potvrdite lozinku"
+            placeholderTextColor={COLORS.gray}
             secureTextEntry={!showConfirmPassword}
           />
           <TouchableOpacity
@@ -595,6 +601,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
           value={registerData.securityAnswer}
           onChangeText={(text) => setRegisterData({ ...registerData, securityAnswer: text })}
           placeholder="Unesite odgovor"
+          placeholderTextColor={COLORS.gray}
         />
         <Text style={styles.helperText}>
           ⚠️ VAŽNO: Zapamtite ovaj odgovor - trebat će vam za resetovanje lozinke!
@@ -630,6 +637,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
               value={forgotPasswordData.email}
               onChangeText={(text) => setForgotPasswordData({ ...forgotPasswordData, email: text })}
               placeholder="Unesite email ili korisničko ime"
+              placeholderTextColor={COLORS.gray}
               autoCapitalize="none"
               keyboardType="email-address"
             />
@@ -670,6 +678,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
               value={forgotPasswordData.securityAnswer}
               onChangeText={(text) => setForgotPasswordData({ ...forgotPasswordData, securityAnswer: text })}
               placeholder="Unesite odgovor"
+              placeholderTextColor={COLORS.gray}
             />
           </View>
 
@@ -709,6 +718,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
                 value={forgotPasswordData.newPassword}
                 onChangeText={(text) => setForgotPasswordData({ ...forgotPasswordData, newPassword: text })}
                 placeholder="Unesite novu lozinku"
+                placeholderTextColor={COLORS.gray}
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity
@@ -732,6 +742,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
                 value={forgotPasswordData.confirmNewPassword}
                 onChangeText={(text) => setForgotPasswordData({ ...forgotPasswordData, confirmNewPassword: text })}
                 placeholder="Potvrdite novu lozinku"
+                placeholderTextColor={COLORS.gray}
                 secureTextEntry={!showConfirmPassword}
               />
               <TouchableOpacity
@@ -769,7 +780,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
       <ScrollView 
         style={styles.content} 
@@ -844,8 +855,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 20,
-    paddingBottom: 120, // Extra padding for bottom navigation
+    padding: 16, // Reduced from 20 for better space utilization
+    paddingBottom: 140, // Increased to ensure content is not hidden
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -882,10 +893,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   formContainer: {
-    gap: 16,
+    gap: 12, // Reduced from 16 for better space utilization on small screens
   },
   formTitle: {
-    fontSize: 24,
+    fontSize: width < 380 ? 20 : 24, // Smaller font for small screens
     fontWeight: 'bold',
     color: COLORS.primary,
     textAlign: 'center',
@@ -898,10 +909,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   inputContainer: {
-    gap: 8,
+    gap: 6, // Reduced from 8 for better space utilization
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: width < 380 ? 13 : 14, // Smaller font for small screens
     fontWeight: 'medium',
     color: COLORS.gray,
   },
@@ -909,9 +920,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: COLORS.gray,
+    padding: width < 380 ? 10 : 12, // Smaller padding for small screens
+    fontSize: width < 380 ? 14 : 16, // Smaller font for small screens
+    color: '#000000', // Changed from COLORS.gray to black for better visibility
   },
   textInputError: {
     borderColor: COLORS.error,
@@ -932,9 +943,9 @@ const styles = StyleSheet.create({
   },
   passwordInput: {
     flex: 1,
-    padding: 12,
-    fontSize: 16,
-    color: COLORS.gray,
+    padding: width < 380 ? 10 : 12, // Smaller padding for small screens
+    fontSize: width < 380 ? 14 : 16, // Smaller font for small screens
+    color: '#000000', // Changed from COLORS.gray to black for better visibility
   },
   eyeButton: {
     padding: 12,

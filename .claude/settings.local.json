@@ -37,7 +37,8 @@
       "Bash(git push:*)",
       "Bash(npm run build:*)",
       "Bash(npm run deploy:web:*)",
-      "Bash(npm run deploy:full:*)"
+      "Bash(npm run deploy:full:*)",
+      "Bash(npm run clean:ios:*)"
     ],
     "deny": [],
     "ask": []

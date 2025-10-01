@@ -1,15 +1,17 @@
 {
   "expo": {
+    "version": "1.3.0",
     "extra": {
       "eas": {
         "projectId": "ad12abb0-43d3-4d86-bf43-bd14ab751159"
       }
     },
     "ios": {
-      "bundleIdentifier": "com.wanne.dersba",
+      "bundleIdentifier": "com.daije.mobile",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "36"
     }
   }
 }
