@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,8 @@ import {
   ScrollView,
   Dimensions
 } from 'react-native';
-import apiClient from '../services/apiClient';
 import LoadingSkeleton from './LoadingSkeleton';
+import { useAppData } from '../context/AppDataContext';
 
 const { width } = Dimensions.get('window');
 const BAR_WIDTH = (width - 60) / 12; // 12 months, with padding
@@ -23,73 +23,55 @@ const COLORS = {
 };
 
 const SimplifiedStatistics = () => {
-  const [statistics, setStatistics] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { lectures, loading, error } = useAppData();
 
-  useEffect(() => {
-    fetchStatistics();
-  }, []);
-
-  const fetchStatistics = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // Temporary workaround: fetch all lectures and calculate statistics locally
-      // until the server endpoint is fixed in production
-      const response = await apiClient.get('/lectures/public?status=all');
-      
-      if (response.data) {
-        const lectures = Array.isArray(response.data) ? response.data : [];
-        
-        // Filter for 2025 and approved lectures
-        const lectures2025 = lectures.filter(lecture => {
-          if (!lecture.date || lecture.status !== 'approved') return false;
-          const year = new Date(lecture.date).getFullYear();
-          return year === 2025;
-        });
-        
-        // Calculate monthly statistics
-        const monthlyStats = {};
-        let totalCount = 0;
-        
-        lectures2025.forEach(lecture => {
-          const date = new Date(lecture.date);
-          const month = date.getMonth() + 1; // 1-12
-          const year = date.getFullYear();
-          
-          const key = `${year}-${month}`;
-          if (!monthlyStats[key]) {
-            monthlyStats[key] = {
-              year,
-              month,
-              count: 0
-            };
-          }
-          monthlyStats[key].count++;
-          totalCount++;
-        });
-        
-        // Convert to array format expected by the component
-        const monthlyStatsArray = Object.values(monthlyStats);
-        
-        setStatistics({
-          summary: {
-            totalLectures: totalCount
-          },
-          monthlyStats: monthlyStatsArray
-        });
-      }
-    } catch (err) {
-      console.error('Error fetching statistics:', err);
-      setError('Greška pri učitavanju statistika');
-    } finally {
-      setIsLoading(false);
+  const statistics = useMemo(() => {
+    if (!Array.isArray(lectures) || lectures.length === 0) {
+      return null;
     }
-  };
 
-  if (isLoading) {
+    const monthlyStats = {};
+    let totalCount = 0;
+
+    lectures.forEach(lecture => {
+      if (!lecture?.date || lecture.status !== 'approved') {
+        return;
+      }
+
+      const date = new Date(lecture.date);
+      if (Number.isNaN(date.getTime()) || date.getFullYear() !== 2025) {
+        return;
+      }
+
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+      const key = `${year}-${month}`;
+
+      if (!monthlyStats[key]) {
+        monthlyStats[key] = {
+          year,
+          month,
+          count: 0
+        };
+      }
+
+      monthlyStats[key].count += 1;
+      totalCount += 1;
+    });
+
+    if (totalCount === 0) {
+      return null;
+    }
+
+    return {
+      summary: {
+        totalLectures: totalCount
+      },
+      monthlyStats: Object.values(monthlyStats)
+    };
+  }, [lectures]);
+
+  if (loading) {
     return (
       <View style={styles.container}>
         <LoadingSkeleton type="stats" count={1} />

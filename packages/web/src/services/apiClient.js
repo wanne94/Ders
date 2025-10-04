@@ -2,6 +2,7 @@ import tokenManager from './tokenManager';
 import { getCachedResponse, setCachedResponse, getPendingRequest, setPendingRequest } from './apiCache';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5004/api';
+const debugEnabled = process.env.NEXT_PUBLIC_DEBUG === 'true';
 
 class ApiClient {
   constructor() {
@@ -44,7 +45,7 @@ class ApiClient {
       // Provjeri validnost tokena prije slanja (performanse optimizacija)
       if (token && tokenManager.isTokenValid(token)) {
         config.headers.Authorization = `Bearer ${token}`;
-      } else if (token) {
+      } else if (token && debugEnabled) {
         console.log('⚠️ API Client: Token exists but is invalid');
       }
     }
@@ -56,7 +57,9 @@ class ApiClient {
       
       // Handle 401 Unauthorized
       if (response.status === 401 && retryCount < this.maxRetries) {
-        console.log('🔄 API Client: 401 received, attempting token refresh...');
+        if (debugEnabled) {
+          console.log('🔄 API Client: 401 received, attempting token refresh...');
+        }
         
         // Pokušaj osvježiti token
         try {

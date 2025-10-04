@@ -1,9 +1,10 @@
-console.log("➡️ Loading next.config.js");
-
 const path = require('path');
 const envConfig = require('./config/environment');
 
-console.log(`🌍 Next.js Environment: ${envConfig.NODE_ENV}`);
+if (process.env.NODE_ENV !== 'production') {
+  console.log('➡️ Loading next.config.js');
+  console.log(`🌍 Next.js Environment: ${envConfig.NODE_ENV}`);
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

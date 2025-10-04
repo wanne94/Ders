@@ -20,34 +20,16 @@ const LecturesSection = ({
 }) => {
   const router = useRouter();
 
-  console.log('🎯 LecturesSection received lectures:', lectures?.length || 0);
-  console.log('🎯 First lecture in component:', lectures?.[0]);
-
-  // Debug logging
-  const cancelledInRaw = lectures.filter(l => l.status === 'cancelled' || l.isCancelled);
-  if (cancelledInRaw.length > 0) {
-  }
-
   // Filtriramo approved i cancelled predavanja
   const filteredLectures = lectures.filter(lecture =>
     lecture.status === 'approved' || lecture.status === 'cancelled'
   );
-
-  console.log('🎯 Filtered lectures (approved/cancelled):', filteredLectures.length);
 
   // Sortiramo predavanja
   const sortedLectures = sortLecturesByStatus(filteredLectures);
 
   // Primenjujemo limit ako je potrebno
   const displayLectures = limit ? sortedLectures.slice(0, limit) : sortedLectures;
-
-  console.log('🎯 Display lectures after filtering and limiting:', displayLectures.length);
-  
-  // Check if Diskriminacija lecture is in display
-  const diskriminacija = displayLectures.find(l => l.title && l.title.includes('Diskriminacija žena'));
-  if (diskriminacija) {
-  } else {
-  }
 
   const handleViewAll = () => {
     router.push(viewAllPath);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Image from 'next/image';
@@ -25,11 +25,8 @@ import UniversalCard from '@/components/UniversalCard';
 import SkeletonGrid from '@/components/SkeletonGrid';
 import LecturesSection from '@/components/LecturesSection';
 import SimplifiedStatistics from '@/components/SimplifiedStatistics';
-import { predavanjaService, daijeService, udruzenjaService } from '@/services';
-import { deviceUtils, storage } from '@/utils';
-import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
 import { logNavigation, logSocialShare } from '@/services/analytics';
-import { usePerformanceTracking, measureAsyncOperation } from '@/hooks/usePerformanceTracking';
+import { usePerformanceTracking } from '@/hooks/usePerformanceTracking';
 
 // HeroSection Component
 const HeroSection = () => {
@@ -264,47 +261,42 @@ const BenefitsSection = () => {
 // ActiveOrganizations Component
 const ActiveOrganizations = ({ organizations, lectures, isLoading }) => {
   const router = useRouter();
-  const [displayOrganizations, setDisplayOrganizations] = useState([]);
 
-  useEffect(() => {
-    if (organizations && lectures) {
-      const approvedOrgs = (organizations || []).filter(org => {
-        if (org.status !== 'approved') return false;
+  const approvedOrganizations = useMemo(() => {
+    if (!organizations || !lectures) {
+      return [];
+    }
 
-        if (typeof org.lectureCount === 'number') {
-          return org.lectureCount > 0;
+    const filtered = (organizations || []).filter(org => {
+      if (org.status !== 'approved') return false;
+
+      if (typeof org.lectureCount === 'number') {
+        return org.lectureCount > 0;
+      }
+
+      return lectures.some(lecture => {
+        if (lecture.status !== 'approved') return false;
+        if (!lecture.organization) return false;
+
+        if (typeof lecture.organization === 'string') {
+          return lecture.organization === org.name;
         }
 
-        const hasPredavanje = lectures.some(lecture => {
-          if (lecture.status !== 'approved') return false;
-          if (!lecture.organization) return false;
+        if (typeof lecture.organization === 'object') {
+          return lecture.organization._id === org._id ||
+                 lecture.organization.name === org.name;
+        }
 
-          if (typeof lecture.organization === 'string') {
-            return lecture.organization === org.name;
-          }
-
-          if (typeof lecture.organization === 'object') {
-            return lecture.organization._id === org._id ||
-                   lecture.organization.name === org.name;
-          }
-
-          return false;
-        });
-
-        return hasPredavanje;
+        return false;
       });
+    });
 
-      const shuffled = [...approvedOrgs].sort(() => Math.random() - 0.5);
-      const sortedOrganizations = shuffled.slice(0, 10);
-      setDisplayOrganizations(sortedOrganizations || []);
-    }
+    return filtered.slice(0, 10);
   }, [organizations, lectures]);
 
   const handleViewAllOrganizations = () => {
     router.push('/organizations');
   };
-
-  const approvedOrganizations = (displayOrganizations || []).filter(item => item.status === 'approved');
 
   return (
     <ContentContainer>
@@ -402,37 +394,32 @@ const SocialMediaSection = () => {
 // ActiveDaije Component
 const ActiveDaije = ({ daije, lectures, isLoading }) => {
   const router = useRouter();
-  const [displayDaije, setDisplayDaije] = useState([]);
 
-  useEffect(() => {
-    if (daije && lectures) {
-      const approvedDaije = (daije || []).filter(daija => {
-        if (daija.status !== 'approved') return false;
-
-        if (typeof daija.lectureCount === 'number') {
-          return daija.lectureCount > 0;
-        }
-
-        const hasPredavanje = lectures.some(lecture =>
-          lecture.status === 'approved' &&
-          lecture.daija &&
-          (lecture.daija._id === daija._id || lecture.daija === daija._id)
-        );
-
-        return hasPredavanje;
-      });
-
-      const shuffled = [...approvedDaije].sort(() => Math.random() - 0.5);
-      const randomDaije = shuffled.slice(0, 10);
-      setDisplayDaije(randomDaije || []);
+  const approvedDaije = useMemo(() => {
+    if (!daije || !lectures) {
+      return [];
     }
+
+    const filtered = (daije || []).filter(daija => {
+      if (daija.status !== 'approved') return false;
+
+      if (typeof daija.lectureCount === 'number') {
+        return daija.lectureCount > 0;
+      }
+
+      return lectures.some(lecture =>
+        lecture.status === 'approved' &&
+        lecture.daija &&
+        (lecture.daija._id === daija._id || lecture.daija === daija._id)
+      );
+    });
+
+    return filtered.slice(0, 10);
   }, [daije, lectures]);
 
   const handleViewAllDaije = () => {
     router.push('/daije');
   };
-
-  const approvedDaije = displayDaije;
 
   return (
     <ContentContainer>
@@ -478,90 +465,30 @@ const ActiveDaije = ({ daije, lectures, isLoading }) => {
   );
 };
 
-// Filter function for approved items
-const filterApproved = (items) => (items || []).filter(item =>
-  item.status === 'approved'
-);
-
 // Main Home Component
-export default function Home() {
-  const [lectures, setLectures] = useState([]);
-  const [organizations, setOrganizations] = useState([]);
-  const [daije, setDaije] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+export default function Home({
+  initialLectures = [],
+  initialOrganizations = [],
+  initialDaije = [],
+  initialError = null
+}) {
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
-  const router = useRouter();
 
   usePerformanceTracking('home_page_render');
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const allLectures = await measureAsyncOperation('fetch_lectures', async () => {
-          return await predavanjaService.getAllPredavanja(1, 100, 'all');
-        });
-
-        console.log('🔍 Fetched lectures from API:', allLectures?.length || 0);
-        console.log('🔍 First lecture:', allLectures?.[0]);
-
-        const cancelledLectures = allLectures.filter(l => l.status === 'cancelled' || l.isCancelled);
-        const diskriminacija = allLectures.find(l => l.title && l.title.includes('Diskriminacija žena'));
-        const weeklyLectures = allLectures.filter(l => l.isWeeklyLecture);
-
-        const lecturesData = (allLectures || []).map(lecture => ({
-          ...lecture,
-          type: 'Predavanje',
-          daija: lecture.daija || null,
-          organization: lecture.organization || null
-        }));
-
-        lecturesData.forEach(lecture => {
-          // Structure validation without logging
-        });
-
-        console.log('🔍 Processed lectures:', lecturesData?.length || 0);
-        setLectures(lecturesData);
-
-        const organizationsData = await measureAsyncOperation('fetch_organizations', async () => {
-          return await udruzenjaService.getAllUdruzenja();
-        });
-        setOrganizations(organizationsData || []);
-
-        const daijeData = await measureAsyncOperation('fetch_daije', async () => {
-          return await daijeService.getAllDaije();
-        });
-        setDaije(daijeData || []);
-
-      } catch (err) {
-        console.error('Greška pri dohvaćanju podataka:', err);
-        setError('Greška pri učitavanju podataka');
-        setLectures([]);
-        setOrganizations([]);
-        setDaije([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (localStorage.getItem('registrationSuccess') === 'true') {
-        setShowRegistrationSuccess(true);
-        localStorage.removeItem('registrationSuccess');
-      }
+    if (typeof window !== 'undefined' && localStorage.getItem('registrationSuccess') === 'true') {
+      setShowRegistrationSuccess(true);
+      localStorage.removeItem('registrationSuccess');
     }
   }, []);
 
-  const approvedOrganizations = (organizations || []).filter(item => item.status === 'approved');
-  const approvedDaije = (daije || []).filter(item => item.status === 'approved');
-  const approvedLectures = (lectures || []).filter(item => item.status === 'approved');
+  const lectures = initialLectures;
+  const organizations = initialOrganizations;
+  const daije = initialDaije;
+
+  const error = initialError;
+  const isLoading = false;
 
   return (
     <PageLayout
@@ -637,11 +564,72 @@ export default function Home() {
   );
 }
 
-// Force server-side rendering to ensure fresh content on every request
+// Server-side data fetching keeps the initial render populated without extra client requests
 export async function getServerSideProps() {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5004/api';
+  const errors = [];
+
+  const shuffleArray = (items) => {
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    const copy = [...items];
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+
+    return copy;
+  };
+
+  const fetchJson = async (endpoint, label) => {
+    try {
+      const response = await fetch(`${apiBase}${endpoint}`, {
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Status ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`SSR fetch failed for ${label}:`, error);
+      errors.push(label);
+      return [];
+    }
+  };
+
+  const [lecturesRaw, organizationsRaw, daijeRaw] = await Promise.all([
+    fetchJson('/lectures/public?page=1&limit=20&status=all', 'predavanja'),
+    fetchJson('/organizations', 'udruženja'),
+    fetchJson('/daije', 'daije')
+  ]);
+
+  const lectures = Array.isArray(lecturesRaw)
+    ? lecturesRaw.map((lecture) => ({
+        ...lecture,
+        type: 'Predavanje',
+        daija: lecture.daija || null,
+        organization: lecture.organization || null
+      }))
+    : [];
+
+  const organizations = Array.isArray(organizationsRaw) ? shuffleArray(organizationsRaw) : [];
+  const daije = Array.isArray(daijeRaw) ? shuffleArray(daijeRaw) : [];
+
+  const initialError = errors.length
+    ? `Greška pri učitavanju: ${errors.join(', ')}`
+    : null;
+
   return {
     props: {
-      timestamp: new Date().toISOString()
+      initialLectures: lectures,
+      initialOrganizations: organizations,
+      initialDaije: daije,
+      initialError
     }
   };
 }

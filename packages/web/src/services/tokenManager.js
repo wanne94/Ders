@@ -4,6 +4,7 @@
  */
 
 import { getToken, clearAuthData, setToken, getUserData } from '@/utils/authHelpers';
+const debugEnabled = process.env.NEXT_PUBLIC_DEBUG === 'true';
 
 class TokenManager {
   constructor() {
@@ -126,7 +127,9 @@ class TokenManager {
           this.cachedToken = data.token;
           const decoded = this.decodeToken(data.token);
           this.cachedTokenExpiry = decoded.exp * 1000;
-          console.log('✅ Token refreshed successfully');
+          if (debugEnabled) {
+            console.log('✅ Token refreshed successfully');
+          }
           resolve(data.token);
         } else {
           throw new Error('No token in refresh response');
@@ -181,7 +184,9 @@ class TokenManager {
     try {
       // Provjeri validnost
       if (!this.isTokenValid()) {
-        console.log('⚠️ Token is invalid or missing');
+        if (debugEnabled) {
+          console.log('⚠️ Token is invalid or missing');
+        }
         // Emituj event da token nije valjan
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('tokenInvalid'));
@@ -191,7 +196,9 @@ class TokenManager {
 
       // Provjeri da li ističe uskoro
       if (this.isTokenExpiringSoon()) {
-        console.log('⚠️ Token expires soon, attempting refresh...');
+        if (debugEnabled) {
+          console.log('⚠️ Token expires soon, attempting refresh...');
+        }
         try {
           await this.refreshToken();
         } catch (error) {
@@ -212,7 +219,9 @@ class TokenManager {
    */
   handleStorageChange(event) {
     if (event.key === (process.env.NEXT_PUBLIC_JWT_STORAGE_KEY || 'token')) {
-      console.log('🔄 Token changed in another tab');
+      if (debugEnabled) {
+        console.log('🔄 Token changed in another tab');
+      }
       
       // Reset cache
       this.cachedToken = null;

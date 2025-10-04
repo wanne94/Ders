@@ -108,15 +108,17 @@ export const getCacheStats = () => {
   return stats;
 };
 
-// Auto cleanup expired cache every 5 minutes
-setInterval(() => {
-  for (const [key, value] of cacheMap) {
-    const cacheMaxAge = CACHE_CONFIG[value.cacheType] || CACHE_CONFIG.default;
-    if (Date.now() - value.timestamp > cacheMaxAge) {
-      cacheMap.delete(key);
+// Auto cleanup expired cache every 5 minutes (browser only)
+if (typeof window !== 'undefined') {
+  window.setInterval(() => {
+    for (const [key, value] of cacheMap) {
+      const cacheMaxAge = CACHE_CONFIG[value.cacheType] || CACHE_CONFIG.default;
+      if (Date.now() - value.timestamp > cacheMaxAge) {
+        cacheMap.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  }, 5 * 60 * 1000);
+}
 
 const apiCache = {
   getCachedResponse,

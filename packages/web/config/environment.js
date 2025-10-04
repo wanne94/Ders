@@ -106,7 +106,9 @@ module.exports = {
 };
 
 // Log current configuration
-console.log(`🌍 Environment: ${currentEnv}`);
-console.log(`🔧 API URL: ${envConfig.API_URL}`);
-console.log(`🔧 Server URL: ${envConfig.SERVER_URL}`);
-console.log(`🔧 App URL: ${envConfig.APP_URL}`); 
+if (process.env.NODE_ENV !== 'production') {
+  console.log(`🌍 Environment: ${currentEnv}`);
+  console.log(`🔧 API URL: ${envConfig.API_URL}`);
+  console.log(`🔧 Server URL: ${envConfig.SERVER_URL}`);
+  console.log(`🔧 App URL: ${envConfig.APP_URL}`);
+}

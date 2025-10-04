@@ -1,112 +1,92 @@
-import { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Alert, FlatList, ActivityIndicator, Text, SafeAreaView, RefreshControl, TouchableOpacity } from 'react-native';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { View, StyleSheet, Alert, FlatList, Text, SafeAreaView, RefreshControl, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import UniverzalCard from '../components/UniverzalCard';
 import Menu from '../components/Menu';
-import apiClient from '../services/apiClient';
-import udruzenjaService from '../services/udruzenjaService';
-import predavanjaService from '../services/predavanjaService';
-import daijeService from '../services/daijeService';
 import { formatDateWithDay } from '../utils/dateUtils';
-import { applySorting, sortLecturesByStatus } from '../utils/sortingUtils';
-import { ENV } from '../config';
-import { getUserData } from '../utils/authHelpers';
+import { sortLecturesByStatus } from '../utils/sortingUtils';
 import { SkeletonCardList } from '../components/SkeletonCard';
+import { useAppData } from '../context/AppDataContext';
 
 const COLORS = {
   primary: '#022C43',
   primaryLight: '#055A87',
   white: '#ffffff',
   gray: '#666666',
-  lightGray: '#f5f5f5',
+  lightGray: '#f5f5f5'
 };
 
-// API functions using the real services
-const fetchLectures = async () => {
-  try {
-    // console.log('UniversalPage: Fetching lectures...');
-    const response = await apiClient.get('/lectures/public?status=all');
-    const data = response.data;
-    // Return all lectures including cancelled ones
-    const lectures = Array.isArray(data) ? data : [];
-    // Add type field to each lecture
-    return lectures.map(lecture => ({
-      ...lecture,
-      type: 'predavanje'
-    }));
-  } catch (error) {
-    // console.error('UniversalPage: Error fetching lectures:', error.message);
-    return [];
-  }
-};
+const ITEMS_PER_PAGE = 8;
 
-const fetchDaije = async (allLectures = []) => {
-  try {
-    const data = await daijeService.getAllDaije();
-    const daije = Array.isArray(data) ? data : [];
-    
-    // Return all daije without filtering (matching web implementation)
-    return daije;
-  } catch (error) {
-    // console.error('Error fetching daije:', error);
-    return [];
-  }
-};
-
-const fetchOrganizations = async (allLectures = []) => {
-  try {
-    const data = await udruzenjaService.getAllUdruzenja();
-    const organizations = Array.isArray(data) ? data : [];
-    
-    // Filter only organizations with at least one lecture (matching web implementation)
-    const orgsWithLectures = organizations.filter(org => {
-      // If organization has lectureCount from backend, use it
-      if (typeof org.lectureCount === 'number') {
-        return org.lectureCount > 0;
-      }
-      
-      // Fallback: Check if organization has any approved lectures
-      return allLectures.some(lecture => {
-        if (!lecture || lecture.isCancelled || lecture.status === 'cancelled') {
-          return false;
-        }
-        
-        // Check if lecture is by this organization
-        if (lecture.organizationId && typeof lecture.organizationId === 'object') {
-          return lecture.organizationId._id === org._id;
-        } else if (lecture.organizationId) {
-          return lecture.organizationId === org._id;
-        }
-        
-        return false;
-      });
-    });
-    
-    return orgsWithLectures;
-  } catch (error) {
-    // console.error('Error fetching organizations:', error);
-    return [];
-  }
-};
-
-const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures = [], onNavigate, user, isAuthenticated, scrollRef }) => {
+const UniversalPage = ({
+  type = 'lectures',
+  onBack,
+  onProfileOpen,
+  onNavigate,
+  user,
+  isAuthenticated,
+  scrollRef
+}) => {
+  const { lectures, daije, organizations, loading, refresh } = useAppData();
   const [data, setData] = useState([]);
   const [displayedData, setDisplayedData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
-  
-  const ITEMS_PER_PAGE = 8; // Optimalan broj za mobilne uređaje
 
-  const getPageConfig = () => {
+  const lectureDataset = useMemo(() => {
+    if (!Array.isArray(lectures)) {
+      return [];
+    }
+
+    const normalized = lectures.map(lecture => ({
+      ...lecture,
+      type: lecture.type || 'predavanje'
+    }));
+
+    return sortLecturesByStatus(normalized);
+  }, [lectures]);
+
+  const daijeDataset = useMemo(() => (
+    Array.isArray(daije) ? daije : []
+  ), [daije]);
+
+  const organizationDataset = useMemo(() => {
+    if (!Array.isArray(organizations)) {
+      return [];
+    }
+
+    return organizations.filter(org => {
+      if (org.status !== 'approved') {
+        return false;
+      }
+
+      if (typeof org.lectureCount === 'number') {
+        return org.lectureCount > 0;
+      }
+
+      return lectureDataset.some(lecture => {
+        if (!lecture || lecture.status !== 'approved' || !lecture.organization) {
+          return false;
+        }
+
+        if (typeof lecture.organization === 'string') {
+          return lecture.organization === org.name;
+        }
+
+        return lecture.organization._id === org._id || lecture.organization.name === org.name;
+      });
+    });
+  }, [organizations, lectureDataset]);
+
+  const pageConfig = useMemo(() => {
     switch (type) {
       case 'lectures':
         return {
           title: 'Dersovi',
           subtitle: 'Svi dostupni dersovi',
-          fetchFunction: fetchLectures,
+          dataset: lectureDataset,
+          itemType: 'predavanje',
           cardConfig: {
             titleKey: 'title',
             subtitleKey: 'speaker',
@@ -122,22 +102,21 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
         return {
           title: 'Daije',
           subtitle: 'Naši daije',
-          fetchFunction: () => fetchDaije(allLectures),
+          dataset: daijeDataset,
+          itemType: 'daija',
           cardConfig: {
             titleKey: 'name',
             subtitleKey: 'title',
             descriptionKeys: ['title'],
-            formatDescription: (item) => {
-              if (!item) return '';
-              return item.title ? item.title.toUpperCase() : '';
-            }
+            formatDescription: (item) => item?.title ? item.title.toUpperCase() : ''
           }
         };
       case 'organizations':
         return {
           title: 'Udruženja',
           subtitle: 'Naši partneri',
-          fetchFunction: () => fetchOrganizations(allLectures),
+          dataset: organizationDataset,
+          itemType: 'udruženje',
           cardConfig: {
             titleKey: 'name',
             subtitleKey: 'city',
@@ -152,7 +131,8 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
         return {
           title: 'Sadržaj',
           subtitle: 'Sav sadržaj',
-          fetchFunction: fetchLectures,
+          dataset: lectureDataset,
+          itemType: 'predavanje',
           cardConfig: {
             titleKey: 'title',
             subtitleKey: 'type',
@@ -161,95 +141,43 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
           }
         };
     }
-  };
+  }, [type, lectureDataset, daijeDataset, organizationDataset]);
 
-  const pageConfig = getPageConfig();
+  useEffect(() => {
+    const baseData = Array.isArray(pageConfig.dataset) ? pageConfig.dataset : [];
+    setData(baseData);
+    setCurrentPage(1);
+    setDisplayedData(baseData.slice(0, ITEMS_PER_PAGE));
+  }, [pageConfig.dataset]);
 
-  const loadData = async (isRefresh = false) => {
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
     try {
-      if (!isRefresh) {
-        setIsLoading(true);
-      }
-
-      const result = await pageConfig.fetchFunction();
-      const rawData = Array.isArray(result) ? result : [];
-      
-      // Apply centralized sorting (matching web app logic)
-      const sortedData = type === 'lectures' 
-        ? sortLecturesByStatus(rawData)
-        : rawData; // No sorting for daije (matching web app)
-
-      setData(sortedData);
-      
-      // Reset to first page when refreshing
-      if (isRefresh) {
-        setCurrentPage(1);
-        setDisplayedData(sortedData.slice(0, ITEMS_PER_PAGE));
-      } else {
-        // Initially show first page
-        setDisplayedData(sortedData.slice(0, ITEMS_PER_PAGE));
-      }
-    } catch (error) {
-      Alert.alert('Greška', 'Došlo je do greške prilikom učitavanja podataka');
-      console.error('Error loading data:', error);
-      setData([]);
-      setDisplayedData([]);
+      await refresh();
     } finally {
-      setIsLoading(false);
       setRefreshing(false);
     }
-  };
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    
-    await loadData(true);
-  }, [type, isAuthenticated]);
+  }, [refresh]);
 
   const loadMoreItems = () => {
     const nextPage = currentPage + 1;
-    const startIndex = (nextPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    const newItems = data.slice(0, endIndex);
-    
-    setDisplayedData(newItems);
+    const endIndex = nextPage * ITEMS_PER_PAGE;
+    setDisplayedData(data.slice(0, endIndex));
     setCurrentPage(nextPage);
   };
 
   const hasMoreItems = displayedData.length < data.length;
-
-  useEffect(() => {
-    const loadAllData = async () => {
-
-      
-      
-      
-      // Then load main data
-      await loadData();
-    };
-    
-    loadAllData();
-  }, [type, isAuthenticated]);
+  const isInitialLoading = loading && data.length === 0;
 
   const handleItemPress = (item) => {
     if (!item) return;
-    
+
     if (onProfileOpen) {
-      let profileType = '';
-      switch (type) {
-        case 'lectures':
-          profileType = 'lecture';
-          break;
-        case 'speakers':
-          profileType = 'daija';
-          break;
-        case 'organizations':
-          profileType = 'organization';
-          break;
-      }
+      let profileType = 'predavanje';
+      if (type === 'speakers') profileType = 'daija';
+      if (type === 'organizations') profileType = 'organization';
       onProfileOpen(item, profileType);
     } else {
-      // Fallback to alert if no profile handler
       let message = '';
       switch (type) {
         case 'lectures':
@@ -261,138 +189,108 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
         case 'organizations':
           message = `${item.name || ''}\n${item.address || ''}, ${item.city || ''}\nTel: ${item.contact || ''}\nEmail: ${item.email || ''}`;
           break;
+        default:
+          message = item.title || '';
       }
       Alert.alert(pageConfig.title, message.trim());
     }
   };
 
   const handleSearch = () => {
-    if (onNavigate) {
-      onNavigate('search');
-    }
+    onNavigate?.('search');
   };
 
-  const handleMenuPress = () => {
-    setMenuOpen(true);
+  const handleMenuPress = () => setMenuOpen(true);
+  const handleBackPress = () => {
+    onBack?.();
   };
-
-  const handleMenuClose = () => {
-    setMenuOpen(false);
-  };
-
-  const handleMenuNavigate = (path) => {
-    if (onNavigate) {
-      onNavigate(path);
-    }
-  };
-
-  const handleAuthNavigate = () => {
-    if (onNavigate) {
-      onNavigate('auth');
-    }
-  };
+  const handleMenuClose = () => setMenuOpen(false);
+  const handleMenuNavigate = (path) => onNavigate?.(path);
+  const handleAuthNavigate = () => onNavigate?.('auth');
 
   const handleLogout = async () => {
     try {
-      // Clear auth token
       await AsyncStorage.removeItem('authToken');
       await AsyncStorage.removeItem('userRole');
-      
-      // Navigate to home
-      if (onNavigate) {
-        onNavigate('home');
-      }
+      onNavigate?.('home');
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
 
-  const handleAddContent = () => {
-    if (onNavigate) {
-      onNavigate('add-content');
-    }
-  };
+  const handleAddContent = () => onNavigate?.('add-content');
+  const handleAddContentWithType = (contentType) => onNavigate?.('add-content', { preselectedType: contentType });
+  const handleProfileNavigate = () => onNavigate?.('profile');
 
-  const handleAddContentWithType = (type) => {
-    // Navigate to add content screen with pre-selected type
-    if (onNavigate) {
-      onNavigate('add-content', { preselectedType: type });
-    }
-  };
-
-  const handleProfileNavigate = (userId, userType) => {
-    if (onNavigate) {
-      onNavigate('profile');
-    }
-  };
-
-  // Memoized render item function for better performance
   const renderItem = useCallback(({ item }) => {
-    // Render item called
-    // Normalize ID - handle MongoDB ObjectId format
-    const rawId = item._id || item.id;
-    const itemId = typeof rawId === 'object' && rawId.toString ? rawId.toString() : String(rawId);
-    const isFollowing = false;
+    if (!item) return null;
 
-    
-    
+    const rawId = item._id || item.id;
+    const itemId = typeof rawId === 'object' && rawId?.toString ? rawId.toString() : String(rawId || '');
+
     return (
       <UniverzalCard
+        key={itemId}
         data={{
           ...item,
-          type: type === 'lectures' ? 'predavanje' : 
-                type === 'speakers' ? 'daija' : 
-                type === 'organizations' ? 'udruženje' : item.type
+          type: pageConfig.itemType
         }}
         onPress={() => handleItemPress(item)}
-        isFollowing={isFollowing}
       />
     );
-  }, [type, handleItemPress]);
+  }, [pageConfig.itemType, handleItemPress]);
 
-  // Key extractor for optimal list performance
-  const keyExtractor = useCallback((item, index) => 
-    item?._id || item?.id || `${type}-${index}`, [type]);
+  const keyExtractor = useCallback((item, index) => item?._id || item?.id || `${type}-${index}`, [type]);
 
-  // Empty component
   const ListEmptyComponent = () => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyText}>Trenutno nema dostupnih podataka.</Text>
     </View>
   );
 
-  // Header component for lectures - shows statistics
-  const ListHeaderComponent = () => {
-    // Removed statistics from lectures screen
-    return null;
-  };
-
-  // Show more button component
   const ListFooterComponent = () => {
     if (!hasMoreItems) return null;
-    
+
     return (
-      <TouchableOpacity 
-        style={styles.showMoreButton} 
-        onPress={loadMoreItems}
-        activeOpacity={0.8}
-      >
+      <TouchableOpacity style={styles.showMoreButton} onPress={loadMoreItems} activeOpacity={0.8}>
         <Text style={styles.showMoreText}>Prikaži više</Text>
       </TouchableOpacity>
     );
   };
 
-  // Loading component
-  if (isLoading && !refreshing) {
+  if (isInitialLoading && !refreshing) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={[styles.topBarButton, !onBack && styles.topBarButtonDisabled]}
+            onPress={handleBackPress}
+            disabled={!onBack}
+          >
+            <Text style={styles.topBarButtonText}>←</Text>
+          </TouchableOpacity>
+          <View style={styles.topBarTitleWrapper}>
+            <Text style={styles.topBarTitle}>{pageConfig.title}</Text>
+            {pageConfig.subtitle ? (
+              <Text style={styles.topBarSubtitle}>{pageConfig.subtitle}</Text>
+            ) : null}
+          </View>
+          <View style={styles.topBarActions}>
+            <TouchableOpacity style={styles.topBarButton} onPress={handleSearch}>
+              <Text style={styles.topBarButtonText}>🔍</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.topBarButton} onPress={handleMenuPress}>
+              <Text style={styles.topBarButtonText}>☰</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
         <View style={styles.loadingContainer}>
-          <SkeletonCardList 
-            count={6} 
-            type={type === 'lectures' ? 'lecture' : type === 'speakers' ? 'daija' : 'organization'} 
+          <SkeletonCardList
+            count={6}
+            type={type === 'lectures' ? 'lecture' : type === 'speakers' ? 'daija' : 'organization'}
           />
         </View>
-        <Menu 
+        <Menu
           isOpen={menuOpen}
           onClose={handleMenuClose}
           onNavigate={handleMenuNavigate}
@@ -410,11 +308,33 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          style={[styles.topBarButton, !onBack && styles.topBarButtonDisabled]}
+          onPress={handleBackPress}
+          disabled={!onBack}
+        >
+          <Text style={styles.topBarButtonText}>←</Text>
+        </TouchableOpacity>
+        <View style={styles.topBarTitleWrapper}>
+          <Text style={styles.topBarTitle}>{pageConfig.title}</Text>
+          {pageConfig.subtitle ? (
+            <Text style={styles.topBarSubtitle}>{pageConfig.subtitle}</Text>
+          ) : null}
+        </View>
+        <View style={styles.topBarActions}>
+          <TouchableOpacity style={styles.topBarButton} onPress={handleSearch}>
+            <Text style={styles.topBarButtonText}>🔍</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.topBarButton} onPress={handleMenuPress}>
+            <Text style={styles.topBarButtonText}>☰</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
       <FlatList
         ref={scrollRef}
         data={displayedData}
         renderItem={renderItem}
-        
         keyExtractor={keyExtractor}
         style={styles.content}
         contentContainerStyle={[
@@ -426,26 +346,25 @@ const UniversalPage = ({ type = 'lectures', onBack, onProfileOpen, allLectures =
         initialNumToRender={4}
         maxToRenderPerBatch={2}
         updateCellsBatchingPeriod={50}
-        removeClippedSubviews={true}
+        removeClippedSubviews
         getItemLayout={(data, index) => ({
-          length: 220, // Approximate height of UniverzalCard
+          length: 220,
           offset: 220 * index,
-          index,
+          index
         })}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={onRefresh}
+            onRefresh={handleRefresh}
             colors={[COLORS.primary]}
             tintColor={COLORS.primary}
           />
         }
         ListEmptyComponent={ListEmptyComponent}
-        ListHeaderComponent={ListHeaderComponent}
         ListFooterComponent={ListFooterComponent}
       />
-      
-      <Menu 
+
+      <Menu
         isOpen={menuOpen}
         onClose={handleMenuClose}
         onNavigate={handleMenuNavigate}
@@ -466,14 +385,56 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.white,
   },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLORS.lightGray,
+  },
+  topBarTitleWrapper: {
+    flex: 1,
+    marginHorizontal: 12,
+  },
+  topBarTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.primary,
+    textAlign: 'center',
+  },
+  topBarSubtitle: {
+    fontSize: 12,
+    color: COLORS.gray,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  topBarActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  topBarButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(2, 44, 67, 0.08)',
+  },
+  topBarButtonDisabled: {
+    opacity: 0.4,
+  },
+  topBarButtonText: {
+    fontSize: 16,
+    color: COLORS.primary,
+  },
   content: {
     flex: 1,
     backgroundColor: COLORS.lightGray,
   },
   contentContainer: {
     padding: 8,
-    paddingBottom: 100, // Extra padding for bottom navigation
-    gap: 8, // Razmak između kartice
+    paddingBottom: 100,
+    gap: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -481,12 +442,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     minHeight: 200,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: COLORS.gray,
-    textAlign: 'center',
   },
   emptyContainer: {
     flex: 1,
@@ -525,4 +480,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UniversalPage; 
+export default UniversalPage;
