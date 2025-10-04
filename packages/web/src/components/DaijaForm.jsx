@@ -28,7 +28,7 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
     title: 'prof',
     biography: '',
     image: '',
-    status: 'pending',
+    status: approvalEnabled ? 'approved' : 'pending',
     education: []
   });
 
@@ -66,13 +66,13 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
         title: 'prof',
         biography: '',
         image: '',
-        status: 'pending',
+        status: approvalEnabled ? 'approved' : 'pending',
         education: []
       });
       setImagePreview(null);
       setEducationInput('');
     }
-  }, [daija, open]);
+  }, [daija, open, approvalEnabled]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -228,7 +228,7 @@ const DaijaForm = ({ open, onClose, onSuccess, approvalEnabled = true, daija }) 
       } else {
         response = await axiosInstance.post('/daije', {
           ...finalFormData,
-          status: approvalEnabled ? 'pending' : 'approved'
+          status: approvalEnabled ? 'approved' : 'pending'
         });
       }
       

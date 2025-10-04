@@ -11,8 +11,8 @@ if [ ! -d "server" ]; then
     exit 1
 fi
 
-if [ ! -d "web" ]; then
-    echo "❌ Web direktorij ne postoji!"
+if [ ! -d "packages/web" ]; then
+    echo "❌ packages/web direktorij ne postoji!"
     exit 1
 fi
 
@@ -24,9 +24,9 @@ if [ ! -d "server/node_modules" ]; then
     cd server && npm install && cd ..
 fi
 
-if [ ! -d "web/node_modules" ]; then
+if [ ! -d "packages/web/node_modules" ]; then
     echo "⬇️ Instaliranje web dependencies..."
-    cd web && npm install && cd ..
+    (cd packages/web && npm install)
 fi
 
 # Pokreni aplikacije paralelno

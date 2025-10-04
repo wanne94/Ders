@@ -29,7 +29,7 @@ echo ⏳ Čekanje da se server pokrene...
 timeout /t 3 /nobreak > nul
 
 echo 🌐 Pokretanje frontend-a...
-cd ../web
+cd ../packages/web
 start "Frontend App" cmd /k "npm run dev"
 
 echo.

@@ -70,7 +70,7 @@ const UnifiedForm = ({
           title: 'prof',
           biography: '',
           image: '',
-          status: 'pending',
+          status: approvalEnabled ? 'approved' : 'pending',
           education: []
         };
       case 'organization':
@@ -83,14 +83,14 @@ const UnifiedForm = ({
           instagram: '',
           telegram: '',
           viber: '',
-          status: 'pending',
+          status: approvalEnabled ? 'approved' : 'pending',
           image: '',
           imageFile: null
         };
       default:
         return {};
     }
-  }, [type]);
+  }, [type, approvalEnabled]);
 
   const [formData, setFormData] = useState(getInitialFormData());
   const [imagePreview, setImagePreview] = useState(null);
@@ -98,6 +98,15 @@ const UnifiedForm = ({
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const defaultsSet = useRef(false);
+
+  useEffect(() => {
+    if (!data && (type === 'daija' || type === 'organization')) {
+      setFormData(prev => ({
+        ...prev,
+        status: approvalEnabled ? 'approved' : 'pending'
+      }));
+    }
+  }, [approvalEnabled, data, type]);
 
   // Lecture-specific states
   const [useCustomSpeaker, setUseCustomSpeaker] = useState(false);

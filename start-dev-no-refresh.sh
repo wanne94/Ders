@@ -6,21 +6,17 @@ pkill -f "nodemon" 2>/dev/null || true
 sleep 2
 
 echo "🧹 Clearing Next.js cache..."
-cd web && rm -rf .next
-cd ..
+(cd packages/web && rm -rf .next)
 
 echo "🚀 Starting backend server..."
-cd server
-NODE_ENV=development node index.js &
+(cd server && NODE_ENV=development node index.js) &
 BACKEND_PID=$!
-cd ..
 
 echo "⏳ Waiting for backend to start..."
 sleep 3
 
 echo "🌐 Starting frontend without Fast Refresh..."
-cd web
-FAST_REFRESH=false WATCHPACK_POLLING=false NODE_OPTIONS='--max-old-space-size=4096' next dev -p 3001 &
+(cd packages/web && FAST_REFRESH=false WATCHPACK_POLLING=false NODE_OPTIONS='--max-old-space-size=4096' next dev -p 3001) &
 FRONTEND_PID=$!
 
 echo "✅ Servers started!"

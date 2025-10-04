@@ -13,12 +13,12 @@ echo "🚀 Starting deployment with password authentication..."
 
 # Build web aplikacije
 echo "📦 Building web application..."
-cd web && npm run build
-cd ..
+cd packages/web && npm run build
+cd ../..
 
 # Deploy web aplikacije
 echo "🚀 Deploying web to server..."
-sshpass -e rsync -avz --exclude 'node_modules' --exclude '.env.local' -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" web/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/web/
+sshpass -e rsync -avz --exclude 'node_modules' --exclude '.env.local' -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" packages/web/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/web/
 
 # Instaliraj dependencies na serveru
 echo "📦 Installing dependencies on server..."

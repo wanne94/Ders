@@ -1,16 +1,13 @@
 #!/bin/bash
 
 echo "🔨 Building Next.js application..."
-cd web
-npm run build
+(cd packages/web && npm run build)
 
 echo "🚀 Starting production server..."
-cd ../server
-NODE_ENV=production node index.js &
+(cd server && NODE_ENV=production node index.js) &
 SERVER_PID=$!
 
-cd ../web
-npm run start &
+(cd packages/web && npm run start) &
 WEB_PID=$!
 
 echo "✅ Production servers started!"

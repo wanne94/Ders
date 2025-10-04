@@ -32,7 +32,7 @@ const OrganizationForm = ({ open, onClose, onSuccess, approvalEnabled = true, or
     instagram: '',
     telegram: '',
     viber: '',
-    status: 'pending',
+    status: approvalEnabled ? 'approved' : 'pending',
     image: '',
     imageFile: null
   });
@@ -74,13 +74,13 @@ const OrganizationForm = ({ open, onClose, onSuccess, approvalEnabled = true, or
         instagram: '',
         telegram: '',
         viber: '',
-        status: 'pending',
+        status: approvalEnabled ? 'approved' : 'pending',
         image: '',
         imageFile: null
       });
       setImagePreview(null);
     }
-  }, [organization, open]);
+  }, [organization, open, approvalEnabled]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

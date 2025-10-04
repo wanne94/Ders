@@ -5,6 +5,7 @@ const Lecture = require('../models/Lecture');
 const User = require('../models/User');
 const Organization = require('../models/Organization'); // Add Organization model
 const Daija = require('../models/Daija'); // Add Daija model
+const Settings = require('../models/Settings');
 const { authMiddleware: authenticateToken } = require('../utils/jwt');
 const { isAdminOrSuperAdmin, optionalAuth } = require('../middleware/auth');
 const { calculateLecturesStatus } = require('../utils/lectureStatus');
@@ -672,7 +673,7 @@ router.post('/', authenticateToken, async (req, res) => {
       shortDescription,
       description,
       image,
-      status = 'approved',
+      status: requestedStatus,
       isWeeklyLecture = false,
       totalWeeks = 2,
       // Seminar fields
@@ -757,6 +758,20 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     }
 
+    const approvalSettingsDoc = await Settings.findOne({ key: 'approvalSettings' });
+    const autoApproveLectures = approvalSettingsDoc?.value?.lecture !== false;
+    const canOverrideStatus = req.user.role === 'admin' || req.user.role === 'super_admin';
+    const finalStatus = (canOverrideStatus && requestedStatus)
+      ? requestedStatus
+      : (autoApproveLectures ? 'approved' : 'pending');
+
+    console.log('📊 [Lecture Approval] Router evaluation:', {
+      autoApproveLectures,
+      canOverrideStatus,
+      requestedStatus,
+      finalStatus
+    });
+
     if (isWeeklyLecture) {
       // Create all lectures in the series at once
       const weeklySeriesId = `WL_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -783,7 +798,7 @@ router.post('/', authenticateToken, async (req, res) => {
           shortDescription,
           description,
           image,
-          status,
+          status: finalStatus,
           createdBy: req.user.id,
           isWeeklyLecture: true,
           weeklySeriesId,
@@ -838,7 +853,7 @@ router.post('/', authenticateToken, async (req, res) => {
         shortDescription,
         description,
         image,
-        status,
+        status: finalStatus,
         createdBy: req.user.id,
         // Seminar specific fields
         isSeminar: true,
@@ -875,7 +890,7 @@ router.post('/', authenticateToken, async (req, res) => {
         shortDescription,
         description,
         image,
-        status,
+        status: finalStatus,
         createdBy: req.user.id
       };
       

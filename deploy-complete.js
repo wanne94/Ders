@@ -31,13 +31,13 @@ function exec(command, options = {}) {
 
 function deployWeb() {
     console.log('\n📦 Building web application...');
-    if (!exec('cd web && npm run build')) {
+    if (!exec('cd packages/web && npm run build')) {
         throw new Error('Web build failed');
     }
 
     console.log('\n🚀 Deploying web to server...');
     // Deploy the entire web directory including .next for SSR
-    if (!exec(`sshpass -e rsync -avz --exclude 'node_modules' --exclude '.env.local' -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" web/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/web/`)) {
+    if (!exec(`sshpass -e rsync -avz --exclude 'node_modules' --exclude '.env.local' -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" packages/web/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/web/`)) {
         throw new Error('Web deployment failed');
     }
 

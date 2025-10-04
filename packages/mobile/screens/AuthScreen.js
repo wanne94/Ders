@@ -584,6 +584,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
             onValueChange={(itemValue) =>
               setRegisterData({ ...registerData, securityQuestionIndex: itemValue })
             }
+            mode={Platform.OS === 'android' ? 'dropdown' : undefined}
             dropdownIconColor="#000000"
           >
             <Picker.Item label="Izaberite pitanje..." value="" color="#000000" style={{backgroundColor: '#FFFFFF'}} />
@@ -907,6 +908,7 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     textAlign: 'center',
     marginBottom: 16,
+    lineHeight: 22,
   },
   inputContainer: {
     gap: 6, // Reduced from 8 for better space utilization
@@ -955,11 +957,19 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
+    minHeight: 48,
+    justifyContent: 'center',
   },
   picker: {
-    height: 50,
+    width: '100%',
     color: '#000000',
     backgroundColor: '#FFFFFF',
+    ...Platform.select({
+      android: {
+        height: 48,
+      },
+    }),
   },
   switchContainer: {
     flexDirection: 'row',

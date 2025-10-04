@@ -6,8 +6,8 @@
     }
   },
   "include": [
-    "web/**/*",
-    "mobile/**/*",
+    "packages/web/**/*",
+    "packages/mobile/**/*",
     "server/**/*",
     "scripts/**/*",
     "*.js"

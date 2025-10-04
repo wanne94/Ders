@@ -5,8 +5,8 @@ trap 'kill $(jobs -p); exit' INT TERM
 
 # Start all services
 ./start-tunnel.sh &
-cd server && npm run dev &
-cd web && npm run dev &
+(cd server && npm run dev) &
+(cd packages/web && npm run dev) &
 
 # Wait for all background jobs
 wait

@@ -32,6 +32,7 @@ import predavanjaService from '../services/predavanjaService';
 import daijeService from '../services/daijeService';
 import udruzenjaService from '../services/udruzenjaService';
 import uploadService from '../services/uploadService';
+import { getApiUrl } from '../config';
 import IOSCompatibleDropdown from '../components/IOSCompatibleDropdown';
 
 const COLORS = {
@@ -60,6 +61,11 @@ const AddContentScreen = ({ onBack }) => {
   const [showSeminarOptions, setShowSeminarOptions] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [approvalSettings, setApprovalSettings] = useState({
+    lecture: true,
+    daija: true,
+    organization: true
+  });
   
   // Calendar state for end date
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
@@ -72,6 +78,25 @@ const AddContentScreen = ({ onBack }) => {
   const [showCustomSpeakerInput, setShowCustomSpeakerInput] = useState(false);
   const [customSpeakerInput, setCustomSpeakerInput] = useState('');
   const [showWeeklyOptions, setShowWeeklyOptions] = useState(false);
+
+  useEffect(() => {
+    const fetchApprovalSettings = async () => {
+      try {
+        const response = await fetch(`${getApiUrl()}/settings/public`);
+        const data = await response.json();
+        if (data?.approvalSettings) {
+          setApprovalSettings(prev => ({
+            ...prev,
+            ...data.approvalSettings
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching approval settings:', error);
+      }
+    };
+
+    fetchApprovalSettings();
+  }, []);
 
   const contentTypes = [
     {
@@ -185,7 +210,7 @@ const AddContentScreen = ({ onBack }) => {
           name: '',
           title: 'prof',
           biography: '',
-          status: 'pending'
+          status: approvalSettings.daija ? 'approved' : 'pending'
         };
       case 'organization':
         return {
@@ -197,7 +222,7 @@ const AddContentScreen = ({ onBack }) => {
           instagram: '',
           telegram: '',
           viber: '',
-          status: 'pending'
+          status: approvalSettings.organization ? 'approved' : 'pending'
         };
       default:
         return {};
@@ -218,6 +243,22 @@ const AddContentScreen = ({ onBack }) => {
     setCustomSpeakerInput('');
     setShowWeeklyOptions(false);
   };
+
+  useEffect(() => {
+    if (!selectedType) return;
+
+    if (selectedType === 'daija') {
+      setFormData(prev => ({
+        ...prev,
+        status: approvalSettings.daija ? 'approved' : 'pending'
+      }));
+    } else if (selectedType === 'organization') {
+      setFormData(prev => ({
+        ...prev,
+        status: approvalSettings.organization ? 'approved' : 'pending'
+      }));
+    }
+  }, [approvalSettings, selectedType]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));

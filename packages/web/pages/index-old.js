@@ -2,19 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Image from 'next/image';
-import {
-  School,
-  Building2,
-  User,
-  CheckCircle,
-  Bell,
-  Bookmark,
-  Calendar,
-  UserPlus,
-  Star,
-  Facebook,
-  Instagram
-} from 'lucide-react';
+import { Box, Grid, Typography, CardActions, IconButton } from '@mui/material';
+import SchoolIcon from '@mui/icons-material/School';
+import BusinessIcon from '@mui/icons-material/Business';
+import PersonIcon from '@mui/icons-material/Person';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import StarIcon from '@mui/icons-material/Star';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
+import EventIcon from '@mui/icons-material/Event';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import InstagramIcon from '@mui/icons-material/Instagram';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';

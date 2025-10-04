@@ -1394,7 +1394,7 @@ const Dashboard = () => {
           title: data.title,
           speaker: data.speaker,
           date: data.date,
-          status: approvalSettings.lecture ? 'pending' : 'approved',
+          status: approvalSettings.lecture ? 'approved' : 'pending',
           image: getDefaultLectureImage()
         };
         await predavanjaService.createPredavanje(lectureData);
@@ -1404,7 +1404,7 @@ const Dashboard = () => {
         const orgData = {
           name: data.name,
           description: data.description,
-          status: approvalSettings.organization ? 'pending' : 'approved',
+          status: approvalSettings.organization ? 'approved' : 'pending',
           image: getDefaultOrganizationImage()
         };
         await udruzenjaService.createUdruzenje(orgData);
@@ -1414,7 +1414,7 @@ const Dashboard = () => {
         const daijaData = {
           name: data.name,
           title: data.title,
-          status: approvalSettings.daija ? 'pending' : 'approved',
+          status: approvalSettings.daija ? 'approved' : 'pending',
           image: getDefaultDaijaImage()
         };
         await daijeService.createDaija(daijaData);

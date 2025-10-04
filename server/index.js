@@ -1763,9 +1763,20 @@ app.post('/api/lectures', authenticateToken, async (req, res) => {
       });
     }
     
-    // Lectures are always automatically approved
+    const approvalSettingsDoc = await Settings.findOne({ key: 'approvalSettings' });
+    const autoApproveLectures = approvalSettingsDoc?.value?.lecture !== false;
     const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
-    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : 'approved';
+    const requestedStatus = req.body.status;
+    const finalStatus = (isAdminUser && requestedStatus)
+      ? requestedStatus
+      : (autoApproveLectures ? 'approved' : 'pending');
+
+    logger.info('Lecture approval evaluation:', {
+      autoApproveLectures,
+      isAdminUser,
+      requestedStatus,
+      finalStatus
+    });
     
     // Parse date from YYYY-MM-DD format (sent from frontend)
     let parsedDate = req.body.date;
@@ -1967,7 +1978,10 @@ app.post('/api/lectures/public', async (req, res) => {
       });
     }
 
-    // Public submissions always go to pending status for approval
+    const approvalSettingsDoc = await Settings.findOne({ key: 'approvalSettings' });
+    const autoApproveLectures = approvalSettingsDoc?.value?.lecture !== false;
+    const finalStatus = autoApproveLectures ? 'approved' : 'pending';
+
     let lectureData = {
       title: req.body.title,
       speaker: req.body.speaker || '',
@@ -1981,11 +1995,14 @@ app.post('/api/lectures/public', async (req, res) => {
       shortDescription: req.body.shortDescription || '',
       description: req.body.description || '',
       image: req.body.image || '/uploads/images/predavanjeslika.jpg', // Default image
-      status: 'approved', // Always approved for lectures
+      status: finalStatus,
       createdBy: null // No user associated with public submissions
     };
-    
-    logger.info('Creating public lecture with data:', lectureData);
+
+    logger.info('Creating public lecture with data:', {
+      ...lectureData,
+      status: finalStatus
+    });
     const lecture = new Lecture(lectureData);
     
     const savedLecture = await lecture.save();
@@ -2002,9 +2019,13 @@ app.post('/api/lectures/public', async (req, res) => {
       daijaId: savedLecture.daija || null
     };
     
+    const responseMessage = finalStatus === 'approved'
+      ? 'Predavanje je uspješno objavljeno.'
+      : 'Predavanje je uspješno poslato na odobravanje. Biće objavljeno nakon što ga administrator odobri.';
+
     res.status(201).json({
       ...responseData,
-      message: 'Predavanje je uspešno poslato na odobravanje. Biće objavljeno nakon što ga administrator odobri.'
+      message: responseMessage
     });
   } catch (error) {
     logger.error('Error adding public lecture:', error);
@@ -2517,11 +2538,13 @@ app.post('/api/daije', authenticateToken, async (req, res) => {
 
     // Get approval settings
     const approvalSettings = await Settings.findOne({ key: 'approvalSettings' });
-    const needsApproval = approvalSettings?.value?.daija !== false; // Default to true if setting not found
+    const autoApproveDaije = approvalSettings?.value?.daija !== false; // Default to auto-approve if setting not found
 
     // Only allow admin/super_admin to explicitly set status, otherwise use approval settings
     const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
-    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : (needsApproval ? 'pending' : 'approved');
+    const finalStatus = (isAdminUser && req.body.status)
+      ? req.body.status
+      : (autoApproveDaije ? 'approved' : 'pending');
 
     const daijaData = {
       name: req.body.name || '',
@@ -2534,12 +2557,12 @@ app.post('/api/daije', authenticateToken, async (req, res) => {
       status: finalStatus
     };
     
-         logger.info('Using approval settings:', { 
-       needsApproval,
+         logger.info('Using approval settings:', {
+       autoApproveDaije,
        setting: approvalSettings?.value?.daija,
        isAdminUser,
        requestedStatus: req.body.status,
-       finalStatus: daijaData.status 
+       finalStatus: daijaData.status
      });
     
     logger.info('Creating daija with data:', daijaData);
@@ -2857,11 +2880,13 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
 
     // Get approval settings
     const approvalSettings = await Settings.findOne({ key: 'approvalSettings' });
-    const needsApproval = approvalSettings?.value?.organization !== false; // Default to true if setting not found
+    const autoApproveOrganizations = approvalSettings?.value?.organization !== false; // Default to auto-approve if setting not found
 
     // Only allow admin/super_admin to explicitly set status, otherwise use approval settings
     const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
-    const finalStatus = (isAdminUser && req.body.status) ? req.body.status : (needsApproval ? 'pending' : 'approved');
+    const finalStatus = (isAdminUser && req.body.status)
+      ? req.body.status
+      : (autoApproveOrganizations ? 'approved' : 'pending');
 
     const organizationData = {
       name: req.body.name,
@@ -2876,12 +2901,12 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
       status: finalStatus
     };
     
-         logger.info('Using approval settings:', { 
-       needsApproval,
+         logger.info('Using approval settings:', {
+       autoApproveOrganizations,
        setting: approvalSettings?.value?.organization,
        isAdminUser,
        requestedStatus: req.body.status,
-       finalStatus: organizationData.status 
+       finalStatus: organizationData.status
      });
     
     logger.info('Creating organization with data:', organizationData);
@@ -4632,5 +4657,3 @@ app.post('/api/debug/approve-pending-organizations', async (req, res) => {
     res.status(500).json({ message: 'Greška pri odobravanju pending organizacija' });
   }
 });
-
-

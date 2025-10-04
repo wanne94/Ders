@@ -72,7 +72,7 @@ const UnifiedFormNew = ({
           title: 'prof',
           biography: '',
           image: '',
-          status: 'pending',
+          status: approvalEnabled ? 'approved' : 'pending',
           education: [],
           facebook: '',
           viber: '',
@@ -88,13 +88,13 @@ const UnifiedFormNew = ({
           instagram: '',
           telegram: '',
           viber: '',
-          status: 'pending',
+          status: approvalEnabled ? 'approved' : 'pending',
           image: ''
         };
       default:
         return {};
     }
-  }, [type]);
+  }, [type, approvalEnabled]);
 
   const [formData, setFormData] = useState(getInitialFormData());
   const [imagePreview, setImagePreview] = useState(null);
@@ -204,12 +204,21 @@ const UnifiedFormNew = ({
           image: data.image || ''
         });
       }
-      
+
       if (data.image) {
         setImagePreview(getImageUrl(data.image));
       }
     }
   }, [data, type]);
+
+  useEffect(() => {
+    if (!data && (type === 'daija' || type === 'organization')) {
+      setFormData(prev => ({
+        ...prev,
+        status: approvalEnabled ? 'approved' : 'pending'
+      }));
+    }
+  }, [approvalEnabled, data, type]);
 
   // Auto-fill organization fields for lectures
   useEffect(() => {
