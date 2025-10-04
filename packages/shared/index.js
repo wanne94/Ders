@@ -20,6 +20,36 @@ export * from './constants/ui.js';
 
 // Validation exports
 export * from './validation/lectureValidation.js';
+export {
+  USER_VALIDATION_RULES,
+  validateUserForm,
+  sanitizeUserData,
+  isUserFormValid,
+  getPasswordStrength,
+  validateField as validateUserField
+} from './validation/userValidation.js';
+export {
+  ORGANIZATION_VALIDATION_RULES,
+  ORGANIZATION_IMAGE_RULES,
+  validateOrganizationForm,
+  validateOrganizationImage,
+  sanitizeOrganizationData,
+  isOrganizationFormValid,
+  validateField as validateOrganizationField
+} from './validation/organizationValidation.js';
+export {
+  mergeErrors as mergeValidationErrors,
+  hasErrors,
+  getFirstError,
+  formatErrors,
+  sanitizeInput,
+  isEmpty,
+  isAlphanumeric,
+  isLengthValid,
+  isValidEmail,
+  isValidPhone,
+  isValidUrl
+} from './validation/validationHelpers.js';
 
 // Utils exports
 export * from './utils/index.js';

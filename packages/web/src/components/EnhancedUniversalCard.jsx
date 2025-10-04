@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-import { MapPin, Building2, Clock, Calendar, User, Briefcase, GraduationCap, BookOpen } from 'lucide-react';
+import { MapPin, Building2, Clock, Calendar, User, Briefcase, GraduationCap, CalendarCheck, BookOpen } from 'lucide-react';
 import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrganizationSlug } from '../utils/dataHelpers';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
 import { formatDaijaTitle } from '../utils';
@@ -30,6 +30,42 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
   if (!data) {
     return null;
   }
+
+  const getHeldLecturesCount = (entity) => {
+    if (!entity) return null;
+
+    const possibleKeys = [
+      'completedLecturesCount',
+      'heldLecturesCount',
+      'lecturesHeld',
+      'lectureCount'
+    ];
+
+    for (const key of possibleKeys) {
+      const value = entity[key];
+      if (typeof value === 'number' && !Number.isNaN(value)) {
+        return value;
+      }
+    }
+
+    return null;
+  };
+
+  const formatHeldLecturesText = (count) => {
+    if (count === 0) {
+      return '0 održanih predavanja';
+    }
+
+    if (count === 1) {
+      return '1 održano predavanje';
+    }
+
+    if (count >= 2 && count <= 4) {
+      return `${count} održana predavanja`;
+    }
+
+    return `${count} održanih predavanja`;
+  };
 
   const getDisplayData = () => {
     const entityType = data.type?.toLowerCase() || 'unknown';
@@ -80,9 +116,9 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
           infoItems: [
             data.specialization && { icon: GraduationCap, text: data.specialization },
             data.city && { icon: Building2, text: data.city },
-            data.lectureCount !== undefined && { 
-              icon: BookOpen, 
-              text: `Broj predavanja: ${data.lectureCount || 0}`,           
+            typeof data.lectureCount === 'number' && {
+              icon: BookOpen,
+              text: `Broj predavanja: ${data.lectureCount || 0}`
             }
           ].filter(Boolean),
           onClick: () => {
@@ -91,26 +127,29 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
           }
         };
       
-      case 'udruženje':
+      case 'udruženje': {
+        const heldLecturesCount = getHeldLecturesCount(data);
+
         return {
           type: 'organization',
           title: data.name,
           image: data.image || getDefaultOrganizationImage(),
           imageStyle: 'rounded-lg',
           infoItems: [
+            typeof heldLecturesCount === 'number' && {
+              icon: CalendarCheck,
+              text: formatHeldLecturesText(heldLecturesCount)
+            },
             data.shortDescription && { icon: Briefcase, text: data.shortDescription },
             data.address && { icon: MapPin, text: data.address },
-            data.city && { icon: Building2, text: data.city },
-            data.lectureCount !== undefined && { 
-              icon: BookOpen, 
-              text: `Broj predavanja: ${data.lectureCount || 0}`,           
-            }
+            data.city && { icon: Building2, text: data.city }
           ].filter(Boolean),
           onClick: () => {
             const slug = generateOrganizationSlug(data);
             router.push(`/profile/organization/${data._id}`);
           }
         };
+      }
       
       default:
         return null;
@@ -138,6 +177,10 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
       default: return 'bg-gray-50 text-gray-600 border-gray-200';
     }
   };
+
+  const isDaijaCard = displayData.type === 'daija';
+  const daijaName = data?.name || displayData.title;
+  const daijaTitle = data?.title;
 
   return (
     <Card 
@@ -173,63 +216,115 @@ const EnhancedUniversalCard = React.memo(({ data }) => {
         </div>
       )}
       
-      <CardContent className="h-full p-4 flex flex-col overflow-hidden">
-        {/* Title section for lectures - full width */}
-        {displayData.type === 'lecture' && (
-          <>
-            <h2 className="text-base font-bold mb-2 mt-6 text-left w-full text-gray-900 truncate">
-              {displayData.title}
-              {data.lecturePart && ` (dio ${data.lecturePart}.)`}
-            </h2>
-            <div className="border-b border-gray-200 mb-2" />
-          </>
-        )}
+      <CardContent
+        className={
+          isDaijaCard
+            ? 'h-full p-6 flex flex-col items-center justify-center text-center gap-4'
+            : 'h-full p-4 flex flex-col overflow-hidden'
+        }
+      >
+        {isDaijaCard ? (
+          <div className="flex flex-col items-center justify-center flex-1 gap-4 w-full">
+            <div className="relative w-28 h-28 sm:w-32 sm:h-32">
+              <div className="relative w-full h-full rounded-full overflow-hidden shadow-md border border-gray-100 bg-gray-50">
+                <Image
+                  src={imageUrl}
+                  alt={daijaName}
+                  fill
+                  sizes="128px"
+                  className="object-cover"
+                  onError={handleImageError}
+                />
+              </div>
+            </div>
 
-        <div className="flex h-full flex-1 gap-3">
-          {/* Left side - Information */}
-          <div className="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
-            {/* Main title for non-lecture types */}
-            {displayData.type !== 'lecture' && (
-              <h2 className="text-base font-semibold mb-2 text-left text-gray-900 truncate">
-                {displayData.title}
-                {data.lecturePart && ` (dio ${data.lecturePart}.)`}
+            <div className="flex flex-col items-center gap-1">
+              <h2 className="text-lg font-semibold text-gray-900 capitalize">
+                {daijaName}
               </h2>
+              {daijaTitle && (
+                <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  {daijaTitle}
+                </span>
+              )}
+            </div>
+
+            {displayData.infoItems.length > 0 && (
+              <div className="flex flex-col items-center gap-1.5 w-full">
+                {displayData.infoItems.slice(0, 4).map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={index} className="flex items-center justify-center gap-2 text-sm text-gray-600">
+                      <Icon className="h-4 w-4 text-gray-400" />
+                      <span className="leading-normal">
+                        {item.text}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Title section for lectures - full width */}
+            {displayData.type === 'lecture' && (
+              <>
+                <h2 className="text-base font-bold mb-2 mt-6 text-left w-full text-gray-900 truncate">
+                  {displayData.title}
+                  {data.lecturePart && ` (dio ${data.lecturePart}.)`}
+                </h2>
+                <div className="border-b border-gray-200 mb-2" />
+              </>
             )}
 
-            {/* Info items */}
-            <div className="flex flex-col gap-1.5">
-              {displayData.infoItems.slice(0, 5).map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div key={index} className="flex items-center gap-2">
-                    <Icon className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                    <span className="text-sm text-gray-600 line-clamp-1 text-left leading-relaxed">
-                      {item.text}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+            <div className="flex h-full flex-1 gap-3">
+              {/* Left side - Information */}
+              <div className="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
+                {/* Main title for non-lecture types */}
+                {displayData.type !== 'lecture' && (
+                  <h2 className="text-base font-semibold mb-2 text-left text-gray-900 truncate">
+                    {displayData.title}
+                    {data.lecturePart && ` (dio ${data.lecturePart}.)`}
+                  </h2>
+                )}
 
-          {/* Right side - Image */}
-          <div className="w-28 h-36 flex-shrink-0 relative self-center">
-            <div className={`w-full h-full relative overflow-hidden shadow-sm ${displayData.imageStyle}`}>
-              <Image
-                src={imageUrl}
-                alt={displayData.title}
-                fill
-                sizes="112px"
-                className="object-cover object-top"
-                onError={handleImageError}
-              />
-            </div>
-          </div>
-        </div>
+                {/* Info items */}
+                <div className="flex flex-col gap-1.5">
+                  {displayData.infoItems.slice(0, 5).map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={index} className="flex items-center gap-2">
+                        <Icon className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-600 line-clamp-1 text-left leading-relaxed">
+                          {item.text}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-        {/* Cancelled overlay for lectures */}
-        {displayData.type === 'lecture' && data.cancelled && (
-          <CancelledOverlay show={true} />
+              {/* Right side - Image */}
+              <div className="w-28 h-36 flex-shrink-0 relative self-center">
+                <div className={`w-full h-full relative overflow-hidden shadow-sm ${displayData.imageStyle}`}>
+                  <Image
+                    src={imageUrl}
+                    alt={displayData.title}
+                    fill
+                    sizes="112px"
+                    className="object-cover object-top"
+                    onError={handleImageError}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Cancelled overlay for lectures */}
+            {displayData.type === 'lecture' && data.cancelled && (
+              <CancelledOverlay show={true} />
+            )}
+          </>
         )}
       </CardContent>
     </Card>

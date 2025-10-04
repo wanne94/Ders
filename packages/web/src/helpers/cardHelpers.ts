@@ -97,7 +97,7 @@ export const formatLectureCard = (lecture: any): CardData => {
 };
 
 // Format daija data for card display
-export const formatDaijaCard = (daija: any, lectureCount?: number): CardData => {
+export const formatDaijaCard = (daija: any, _lectureCount?: number): CardData => {
   const infoItems: InfoItem[] = [];
 
   // Specialization
@@ -141,7 +141,7 @@ export const formatDaijaCard = (daija: any, lectureCount?: number): CardData => 
 };
 
 // Format organization data for card display
-export const formatOrganizationCard = (organization: any, lectureCount?: number): CardData => {
+export const formatOrganizationCard = (organization: any, _lectureCount?: number): CardData => {
   const infoItems: InfoItem[] = [];
 
   // Short description
@@ -153,15 +153,6 @@ export const formatOrganizationCard = (organization: any, lectureCount?: number)
     infoItems.push({
       icon: '📝',
       text: shortDesc
-    });
-  }
-
-  // Lecture count
-  if (lectureCount !== undefined) {
-    infoItems.push({
-      icon: '📚',
-      text: `${lectureCount} predavanja`,
-      color: '#1976d2'
     });
   }
 

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { daijeService } from '@/services';
 import { generateSlug } from '@/utils';
+import LoadingState from '@/components/LoadingState';
 
 // Dynamically import ProfilePage to avoid SSR issues
 const ProfilePage = dynamic(() => import('../profile/[type]/[[...params]]'), {
@@ -44,7 +45,7 @@ const DaijaProfilePage = () => {
   }, [slug, router]);
 
   if (loading || !daija) {
-    return <div>Loading...</div>;
+    return <LoadingState />;
   }
 
   // ProfilePage will use the modified router.query

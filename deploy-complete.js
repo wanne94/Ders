@@ -42,12 +42,12 @@ function deployWeb() {
     }
 
     console.log('\n📦 Installing web dependencies on server...');
-    if (!exec(`sshpass -e ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/web && npm install --production"`)) {
+    if (!exec(`sshpass -e ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/web && npm install --production --legacy-peer-deps"`)) {
         throw new Error('Web dependency installation failed');
     }
 
     console.log('\n🔄 Restarting web application...');
-    if (!exec(`sshpass -e ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/web && pm2 restart ders-web || pm2 start npm --name ders-web -- start"`)) {
+    if (!exec(`sshpass -e ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/web && (pm2 restart ders-web --update-env || (PORT=3002 pm2 start npm --name ders-web -- start))"`)) {
         throw new Error('Web restart failed');
     }
 
@@ -63,7 +63,7 @@ function deployServer() {
     }
 
     console.log('\n📦 Installing server dependencies...');
-    if (!exec(`sshpass -e ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/server && npm install --production"`)) {
+    if (!exec(`sshpass -e ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "cd ${DEPLOY_PATH}/server && npm install --production --legacy-peer-deps"`)) {
         throw new Error('Server dependency installation failed');
     }
 

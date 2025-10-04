@@ -72,6 +72,26 @@ import { getUserData, getToken } from '@/utils/authHelpers';
 import LectureFormNew from '@/components/LectureFormNew';
 import UnifiedFormNew from '@/components/UnifiedFormNew';
 
+const resolveHeldLecturesCount = (entity) => {
+  if (!entity) return null;
+
+  const possibleKeys = [
+    'completedLecturesCount',
+    'heldLecturesCount',
+    'lecturesHeld',
+    'lectureCount'
+  ];
+
+  for (const key of possibleKeys) {
+    const value = entity[key];
+    if (typeof value === 'number' && !Number.isNaN(value)) {
+      return value;
+    }
+  }
+
+  return null;
+};
+
 const ProfilePage = () => {
   const router = useRouter();
   const { type, params } = router.query;
@@ -107,6 +127,25 @@ const ProfilePage = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const heldLecturesCount = (() => {
+    const fallback = Array.isArray(relatedLectures) ? relatedLectures.length : 0;
+
+    if (type !== 'organization') {
+      return fallback;
+    }
+
+    const resolved = resolveHeldLecturesCount(profile);
+    if (typeof resolved === 'number' && !Number.isNaN(resolved)) {
+      return resolved;
+    }
+
+    return fallback;
+  })();
+
+  const shouldShowLectureStatCard = type === 'organization'
+    ? typeof heldLecturesCount === 'number'
+    : heldLecturesCount > 0;
 
   // Check authentication on mount
   useEffect(() => {
@@ -765,22 +804,22 @@ const ProfilePage = () => {
                           </div>
 
                           {/* Statistics Cards - For daija and organization profiles */}
-                          {type !== 'lecture' && (
+                          {type !== 'lecture' && shouldShowLectureStatCard && (
                             <div className="flex gap-3">
                               {/* Number of lectures */}
-                              {relatedLectures.length > 0 && (
-                                <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
-                                  <CardContent className="p-4 text-center">
-                                    {type === 'organization' ? (
-                                      <Activity className="h-6 w-6 mx-auto mb-2 text-blue-300" />
-                                    ) : (
-                                      <BookOpen className="h-6 w-6 mx-auto mb-2 text-purple-300" />
-                                    )}
-                                    <div className="text-2xl font-bold">{relatedLectures.length}</div>
-                                    <div className="text-xs opacity-80">Predavanja</div>
-                                  </CardContent>
-                                </Card>
-                              )}
+                              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
+                                <CardContent className="p-4 text-center">
+                                  {type === 'organization' ? (
+                                    <Activity className="h-6 w-6 mx-auto mb-2 text-blue-300" />
+                                  ) : (
+                                    <BookOpen className="h-6 w-6 mx-auto mb-2 text-purple-300" />
+                                  )}
+                                  <div className="text-2xl font-bold">{heldLecturesCount}</div>
+                                  <div className="text-xs opacity-80">
+                                    {type === 'organization' ? 'Održana predavanja' : 'Predavanja'}
+                                  </div>
+                                </CardContent>
+                              </Card>
 
                               {/* Views if available */}
                               {profile.views && (

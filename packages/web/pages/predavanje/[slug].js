@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { predavanjaService } from '@/services';
 import { generateSlug } from '@/utils';
+import LoadingState from '@/components/LoadingState';
 
 const PredavanjeProfilePage = () => {
   const router = useRouter();
@@ -37,7 +38,7 @@ const PredavanjeProfilePage = () => {
   }, [slug, router]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingState />;
   }
 
   // This will not be shown as we redirect

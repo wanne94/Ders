@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-import { MapPin, Building2, Clock, Calendar, User, Briefcase, GraduationCap, BookOpen } from 'lucide-react';
+import { MapPin, Building2, Clock, Calendar, User, Briefcase, GraduationCap, CalendarCheck } from 'lucide-react';
 import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrganizationSlug, calculateLectureStatus } from '../utils/dataHelpers';
 import CancelledOverlay from './CancelledOverlay';
 import { getImageUrl, getImageFallbackUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
@@ -26,6 +26,42 @@ const UniversalCard = React.memo(({ data }) => {
   if (!data) {
     return null;
   }
+
+  const getHeldLecturesCount = (entity) => {
+    if (!entity) return null;
+
+    const possibleKeys = [
+      'completedLecturesCount',
+      'heldLecturesCount',
+      'lecturesHeld',
+      'lectureCount'
+    ];
+
+    for (const key of possibleKeys) {
+      const value = entity[key];
+      if (typeof value === 'number' && !Number.isNaN(value)) {
+        return value;
+      }
+    }
+
+    return null;
+  };
+
+  const formatHeldLecturesText = (count) => {
+    if (count === 0) {
+      return '0 održanih predavanja';
+    }
+
+    if (count === 1) {
+      return '1 održano predavanje';
+    }
+
+    if (count >= 2 && count <= 4) {
+      return `${count} održana predavanja`;
+    }
+
+    return `${count} održanih predavanja`;
+  };
 
   const getDisplayData = () => {
     
@@ -127,11 +163,7 @@ const UniversalCard = React.memo(({ data }) => {
           imageStyle: 'rounded-full',
           infoItems: [
             data.specialization && { icon: GraduationCap, text: data.specialization },
-            data.city && { icon: MapPin, text: data.city },
-            data.lectureCount !== undefined && { 
-              icon: BookOpen, 
-              text: `Broj predavanja: ${data.lectureCount || 0}`,           
-            }
+            data.city && { icon: MapPin, text: data.city }
           ].filter(Boolean),
           onClick: () => {
             console.log('🔍 Daija card clicked!', data.name);
@@ -155,20 +187,22 @@ const UniversalCard = React.memo(({ data }) => {
           }
         };
       
-      case 'udruženje':
+      case 'udruženje': {
+        const heldLecturesCount = getHeldLecturesCount(data);
+
         return {
           type: 'organization',
           title: data.name,
           image: data.image || getDefaultOrganizationImage(),
           imageStyle: 'rounded-lg',
           infoItems: [
+            typeof heldLecturesCount === 'number' && {
+              icon: CalendarCheck,
+              text: formatHeldLecturesText(heldLecturesCount)
+            },
             data.shortDescription && { icon: Briefcase, text: data.shortDescription },
             data.address && { icon: MapPin, text: data.address },
-            data.city && { icon: Building2, text: data.city },
-            data.lectureCount !== undefined && { 
-              icon: BookOpen, 
-              text: `Broj predavanja: ${data.lectureCount || 0}`,           
-            }
+            data.city && { icon: Building2, text: data.city }
           ].filter(Boolean),
           onClick: () => {
             console.log('🔍 Organization card clicked!', data.name);
@@ -191,6 +225,7 @@ const UniversalCard = React.memo(({ data }) => {
             }
           }
         };
+      }
       
       default:
         return null;
@@ -219,9 +254,16 @@ const UniversalCard = React.memo(({ data }) => {
     }
   };
 
+  const isDaijaCard = displayData.type === 'daija';
+  const isOrganizationCard = displayData.type === 'organization';
+  const daijaName = data?.name || displayData.title;
+  const daijaTitle = data?.title;
+
   return (
     <Card
-      className="flex flex-col relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer w-full h-[240px]"
+      className={`flex flex-col relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer w-full ${
+        isOrganizationCard ? 'min-h-[260px]' : 'h-[240px]'
+      }`}
       onClick={displayData.onClick}
     >
       {/* Seminar badge - left side */}
@@ -253,77 +295,165 @@ const UniversalCard = React.memo(({ data }) => {
         </div>
       )}
       
-      <CardContent className="h-full p-4 flex flex-col overflow-hidden">
-        
-        {/* Title section for lectures - full width */}
-        {displayData.type === 'lecture' && (
-          <>
-            <h2 className="text-base font-bold mb-2 mt-6 text-left w-full text-gray-900 truncate">
-              {displayData.title}
-              {data.lecturePart && ` (dio ${data.lecturePart}.)`}
-            </h2>
-            <div className="border-b border-gray-200 mb-2" />
-          </>
-        )}
-
-        <div className="flex h-full flex-1 gap-3">
-          {/* Left side - Information */}
-          <div className="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
-            {/* Title prefix (for daija titles) */}
-            {displayData.titlePrefix && (
-              <p className="text-xs text-gray-600 mb-1">
-                {displayData.titlePrefix}
-              </p>
-            )}
-
-            {/* Main title for non-lecture types */}
-            {displayData.type !== 'lecture' && (
-              <h2 className="text-base font-semibold mb-1.5 text-left text-gray-900 truncate">
-                {displayData.title}
-                {data.lecturePart && ` (dio ${data.lecturePart}.)`}
-              </h2>
-            )}
-
-            {/* Info items */}
-            <div className="flex flex-col gap-0.5">
-              {displayData.infoItems.slice(0, 6).map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div key={index} className="flex items-center gap-2">
-                    <Icon className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                    <span className="text-[15px] text-gray-600 line-clamp-1 text-left leading-tight">
-                      {item.text}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right side - Image */}
-          <div className="w-28 h-36 flex-shrink-0 relative self-center">
-            <div className={`w-full h-full relative overflow-hidden shadow-sm ${displayData.imageStyle}`}>
+      <CardContent
+        className={
+          isDaijaCard
+            ? 'h-full p-6 flex flex-col items-center justify-center text-center gap-4'
+            : isOrganizationCard
+              ? 'p-0 h-full flex flex-col'
+              : 'h-full p-4 flex flex-col overflow-hidden'
+        }
+      >
+        {isOrganizationCard ? (
+          <div className="flex flex-col h-full">
+            <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-gray-100">
               <Image
                 src={imageUrl}
                 alt={displayData.title}
                 fill
-                sizes="112px"
-                className="object-cover object-top"
+                sizes="(min-width: 640px) 180px, 100vw"
+                className="object-cover"
                 onError={handleImageError}
               />
-              {/* Cancelled overlay on image only for lectures */}
-              {displayData.type === 'lecture' && (data.cancelled || data.isCancelled || displayData.statusInfo?.status === 'cancelled') && (
-                <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-red-500 text-white font-extrabold text-xs tracking-wider uppercase py-1.5 px-10 rotate-[-30deg] shadow-lg transform-gpu">
-                      OTKAZANO
-                    </div>
-                  </div>
+            </div>
+
+            <div className="flex flex-col flex-1 px-4 py-4 gap-2">
+              <h2 className="text-base font-semibold text-gray-900 leading-tight">
+                {displayData.title}
+              </h2>
+
+              {displayData.infoItems.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  {displayData.infoItems.slice(0, 6).map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={index} className="flex items-start gap-2">
+                        <Icon className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <span className="text-[15px] text-gray-600 leading-snug line-clamp-2">
+                          {item.text}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
           </div>
-        </div>
+        ) : isDaijaCard ? (
+          <div className="flex flex-col items-center justify-center flex-1 gap-4 w-full">
+            <div className="relative w-28 h-28 sm:w-32 sm:h-32">
+              <div className="relative w-full h-full rounded-full overflow-hidden shadow-md border border-gray-100 bg-gray-50">
+                <Image
+                  src={imageUrl}
+                  alt={daijaName}
+                  fill
+                  sizes="128px"
+                  className="object-cover"
+                  onError={handleImageError}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-1">
+              <h2 className="text-lg font-semibold text-gray-900 capitalize">
+                {daijaName}
+              </h2>
+              {daijaTitle && (
+                <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  {daijaTitle}
+                </span>
+              )}
+            </div>
+
+            {displayData.infoItems.length > 0 && (
+              <div className="flex flex-col items-center gap-1.5 w-full">
+                {displayData.infoItems.slice(0, 4).map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={index} className="flex items-center justify-center gap-2 text-sm text-gray-600">
+                      <Icon className="h-4 w-4 text-gray-400" />
+                      <span className="leading-normal">
+                        {item.text}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Title section for lectures - full width */}
+            {displayData.type === 'lecture' && (
+              <>
+                <h2 className="text-base font-bold mb-2 mt-6 text-left w-full text-gray-900 truncate">
+                  {displayData.title}
+                  {data.lecturePart && ` (dio ${data.lecturePart}.)`}
+                </h2>
+                <div className="border-b border-gray-200 mb-2" />
+              </>
+            )}
+
+            <div className="flex h-full flex-1 gap-3">
+              {/* Left side - Information */}
+              <div className="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
+                {/* Title prefix (for daija titles) */}
+                {displayData.titlePrefix && (
+                  <p className="text-xs text-gray-600 mb-1">
+                    {displayData.titlePrefix}
+                  </p>
+                )}
+
+                {/* Main title for non-lecture types */}
+                {displayData.type !== 'lecture' && (
+                  <h2 className="text-base font-semibold mb-1.5 text-left text-gray-900 truncate">
+                    {displayData.title}
+                    {data.lecturePart && ` (dio ${data.lecturePart}.)`}
+                  </h2>
+                )}
+
+                {/* Info items */}
+                <div className="flex flex-col gap-0.5">
+                  {displayData.infoItems.slice(0, 6).map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={index} className="flex items-center gap-2">
+                        <Icon className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                        <span className="text-[15px] text-gray-600 line-clamp-1 text-left leading-tight">
+                          {item.text}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Right side - Image */}
+              <div className="w-28 h-36 flex-shrink-0 relative self-center">
+                <div className={`w-full h-full relative overflow-hidden shadow-sm ${displayData.imageStyle}`}>
+                  <Image
+                    src={imageUrl}
+                    alt={displayData.title}
+                    fill
+                    sizes="112px"
+                    className="object-cover object-top"
+                    onError={handleImageError}
+                  />
+                  {/* Cancelled overlay on image only for lectures */}
+                  {displayData.type === 'lecture' && (data.cancelled || data.isCancelled || displayData.statusInfo?.status === 'cancelled') && (
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-red-500 text-white font-extrabold text-xs tracking-wider uppercase py-1.5 px-10 rotate-[-30deg] shadow-lg transform-gpu">
+                          OTKAZANO
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
