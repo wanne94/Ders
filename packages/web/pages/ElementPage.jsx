@@ -34,6 +34,7 @@ import LectureFormNew from '@/components/LectureFormNew';
 import UnifiedFormNew from '@/components/UnifiedFormNew';
 import LecturesSection from '@/components/LecturesSection';
 import BulkActionsToolbar from '@/components/BulkActionsToolbar';
+import AuthPromptDialog from '@/components/AuthPromptDialog';
 import { safeApiCall, normalizeToArray } from '@/utils/dataHelpers';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
 import { useDebounce } from '@ders-ba/shared';
@@ -41,6 +42,7 @@ import { DaijeGrid, LecturesGrid, OrganizationsGrid } from '@/components/GridLay
 import predavanjaService from '@/services/predavanjaService';
 import daijeService from '@/services/daijeService';
 import udruzenjaService from '@/services/udruzenjaService';
+import { useAuthCheck } from '@/utils/useAuthCheck';
 
 const ElementPage = ({ type }) => {
   const router = useRouter();
@@ -87,6 +89,13 @@ const ElementPage = ({ type }) => {
         return null;
     }
   }, [type]);
+
+  const {
+    authPromptOpen,
+    checkAuthAndExecute,
+    handleAuthPromptClose,
+    handleGoToAuth,
+  } = useAuthCheck();
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -313,8 +322,10 @@ const ElementPage = ({ type }) => {
   }, []);
 
   const handleAddClick = useCallback(() => {
-    setState(prev => ({ ...prev, isFormOpen: true }));
-  }, []);
+    checkAuthAndExecute(() => {
+      setState(prev => ({ ...prev, isFormOpen: true }));
+    });
+  }, [checkAuthAndExecute]);
 
   const handleFormClose = useCallback(() => {
     setState(prev => ({ ...prev, isFormOpen: false }));
@@ -683,6 +694,14 @@ const ElementPage = ({ type }) => {
 
       {/* Form Dialog */}
       {getFormComponent()}
+
+      <AuthPromptDialog
+        open={authPromptOpen}
+        onClose={handleAuthPromptClose}
+        onGoToAuth={handleGoToAuth}
+        title="Prijava potrebna"
+        message="Morate biti prijavljeni da biste dodali novi sadržaj."
+      />
         </ContentContainer>
       </PageLayout>
     </>

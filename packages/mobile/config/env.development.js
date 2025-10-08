@@ -1,28 +1,28 @@
 // Konfiguracija za Expo Go development
 const getLocalIP = () => {
-  // Koristimo produkcijsku API adresu jer lokalni server ne radi
+  // Primarni API u dev modu sada ide na produkcijski server
   return 'https://ders.ba';
-};;
+};
 
 const getBackupURL = () => {
-  // Backup opcija - može se koristiti alternativna IP adresa
-  return 'http://192.168.0.20:5004';
+  // Backup opcija - lokalni server ako je pokrenut
+  return 'http://localhost:5004/api';
 };
 
 const getFallbackLocalURL = () => {
-  // Fallback opcija
-  return 'http://192.168.0.20:5004';
+  // Fallback opcija - statički LAN IP ako je podešen
+  return 'http://192.168.0.20:5004/api';
 };
 
 export const ENV = {
   IS_DEV: true,
   
   // API Configuration  
-  API_URL: `http://localhost:5004/api`,
-  SERVER_URL: `http://localhost:5004/api`,
-  BACKUP_API_URL: `https://ders.ba/api`,
-  UPLOADS_URL: `http://localhost:5004/uploads`,
-  FALLBACK_API_URL: `https://ders.ba/api`, // Fallback URL
+  API_URL: `${getLocalIP()}/api`,
+  SERVER_URL: `${getLocalIP()}/api`,
+  BACKUP_API_URL: getBackupURL(),
+  UPLOADS_URL: `${getLocalIP()}/uploads`,
+  FALLBACK_API_URL: getFallbackLocalURL(), // Fallback URL
   
   // Image handling
   IMAGE_SERVER_URL: 'https://ders.ba',

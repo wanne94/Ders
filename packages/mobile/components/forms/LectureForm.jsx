@@ -540,16 +540,14 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
       Alert.alert('Greška', 'Daija je obavezan');
       return false;
     }
-    // Adresa i mjesto su obavezni samo ako je odabrano udruženje ili se ručno unosi
-    if ((formData.organizationId || useCustomOrganization)) {
-      if (!formData.address.trim()) {
-        Alert.alert('Greška', 'Adresa je obavezna');
-        return false;
-      }
-      if (!formData.city.trim()) {
-        Alert.alert('Greška', 'Mjesto je obavezno');
-        return false;
-      }
+    // Backend zahtijeva adresu i mjesto bez obzira na odabrano udruženje
+    if (!formData.address.trim()) {
+      Alert.alert('Greška', 'Adresa je obavezna');
+      return false;
+    }
+    if (!formData.city.trim()) {
+      Alert.alert('Greška', 'Mjesto je obavezno');
+      return false;
     }
     
     // Validacija za seminare
@@ -957,13 +955,9 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         {/* Organization Dropdown */}
         {renderOrganizationDropdown()}
 
-        {/* Prikazuj adresu i mjesto samo ako je odabrano udruženje ili se ručno unosi */}
-        {(formData.organizationId || useCustomOrganization) && (
-          <>
-            {renderInput('Adresa', 'address', 'Unesite adresu...', false, true, Boolean(formData.organizationId && !useCustomOrganization))}
-            {renderInput('Mjesto', 'city', 'Unesite mjesto...', false, true, Boolean(formData.organizationId && !useCustomOrganization))}
-          </>
-        )}
+        {/* Adresa i mjesto su uvijek dostupni, ali se zaključavaju ako ih popunjava udruženje */}
+        {renderInput('Adresa', 'address', 'Unesite adresu...', false, true, Boolean(formData.organizationId && !useCustomOrganization))}
+        {renderInput('Mjesto', 'city', 'Unesite mjesto...', false, true, Boolean(formData.organizationId && !useCustomOrganization))}
 
 
         {/* Weekly lecture section */}
@@ -1812,4 +1806,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LectureForm; 
+export default LectureForm;

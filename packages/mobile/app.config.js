@@ -23,7 +23,13 @@ export default {
       bundleIdentifier: "com.daije.mobile",
       buildNumber: "26",
       infoPlist: {
-        ITSAppUsesNonExemptEncryption: false
+        ITSAppUsesNonExemptEncryption: false,
+        NSPhotoLibraryUsageDescription:
+          "Ders koristi vaše fotografije kako biste dodali ili uredili slike profila daija, organizacija i predavanja.",
+        NSCalendarsUsageDescription:
+          "Ders dodaje odabrana predavanja u vaš kalendar kako biste dobili podsjetnike prije početka.",
+        NSCalendarsFullAccessUsageDescription:
+          "Ders dodaje odabrana predavanja u vaš kalendar kako biste dobili podsjetnike prije početka."
       }
     },
     plugins: [

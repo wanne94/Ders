@@ -371,6 +371,23 @@ const AppContent = () => {
     refresh();
   }, [refresh]);
   const handleAddContentOptionSelect = (type) => {
+    if (!isAuthenticated) {
+      Alert.alert(
+        'Prijava potrebna',
+        'Morate biti prijavljeni da biste dodali sadržaj.',
+        [
+          { text: 'Otkaži', style: 'cancel' },
+          {
+            text: 'Prijavi se',
+            onPress: () => setActiveTab('auth')
+          },
+        ],
+        { cancelable: true }
+      );
+      setShowAddMenu(false);
+      return;
+    }
+
     setSelectedFormType(type);
     setShowFormPopup(true);
     setShowAddMenu(false);

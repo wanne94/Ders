@@ -54,15 +54,15 @@
       <true/>
     </dict>
     <key>NSCalendarsFullAccessUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your calendars</string>
+    <string>Ders dodaje odabrana predavanja u vaš kalendar kako biste dobili podsjetnike prije početka.</string>
     <key>NSCalendarsUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your calendars</string>
+    <string>Ders dodaje odabrana predavanja u vaš kalendar kako biste dobili podsjetnike prije početka.</string>
     <key>NSCameraUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your camera</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your photos</string>
+    <string>Ders koristi vaše fotografije kako biste dodali ili uredili slike profila daija, organizacija i predavanja.</string>
     <key>NSRemindersFullAccessUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your reminders</string>
     <key>NSRemindersUsageDescription</key>
