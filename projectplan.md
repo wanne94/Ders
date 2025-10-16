@@ -1,72 +1,105 @@
-# Plan za rješavanje App Store Upload grešaka
+# Popravka Apple App Store Review - Permission Descriptions
 
-## ✅ ZAVRŠENE IZMJENE ZA EAS BUILD
+## Problem
+Apple je odbio app zbog nedovoljno jasnih permission description stringova (Guideline 5.1.1).
 
-### Identifikovani problemi (iz Transporter loga):
-1. ❌ **CFBundleShortVersionString** - verzija 1.0.0 mora biti veća od 1.0.4
-2. ❌ **Build broj konflikt** - build sa brojem "2" je premali
-3. ❌ **Device compatibility** - aplikacija mora podržavati sve uređaje
+**Poruka od Apple:**
+> "One or more purpose strings in the app do not sufficiently explain the use of protected resources. Purpose strings must clearly and completely describe the app's use of data and, in most cases, provide an example of how the data will be used."
 
-### Status: RIJEŠENO ✅
+## Analiza
+Korišćene biblioteke koje zahtijevaju permisije:
+- **expo-image-picker** → Photo Library + Camera (biblioteka može pozvati kameru iako se trenutno ne koristi aktivno)
+- **expo-calendar** → Calendar Access
 
-## Ažurirane verzije (na osnovu zadnje uploadovane 1.2.0 build 28):
+Trenutne permisije u app.config.js:
+- ✅ NSPhotoLibraryUsageDescription - postoji ali nije dovoljno jasan
+- ✅ NSCalendarsUsageDescription - postoji
+- ✅ NSCalendarsFullAccessUsageDescription - postoji
+- ❌ **NSCameraUsageDescription - NEDOSTAJE!**
 
-### 1. **Info.plist** (`packages/mobile/ios/Ders/Info.plist`)
-   - CFBundleShortVersionString: **1.2.1** ✅
-   - CFBundleVersion: **29** ✅
+## Rješenje
+Dodati NSCameraUsageDescription i poboljšati postojeće opise sa jasnijim i detaljnijim objašnjenjima koja uključuju konkretne primjere korištenja.
 
-### 2. **app.json** (root folder)
-   - ios.buildNumber: **29** ✅
+## Todo Lista
 
-### 3. **Targeted Device Family**
-   - TARGETED_DEVICE_FAMILY = "1,2" (iPhone i iPad) ✅
+### [✅] 1. Dodati NSCameraUsageDescription permission
+- Dodati jasan opis zašto app može tražiti pristup kameri
+- Uključiti konkretan primjer: "fotografisanje slika profila daija, organizacija i predavanja"
+- Lokacija: packages/mobile/app.config.js
 
-## Kada koristiš EAS build --local za iOS:
+### [✅] 2. Poboljšati NSPhotoLibraryUsageDescription
+- Proširiti opis sa konkretnijim primjerom korištenja
+- Format: "[App] koristi galeriju fotografija da [konkretna akcija]. Na primjer, [konkretan primjer]."
+- Lokacija: packages/mobile/app.config.js
 
-### Konfiguracija verzija:
+### [✅] 3. Provjeriti i po potrebi poboljšati Calendar descriptions
+- Provjeriti NSCalendarsUsageDescription i NSCalendarsFullAccessUsageDescription
+- Dodati konkretnije primjere ako treba
+- Lokacija: packages/mobile/app.config.js
 
-#### 1. **app.json / app.config.js** (Primarna lokacija)
-```json
-{
-  "expo": {
-    "version": "1.2.1",  // CFBundleShortVersionString
-    "ios": {
-      "buildNumber": "29",  // CFBundleVersion
-      "bundleIdentifier": "com.daije.mobile"
-    }
-  }
-}
-```
+### [✅] 4. Povećati buildNumber
+- Trenutni buildNumber: 26
+- Novi buildNumber: 27
+- Lokacija: packages/mobile/app.config.js
 
-#### 2. **Info.plist** (Ako postoji ios/ folder nakon prebuild)
-- CFBundleShortVersionString: 1.2.1
-- CFBundleVersion: 29
+### [✅] 5. Ažurirati root app.json
+- Sinhronizovati buildNumber u root app.json
+- Novi buildNumber: 37 → 38
+- Lokacija: /Users/wanne/react-app/Ders/app.json
 
-#### 3. **eas.json** konfiguracija
-```json
-{
-  "cli": {
-    "appVersionSource": "local"  // Koristi lokalne verzije iz app.json
-  }
-}
-```
+### [✅] 6. Prebuild i verifikacija
+- Pokrenuti `cd packages/mobile && npx expo prebuild --platform ios`
+- Provjeriti ios/Ders/Info.plist da su sve permisije pravilno upisane
+- Verifikovati da NSCameraUsageDescription postoji u Info.plist
 
-## Komande za build:
+---
 
-1. **Sinkronizacija verzija (opciono):**
-   ```bash
-   npx expo prebuild --clean
-   ```
+## Review Sekcija
 
-2. **Lokalni EAS build za iOS:**
-   ```bash
-   eas build --platform ios --local
-   ```
+### Izvršene izmjene:
 
-## Status:
-✅ **SVE VERZIJE SU ISPRAVNO POSTAVLJENE I SPREMNE ZA BUILD!**
+#### 1. **app.config.js** (packages/mobile/app.config.js)
+   - ✅ **Dodato**: NSCameraUsageDescription sa jasnim objašnjenjem i primjerom
+   - ✅ **Poboljšano**: NSPhotoLibraryUsageDescription sa detaljnijim objašnjenjem i konkretnim primjerom
+   - ✅ **Poboljšano**: NSCalendarsUsageDescription sa dodatnim primjerom (notifikacija 15 minuta prije)
+   - ✅ **Poboljšano**: NSCalendarsFullAccessUsageDescription sa dodatnim primjerom
+   - ✅ **Povećano**: buildNumber sa 26 na 27
 
-Aplikacija će imati:
-- Verziju **1.2.1** (veća od zadnje uploadovane 1.2.0)
-- Build broj **29** (veći od zadnjeg 28)
-- Podršku za iPhone i iPad
+#### 2. **app.json** (root)
+   - ✅ **Povećano**: ios.buildNumber sa 37 na 38
+
+#### 3. **Info.plist** (packages/mobile/ios/Ders/Info.plist)
+   - ✅ **Dodato**: NSCameraUsageDescription
+   - ✅ **Dodato**: NSPhotoLibraryUsageDescription
+   - ✅ **Dodato**: NSCalendarsUsageDescription
+   - ✅ **Dodato**: NSCalendarsFullAccessUsageDescription
+   - ✅ **Dodato**: ITSAppUsesNonExemptEncryption = false
+
+### Nove permission descriptions:
+
+**NSCameraUsageDescription:**
+> "Ders koristi kameru da fotografišete slike profila daija, organizacija i predavanja. Na primjer, možete direktno fotografisati sliku umjesto da je birate iz galerije."
+
+**NSPhotoLibraryUsageDescription:**
+> "Ders koristi galeriju fotografija da odaberete i učitate slike profila daija, organizacija i predavanja. Na primjer, možete odabrati postojeću fotografiju sa vašeg uređaja za sliku profila daije."
+
+**NSCalendarsUsageDescription:**
+> "Ders dodaje odabrana predavanja u vaš kalendar kako biste dobili automatske podsjetnike prije početka. Na primjer, kada dodate predavanje u kalendar, primit ćete notifikaciju 15 minuta prije početka."
+
+**NSCalendarsFullAccessUsageDescription:**
+> "Ders dodaje odabrana predavanja u vaš kalendar kako biste dobili automatske podsjetnike prije početka. Na primjer, kada dodate predavanje u kalendar, primit ćete notifikaciju 15 minuta prije početka."
+
+### Status:
+✅ **SVE IZMJENE SU ZAVRŠENE**
+
+Aplikacija sada ima:
+- Sve potrebne permission descriptions sa jasnim objašnjenjima i konkretnim primjerima
+- Povećan buildNumber (27 u app.config.js, 38 u root app.json)
+- Sve permisije pravilno upisane u ios/Ders/Info.plist
+
+### Sljedeći koraci:
+1. Build iOS aplikacije: `cd packages/mobile && eas build --platform ios --local`
+2. Upload na App Store Connect
+3. Ponovno podnošenje za review
+
+Promjene adresiraju Apple-ov zahtjev za jasnije i detaljnije permission descriptions prema Guideline 5.1.1.

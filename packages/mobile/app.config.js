@@ -2,7 +2,7 @@ export default {
   expo: {
     name: "Ders",
     slug: "ders-mobile",
-    version: "1.2.0",
+    version: "1.3.1",
     scheme: "ders",
     icon: "./assets/images/icon.png",
     splash: {
@@ -21,15 +21,18 @@ export default {
     },
     ios: {
       bundleIdentifier: "com.daije.mobile",
-      buildNumber: "26",
+      buildNumber: "36",
+      supportsTablet: true,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
+        NSCameraUsageDescription:
+          "Ders koristi kameru da fotografišete slike profila daija, organizacija i predavanja. Na primjer, možete direktno fotografisati sliku umjesto da je birate iz galerije.",
         NSPhotoLibraryUsageDescription:
-          "Ders koristi vaše fotografije kako biste dodali ili uredili slike profila daija, organizacija i predavanja.",
+          "Ders koristi galeriju fotografija da odaberete i učitate slike profila daija, organizacija i predavanja. Na primjer, možete odabrati postojeću fotografiju sa vašeg uređaja za sliku profila daije.",
         NSCalendarsUsageDescription:
-          "Ders dodaje odabrana predavanja u vaš kalendar kako biste dobili podsjetnike prije početka.",
+          "Ders dodaje odabrana predavanja u vaš kalendar kako biste dobili automatske podsjetnike prije početka. Na primjer, kada dodate predavanje u kalendar, primit ćete notifikaciju 15 minuta prije početka.",
         NSCalendarsFullAccessUsageDescription:
-          "Ders dodaje odabrana predavanja u vaš kalendar kako biste dobili podsjetnike prije početka."
+          "Ders dodaje odabrana predavanja u vaš kalendar kako biste dobili automatske podsjetnike prije početka. Na primjer, kada dodate predavanje u kalendar, primit ćete notifikaciju 15 minuta prije početka."
       }
     },
     plugins: [

@@ -38,7 +38,13 @@
       "Bash(npm run build:*)",
       "Bash(npm run deploy:web:*)",
       "Bash(npm run deploy:full:*)",
-      "Bash(npm run clean:ios:*)"
+      "Bash(npm run clean:ios:*)",
+      "Bash(cat:*)",
+      "Bash(tee:*)",
+      "Bash(unzip:*)",
+      "Bash(plutil:*)",
+      "Bash(sips:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
