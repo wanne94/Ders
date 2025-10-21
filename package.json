@@ -1,6 +1,6 @@
 {
   "name": "ders-ba",
-  "version": "1.3.0",
+  "version": "1.3.3",
   "description": "DERS.BA Monorepo - Web & Mobile Applications",
   "private": true,
   "workspaces": [

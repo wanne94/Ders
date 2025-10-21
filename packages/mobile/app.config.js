@@ -2,8 +2,9 @@ export default {
   expo: {
     name: "Ders",
     slug: "ders-mobile",
-    version: "1.3.1",
+    version: "1.3.3",
     scheme: "ders",
+    orientation: "portrait",
     icon: "./assets/images/icon.png",
     splash: {
       image: "./assets/images/splash-icon.png",
@@ -21,7 +22,7 @@ export default {
     },
     ios: {
       bundleIdentifier: "com.daije.mobile",
-      buildNumber: "36",
+      buildNumber: "39",
       supportsTablet: true,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,

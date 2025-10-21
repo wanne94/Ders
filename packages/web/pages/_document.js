@@ -38,20 +38,7 @@ export default function Document() {
         <meta name="twitter:title" content="Ders - Platforma za praćenje predavanja" />
         <meta name="twitter:description" content="Pronađite najnovija predavanja, pratite omiljene daije i organizacije na jednom mjestu." />
         <meta name="twitter:image" content="https://ders.ba/uploads/android-chrome-512x512.png" />
-        
-        {/* Google Analytics */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-2PXHZSFM8R"></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-2PXHZSFM8R');
-            `,
-          }}
-        />
-        
+
         <link rel="icon" type="image/png" sizes="192x192" href="https://ders.ba/uploads/android-chrome-192x192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="https://ders.ba/uploads/android-chrome-512x512.png" />
         <link rel="shortcut icon" href="https://ders.ba/uploads/favicon.png" />

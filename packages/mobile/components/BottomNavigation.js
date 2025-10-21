@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useRef, useImperativeHandle, forwardRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 // Import shared navigation config
 import { mainMenuItems, routes } from '@ders-ba/shared';
@@ -14,7 +14,7 @@ const COLORS = {
   success: '#4CAF50',
 };
 
-const BottomNavigation = ({ activeTab, onTabPress, isAddMenuOpen = false }) => {
+const BottomNavigation = forwardRef(({ activeTab, onTabPress, isAddMenuOpen = false }, ref) => {
   // Build tabs from shared config
   const tabs = [
     {
@@ -44,9 +44,46 @@ const BottomNavigation = ({ activeTab, onTabPress, isAddMenuOpen = false }) => {
     },
   ];
 
+  // Animation values for each tab
+  const scaleAnimations = useRef(
+    tabs.reduce((acc, tab) => {
+      acc[tab.id] = new Animated.Value(1);
+      return acc;
+    }, {})
+  ).current;
+
+  // Expose triggerBounce function to parent
+  useImperativeHandle(ref, () => ({
+    triggerBounce: (tabId) => {
+      const scaleAnim = scaleAnimations[tabId];
+      if (!scaleAnim) return;
+
+      // Bounce animation: 1 → 1.3 → 0.95 → 1
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.3,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.95,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 3,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }), [scaleAnimations]);
+
   const renderTab = (tab, index) => {
     const isActive = activeTab === tab.id;
     const isAddButton = tab.id === 'add';
+    const scaleAnim = scaleAnimations[tab.id];
 
     if (isAddButton) {
       return (
@@ -57,16 +94,19 @@ const BottomNavigation = ({ activeTab, onTabPress, isAddMenuOpen = false }) => {
           activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <View style={[
-            styles.addButtonInner,
-            isAddMenuOpen && styles.addButtonActive
-          ]}>
-            <Ionicons 
-              name={isAddMenuOpen ? 'close' : tab.icon} 
-              size={24} 
-              color={COLORS.white} 
+          <Animated.View
+            style={[
+              styles.addButtonInner,
+              isAddMenuOpen && styles.addButtonActive,
+              scaleAnim && { transform: [{ scale: scaleAnim }] }
+            ]}
+          >
+            <Ionicons
+              name={isAddMenuOpen ? 'close' : tab.icon}
+              size={24}
+              color={COLORS.white}
             />
-          </View>
+          </Animated.View>
         </TouchableOpacity>
       );
     }
@@ -79,11 +119,13 @@ const BottomNavigation = ({ activeTab, onTabPress, isAddMenuOpen = false }) => {
         activeOpacity={0.7}
         delayPressIn={0}
       >
-        <Ionicons 
-          name={isActive ? tab.activeIcon : tab.icon} 
-          size={24} 
-          color={isActive ? COLORS.primary : COLORS.gray} 
-        />
+        <Animated.View style={scaleAnim && { transform: [{ scale: scaleAnim }] }}>
+          <Ionicons
+            name={isActive ? tab.activeIcon : tab.icon}
+            size={24}
+            color={isActive ? COLORS.primary : COLORS.gray}
+          />
+        </Animated.View>
         <Text style={[styles.tabLabel, isActive && styles.activeTabLabel]}>
           {tab.label}
         </Text>
@@ -96,7 +138,9 @@ const BottomNavigation = ({ activeTab, onTabPress, isAddMenuOpen = false }) => {
       {tabs.map((tab, index) => renderTab(tab, index))}
     </View>
   );
-};
+});
+
+BottomNavigation.displayName = 'BottomNavigation';
 
 const styles = StyleSheet.create({
   container: {

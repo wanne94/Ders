@@ -28,9 +28,11 @@ export { getDefaultTime };
 export { formatDate, formatDateWithDay };
 
 // Default export for backward compatibility
-export default {
+const dateUtils = {
   getClientTodayString,
   getDefaultTime,
   formatDate,
   formatDateWithDay
 };
+
+export default dateUtils;

@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, Alert, FlatList, Text, SafeAreaView, RefreshControl, TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import UniverzalCard from '../components/UniverzalCard';
-import Menu from '../components/Menu';
 import { formatDateWithDay } from '../utils/dateUtils';
 import { sortLecturesByStatus } from '../utils/sortingUtils';
 import { SkeletonCardList } from '../components/SkeletonCard';
@@ -32,7 +30,6 @@ const UniversalPage = ({
   const [displayedData, setDisplayedData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const lectureDataset = useMemo(() => {
     if (!Array.isArray(lectures)) {
@@ -196,31 +193,10 @@ const UniversalPage = ({
     }
   };
 
-  const handleSearch = () => {
-    onNavigate?.('search');
-  };
 
-  const handleMenuPress = () => setMenuOpen(true);
   const handleBackPress = () => {
     onBack?.();
   };
-  const handleMenuClose = () => setMenuOpen(false);
-  const handleMenuNavigate = (path) => onNavigate?.(path);
-  const handleAuthNavigate = () => onNavigate?.('auth');
-
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('userRole');
-      onNavigate?.('home');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
-  const handleAddContent = () => onNavigate?.('add-content');
-  const handleAddContentWithType = (contentType) => onNavigate?.('add-content', { preselectedType: contentType });
-  const handleProfileNavigate = () => onNavigate?.('profile');
 
   const renderItem = useCallback(({ item }) => {
     if (!item) return null;
@@ -275,14 +251,6 @@ const UniversalPage = ({
               <Text style={styles.topBarSubtitle}>{pageConfig.subtitle}</Text>
             ) : null}
           </View>
-          <View style={styles.topBarActions}>
-            <TouchableOpacity style={styles.topBarButton} onPress={handleSearch}>
-              <Text style={styles.topBarButtonText}>🔍</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.topBarButton} onPress={handleMenuPress}>
-              <Text style={styles.topBarButtonText}>☰</Text>
-            </TouchableOpacity>
-          </View>
         </View>
         <View style={styles.loadingContainer}>
           <SkeletonCardList
@@ -290,18 +258,6 @@ const UniversalPage = ({
             type={type === 'lectures' ? 'lecture' : type === 'speakers' ? 'daija' : 'organization'}
           />
         </View>
-        <Menu
-          isOpen={menuOpen}
-          onClose={handleMenuClose}
-          onNavigate={handleMenuNavigate}
-          isAuthenticated={isAuthenticated || false}
-          user={user}
-          onAuthNavigate={handleAuthNavigate}
-          onLogout={handleLogout}
-          onAddContent={handleAddContent}
-          onAddContentWithType={handleAddContentWithType}
-          onProfileNavigate={handleProfileNavigate}
-        />
       </SafeAreaView>
     );
   }
@@ -321,14 +277,6 @@ const UniversalPage = ({
           {pageConfig.subtitle ? (
             <Text style={styles.topBarSubtitle}>{pageConfig.subtitle}</Text>
           ) : null}
-        </View>
-        <View style={styles.topBarActions}>
-          <TouchableOpacity style={styles.topBarButton} onPress={handleSearch}>
-            <Text style={styles.topBarButtonText}>🔍</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.topBarButton} onPress={handleMenuPress}>
-            <Text style={styles.topBarButtonText}>☰</Text>
-          </TouchableOpacity>
         </View>
       </View>
       <FlatList
@@ -362,19 +310,6 @@ const UniversalPage = ({
         }
         ListEmptyComponent={ListEmptyComponent}
         ListFooterComponent={ListFooterComponent}
-      />
-
-      <Menu
-        isOpen={menuOpen}
-        onClose={handleMenuClose}
-        onNavigate={handleMenuNavigate}
-        isAuthenticated={isAuthenticated || false}
-        user={user}
-        onAuthNavigate={handleAuthNavigate}
-        onLogout={handleLogout}
-        onAddContent={handleAddContent}
-        onAddContentWithType={handleAddContentWithType}
-        onProfileNavigate={handleProfileNavigate}
       />
     </SafeAreaView>
   );

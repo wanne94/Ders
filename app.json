@@ -1,6 +1,6 @@
 {
   "expo": {
-    "version": "1.3.1",
+    "version": "1.3.3",
     "extra": {
       "eas": {
         "projectId": "ad12abb0-43d3-4d86-bf43-bd14ab751159"
@@ -11,7 +11,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "36"
+      "buildNumber": "39"
     }
   }
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -734,10 +735,11 @@ const ProfilePage = () => {
                           group
                         `}
                       >
-                        <img
+                        <Image
                           src={getImageUrl(profile.image) || getDefaultImage()}
                           alt={profile.title || profile.name}
-                          className={`w-full ${type === 'lecture' ? 'h-full object-contain bg-black/5' : 'h-full object-cover'}`}
+                          fill
+                          className={`${type === 'lecture' ? 'object-contain bg-black/5' : 'object-cover'}`}
                           onError={(e) => {
                             e.target.onerror = null;
                             e.target.src = getDefaultImage();
@@ -1477,9 +1479,11 @@ const ProfilePage = () => {
               <DialogTitle>{getTitle()}</DialogTitle>
             </DialogHeader>
             <div className="relative">
-              <img
+              <Image
                 src={getImageUrl(profile.image) || getDefaultImage()}
                 alt={profile.title || profile.name}
+                width={1200}
+                height={800}
                 className="w-full h-auto rounded-lg"
                 onError={(e) => {
                   e.target.onerror = null;

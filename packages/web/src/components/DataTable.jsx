@@ -1,4 +1,5 @@
 import { useState, useMemo, memo, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { formatDaijaTitle } from '../utils';
 import {
   Table,
@@ -72,9 +73,11 @@ const ImageCell = memo(({ src, alt, defaultSrc }) => {
   };
   
   return (
-    <img
+    <Image
       src={imageSrc}
       alt={alt}
+      width={48}
+      height={48}
       onError={handleError}
       className="w-12 h-12 object-cover rounded border border-gray-200"
     />

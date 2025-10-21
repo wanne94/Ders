@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useImperativeHandle } from 'react';
 import {
   StyleSheet,
   Text,
@@ -26,7 +26,6 @@ import AuthScreen from './screens/AuthScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import AddContentMenu from './components/AddContentMenu';
 import AddContentPopup from './components/AddContentPopup';
-import SearchScreen from './screens/SearchScreen';
 import UpdateChecker from './components/UpdateChecker';
 import { ToastProvider } from './utils/ToastManager';
 import { SkeletonCardList } from './components/SkeletonCard';
@@ -57,9 +56,10 @@ const COLORS = {
 
 // API function to fetch lectures using apiClient with proper URL switching
 // Home Page Section List Component
-const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection }) => {
+const HomePageSectionList = React.memo(React.forwardRef(({ onProfileOpen, onNavigateToSection }, ref) => {
   const { lectures, daije, organizations, loading, refresh } = useAppData();
   const [refreshing, setRefreshing] = useState(false);
+  const sectionListRef = useRef(null);
 
   const lectureItems = useMemo(() => {
     if (!Array.isArray(lectures)) {
@@ -175,6 +175,21 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection }) 
     }
   }, [refresh]);
 
+  // Expose handleRefresh and scrollToTop to parent via ref
+  useImperativeHandle(ref, () => ({
+    refresh: handleRefresh,
+    scrollToTop: () => {
+      if (sectionListRef.current) {
+        sectionListRef.current.scrollToLocation({
+          sectionIndex: 0,
+          itemIndex: 0,
+          animated: true,
+          viewPosition: 0
+        });
+      }
+    }
+  }), [handleRefresh]);
+
   const renderItem = useCallback(({ item, section }) => (
     <UniverzalCard
       key={`${section.type}-${item._id || item.id}`}
@@ -237,6 +252,7 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection }) 
 
   return (
     <SectionList
+      ref={sectionListRef}
       sections={sections}
       renderItem={renderItem}
       renderSectionHeader={renderSectionHeader}
@@ -270,7 +286,7 @@ const HomePageSectionList = React.memo(({ onProfileOpen, onNavigateToSection }) 
       })}
     />
   );
-});
+}));
 
 // Main App Component
 const AppContent = () => {
@@ -281,6 +297,8 @@ const AppContent = () => {
   
   const [activeTab, setActiveTab] = useState('home');
   const universalPageRef = useRef(null);
+  const homePageRef = useRef(null);
+  const bottomNavRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showFormPopup, setShowFormPopup] = useState(false);
@@ -360,11 +378,38 @@ const AppContent = () => {
       setShowAddMenu(!showAddMenu);
       return;
     }
-    
-    // Removed auto-scroll to top when clicking same tab to prevent scroll issues
+
+    // If clicking on same tab, trigger animations and refresh
+    if (tab === activeTab) {
+      // Trigger bounce animation on the tab icon
+      bottomNavRef.current?.triggerBounce(tab);
+
+      // For home tab, scroll to top and refresh
+      if (tab === 'home') {
+        homePageRef.current?.scrollToTop();
+        // Small delay so scroll animation is visible before refresh
+        setTimeout(() => {
+          homePageRef.current?.refresh();
+        }, 200);
+      }
+      return;
+    }
+
+    // Normal tab navigation
     setActiveTab(tab);
   };
-  const handleLogoPress = () => setActiveTab('home');
+  const handleLogoPress = () => {
+    // If already on home, scroll to top and refresh
+    if (activeTab === 'home') {
+      homePageRef.current?.scrollToTop();
+      // Small delay so scroll animation is visible before refresh
+      setTimeout(() => {
+        homePageRef.current?.refresh();
+      }, 200);
+      return;
+    }
+    setActiveTab('home');
+  };
   const handleContentAdded = useCallback(() => {
     setShowFormPopup(false);
     setSelectedFormType(null);
@@ -405,7 +450,7 @@ const AppContent = () => {
   };
   
   const shouldShowBottomNavigation = () => {
-    return !['dashboard', 'auth', 'userProfile', 'search'].includes(activeTab);
+    return !['dashboard', 'auth', 'userProfile'].includes(activeTab);
   };
 
   // Main component render
@@ -413,7 +458,8 @@ const AppContent = () => {
     switch (activeTab) {
       case 'home':
         return (
-          <HomePageSectionList 
+          <HomePageSectionList
+            ref={homePageRef}
             onProfileOpen={handleProfileOpen}
             onNavigateToSection={(section) => setActiveTab(section)}
           />
@@ -424,8 +470,6 @@ const AppContent = () => {
         return <UniversalPage type="speakers" onBack={handleBack} onProfileOpen={handleProfileOpen} isAuthenticated={isAuthenticated} user={user} onNavigate={(screen) => setActiveTab(screen)} scrollRef={universalPageRef} />;
       case 'organizations':
         return <UniversalPage type="organizations" onBack={handleBack} onProfileOpen={handleProfileOpen} isAuthenticated={isAuthenticated} user={user} onNavigate={(screen) => setActiveTab(screen)} scrollRef={universalPageRef} />;
-      case 'search':
-        return <SearchScreen onBack={handleBack} onNavigate={(screen) => setActiveTab(screen)} onAddContent={handleAddContentOptionSelect} onProfileOpen={handleProfileOpen} />;
       case 'profile':
         return (
           <UniversalProfile 
@@ -468,7 +512,8 @@ const AppContent = () => {
 
       default:
         return (
-          <HomePageSectionList 
+          <HomePageSectionList
+            ref={homePageRef}
             onProfileOpen={handleProfileOpen}
             onNavigateToSection={(section) => setActiveTab(section)}
           />
@@ -488,6 +533,7 @@ const AppContent = () => {
 
       {shouldShowBottomNavigation() && (
         <BottomNavigation
+          ref={bottomNavRef}
           activeTab={activeTab}
           onTabPress={handleTabPress}
           isAddMenuOpen={showAddMenu}

@@ -19,6 +19,7 @@ import { uploadImage, getImageUrl } from '../../utils/imageUtils';
 import { parseApiError, parseImageUploadError, showDetailedErrorAlert } from '../../utils/errorUtils';
 import { checkConnectivityBeforeApiCall, showNetworkAlert } from '../../utils/networkUtils';
 import ImagePickerWithGallery from '../ImagePickerWithGallery';
+import apiCache from '../../services/apiCache';
 
 const COLORS = {
   primary: '#022C43',
@@ -215,16 +216,24 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
       if (editMode && editData?._id) {
         await daijeService.updateItem(editData._id, finalFormData);
         console.log('✅ Daija updated successfully');
+
+        // Clear daije cache to ensure fresh data on next load
+        await apiCache.clearCache('daije');
+
         Alert.alert(
-          'Uspjeh', 
+          'Uspjeh',
           'Daija je uspješno ažuriran!',
           [{ text: 'OK', onPress: () => onSuccess && onSuccess() }]
         );
       } else {
         await daijeService.createDaija(finalFormData);
         console.log('✅ Daija created successfully');
+
+        // Clear daije cache to ensure fresh data on next load
+        await apiCache.clearCache('daije');
+
         Alert.alert(
-          'Uspjeh', 
+          'Uspjeh',
           'Daija je uspješno dodan!',
           [{ text: 'OK', onPress: () => onSuccess && onSuccess() }]
         );

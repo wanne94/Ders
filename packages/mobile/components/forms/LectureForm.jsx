@@ -36,6 +36,7 @@ import Toast from '../Toast';
 import { uploadImage, getImageUrl } from '../../utils/imageUtils';
 import ImagePickerWithGallery from '../ImagePickerWithGallery';
 import { isAuthenticated as checkIsAuthenticated } from '../../utils/authHelpers';
+import apiCache from '../../services/apiCache';
 
 const COLORS = {
   primary: '#022C43',
@@ -664,7 +665,10 @@ const LectureForm = ({ onBack, onSuccess, editMode = false, editData = null }) =
         const message = showSeminarOptions ? 'Uspješno ste dodali seminar!' : 'Uspješno ste dodali predavanje!';
         Alert.alert('Uspjeh', message);
       }
-      
+
+      // Clear lectures cache to ensure fresh data on next load
+      await apiCache.clearCache('lectures');
+
       // Call success callback
       if (onSuccess) {
         onSuccess();

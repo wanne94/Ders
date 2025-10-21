@@ -31,6 +31,7 @@ import LoadingSkeleton from '../components/LoadingSkeleton';
 import { getImageUrl } from '../utils/imageUtils';
 import { appEvents, AUTH_EVENTS } from '../utils/eventEmitter';
 import RoleBadge from '../components/RoleBadge';
+import apiCache from '../services/apiCache';
 
 const { width, height } = Dimensions.get('window');
 
@@ -1026,8 +1027,18 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
                   Alert.alert('Greška', 'Nepoznat tip stavke');
                   return;
               }
-              
+
               await service.deleteItem(item._id);
+
+              // Clear cache based on item type
+              if (itemType === 'lecture') {
+                await apiCache.clearCache('lectures');
+              } else if (itemType === 'daija') {
+                await apiCache.clearCache('daije');
+              } else if (itemType === 'organization') {
+                await apiCache.clearCache('organizations');
+              }
+
               await handleDataChange();
               Alert.alert('Uspjeh', `"${itemName}" je uspješno obrisano`);
             } catch (error) {
@@ -1287,19 +1298,28 @@ const DashboardScreen = ({ onBack, userRole = 'admin', onDataChange }) => {
               }
 
               // Delete all selected items
-              const promises = selectedItems.map(id => 
-                service.deleteItem ? service.deleteItem(id) : 
+              const promises = selectedItems.map(id =>
+                service.deleteItem ? service.deleteItem(id) :
                 service.deleteUser ? service.deleteUser(id) :
                 Promise.reject('No delete method')
               );
-              
+
               await Promise.all(promises);
-              
+
+              // Clear cache based on item type
+              if (type === 'lectures' || type === 'lecture') {
+                await apiCache.clearCache('lectures');
+              } else if (type === 'daije' || type === 'daija') {
+                await apiCache.clearCache('daije');
+              } else if (type === 'organizations' || type === 'organization') {
+                await apiCache.clearCache('organizations');
+              }
+
               Alert.alert(
-                'Uspjeh', 
+                'Uspjeh',
                 `${selectedItems.length} stavki je uspješno obrisano`
               );
-              
+
               // Reset selection and refresh data
               setSelectedItems([]);
               setBulkMode(false);

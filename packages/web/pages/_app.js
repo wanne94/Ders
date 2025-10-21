@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Script from 'next/script';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { CssBaseline, Box, Snackbar, Alert } from '@mui/material';
@@ -70,6 +71,21 @@ function MyApp({ Component, pageProps }) {
         <title>Ders</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
+
+      {/* Google Analytics */}
+      <Script
+        src="https://www.googletagmanager.com/gtag/js?id=G-2PXHZSFM8R"
+        strategy="afterInteractive"
+      />
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-2PXHZSFM8R');
+        `}
+      </Script>
+
       <CssBaseline />
       <LocalizationProvider 
         dateAdapter={AdapterDateFns} 

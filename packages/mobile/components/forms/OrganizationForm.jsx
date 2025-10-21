@@ -19,6 +19,7 @@ import { uploadImage, getImageUrl } from '../../utils/imageUtils';
 import { parseApiError, parseImageUploadError, showDetailedErrorAlert } from '../../utils/errorUtils';
 import { checkConnectivityBeforeApiCall, showNetworkAlert } from '../../utils/networkUtils';
 import ImagePickerWithGallery from '../ImagePickerWithGallery';
+import apiCache from '../../services/apiCache';
 
 const COLORS = {
   primary: '#022C43',
@@ -207,16 +208,24 @@ const OrganizationForm = ({ onBack, onSuccess, editMode = false, editData = null
       if (editMode && editData?._id) {
         await udruzenjaService.updateItem(editData._id, finalFormData);
         console.log('✅ Organization updated successfully');
+
+        // Clear organizations cache to ensure fresh data on next load
+        await apiCache.clearCache('organizations');
+
         Alert.alert(
-          'Uspjeh', 
+          'Uspjeh',
           'Udruženje je uspješno ažurirano!',
           [{ text: 'OK', onPress: () => onSuccess && onSuccess() }]
         );
       } else {
         await udruzenjaService.createUdruzenje(finalFormData);
         console.log('✅ Organization created successfully');
+
+        // Clear organizations cache to ensure fresh data on next load
+        await apiCache.clearCache('organizations');
+
         Alert.alert(
-          'Uspjeh', 
+          'Uspjeh',
           'Udruženje je uspješno dodano!',
           [{ text: 'OK', onPress: () => onSuccess && onSuccess() }]
         );
