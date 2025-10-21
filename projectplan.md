@@ -124,14 +124,16 @@ Detaljna analiza mobile (Expo/React Native) i web (Next.js) aplikacije u skladu 
 **Akcija**:
 - 🔄 Razdvojiti routes u separate fajlove
   - ✅ Kreiran `routes/settingsRoutes.js` (2 endpoints)
-  - ⏳ U toku: `routes/suggestionsRoutes.js` (6 endpoints)
-  - ⏳ Planirano: `routes/daijeRoutes.js`
-  - ⏳ Planirano: `routes/organizationsRoutes.js`
+  - ✅ Kreiran `routes/suggestionsRoutes.js` (6 endpoints)
+  - ✅ Kreiran `routes/daijeRoutes.js` (12 endpoints)
+  - ✅ Kreiran `routes/organizationsRoutes.js` (13 endpoints)
+  - ⏳ Preostaje: Mountanje route-ova u index.js
+  - ⏳ Preostaje: Uklanjanje starih route definicija iz index.js
 - ⏳ Middleware već u posebnom folderu
 - ⏳ Database config već razdvojen
 - ⏳ Error handling za review
 
-**Napredak**: 10% završeno
+**Napredak**: 50% završeno (route fajlovi kreirani, preostaje mountanje u index.js)
 **Cilj**: Max 200 linija za main server file
 
 ---
