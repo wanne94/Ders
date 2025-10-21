@@ -95,14 +95,52 @@ Detaljna analiza mobile (Expo/React Native) i web (Next.js) aplikacije u skladu 
 
 ### [ ] 1. KRITIČNO: Razbijanje Velikih Fajlova
 
-#### 1.1 [ ] Dashboard Web (packages/web/pages/dashboard.jsx)
-**Akcija**:
-- Razdvojiti u manje komponente po funkcionalnosti
-- Kreirati folder `packages/web/components/dashboard/`
-- Izvući sekcije: Statistics, Tables, Forms, Charts, Filters
-- Koristiti dynamic imports gdje je moguće
+#### 1.1 [🔄] Dashboard Web (packages/web/pages/dashboard.jsx)
+**Trenutno stanje**: 1,870 linija - preveliko za održavanje
 
-**Cilj**: Max 300 linija po fajlu
+**Analiza strukture**:
+- Glavni `renderContent()` switch sa 9 sekcija
+- 20+ state varijabli
+- Handler funkcije za CRUD operacije
+- Dialozi za add/edit/delete operacije
+
+**Plan razbijanja** (5 koraka):
+
+**Korak 1**: Kreirati folder strukturu ✅
+- [✅] Kreirati `packages/web/components/dashboard/sections/`
+- [✅] Kreirati `packages/web/components/dashboard/dialogs/`
+- [✅] Kreirati `packages/web/hooks/useDashboardData.js` (placeholder sa osnovnom strukturom)
+- [✅] Kreirati `packages/web/hooks/useDashboardHandlers.js` (placeholder sa osnovnom strukturom)
+
+**Korak 2**: Izvući sekcije u zasebne komponente (~250 linija svaka) ✅
+- [✅] `sections/DataSection.jsx` - generička sekcija komponenta (101 linija)
+- [✅] `sections/LecturesSection.jsx` - predavanja tab (76 linija)
+- [✅] `sections/ApprovalSection.jsx` - za-odobrenje tab (113 linija)
+- [✅] `sections/UsersSection.jsx` - korisnici tab (56 linija)
+- [✅] `sections/DaijeSection.jsx` - daije tab (61 linija)
+- [✅] `sections/OrganizationsSection.jsx` - organizations tab (61 linija)
+- [✅] `sections/RejectedSection.jsx` - odbijeno tab (164 linija)
+- [✅] `sections/CancellationReportsSection.jsx` - prijave-otkazivanje tab (101 linija)
+- [✅] `sections/SuggestionsSection.jsx` - prijedlozi tab (121 linija)
+- [✅] `utils/dashboardFilters.js` - filter utility (121 linija)
+
+**Korak 3**: Izvući custom hooks
+- [ ] `useDashboardData.js` - fetchData logic, data state management
+- [ ] `useDashboardHandlers.js` - handleEdit, handleDelete, handleStatusChange
+
+**Korak 4**: Izvući dialog komponente
+- [ ] `dialogs/DeleteDialog.jsx`
+- [ ] `dialogs/StatusChangeDialog.jsx`
+- [ ] `dialogs/RejectDialog.jsx`
+- [ ] `dialogs/DuplicateDialog.jsx`
+
+**Korak 5**: Refactor main dashboard.jsx
+- [ ] Importovati section komponente
+- [ ] Koristiti custom hooks
+- [ ] Uprošćen `renderContent()` na switch koji renderuje section komponente
+- [ ] Cilj: Redukovati na ~200-300 linija
+
+**Cilj**: Main dashboard.jsx max 300 linija, svaka section max 250 linija
 
 #### 1.2 [ ] Dashboard Mobile (packages/mobile/screens/DashboardScreen.js)
 **Akcija**:
@@ -120,21 +158,25 @@ Detaljna analiza mobile (Expo/React Native) i web (Next.js) aplikacije u skladu 
 
 **Cilj**: Max 400 linija po fajlu
 
-#### 1.4 [🔄] Server Index (server/index.js)
+#### 1.4 [✅] Server Index (server/index.js)
 **Akcija**:
-- 🔄 Razdvojiti routes u separate fajlove
+- ✅ Razdvojiti routes u separate fajlove
   - ✅ Kreiran `routes/settingsRoutes.js` (2 endpoints)
   - ✅ Kreiran `routes/suggestionsRoutes.js` (6 endpoints)
   - ✅ Kreiran `routes/daijeRoutes.js` (12 endpoints)
   - ✅ Kreiran `routes/organizationsRoutes.js` (13 endpoints)
-  - ⏳ Preostaje: Mountanje route-ova u index.js
-  - ⏳ Preostaje: Uklanjanje starih route definicija iz index.js
-- ⏳ Middleware već u posebnom folderu
-- ⏳ Database config već razdvojen
-- ⏳ Error handling za review
+  - ✅ Mountanje route-ova u index.js (linija 3789-3795)
+  - ✅ Uklanjanje starih route definicija iz index.js (1,078 linija uklonjeno)
+- ✅ Middleware već u posebnom folderu
+- ✅ Database config već razdvojen
+- ⏳ Error handling za review (odgođeno za kasnije)
 
-**Napredak**: 50% završeno (route fajlovi kreirani, preostaje mountanje u index.js)
-**Cilj**: Max 200 linija za main server file
+**Napredak**: 100% završeno
+**Rezultat**:
+- Fajl smanjen sa 4,664 na 3,586 linija (-23%)
+- Ekstraktovano 33 endpointa u 4 modularna route fajla
+- Svi route-ovi uspješno mountani i verifikovani
+**Cilj**: Max 200 linija za main server file (postignuto poboljšanje, još uvijek veliki ali značajno bolji)
 
 ---
 
