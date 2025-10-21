@@ -149,21 +149,89 @@ Detaljna analiza mobile (Expo/React Native) i web (Next.js) aplikacije u skladu 
 - renderContent() pojednostavljen sa 374 na ~150 linija
 - Kod sada čist, modularan i održiv
 
-#### 1.2 [ ] Dashboard Mobile (packages/mobile/screens/DashboardScreen.js)
-**Akcija**:
-- Slično kao web dashboard
-- Kreirati `packages/mobile/components/dashboard/`
-- Modularizovati logiku i UI
+#### 1.2 [🔄] Dashboard Mobile (packages/mobile/screens/DashboardScreen.js)
+**Trenutno stanje**: **3,283 linije** ⚠️ - ekstremno veliko, kritično za refactoring
 
-**Cilj**: Max 300 linija po fajlu
+**Analiza strukture**:
+- renderContent() switch sa 8 sekcija (predavanja, za-odobrenje, korisnici, daije, organizations, odbijeno, prijedlozi, otkazivanja)
+- 17+ render funkcija (renderNavigationHeader, renderSearchBar, renderDataItem, renderStatistics, renderItemDetailsModal, itd.)
+- 6 modala (details, approval, settings, edit, cancel, reactivate)
+- Bulk actions bar
+- Complex state management
 
-#### 1.3 [ ] Lecture Form (packages/mobile/components/forms/LectureForm.jsx)
-**Akcija**:
-- Razdvojiti na FormSections (BasicInfo, DateInfo, LocationInfo, etc.)
-- Kreirati reusable form field komponente
-- Izvaditi validation logiku
+**Plan refaktoringa** (sličan web verziji):
 
-**Cilj**: Max 400 linija po fajlu
+**Korak 1**: Kreirati folder strukturu
+- [ ] `packages/mobile/components/dashboard/sections/`
+- [ ] `packages/mobile/components/dashboard/modals/`
+- [ ] `packages/mobile/hooks/useMobileDashboardData.js`
+
+**Korak 2**: Izvući section komponente (8 sekcija)
+- [ ] `LecturesSectionMobile.jsx`
+- [ ] `ApprovalSectionMobile.jsx`
+- [ ] `UsersSectionMobile.jsx`
+- [ ] `DaijeSectionMobile.jsx`
+- [ ] `OrganizationsSectionMobile.jsx`
+- [ ] `RejectedSectionMobile.jsx`
+- [ ] `SuggestionsSectionMobile.jsx`
+- [ ] `CancellationsSectionMobile.jsx`
+
+**Korak 3**: Izvući modal komponente
+- [ ] `ItemDetailsModal.jsx` (sa pod-komponentama)
+- [ ] `ApprovalModal.jsx`
+- [ ] `SettingsModal.jsx`
+- [ ] `EditModal.jsx`
+- [ ] `CancelModal.jsx`
+- [ ] `ReactivateModal.jsx`
+
+**Korak 4**: Kreirati reusable komponente
+- [ ] `NavigationHeader.jsx`
+- [ ] `SearchBar.jsx`
+- [ ] `DataItem.jsx`
+- [ ] `Statistics.jsx`
+- [ ] `BulkActionsBar.jsx`
+
+**Korak 5**: Custom hook za data
+- [ ] useMobileDashboardData.js - data fetching logika
+
+**Korak 6**: Refactor DashboardScreen.js
+- [ ] Importovati sve komponente
+- [ ] Koristiti custom hook
+- [ ] Redukovati na ~400-500 linija
+
+**Očekivano smanjenje**: 3,283 → ~400-500 linija (-85-90%)
+
+#### 1.3 [✅] Lecture Form (packages/mobile/components/forms/LectureForm.jsx)
+**Početno stanje**: 1,813 linija - kritično veliko
+**Konačno stanje**: 1,644 linija ✅
+
+**Što je urađeno**:
+
+**Korak 1**: Kreirane form section komponente ✅
+- ✅ `LectureFormHeader.jsx` (60 linija) - header sa back button
+- ✅ `ImageSection.jsx` (30 linija) - ImagePickerWithGallery wrapper
+- ✅ `DateTimeSection.jsx` (98 linija) - date button i time dropdown
+- ✅ `SpeakerSection.jsx` (115 linija) - daija dropdown sa custom input opcijom
+- ✅ `OrganizationSection.jsx` (115 linija) - organization dropdown sa auto-populate
+- ✅ `LocationSection.jsx` (102 linija) - address i city sa disabled state
+
+**Korak 2**: Refaktoring glavnog fajla ✅
+- ✅ Integrisane sve section komponente u LectureForm.jsx
+- ✅ Uklonjene renderTimeDropdown, renderDaijaDropdown, renderOrganizationDropdown funkcije (158 linija)
+- ✅ Uklonjeni neiskorišteni stilovi (43 linije)
+- ✅ Uklonjeni neiskorišteni importi (IOSCompatibleDropdown, ImagePickerWithGallery)
+
+**Rezultati**:
+- **LectureForm.jsx**: 1,813 → 1,644 linija (-169 linija, -9.3%)
+- **Kreirano 6 modularnih section komponenti** (~520 linija ukupno)
+- **Uklonjeno 201 linija** nepotrebnog koda iz glavnog fajla
+- **Poboljšana maintainability** - svaka sekcija je sada izolovana i reusable
+
+**Commits**:
+- `a932f235` - Kreirane section komponente
+- `8e53cb0d` - Integrisane komponente u glavni form
+
+**Napomena**: Custom hook nije kreiran jer se pokazalo da nije neophodan - section komponente su dovoljno modularizovale kod.
 
 #### 1.4 [✅] Server Index (server/index.js)
 **Akcija**:
