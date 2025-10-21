@@ -1,558 +1,391 @@
-# Plan Analize i Poboljšanja: Web i Mobile Aplikacije (DERS.BA)
+# Plan Nastavka Refaktorisanja - Dashboard Mobile
 
 ## Datum: 2025-10-21
 
-## Pregled
+## Trenutno Stanje
 
-Detaljna analiza mobile (Expo/React Native) i web (Next.js) aplikacije u skladu sa najboljim praksama tehnologija koje se koriste, identifikacija problema i predložena poboljšanja.
+### ✅ Završeno (Commitovano)
+1. **Dashboard Web** - potpuno refaktorisan (1,870 → 1,368 linija)
+2. **LectureForm** - potpuno refaktorisan (1,813 → 1,644 linija)
+3. **Server Index** - ekstraktovani route moduli (4,664 → 3,586 linija)
+4. **Verzije** - sinhronizovane na 1.3.3
+5. **Dead Code** - očišćen App.backup.js
 
----
+### 🔄 Započeto Ali Nije Završeno
+**Dashboard Mobile (packages/mobile/screens/DashboardScreen.js)**
+- **Trenutno**: 3,283 linije ⚠️
+- **Kreirano**:
+  - ✅ Folder struktura (sections/, modals/, hooks/)
+  - ✅ 3 reusable komponente (Statistics, NavigationHeader, SearchBar)
+  - ✅ Placeholder hook (useMobileDashboardData.js)
 
-## Trenutno Stanje Projekta
-
-### Tehnologije
-**Mobile (packages/mobile):**
-- React Native 0.81.4
-- Expo SDK 54
-- React 19.1.0
-- React Navigation v7 (bottom-tabs, stack)
-
-**Web (packages/web):**
-- Next.js 15.5.4 (App Router)
-- React 19.1.0
-- Material UI v6.1.10
-- Tailwind CSS 3.4.17
-
-**Backend (server):**
-- Express.js 4.18.2
-- MongoDB/Mongoose 7.8.7
+### ⚠️ Uncommitted Changes
+- **server/index.js**: 1,078 linija obrisano (treba provjeriti i commitovati)
+- **.claude/settings.local.json**: dodato tree command u allow listu
 
 ---
 
-## Identifikovani Problemi
+## Analiza DashboardScreen.js Strukture
 
-### 🔴 Kritični Problemi
+### Render Funkcije (10 funkcija)
+1. ✅ renderNavigationHeader → već u NavigationHeader.jsx
+2. ✅ renderSearchBar → već u SearchBar.jsx
+3. ✅ renderStatistics → već u Statistics.jsx
+4. ❌ renderDataItem → treba ekstraktovati u DataItem.jsx
+5. ❌ renderBulkActionsBar → treba ekstraktovati u BulkActionsBar.jsx
+6. ❌ renderContent → glavni switch (ostavlja se ali pojednostavljuje)
+7-10. ❌ renderModals (7 modala) → treba ekstraktovati
 
-#### 1. **Preveliki Fajlovi (Teška Održivost)**
-- `packages/web/pages/dashboard.jsx`: **1,870 linija** ⚠️
-- `packages/mobile/screens/DashboardScreen.js`: **105.6 KB** ⚠️
-- `packages/mobile/components/forms/LectureForm.jsx`: **58.5 KB** ⚠️
-- `server/index.js`: **4,659 linija** ⚠️
+### Sekcije u renderContent (9 sekcija)
+1. **dashboard** - statistike (već pokriveno Statistics.jsx)
+2. **predavanja** - lectures list
+3. **organizations** - organizations list
+4. **daije** - daije list
+5. **korisnici** - users list
+6. **za-odobrenje** - pending approvals
+7. **odbijeno** - rejected items
+8. **prijedlozi** - suggestions
+9. **otkazivanja** - cancellation reports
 
-**Problem**: Ovi fajlovi su ekstremno veliki i teški za održavanje, testiranje i debugging.
-
-#### 2. **Nekonzistentne Verzije**
-- Root package.json: v1.3.0
-- Mobile package.json: v1.3.2
-- Web package.json: v1.3.0
-- app.json: v1.3.3
-
-**Problem**: Može dovesti do zbunjivosti i problema pri deploymentu.
-
-#### 3. **663 TODO/FIXME Komentara**
-**Problem**: Pokazuje visok nivo tehničkog duga koji treba riješiti.
-
-### 🟡 Srednji Prioritet
-
-#### 4. **Material UI v6 - Zastarjela Upotreba**
-**Problemi**:
-- Možda se ne koristi novi `theme.applyStyles()` API za dark mode
-- Možda nedostaje `cssVariables: true` konfiguracija
-- Potencijalno nema podrške za `colorSchemes`
-
-#### 5. **Next.js 15 App Router - Potencijalne Probleme**
-**Problemi**:
-- Potrebno provjeriti da li se koriste `async` komponente gdje je moguće
-- Da li se koristi novi `generateStaticParams` pattern
-- Cache strategije (`force-cache`, `no-store`, `revalidate`)
-
-#### 6. **React Navigation v7 - TypeScript Tipovi**
-**Problemi**:
-- Nema definisanih type-safe navigation tipova
-- Nedostaju `ParamList` definicije
-- Nema globalnog `RootParamList` type-a
-
-#### 7. **Expo SDK 54 - Konfiguracija**
-**Problemi**:
-- Provjeriti da li je `newArchEnabled` postavljen
-- Provjeriti `eas.json` konfiguraciju
-- Optimizacija app ikona i splash screen-a
-
-#### 8. **Deleted Search Functionality**
-**Problem**: SearchScreen, SearchBar i searchService obrisani bez čišćenja referenci.
-
-### 🟢 Niži Prioritet
-
-#### 9. **Duplicate Code između Mobile/Web**
-**Problem**: Neki kod je dupliciran umjesto da se koristi iz shared paketa.
-
-#### 10. **Nedostaju Tests**
-**Problem**: "no tests specified" greška u serveru, nepoznato test coverage.
+### Modali (7 modala)
+1. **ItemDetailsModal** - prikazuje detalje (lectures, daije, org, users, suggestions, reports)
+2. **ApprovalModal** - approve/reject modal
+3. **SettingsModal** - approval settings
+4. **EditModal** - edit existing items
+5. **CancelModal** - cancel lecture
+6. **ReactivateModal** - reactivate cancelled lecture
+7. **BulkActionsBar** - bulk selection i actions (tehnički nije modal)
 
 ---
 
-## TODO Lista (Prioritizovana)
+## TODO Lista
 
-### [ ] 1. KRITIČNO: Razbijanje Velikih Fajlova
+### [ ] 1. Riješiti Uncommitted Changes
 
-#### 1.1 [✅] Dashboard Web (packages/web/pages/dashboard.jsx)
-**Početno stanje**: 1,870 linija - preveliko za održavanje
-**Konačno stanje**: 1,368 linija ✅
-**Smanenje**: 502 linije (-27%)
-
-**Analiza strukture**:
-- Glavni `renderContent()` switch sa 9 sekcija
-- 20+ state varijabli
-- Handler funkcije za CRUD operacije
-- Dialozi za add/edit/delete operacije
-
-**Plan razbijanja** (5 koraka):
-
-**Korak 1**: Kreirati folder strukturu ✅
-- [✅] Kreirati `packages/web/components/dashboard/sections/`
-- [✅] Kreirati `packages/web/components/dashboard/dialogs/`
-- [✅] Kreirati `packages/web/hooks/useDashboardData.js` (placeholder sa osnovnom strukturom)
-- [✅] Kreirati `packages/web/hooks/useDashboardHandlers.js` (placeholder sa osnovnom strukturom)
-
-**Korak 2**: Izvući sekcije u zasebne komponente (~250 linija svaka) ✅
-- [✅] `sections/DataSection.jsx` - generička sekcija komponenta (101 linija)
-- [✅] `sections/LecturesSection.jsx` - predavanja tab (76 linija)
-- [✅] `sections/ApprovalSection.jsx` - za-odobrenje tab (113 linija)
-- [✅] `sections/UsersSection.jsx` - korisnici tab (56 linija)
-- [✅] `sections/DaijeSection.jsx` - daije tab (61 linija)
-- [✅] `sections/OrganizationsSection.jsx` - organizations tab (61 linija)
-- [✅] `sections/RejectedSection.jsx` - odbijeno tab (164 linija)
-- [✅] `sections/CancellationReportsSection.jsx` - prijave-otkazivanje tab (101 linija)
-- [✅] `sections/SuggestionsSection.jsx` - prijedlozi tab (121 linija)
-- [✅] `utils/dashboardFilters.js` - filter utility (121 linija)
-
-**Korak 3**: Izvući custom hooks
-- [ ] `useDashboardData.js` - fetchData logic, data state management
-- [ ] `useDashboardHandlers.js` - handleEdit, handleDelete, handleStatusChange
-
-**Korak 4**: Izvući dialog komponente
-- [ ] `dialogs/DeleteDialog.jsx`
-- [ ] `dialogs/StatusChangeDialog.jsx`
-- [ ] `dialogs/RejectDialog.jsx`
-- [ ] `dialogs/DuplicateDialog.jsx`
-
-**Korak 5**: Refactor main dashboard.jsx ✅
-- [✅] Importovati section komponente (8 sekcija)
-- [✅] Koristiti useDashboardData hook
-- [✅] Ukloniti lokalni fetchData i filterData (207 linija)
-- [✅] Uprošćen `renderContent()` na čist switch sa section komponentama
-- [✅] Ukloniti renderSection funkciju (50 linija)
-
-**Rezultat**:
-- Dashboard.jsx: 1,870 → 1,368 linija (-502 linije, -27%)
-- Ekstraktovano u 9 section komponenti + 1 utility + 1 hook
-- renderContent() pojednostavljen sa 374 na ~150 linija
-- Kod sada čist, modularan i održiv
-
-#### 1.2 [🔄] Dashboard Mobile (packages/mobile/screens/DashboardScreen.js)
-**Trenutno stanje**: **3,283 linije** ⚠️ - ekstremno veliko, kritično za refactoring
-
-**Analiza strukture**:
-- renderContent() switch sa 8 sekcija (predavanja, za-odobrenje, korisnici, daije, organizations, odbijeno, prijedlozi, otkazivanja)
-- 17+ render funkcija (renderNavigationHeader, renderSearchBar, renderDataItem, renderStatistics, renderItemDetailsModal, itd.)
-- 6 modala (details, approval, settings, edit, cancel, reactivate)
-- Bulk actions bar
-- Complex state management
-
-**Plan refaktoringa** (sličan web verziji):
-
-**Korak 1**: Kreirati folder strukturu
-- [ ] `packages/mobile/components/dashboard/sections/`
-- [ ] `packages/mobile/components/dashboard/modals/`
-- [ ] `packages/mobile/hooks/useMobileDashboardData.js`
-
-**Korak 2**: Izvući section komponente (8 sekcija)
-- [ ] `LecturesSectionMobile.jsx`
-- [ ] `ApprovalSectionMobile.jsx`
-- [ ] `UsersSectionMobile.jsx`
-- [ ] `DaijeSectionMobile.jsx`
-- [ ] `OrganizationsSectionMobile.jsx`
-- [ ] `RejectedSectionMobile.jsx`
-- [ ] `SuggestionsSectionMobile.jsx`
-- [ ] `CancellationsSectionMobile.jsx`
-
-**Korak 3**: Izvući modal komponente
-- [ ] `ItemDetailsModal.jsx` (sa pod-komponentama)
-- [ ] `ApprovalModal.jsx`
-- [ ] `SettingsModal.jsx`
-- [ ] `EditModal.jsx`
-- [ ] `CancelModal.jsx`
-- [ ] `ReactivateModal.jsx`
-
-**Korak 4**: Kreirati reusable komponente
-- [ ] `NavigationHeader.jsx`
-- [ ] `SearchBar.jsx`
-- [ ] `DataItem.jsx`
-- [ ] `Statistics.jsx`
-- [ ] `BulkActionsBar.jsx`
-
-**Korak 5**: Custom hook za data
-- [ ] useMobileDashboardData.js - data fetching logika
-
-**Korak 6**: Refactor DashboardScreen.js
-- [ ] Importovati sve komponente
-- [ ] Koristiti custom hook
-- [ ] Redukovati na ~400-500 linija
-
-**Očekivano smanjenje**: 3,283 → ~400-500 linija (-85-90%)
-
-#### 1.3 [✅] Lecture Form (packages/mobile/components/forms/LectureForm.jsx)
-**Početno stanje**: 1,813 linija - kritično veliko
-**Konačno stanje**: 1,644 linija ✅
-
-**Što je urađeno**:
-
-**Korak 1**: Kreirane form section komponente ✅
-- ✅ `LectureFormHeader.jsx` (60 linija) - header sa back button
-- ✅ `ImageSection.jsx` (30 linija) - ImagePickerWithGallery wrapper
-- ✅ `DateTimeSection.jsx` (98 linija) - date button i time dropdown
-- ✅ `SpeakerSection.jsx` (115 linija) - daija dropdown sa custom input opcijom
-- ✅ `OrganizationSection.jsx` (115 linija) - organization dropdown sa auto-populate
-- ✅ `LocationSection.jsx` (102 linija) - address i city sa disabled state
-
-**Korak 2**: Refaktoring glavnog fajla ✅
-- ✅ Integrisane sve section komponente u LectureForm.jsx
-- ✅ Uklonjene renderTimeDropdown, renderDaijaDropdown, renderOrganizationDropdown funkcije (158 linija)
-- ✅ Uklonjeni neiskorišteni stilovi (43 linije)
-- ✅ Uklonjeni neiskorišteni importi (IOSCompatibleDropdown, ImagePickerWithGallery)
-
-**Rezultati**:
-- **LectureForm.jsx**: 1,813 → 1,644 linija (-169 linija, -9.3%)
-- **Kreirano 6 modularnih section komponenti** (~520 linija ukupno)
-- **Uklonjeno 201 linija** nepotrebnog koda iz glavnog fajla
-- **Poboljšana maintainability** - svaka sekcija je sada izolovana i reusable
-
-**Commits**:
-- `a932f235` - Kreirane section komponente
-- `8e53cb0d` - Integrisane komponente u glavni form
-
-**Napomena**: Custom hook nije kreiran jer se pokazalo da nije neophodan - section komponente su dovoljno modularizovale kod.
-
-#### 1.4 [✅] Server Index (server/index.js)
+#### [❌] 1.1 Provjeriti server/index.js promjene
 **Akcija**:
-- ✅ Razdvojiti routes u separate fajlove
-  - ✅ Kreiran `routes/settingsRoutes.js` (2 endpoints)
-  - ✅ Kreiran `routes/suggestionsRoutes.js` (6 endpoints)
-  - ✅ Kreiran `routes/daijeRoutes.js` (12 endpoints)
-  - ✅ Kreiran `routes/organizationsRoutes.js` (13 endpoints)
-  - ✅ Mountanje route-ova u index.js (linija 3789-3795)
-  - ✅ Uklanjanje starih route definicija iz index.js (1,078 linija uklonjeno)
-- ✅ Middleware već u posebnom folderu
-- ✅ Database config već razdvojen
-- ⏳ Error handling za review (odgođeno za kasnije)
+- Pregledati diff i vidjeti da li su endpointi pravilno premješteni u route module
+- Ako su pravilno premješteni, commitovati promjene
+- Ako nije, popraviti prije commita
+- Testirati da endpointi rade
 
-**Napredak**: 100% završeno
-**Rezultat**:
-- Fajl smanjen sa 4,664 na 3,586 linija (-23%)
-- Ekstraktovano 33 endpointa u 4 modularna route fajla
-- Svi route-ovi uspješno mountani i verifikovani
-**Cilj**: Max 200 linija za main server file (postignuto poboljšanje, još uvijek veliki ali značajno bolji)
+#### [❌] 1.2 Commitovati settings promjene
+**Akcija**:
+- Commitovati .claude/settings.local.json sa odgovarajućom porukom
 
 ---
 
-### [✅] 2. Sinhronizacija Verzija
+### [ ] 2. Kreirati Reusable Komponente (2 komponente)
 
-**Akcija**:
-- ✅ Odlučena jedinstvena verzija: **1.3.3**
-- ✅ Ažurirani svi package.json fajlovi
-- ✅ app.json već imao 1.3.3
-- ✅ Version management: koristiti app.json kao source of truth
+#### [❌] 2.1 Ekstraktovati DataItem.jsx
+**Lokacija**: `packages/mobile/components/dashboard/DataItem.jsx`
+**Opis**: Item komponenta za liste (lectures, daije, organizations, users, etc.)
+**Veličina**: ~150-200 linija
+**Funkcionalnost**:
+- Prikazuje jedan item u listi
+- Different rendering za različite tipove (lecture, daija, organization, user, suggestion, report)
+- Selection checkbox (bulk mode)
+- Tap handler za otvaranje details modala
+- Action buttons (approve, reject, edit, cancel, etc.)
 
-**Fajlovi ažurirani**:
-- ✅ `/package.json` - 1.3.0 → 1.3.3
-- ✅ `/packages/mobile/package.json` - 1.3.2 → 1.3.3
-- ✅ `/packages/web/package.json` - 1.3.0 → 1.3.3
-- ✅ `/app.json` - već 1.3.3
-
----
-
-### [ ] 3. Material UI v6 Modernizacija
-
-#### 3.1 [ ] Dodati CSS Variables Support
-**Akcija**:
-```javascript
-// packages/web/src/theme.js (ili kako god se zove)
-const theme = createTheme({
-  cssVariables: true,
-  colorSchemes: { dark: true },
-  // ... ostalo
-});
-```
-
-#### 3.2 [ ] Zamjeniti theme.palette.mode sa theme.applyStyles()
-**Akcija**:
-- Pronaći sve instance `theme.palette.mode === 'dark'`
-- Zamjeniti sa `theme.applyStyles('dark', { ... })`
-- Ovo rješava SSR flickering probleme
-
-**Primjer**:
-```javascript
-// PRIJE
-const StyledComponent = styled('div')(({ theme }) => ({
-  background: theme.palette.mode === 'dark' ? '#000' : '#fff',
-}));
-
-// POSLIJE
-const StyledComponent = styled('div')(({ theme }) => ({
-  background: '#fff',
-  ...theme.applyStyles('dark', {
-    background: '#000',
-  }),
-}));
-```
-
-#### 3.3 [ ] Dodati useColorScheme Hook
-**Akcija**:
-- Dodati mode switcher komponentu
-- Koristiti `useColorScheme` umjesto custom rješenja
+#### [❌] 2.2 Ekstraktovati BulkActionsBar.jsx
+**Lokacija**: `packages/mobile/components/dashboard/BulkActionsBar.jsx`
+**Opis**: Bulk selection bar sa action buttons
+**Veličina**: ~100-120 linija
+**Funkcionalnost**:
+- Show/hide based na bulkMode
+- Selection counter
+- Bulk approve/reject/delete actions
+- Clear selection
 
 ---
 
-### [ ] 4. Next.js 15 Optimizacije
+### [ ] 3. Kreirati Section Komponente (8 sekcija)
 
-#### 4.1 [ ] Provjeriti i Optimizovati Server Components
-**Akcija**:
-- Pregledati sve page.tsx/jsx fajlove
-- Osigurati da su async gdje je potrebno data fetching
-- Dodati proper type definitions
+**Napomena**: Dashboard sekcija već pokrivena sa Statistics.jsx
 
-#### 4.2 [ ] Implementirati Proper Cache Strategies
-**Akcija**:
-```typescript
-// Static data (cached)
-const staticData = await fetch('...', { cache: 'force-cache' });
+#### [❌] 3.1 LecturesSectionMobile.jsx
+**Lokacija**: `packages/mobile/components/dashboard/sections/LecturesSectionMobile.jsx`
+**Opis**: Lista predavanja sa search i filter
+**Veličina**: ~200-250 linija
+**Funkcionalnost**:
+- FlatList sa lectures
+- Koristi DataItem komponentu
+- Search query filter
+- Active filters podrška
+- Pull-to-refresh
 
-// Dynamic data (not cached)
-const dynamicData = await fetch('...', { cache: 'no-store' });
+#### [❌] 3.2 OrganizationsSectionMobile.jsx
+**Lokacija**: `packages/mobile/components/dashboard/sections/OrganizationsSectionMobile.jsx`
+**Opis**: Lista organizacija
+**Veličina**: ~150-200 linija
 
-// ISR (revalidate every 10s)
-const revalidatedData = await fetch('...', {
-  next: { revalidate: 10 }
-});
-```
+#### [❌] 3.3 DaijeSectionMobile.jsx
+**Lokacija**: `packages/mobile/components/dashboard/sections/DaijeSectionMobile.jsx`
+**Opis**: Lista daija
+**Veličina**: ~150-200 linija
 
-#### 4.3 [ ] Dodati generateStaticParams za Dynamic Routes
-**Akcija**:
-- Implementirati za `/daija/[id]`, `/lecture/[id]`, `/organization/[id]`
-- Pre-render najčešće stranice
+#### [❌] 3.4 UsersSectionMobile.jsx
+**Lokacija**: `packages/mobile/components/dashboard/sections/UsersSectionMobile.jsx`
+**Opis**: Lista korisnika
+**Veličina**: ~150-200 linija
 
-#### 4.4 [ ] Optimizovati Root Layout
-**Akcija**:
-- Provjeriti da li `layout.tsx` koristi proper metadata API
-- Dodati font optimization ako nije
+#### [❌] 3.5 ApprovalSectionMobile.jsx
+**Lokacija**: `packages/mobile/components/dashboard/sections/ApprovalSectionMobile.jsx`
+**Opis**: Za-odobrenje sekcija (pending items)
+**Veličina**: ~200-250 linija
+**Funkcionalnost**:
+- Kombinovana lista pending lectures, daije, organizations
+- Group by type
+- Quick approve/reject actions
 
----
+#### [❌] 3.6 RejectedSectionMobile.jsx
+**Lokacija**: `packages/mobile/components/dashboard/sections/RejectedSectionMobile.jsx`
+**Opis**: Odbijeni items (super_admin only)
+**Veličina**: ~150-200 linija
 
-### [ ] 5. React Navigation v7 TypeScript Support
+#### [❌] 3.7 SuggestionsSectionMobile.jsx
+**Lokacija**: `packages/mobile/components/dashboard/sections/SuggestionsSectionMobile.jsx`
+**Opis**: Prijedlozi lista
+**Veličina**: ~150-200 linija
 
-#### 5.1 [ ] Kreirati Navigation Types Fajl
-**Akcija**:
-```typescript
-// packages/mobile/types/navigation.ts
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import type { CompositeScreenProps } from '@react-navigation/native';
-import type { StackScreenProps } from '@react-navigation/stack';
-
-export type RootTabParamList = {
-  Home: undefined;
-  Dashboard: undefined;
-  Profile: undefined;
-};
-
-export type RootTabScreenProps<T extends keyof RootTabParamList> =
-  BottomTabScreenProps<RootTabParamList, T>;
-
-declare global {
-  namespace ReactNavigation {
-    interface RootParamList extends RootTabParamList {}
-  }
-}
-```
-
-#### 5.2 [ ] Dodati Tipove u Screen Components
-**Akcija**:
-- Importovati i koristiti tipove u svim screen komponentama
-- Dobiti type-safe navigation i route params
+#### [❌] 3.8 CancellationsSectionMobile.jsx
+**Lokacija**: `packages/mobile/components/dashboard/sections/CancellationsSectionMobile.jsx`
+**Opis**: Prijave za otkazivanje predavanja
+**Veličina**: ~150-200 linija
 
 ---
 
-### [ ] 6. Expo SDK Optimizacije
+### [ ] 4. Kreirati Modal Komponente (7 modala)
 
-#### 6.1 [ ] Razmotriti New Architecture
-**Akcija**:
-- Dodati u `app.config.js`:
-```javascript
-module.exports = {
-  expo: {
-    newArchEnabled: true, // ili samo za iOS/Android posebno
-    // ...
-  }
-}
-```
-- Testirati kompatibilnost sa postojećim bibliotekama
+#### [❌] 4.1 ItemDetailsModal.jsx
+**Lokacija**: `packages/mobile/components/dashboard/modals/ItemDetailsModal.jsx`
+**Opis**: Modal za prikaz detaljnih informacija bilo kog itema
+**Veličina**: ~500-600 linija (veliki, kompleksan modal)
+**Funkcionalnost**:
+- Prikazuje details za: lectures, daije, organizations, users, suggestions, cancelled reports
+- Different layout za svaki tip
+- Action buttons (edit, approve, reject, cancel, etc.)
+- Image gallery za lectures
+- Scrollable content
 
-#### 6.2 [ ] Optimizovati App Ikone
-**Akcija**:
-- Provjeriti da li se koristi `.icon` directory (SDK 54+)
-- Optimizovati za dark mode variants
+#### [❌] 4.2 ApprovalModal.jsx
+**Lokacija**: `packages/mobile/components/dashboard/modals/ApprovalModal.jsx`
+**Opis**: Approve/Reject modal
+**Veličina**: ~80-100 linija
+**Funkcionalnost**:
+- Approve button
+- Reject button sa rejection reason input
+- Cancel button
 
-#### 6.3 [ ] Dodati Proper EAS Build Profiles
-**Akcija**:
-- Provjeriti `eas.json`
-- Osigurati development, preview, production profiles
-- Dodati environment variables gdje je potrebno
+#### [❌] 4.3 SettingsModal.jsx
+**Lokacija**: `packages/mobile/components/dashboard/modals/SettingsModal.jsx`
+**Opis**: Approval settings modal
+**Veličina**: ~100-120 linija
+**Funkcionalnost**:
+- Toggle switches za lecture/daija/organization approval requirements
+- Save/Cancel buttons
+- Persistent settings
 
----
+#### [❌] 4.4 EditModal.jsx
+**Lokacija**: `packages/mobile/components/dashboard/modals/EditModal.jsx`
+**Opis**: Edit item modal (placeholder za navigaciju)
+**Veličina**: ~50-70 linija
+**Funkcionalnost**:
+- Shows item type info
+- Navigate to edit screen button
+- Close button
 
-### [ ] 7. Cleanup i Refactoring
+#### [❌] 4.5 CancelModal.jsx
+**Lokacija**: `packages/mobile/components/dashboard/modals/CancelModal.jsx`
+**Opis**: Cancel lecture modal
+**Veličina**: ~100-120 linija
+**Funkcionalnost**:
+- Cancellation reason input
+- Confirm/Cancel buttons
+- Warning message
 
-#### 7.1 [✅] Ukloniti Dead Code (Search Feature)
-**Akcija**:
-- ✅ Pregledao kod preko Grep
-- ✅ Glavni App.js već očišćen (nema referenci)
-- ✅ Obrisan App.backup.js (sadrži zastarjele reference)
-- ✅ DashboardScreen.js ima lokalnu `renderSearchBar` funkciju (ne SearchBar komponentu) - OK
-- ✅ Navigation već ažuriran u glavnom App.js
+#### [❌] 4.6 ReactivateModal.jsx
+**Lokacija**: `packages/mobile/components/dashboard/modals/ReactivateModal.jsx`
+**Opis**: Reactivate cancelled lecture modal
+**Veličina**: ~80-100 linija
+**Funkcionalnost**:
+- Confirmation message
+- Reactivate/Cancel buttons
 
-#### 7.2 [ ] Riješiti TODO/FIXME Komentare
-**Akcija**:
-- Prioritizovati top 50 najvažnijih
-- Kreirati issues za ostatak
-- Riješiti ili dokumentovati
-
-#### 7.3 [ ] Shared Package Optimization
-**Akcija**:
-- Identifikovati duplicirani kod između web/mobile
-- Pomjeriti u `packages/shared`
-- Kreirati reusable komponente gdje je moguće
-
----
-
-### [ ] 8. Testing Implementation
-
-#### 8.1 [ ] Server Tests
-**Akcija**:
-- Dodati Jest tests za API routes
-- Integration tests za database operacije
-- Test coverage cilj: 70%
-
-#### 8.2 [ ] Web Tests
-**Akcija**:
-- Playwright E2E tests su konfigurisani, dodati test cases
-- Jest unit tests za komponente
-- Test coverage cilj: 60%
-
-#### 8.3 [ ] Mobile Tests
-**Akcija**:
-- Jest unit tests
-- React Native Testing Library za komponente
+#### [❌] 4.7 BulkActionsModal.jsx
+**Lokacija**: `packages/mobile/components/dashboard/modals/BulkActionsModal.jsx`
+**Opis**: Bulk actions confirmation modal
+**Veličina**: ~100-120 linija
+**Funkcionalnost**:
+- Shows selected count
+- Action selection (approve, reject, delete)
+- Rejection reason za bulk reject
+- Confirm/Cancel
 
 ---
 
-### [ ] 9. Performance Optimizations
+### [ ] 5. Refaktorisati useMobileDashboardData Hook
 
-#### 9.1 [ ] Web: Image Optimization
+#### [❌] 5.1 Implementirati data fetching logiku
+**Lokacija**: `packages/mobile/hooks/useMobileDashboardData.js`
+**Opis**: Custom hook za svu data fetching logiku
+**Veličina**: ~200-250 linija
+**Funkcionalnost**:
+- fetchData() - dohvata sve podatke (lectures, users, daije, orgs, suggestions, reports)
+- handleRefresh() - refresh svih podataka
+- applyFilters() - filtriranje podataka
+- search functionality
+- Loading states management
+- Error handling
+- Return sve potrebne podatke i funkcije
+
+---
+
+### [ ] 6. Refaktorisati Glavni DashboardScreen.js
+
+#### [❌] 6.1 Importovati sve kreirane komponente
 **Akcija**:
-- Koristiti Next.js `<Image>` component svuda
-- Optimizovati remote image patterns
-- Lazy loading za galerije
+- Importovati sve section komponente (8)
+- Importovati sve modal komponente (7)
+- Importovati reusable komponente (DataItem, BulkActionsBar)
+- Importovati već kreirane (Statistics, NavigationHeader, SearchBar)
+- Importovati useMobileDashboardData hook
 
-#### 9.2 [ ] Mobile: Lazy Loading
+#### [❌] 6.2 Refaktorisati renderContent()
 **Akcija**:
-- React.lazy za heavy components
-- FlatList optimizations (windowSize, removeClippedSubviews)
+- Pojednostaviti switch statement
+- Svaki case samo renderuje odgovarajuću section komponentu
+- Proslijediti potrebne props (data, handlers, states)
+- Ukloniti inline render logiku
 
-#### 9.3 [ ] Code Splitting
+#### [❌] 6.3 Ukloniti stare render funkcije
 **Akcija**:
-- Dynamic imports za velike komponente
-- Route-based splitting (Next.js automatic)
+- Obrisati renderStatistics (već u Statistics.jsx)
+- Obrisati renderNavigationHeader (već u NavigationHeader.jsx)
+- Obrisati renderSearchBar (već u SearchBar.jsx)
+- Obrisati renderDataItem (sada u DataItem.jsx)
+- Obrisati renderBulkActionsBar (sada u BulkActionsBar.jsx)
+- Obrisati sve renderModal funkcije (sada u modal komponentama)
 
----
-
-### [ ] 10. Documentation
-
-#### 10.1 [ ] README Files
+#### [❌] 6.4 Koristiti useMobileDashboardData hook
 **Akcija**:
-- `/README.md` - Project overview
-- `/packages/mobile/README.md` - Mobile setup
-- `/packages/web/README.md` - Web setup
-- `/server/README.md` - API documentation
+- Zamijeniti lokalni data fetching sa hookom
+- Uprošćavanje state management
+- Proslijediti hook rezultate komponentama
 
-#### 10.2 [ ] API Documentation
+#### [❌] 6.5 Finalni cleanup
 **Akcija**:
-- OpenAPI/Swagger za backend routes
-- JSDoc komentari za importante funkcije
+- Ukloniti neiskorištene importi
+- Ukloniti neiskorištene stilove
+- Ukloniti neiskorištene helper funkcije
+- Code formatting
 
 ---
 
-## Prioritet Izvršavanja
+### [ ] 7. Testiranje i Verifikacija
 
-### Faza 1 (1-2 sedmice) - KRITIČNO
-- [ ] TODO 1.1-1.4: Razbijanje velikih fajlova
-- [ ] TODO 2: Sinhronizacija verzija
-- [ ] TODO 7.1: Ukloniti dead code
+#### [❌] 7.1 Testirati sve sekcije
+**Akcija**:
+- Testirati navigaciju između sekcija
+- Testirati search functionality
+- Testirati filter functionality
+- Testirati refresh
 
-### Faza 2 (1 sedmica) - VISOKI PRIORITET
-- [ ] TODO 3: Material UI v6 modernizacija
-- [ ] TODO 4: Next.js 15 optimizacije
-- [ ] TODO 5: React Navigation TypeScript
+#### [❌] 7.2 Testirati sve modale
+**Akcija**:
+- Testirati otvaranje/zatvaranje
+- Testirati approve/reject akcije
+- Testirati edit functionality
+- Testirati bulk actions
 
-### Faza 3 (1 sedmica) - SREDNJI PRIORITET
-- [ ] TODO 6: Expo SDK optimizacije
-- [ ] TODO 7.2-7.3: Cleanup i refactoring
-- [ ] TODO 9: Performance optimizations
+#### [❌] 7.3 Testirati bulk mode
+**Akcija**:
+- Testirati selection
+- Testirati bulk approve/reject/delete
+- Testirati clear selection
 
-### Faza 4 (Ongoing) - NIŽI PRIORITET
-- [ ] TODO 8: Testing implementation
-- [ ] TODO 10: Documentation
-
----
-
-## Review Sekcija
-
-### Metrike Prije Analize
-- **LOC (Lines of Code)**: ~50,000+
-- **Broj velikih fajlova (>500 LOC)**: 4+
-- **TODO komentara**: 663
-- **Test coverage**: Nepoznato (vjerovatno <20%)
-- **TypeScript coverage**: Partial
-
-### Očekivani Rezultati Poslije Implementacije
-- **Broj velikih fajlova**: 0 (max 400 LOC)
-- **TODO komentara**: <100
-- **Test coverage**: >60%
-- **Performance score (Lighthouse)**: >90
-- **Bundle size reduction**: 15-20%
-
-### Tehnički Dug
-- **Prije**: Visok (ocjena 7/10)
-- **Poslije**: Srednji (ocjena 4/10)
+#### [❌] 7.4 Verifikovati line count redukciju
+**Akcija**:
+- Provjeriti finalni broj linija DashboardScreen.js
+- Cilj: 3,283 → ~400-500 linija (-85%)
+- Dokumentovati rezultate
 
 ---
 
-## Napomene
+### [ ] 8. Commit i Dokumentacija
 
-1. **Backward Compatibility**: Sve promjene moraju biti backward compatible
-2. **Testing**: Svaka faza zahtjeva temeljno testiranje
-3. **Git Strategy**: Feature branches za svaki TODO item
-4. **Code Review**: Obavezan review prije merge-a
-5. **Deployment**: Postupno deployment nakon svake faze
+#### [❌] 8.1 Commit sve promjene
+**Akcija**:
+- Kreirati feature commit za svaku grupu komponenti
+- Clear commit messages
+- Git push
 
----
-
-## Pitanja za Korisnika Prije Implementacije
-
-1. Da li postoje specifične komponente koje su prioritetnije za refactoring?
-2. Da li želite da odmah krenem sa Fazom 1 ili da prvo diskutujemo detalje?
-3. Da li postoje neke custom Material UI customizacije koje trebam biti pažljiv da ne pokvarim?
-4. Koji je target deployment timeline?
-5. Da li imate preference za folder strukturu nakon razbijanja velikih fajlova?
+#### [❌] 8.2 Ažurirati projectplan.md
+**Akcija**:
+- Označiti sve todo stavke kao završene
+- Dodati review sekciju sa rezultatima
+- Dokumentovati line count redukciju
+- Dokumentovati sve kreirane komponente
 
 ---
 
-**Status**: ⏳ Čeka odobrenje korisnika
+## Očekivani Rezultati
+
+### Line Count Redukcija
+- **DashboardScreen.js**: 3,283 → ~400-500 linija
+- **Smanjenje**: ~2,700-2,800 linija (-82-85%)
+
+### Kreirane Komponente
+- **Reusable**: 5 komponenti (Statistics, NavigationHeader, SearchBar, DataItem, BulkActionsBar)
+- **Sections**: 8 section komponenti
+- **Modals**: 7 modal komponenti
+- **Hooks**: 1 custom hook
+- **Ukupno**: 21 novi fajl
+
+### Distribukcija Linija Koda
+- DashboardScreen.js: ~400-500 linija
+- Section komponente: ~1,400-1,800 linija (8 × 150-250)
+- Modal komponente: ~1,000-1,200 linija (7 × 80-600)
+- Reusable komponente: ~600-700 linija (5 × 80-250)
+- Hook: ~200-250 linija
+- **Ukupno**: ~3,600-4,450 linija (malo više zbog bolje organizacije i dokumentacije)
+
+### Benefiti
+- ✅ Lakše održavanje - svaka komponenta izolirana
+- ✅ Lakše testiranje - unit tests za svaku komponentu
+- ✅ Reusabilnost - komponente se mogu koristiti drugdje
+- ✅ Readability - čist, razumljiv kod
+- ✅ Performance - lakše profiling i optimizacija
+
+---
+
+## Redoslijed Izvršavanja
+
+**Prioritet 1** (Odmah):
+1. Riješiti uncommitted changes (TODO 1)
+
+**Prioritet 2** (Reusable komponente):
+2. Kreirati DataItem i BulkActionsBar (TODO 2)
+
+**Prioritet 3** (Sections - paralelno ako želiš):
+3. Kreirati sve section komponente (TODO 3)
+
+**Prioritet 4** (Modals):
+4. Kreirati sve modal komponente (TODO 4)
+
+**Prioritet 5** (Hook):
+5. Implementirati data hook (TODO 5)
+
+**Prioritet 6** (Integration):
+6. Refaktorisati glavni fajl (TODO 6)
+
+**Prioritet 7** (Testing):
+7. Testiranje i verifikacija (TODO 7)
+
+**Prioritet 8** (Finalizacija):
+8. Commit i dokumentacija (TODO 8)
+
+---
+
+**Status**: ⏳ Čeka odobrenje korisnika za nastavak
