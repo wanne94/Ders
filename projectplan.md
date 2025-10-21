@@ -120,13 +120,18 @@ Detaljna analiza mobile (Expo/React Native) i web (Next.js) aplikacije u skladu 
 
 **Cilj**: Max 400 linija po fajlu
 
-#### 1.4 [ ] Server Index (server/index.js)
+#### 1.4 [🔄] Server Index (server/index.js)
 **Akcija**:
-- Razdvojiti routes u separate fajlove
-- Middleware u poseban folder
-- Database config u separate fajl
-- Error handling u middleware
+- 🔄 Razdvojiti routes u separate fajlove
+  - ✅ Kreiran `routes/settingsRoutes.js` (2 endpoints)
+  - ⏳ U toku: `routes/suggestionsRoutes.js` (6 endpoints)
+  - ⏳ Planirano: `routes/daijeRoutes.js`
+  - ⏳ Planirano: `routes/organizationsRoutes.js`
+- ⏳ Middleware već u posebnom folderu
+- ⏳ Database config već razdvojen
+- ⏳ Error handling za review
 
+**Napredak**: 10% završeno
 **Cilj**: Max 200 linija za main server file
 
 ---
