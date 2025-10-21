@@ -39,6 +39,19 @@ import LoadingSkeleton from '@/components/LoadingSkeleton';
 import SearchBar from '@/components/SearchBar';
 import AdvancedFilters, { FilterButton } from '@/components/AdvancedFilters';
 
+// Dashboard Section Components
+import LecturesSection from '@/components/dashboard/sections/LecturesSection';
+import UsersSection from '@/components/dashboard/sections/UsersSection';
+import DaijeSection from '@/components/dashboard/sections/DaijeSection';
+import OrganizationsSection from '@/components/dashboard/sections/OrganizationsSection';
+import ApprovalSection from '@/components/dashboard/sections/ApprovalSection';
+import RejectedSection from '@/components/dashboard/sections/RejectedSection';
+import CancellationReportsSection from '@/components/dashboard/sections/CancellationReportsSection';
+import SuggestionsSection from '@/components/dashboard/sections/SuggestionsSection';
+
+// Custom Hooks
+import { useDashboardData } from '@/hooks/useDashboardData';
+
 import { predavanjaService, daijeService, udruzenjaService, suggestionsService, usersService, settingsService } from '@/services';
 import axiosInstance from '@/utils/axiosConfig';
 import { getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
@@ -133,26 +146,9 @@ const Dashboard = () => {
   
   const canDelete = currentUser?.role === 'super_admin';
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
-  
-  const [data, setData] = useState({
-    users: [],
-    lectures: [],
-    daije: [],
-    organizations: [],
-    suggestions: [],
-    archivedSuggestions: [],
-    suggestionsCount: { total: 0, pending: 0, approved: 0, rejected: 0 },
-    cancellationReports: { total: 0, pending: 0, autoCancelled: 0, manuallyCancelled: 0, lectures: [] }
-  });
-  const [counts, setCounts] = useState({
-    pendingSuggestions: 0
-  });
-  const [ui, setUi] = useState({
-    isLoading: true,
-    error: null,
-    snackbar: { open: false, message: '', severity: 'success' }
-  });
-  // fetchData funkcija i useEffect su dodani iznad
+
+  // Use custom hook for data fetching and state management
+  const { data, counts, ui, fetchData, setData, setCounts, setUi } = useDashboardData(isAdmin, currentUser, token);
   const [dialogs, setDialogs] = useState({
     deleteDialog: false,
     statusDialog: false,
@@ -167,115 +163,7 @@ const Dashboard = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [cancellationItem, setCancellationItem] = useState(null);
 
-  // Deklaracija fetchData mora biti iznad useEffect!
-  const fetchData = useCallback(async () => {
-    console.log('📊 Dashboard fetchData: Starting data fetch...');
-    console.log('📊 isAdmin:', isAdmin);
-    console.log('📊 currentUser:', currentUser);
-    console.log('📊 token:', !!token);
-    
-    setUi(prev => ({ ...prev, isLoading: true, error: null }));
-    try {
-      // Only call admin endpoints if user is admin
-      const promises = [];
-      
-      if (isAdmin && token) {
-        console.log('📊 User is admin, calling admin endpoints...');
-        promises.push(
-          usersService.getAllUsers().catch(err => {
-            console.error('Error fetching users:', err);
-            return [];
-          }),
-          predavanjaService.getAllPredavanjaForAdmin().catch(err => {
-            console.error('Error fetching admin lectures:', err);
-            return predavanjaService.getAllPredavanja();
-          }),
-          daijeService.getAllDaijeForAdmin().catch(err => {
-            console.error('Error fetching admin daije:', err);
-            return daijeService.getAllDaije();
-          }),
-          udruzenjaService.getAllUdruzenjaForAdmin().catch(err => {
-            console.error('Error fetching admin orgs:', err);
-            return udruzenjaService.getAllUdruzenja();
-          }),
-          suggestionsService.getAllSuggestions().catch(err => {
-            console.error('Error fetching suggestions:', err);
-            return [];
-          }),
-          suggestionsService.getArchivedSuggestions().catch(err => {
-            console.error('Error fetching archived suggestions:', err);
-            return [];
-          }),
-          suggestionsService.getSuggestionsCount().catch(err => {
-            console.error('Error fetching suggestions count:', err);
-            return { total: 0, pending: 0, approved: 0, rejected: 0 };
-          }),
-          axiosInstance.get('/lectures/admin/cancellation-reports').then(res => res.data).catch(err => {
-            console.error('Error fetching cancellation reports:', err);
-            return { total: 0, pending: 0, autoCancelled: 0, manuallyCancelled: 0, lectures: [] };
-          })
-        );
-      } else {
-        console.log('📊 User is not admin, using public endpoints...');
-        // For non-admin users, use public endpoints or return empty data
-        promises.push(
-          Promise.resolve([]), // users
-          predavanjaService.getAllPredavanja(), // public lectures
-          daijeService.getAllDaije(), // public daije
-          udruzenjaService.getAllUdruzenja(), // public organizations
-          Promise.resolve([]), // suggestions
-          Promise.resolve([]), // archived suggestions
-          Promise.resolve({ total: 0, pending: 0, approved: 0, rejected: 0 }), // suggestions count
-          Promise.resolve({ total: 0, pending: 0, autoCancelled: 0, manuallyCancelled: 0, lectures: [] }) // cancellation reports
-        );
-      }
-      
-      console.log('📊 Executing API calls...');
-      const [usersRes, lecturesRes, daijeRes, orgsRes, suggestionsRes, archivedSuggestionsRes, suggestionsCountRes, cancellationReportsRes] = await Promise.all(promises);
-
-      console.log('📊 API responses received:');
-      console.log('📊 Users:', usersRes);
-      console.log('📊 Lectures:', lecturesRes);
-      console.log('📊 Daije:', daijeRes);
-      console.log('📊 Organizations:', orgsRes);
-      console.log('📊 Cancellation Reports Response:', cancellationReportsRes);
-
-      const suggestionsData = Array.isArray(suggestionsRes) ? suggestionsRes : [];
-      const archivedSuggestionsData = Array.isArray(archivedSuggestionsRes) ? archivedSuggestionsRes : [];
-      
-      // Debug logging za suggestions
-      console.log('🔍 Fetched suggestions data:', suggestionsData);
-      console.log('🔍 Suggestions count:', suggestionsData.length);
-      if (suggestionsData.length > 0) {
-        console.log('🔍 Sample suggestion:', suggestionsData[0]);
-        console.log('🔍 All suggestion statuses:', suggestionsData.map(s => s.status));
-      }
-      
-      setData({
-        users: Array.isArray(usersRes) ? usersRes : usersRes.users || [],
-        lectures: Array.isArray(lecturesRes) ? lecturesRes : [],
-        daije: Array.isArray(daijeRes) ? daijeRes : [],
-        organizations: Array.isArray(orgsRes) ? orgsRes : [],
-        suggestions: suggestionsData,
-        archivedSuggestions: archivedSuggestionsData,
-        suggestionsCount: suggestionsCountRes || { total: 0, pending: 0, approved: 0, rejected: 0 },
-        cancellationReports: cancellationReportsRes || { total: 0, pending: 0, autoCancelled: 0, manuallyCancelled: 0, lectures: [] }
-      });
-
-      // Ažuriraj broj aktivnih prijedloga
-      setCounts(prev => ({
-        ...prev,
-        pendingSuggestions: suggestionsData.filter(s => s.status !== 'archived').length
-      }));
-      console.log('📊 Data set successfully');
-      setUi(prev => ({ ...prev, isLoading: false, error: null }));
-    } catch (error) {
-      console.error('📊 Error fetching dashboard data:', error);
-      setUi(prev => ({ ...prev, isLoading: false, error: 'Greška pri dohvaćanju podataka.' }));
-    }
-  }, [isAdmin, currentUser, token]);
-
-  // Uklonjen duplikat useEffect - koristimo samo onaj ispod sa fetchDataCalledRef
+  // Note: fetchData is now provided by useDashboardData hook
   const [selectedItem, setSelectedItem] = useState(null);
   const [statusChange, setStatusChange] = useState({ item: null, type: '', value: '' });
   const [imagePreview, setImagePreview] = useState(null);
@@ -311,109 +199,10 @@ const Dashboard = () => {
   
   
 
-  const fetchDataCalledRef = useRef(false);
+  // Note: fetchDataCalledRef is now managed by useDashboardData hook
 
-  const filterData = (items, searchQuery, type) => {
-    let filteredItems = [...items];
-    
-    // Apply search filter
-    if (searchQuery && searchQuery.trim()) {
-      filteredItems = filteredItems.filter(item => {
-        switch (type) {
-          case 'lecture':
-            return item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                   item.speaker?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                   item.organization?.toLowerCase().includes(searchQuery.toLowerCase());
-          case 'user':
-            return item.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                   item.email?.toLowerCase().includes(searchQuery.toLowerCase());
-          case 'organization':
-            return item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                   item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                   item.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                   item.city?.toLowerCase().includes(searchQuery.toLowerCase());
-          case 'daija':
-            return item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                   item.description?.toLowerCase().includes(searchQuery.toLowerCase());
-          case 'suggestion':
-            return item.targetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                   item.reason?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                   item.submitterName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                   item.submitterEmail?.toLowerCase().includes(searchQuery.toLowerCase());
-          default:
-            return true;
-        }
-      });
-    }
-    
-    // Apply advanced filters
-    if (Object.keys(activeFilters).length > 0) {
-      // Date filters
-      if (activeFilters.dateFrom) {
-        const fromDate = new Date(activeFilters.dateFrom);
-        filteredItems = filteredItems.filter(item => {
-          const itemDate = item.date ? new Date(item.date) : null;
-          return itemDate && itemDate >= fromDate;
-        });
-      }
-      
-      if (activeFilters.dateTo) {
-        const toDate = new Date(activeFilters.dateTo);
-        filteredItems = filteredItems.filter(item => {
-          const itemDate = item.date ? new Date(item.date) : null;
-          return itemDate && itemDate <= toDate;
-        });
-      }
-      
-      // Status filter
-      if (activeFilters.status) {
-        filteredItems = filteredItems.filter(item => item.status === activeFilters.status);
-      }
-      
-      // City filter
-      if (activeFilters.city) {
-        filteredItems = filteredItems.filter(item => item.city === activeFilters.city);
-      }
-      
-      // Organization filter
-      if (activeFilters.organization) {
-        filteredItems = filteredItems.filter(item => item.organization === activeFilters.organization);
-      }
-      
-      // Speaker filter
-      if (activeFilters.speaker) {
-        filteredItems = filteredItems.filter(item => item.speaker === activeFilters.speaker);
-      }
-      
-      // Has image filter
-      if (activeFilters.hasImage === true) {
-        filteredItems = filteredItems.filter(item => item.imageUrl && item.imageUrl !== '');
-      }
-      
-      // Sort
-      if (activeFilters.sortBy) {
-        filteredItems.sort((a, b) => {
-          let aVal = a[activeFilters.sortBy];
-          let bVal = b[activeFilters.sortBy];
-          
-          // Handle dates
-          if (activeFilters.sortBy === 'date' || activeFilters.sortBy === 'createdAt') {
-            aVal = new Date(aVal);
-            bVal = new Date(bVal);
-          }
-          
-          if (activeFilters.sortOrder === 'desc') {
-            return bVal > aVal ? 1 : -1;
-          } else {
-            return aVal > bVal ? 1 : -1;
-          }
-        });
-      }
-    }
-    
-    return filteredItems;
-  };
-  
+  // Note: filterData is now in utils/dashboardFilters.js and used by section components
+
   const handleApplyFilters = (filters) => {
     setActiveFilters(filters);
     setFiltersOpen(false);
@@ -471,20 +260,7 @@ const Dashboard = () => {
     setDialogs(prev => ({ ...prev, [dialogName]: true }));
   }, []);
 
-  useEffect(() => {
-    console.log('📊 Dashboard fetchData useEffect triggered');
-    console.log('📊 currentUser:', currentUser);
-    console.log('📊 fetchDataCalledRef.current:', fetchDataCalledRef.current);
-    
-    if (!currentUser || fetchDataCalledRef.current) {
-      console.log('📊 Skipping fetchData - conditions not met');
-      return;
-    }
-    
-    console.log('📊 Calling fetchData...');
-    fetchDataCalledRef.current = true;
-    fetchData();
-  }, [currentUser, fetchData]);
+  // Note: Data fetching is now handled by useDashboardData hook
 
   // Event listener za osvežavanje kada se kreira nova suggestion
   useEffect(() => {
@@ -959,58 +735,10 @@ const Dashboard = () => {
     }
   }, [activeSection, showSnackbar]);
 
-  const renderSection = (sectionType, items, title, type = null, showRejectionReason = false) => {
-    const sectionKey = type || getTypeFromSection(activeSection);
-    
-    return (
-      <Box sx={{ mb: 4, width: '100%' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-            {title}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <SearchBar
-              placeholder={`Pretraži ${title.toLowerCase()}...`}
-              onSearch={(value) => handleSearchChange(sectionKey, value)}
-              value={searchQueries[sectionKey] || ''}
-              fullWidth={false}
-              sx={{ width: 300 }}
-            />
-            <FilterButton
-              onClick={() => setFiltersOpen(true)}
-              activeCount={Object.keys(activeFilters).length}
-            />
-          </Box>
-        </Box>
-        
-        {items.length === 0 ? (
-          <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50', width: '100%' }}>
-            <Typography color="text.secondary" variant="h6">
-              Nema {title.toLowerCase()}
-            </Typography>
-          </Paper>
-        ) : (
-          <DataTable
-            data={items}
-            type={type || getTypeFromSection(activeSection)}
-            onEdit={isAdmin ? handleEdit : undefined}
-            onDelete={canDelete ? handleDelete : undefined}
-            onDuplicate={handleDuplicate}
-            onCancel={(type === 'lecture' || type === 'lectures') && isAdmin ? handleCancelLecture : undefined}
-            onStatusChange={isAdmin ? (item, newStatus) => handleStatusChange(item, newStatus, type || getTypeFromSection(activeSection)) : undefined}
-            onBulkStatusChange={isAdmin ? handleBulkStatusChange : undefined}
-            onBulkDelete={canDelete ? handleBulkDelete : undefined}
-            hideActions={!isAdmin}
-            showActions={true}
-            showStatus={true}
-            showRejectionReason={showRejectionReason}
-          />
-        )}
-      </Box>
-    );
-  };
+  // Note: renderSection logic is now in DataSection component
 
   const renderContent = () => {
+    // Loading state
     if (ui.isLoading) {
       return (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -1019,6 +747,7 @@ const Dashboard = () => {
       );
     }
 
+    // Error state
     if (ui.error) {
       return (
         <Box sx={{ p: 3 }}>
@@ -1030,7 +759,7 @@ const Dashboard = () => {
       );
     }
 
-    // Show message for non-admin users
+    // Non-admin users
     if (!isAdmin) {
       return (
         <Box sx={{ p: 3 }}>
@@ -1041,349 +770,118 @@ const Dashboard = () => {
       );
     }
 
-    let content;
+    // Shared props for all sections
+    const commonSectionProps = {
+      searchQueries,
+      handleSearchChange,
+      setFiltersOpen,
+      activeFilters,
+      isAdmin,
+      canDelete,
+      handleEdit,
+      handleDelete,
+      handleDuplicate,
+      handleStatusChange,
+      handleBulkStatusChange,
+      handleBulkDelete
+    };
 
+    // Render section based on activeSection
     switch (activeSection) {
-      case 'za-odobrenje': {
-        // Lectures no longer need approval - automatically approved
-        const pendingLectures = [];
-        
-        const pendingDaije = filterData(
-          (data.daije || []).filter(d => d.status === 'pending'),
-          searchQueries.lectures,
-          'daija'
-        );
-        
-        const pendingOrganizations = filterData(
-          (data.organizations || []).filter(o => o.status === 'pending'),
-          searchQueries.lectures,
-          'organization'
-        );
-        
+      case 'predavanja':
         return (
-          <>
-            {pendingDaije.length > 0 && renderSection('pending', pendingDaije, 'Daije za odobrenje', 'daija')}
-            {pendingOrganizations.length > 0 && renderSection('pending', pendingOrganizations, 'Udruženja za odobrenje', 'organization')}
-            {pendingDaije.length === 0 && pendingOrganizations.length === 0 && (
-              <Box sx={{ textAlign: 'center', py: 8 }}>
-                <Typography variant="h6" color="text.secondary">
-                  Nema sadržaja za odobrenje
-                </Typography>
-              </Box>
-            )}
-          </>
+          <LecturesSection
+            lectures={data.lectures}
+            handleCancelLecture={handleCancelLecture}
+            {...commonSectionProps}
+          />
         );
-      }
-      case 'korisnici': {
-        const filteredUsers = filterData(data.users, searchQueries.users, 'user');
-        content = (
-          <Box sx={{ mb: 4, width: '100%' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-              <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                Korisnici
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <SearchBar
-                  placeholder="Pretraži korisnike..."
-                  onSearch={(value) => handleSearchChange('users', value)}
-                  value={searchQueries.users || ''}
-                  fullWidth={false}
-                  sx={{ width: 300 }}
-                />
-                <FilterButton
-                  onClick={() => setFiltersOpen(true)}
-                  activeCount={Object.keys(activeFilters).length}
-                />
-              </Box>
-            </Box>
-            {filteredUsers.length === 0 ? (
-              <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50', width: '100%' }}>
-                <Typography color="text.secondary" variant="h6">
-                  Nema korisnika
-                </Typography>
-              </Paper>
-            ) : (
-              <DataTable
-                data={filteredUsers}
-                type="users"
-                onEdit={isAdmin ? handleEdit : undefined}
-                onDelete={canDelete ? handleDelete : undefined}
-                onBulkDelete={canDelete ? handleBulkDelete : undefined}
-                hideActions={!isAdmin}
-                showActions={true}
-                showStatus={false}
-              />
-            )}
-          </Box>
-        );
-        break;
-      }
-      case 'daije': {
-        const approvedDaije = filterData(
-          (data.daije || []).filter(d => d.status === 'approved'),
-          searchQueries.lectures,
-          'daija'
-        );
-        content = (
-          <Box>
-            {renderSection('approved', approvedDaije, 'Odobrene Daije', 'daija')}
-          </Box>
-        );
-        break;
-      }
-      case 'organizations': {
-        const approvedOrganizations = filterData(
-          (data.organizations || []).filter(o => o.status === 'approved'),
-          searchQueries.lectures,
-          'organization'
-        );
-        content = (
-          <Box>
-            {renderSection('approved', approvedOrganizations, 'Odobrena udruženja', 'organization')}
-          </Box>
-        );
-        break;
-      }
-      case 'odbijeno': {
-        // Samo super admin može da vidi odbijene stavke
-        if (currentUser?.role !== 'super_admin') {
-          setActiveSection('predavanja');
-          return null;
-        }
-        const rejectedLectures = filterData(
-          (data.lectures || []).filter(l => l.status === 'rejected'),
-          searchQueries.lectures,
-          'lecture'
-        );
-        const rejectedDaije = filterData(
-          (data.daije || []).filter(d => d.status === 'rejected'),
-          searchQueries.lectures,
-          'daija'
-        );
-        const rejectedOrganizations = filterData(
-          (data.organizations || []).filter(o => o.status === 'rejected'),
-          searchQueries.lectures,
-          'organization'
-        );
-        
-        content = (
-          <Box>
-            {rejectedLectures.length > 0 && renderSection('rejected', rejectedLectures, 'Odbačena predavanja', 'lecture', true)}
-            {rejectedDaije.length > 0 && renderSection('rejected', rejectedDaije, 'Odbačene Daije', 'daija', true)}
-            {rejectedOrganizations.length > 0 && renderSection('rejected', rejectedOrganizations, 'Odbačena udruženja', 'organization', true)}
-            {rejectedLectures.length === 0 && rejectedDaije.length === 0 && rejectedOrganizations.length === 0 && (
-              <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
-                <Typography color="text.secondary" variant="h6">
-                  Nema odbačenih stavki
-                </Typography>
-              </Paper>
-            )}
-          </Box>
-        );
-        break;
-      }
 
-      case 'prijave-otkazivanje': {
-        const cancellationReports = data.cancellationReports || { lectures: [] };
-        console.log('🔍 Cancellation Reports Data:', cancellationReports);
-        console.log('🔍 Lectures in reports:', cancellationReports.lectures);
-        const filteredReports = filterData(
-          cancellationReports.lectures || [],
-          searchQueries.lectures,
-          'lecture'
+      case 'za-odobrenje':
+        return (
+          <ApprovalSection
+            daije={data.daije}
+            organizations={data.organizations}
+            {...commonSectionProps}
+          />
         );
-        console.log('🔍 Filtered Reports:', filteredReports);
 
-        content = (
-          <Box sx={{ mb: 4, width: '100%' }}>
-            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-              Prijave za otkazivanje
-            </Typography>
-
-            {/* Summary Cards */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mb: 4 }}>
-              <Paper sx={{ p: 3, bgcolor: 'warning.light', color: 'warning.dark' }}>
-                <Typography variant="h6">{cancellationReports.total || 0}</Typography>
-                <Typography variant="body2">Ukupno prijava</Typography>
-              </Paper>
-              <Paper sx={{ p: 3, bgcolor: 'info.light', color: 'info.dark' }}>
-                <Typography variant="h6">{cancellationReports.pending || 0}</Typography>
-                <Typography variant="body2">Na čekanju</Typography>
-              </Paper>
-              <Paper sx={{ p: 3, bgcolor: 'error.light', color: 'error.dark' }}>
-                <Typography variant="h6">{cancellationReports.autoCancelled || 0}</Typography>
-                <Typography variant="body2">Automatski otkazano</Typography>
-              </Paper>
-              <Paper sx={{ p: 3, bgcolor: 'grey.300', color: 'grey.800' }}>
-                <Typography variant="h6">{cancellationReports.manuallyCancelled || 0}</Typography>
-                <Typography variant="body2">Ručno otkazano</Typography>
-              </Paper>
-            </Box>
-
-            {/* Search Field */}
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                label="Pretraži predavanja"
-                value={searchQueries.lectures}
-                onChange={(e) => handleSearchChange('lectures', e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Box>
-
-            {/* Table */}
-            {filteredReports.length === 0 ? (
-              <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
-                <Typography color="text.secondary">
-                  Nema prijava za otkazivanje
-                </Typography>
-              </Paper>
-            ) : (
-              <DataTable
-                data={filteredReports}
-                type="cancellation-reports"
-                onEdit={(item) => {
-                  setCancellationItem(item);
-                  openDialog('manageCancellationDialog');
-                }}
-                onCancel={(item) => {
-                  setCancellationItem(item);
-                  openDialog('manageCancellationDialog');
-                }}
-                hideActions={!isAdmin}
-                showActions={true}
-                showStatus={false}
-              />
-            )}
-          </Box>
+      case 'korisnici':
+        return (
+          <UsersSection
+            users={data.users}
+            {...commonSectionProps}
+          />
         );
-        break;
-      }
 
-      case 'prijedlozi': {
-        const activeSuggestions = filterData(
-          (data.suggestions || []).filter(s => s.status !== 'archived'),
-          searchQueries.lectures,
-          'suggestion'
+      case 'daije':
+        return (
+          <DaijeSection
+            daije={data.daije}
+            {...commonSectionProps}
+          />
         );
-        const archivedSuggestions = filterData(
-          (data.archivedSuggestions || []),
-          searchQueries.lectures,
-          'suggestion'
-        );
-        
-        // Debug logging za prijedlozi sekciju
-        console.log('🔍 Raw suggestions data:', data.suggestions);
-        console.log('🔍 Filtered active suggestions:', activeSuggestions);
-        console.log('🔍 Active suggestions length:', activeSuggestions.length);
-        console.log('🔍 Archived suggestions length:', archivedSuggestions.length);
-        
-        content = (
-          <Box sx={{ mb: 4, width: '100%' }}>
-            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-              Prijedlozi
-            </Typography>
-            
-            {/* Subsection Navigation */}
-            <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Button
-                  variant={activeSuggestionsSubsection === 'aktivni' ? 'contained' : 'text'}
-                  onClick={() => setActiveSuggestionsSubsection('aktivni')}
-                  sx={{ 
-                    borderRadius: '8px 8px 0 0',
-                    textTransform: 'none',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Aktivni prijedlozi ({activeSuggestions.length})
-                </Button>
-                <Button
-                  variant={activeSuggestionsSubsection === 'arhivirani' ? 'contained' : 'text'}
-                  onClick={() => setActiveSuggestionsSubsection('arhivirani')}
-                  sx={{ 
-                    borderRadius: '8px 8px 0 0',
-                    textTransform: 'none',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Arhivirani prijedlozi ({archivedSuggestions.length})
-                </Button>
-              </Box>
-            </Box>
 
-            {/* Content based on active subsection */}
-            {activeSuggestionsSubsection === 'aktivni' ? (
-              activeSuggestions.length === 0 ? (
-                <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50', width: '100%' }}>
-                  <Typography color="text.secondary" variant="h6">
-                    Nema aktivnih prijedloga
-                  </Typography>
-                </Paper>
-              ) : (
-                <DataTable
-                  data={activeSuggestions}
-                  type="suggestions"
-                  onArchive={handleArchiveSuggestion}
-                  onDelete={canDelete ? (item) => handleDeleteSuggestion(item, false) : undefined}
-                  onBulkDelete={canDelete ? handleBulkDelete : undefined}
-                  hideActions={!isAdmin}
-                  showActions={true}
-                  showStatus={false}
-                />
-              )
-            ) : (
-              archivedSuggestions.length === 0 ? (
-                <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50', width: '100%' }}>
-                  <Typography color="text.secondary" variant="h6">
-                    Nema arhiviranih prijedloga
-                  </Typography>
-                </Paper>
-              ) : (
-                <DataTable
-                  data={archivedSuggestions}
-                  type="suggestions"
-                  onDelete={canDelete ? (item) => handleDeleteSuggestion(item, true) : undefined}
-                  onBulkDelete={canDelete ? handleBulkDelete : undefined}
-                  hideActions={!isAdmin}
-                  showActions={true}
-                  showStatus={false}
-                />
-              )
-            )}
-          </Box>
+      case 'organizations':
+        return (
+          <OrganizationsSection
+            organizations={data.organizations}
+            {...commonSectionProps}
+          />
         );
-        break;
-      }
-      case 'postavke': {
-        content = (
-          <Settings 
+
+      case 'odbijeno':
+        return (
+          <RejectedSection
+            lectures={data.lectures}
+            daije={data.daije}
+            organizations={data.organizations}
+            handleCancelLecture={handleCancelLecture}
+            currentUser={currentUser}
+            setActiveSection={setActiveSection}
+            {...commonSectionProps}
+          />
+        );
+
+      case 'prijave-otkazivanje':
+        return (
+          <CancellationReportsSection
+            cancellationReports={data.cancellationReports}
+            setCancellationItem={setCancellationItem}
+            openDialog={openDialog}
+            {...commonSectionProps}
+          />
+        );
+
+      case 'prijedlozi':
+        return (
+          <SuggestionsSection
+            suggestions={data.suggestions}
+            archivedSuggestions={data.archivedSuggestions}
+            handleArchiveSuggestion={handleArchiveSuggestion}
+            handleDeleteSuggestion={handleDeleteSuggestion}
+            {...commonSectionProps}
+          />
+        );
+
+      case 'postavke':
+        return (
+          <Settings
             approvalSettings={approvalSettings}
             setApprovalSettings={updateApprovalSettings}
           />
         );
-        break;
-      }
-      case 'predavanja':
-      default: {
-        // Show all lectures (approved and cancelled)
-        const allLectures = filterData(
-          (data.lectures || []),
-          searchQueries.lectures,
-          'lecture'
-        );
-        content = renderSection('all', allLectures, 'Svi Dersovi', 'lecture');
-        break;
-      }
-    }
 
-    return content;
+      default:
+        // Default to lectures section
+        return (
+          <LecturesSection
+            lectures={data.lectures}
+            handleCancelLecture={handleCancelLecture}
+            {...commonSectionProps}
+          />
+        );
+    }
   };
 
   const handleQuickAdd = useCallback(async (type, data) => {

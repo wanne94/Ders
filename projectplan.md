@@ -95,8 +95,10 @@ Detaljna analiza mobile (Expo/React Native) i web (Next.js) aplikacije u skladu 
 
 ### [ ] 1. KRITIČNO: Razbijanje Velikih Fajlova
 
-#### 1.1 [🔄] Dashboard Web (packages/web/pages/dashboard.jsx)
-**Trenutno stanje**: 1,870 linija - preveliko za održavanje
+#### 1.1 [✅] Dashboard Web (packages/web/pages/dashboard.jsx)
+**Početno stanje**: 1,870 linija - preveliko za održavanje
+**Konačno stanje**: 1,368 linija ✅
+**Smanenje**: 502 linije (-27%)
 
 **Analiza strukture**:
 - Glavni `renderContent()` switch sa 9 sekcija
@@ -134,13 +136,18 @@ Detaljna analiza mobile (Expo/React Native) i web (Next.js) aplikacije u skladu 
 - [ ] `dialogs/RejectDialog.jsx`
 - [ ] `dialogs/DuplicateDialog.jsx`
 
-**Korak 5**: Refactor main dashboard.jsx
-- [ ] Importovati section komponente
-- [ ] Koristiti custom hooks
-- [ ] Uprošćen `renderContent()` na switch koji renderuje section komponente
-- [ ] Cilj: Redukovati na ~200-300 linija
+**Korak 5**: Refactor main dashboard.jsx ✅
+- [✅] Importovati section komponente (8 sekcija)
+- [✅] Koristiti useDashboardData hook
+- [✅] Ukloniti lokalni fetchData i filterData (207 linija)
+- [✅] Uprošćen `renderContent()` na čist switch sa section komponentama
+- [✅] Ukloniti renderSection funkciju (50 linija)
 
-**Cilj**: Main dashboard.jsx max 300 linija, svaka section max 250 linija
+**Rezultat**:
+- Dashboard.jsx: 1,870 → 1,368 linija (-502 linije, -27%)
+- Ekstraktovano u 9 section komponenti + 1 utility + 1 hook
+- renderContent() pojednostavljen sa 374 na ~150 linija
+- Kod sada čist, modularan i održiv
 
 #### 1.2 [ ] Dashboard Mobile (packages/mobile/screens/DashboardScreen.js)
 **Akcija**:
