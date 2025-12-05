@@ -1,6 +1,6 @@
 module.exports = {
   testEnvironment: 'node',
-  roots: ['<rootDir>/temp', '<rootDir>/server', '<rootDir>/web', '<rootDir>/mob'],
+  roots: ['<rootDir>/server', '<rootDir>/packages/web', '<rootDir>/packages/mobile'],
   testMatch: [
     '**/__tests__/**/*.(js|jsx)',
     '**/?(*.)+(spec|test).(js|jsx)'
