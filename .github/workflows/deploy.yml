@@ -55,7 +55,7 @@ jobs:
       - name: Build Web
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: https://api.ders.ba
+          NEXT_PUBLIC_API_URL: https://ders.ba/api
 
       - name: Add server to known_hosts
         run: |
@@ -92,4 +92,4 @@ jobs:
       - name: Health Check
         run: |
           curl -f https://ders.ba || exit 1
-          curl -f https://api.ders.ba/health || exit 1
+          curl -f https://ders.ba/api/health || exit 1
