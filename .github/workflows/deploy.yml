@@ -37,7 +37,7 @@ jobs:
           ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "\
             cd ${{ secrets.DEPLOY_PATH }}/server && \
             npm install --production --legacy-peer-deps && \
-            pm2 restart ders-api"
+            pm2 restart ders-server"
 
   deploy-web:
     needs: [ci, deploy-server]
@@ -50,7 +50,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
 
       - name: Build Web
         run: npm run build
