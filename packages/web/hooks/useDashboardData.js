@@ -5,12 +5,13 @@ import axiosInstance from '@/utils/axiosConfig';
 /**
  * Custom hook for managing dashboard data fetching and state
  *
- * @param {boolean} isAdmin - Whether the current user is an admin
+ * @param {boolean} canAccessDashboard - Whether the current user can access dashboard (moderator, admin, super_admin)
  * @param {object} currentUser - Current user object
  * @param {string} token - Authentication token
+ * @param {boolean} authChecked - Whether auth check has completed
  * @returns {object} - Dashboard data and loading states
  */
-export const useDashboardData = (isAdmin, currentUser, token) => {
+export const useDashboardData = (canAccessDashboard, currentUser, token, authChecked = false) => {
   const [data, setData] = useState({
     users: [],
     lectures: [],
@@ -36,18 +37,18 @@ export const useDashboardData = (isAdmin, currentUser, token) => {
 
   const fetchData = useCallback(async () => {
     console.log('📊 Dashboard fetchData: Starting data fetch...');
-    console.log('📊 isAdmin:', isAdmin);
+    console.log('📊 canAccessDashboard:', canAccessDashboard);
     console.log('📊 currentUser:', currentUser);
     console.log('📊 token:', !!token);
 
     setUi(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // Only call admin endpoints if user is admin
+      // Only call admin endpoints if user can access dashboard (moderator, admin, super_admin)
       const promises = [];
 
-      if (isAdmin && token) {
-        console.log('📊 User is admin, calling admin endpoints...');
+      if (canAccessDashboard && token) {
+        console.log('📊 User can access dashboard, calling admin endpoints...');
         promises.push(
           usersService.getAllUsers().catch(err => {
             console.error('Error fetching users:', err);
@@ -83,7 +84,7 @@ export const useDashboardData = (isAdmin, currentUser, token) => {
           })
         );
       } else {
-        console.log('📊 User is not admin, using public endpoints...');
+        console.log('📊 User cannot access dashboard, using public endpoints...');
         // For non-admin users, use public endpoints or return empty data
         promises.push(
           Promise.resolve([]), // users
@@ -140,14 +141,15 @@ export const useDashboardData = (isAdmin, currentUser, token) => {
       console.error('📊 Error fetching dashboard data:', error);
       setUi(prev => ({ ...prev, isLoading: false, error: 'Greška pri dohvaćanju podataka.' }));
     }
-  }, [isAdmin, currentUser, token]);
+  }, [canAccessDashboard, currentUser, token]);
 
   useEffect(() => {
-    if (!fetchDataCalledRef.current) {
+    // Wait for auth check to complete before fetching data
+    if (authChecked && !fetchDataCalledRef.current) {
       fetchDataCalledRef.current = true;
       fetchData();
     }
-  }, [fetchData]);
+  }, [fetchData, authChecked]);
 
   return {
     data,

@@ -26,7 +26,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Middleware
 const { authMiddleware: authenticateToken } = require('../utils/jwt');
-const { isAdminOrSuperAdmin } = require('../middleware/auth');
+const { isAdminOrSuperAdmin, isModeratorOrHigher } = require('../middleware/auth');
 
 // GET /api/organizations/public - Get public organizations with lecture count
 router.get('/public', async (req, res) => {
@@ -90,8 +90,8 @@ router.get('/with-active-lectures', async (req, res) => {
   }
 });
 
-// POST /api/organizations/bulk/approve - Bulk approve organizations
-router.post('/bulk/approve', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+// POST /api/organizations/bulk/approve - Bulk approve organizations (Moderator and higher)
+router.post('/bulk/approve', authenticateToken, isModeratorOrHigher, async (req, res) => {
   try {
     const { ids } = req.body;
     
@@ -114,8 +114,8 @@ router.post('/bulk/approve', authenticateToken, isAdminOrSuperAdmin, async (req,
   }
 });
 
-// POST /api/organizations/bulk/reject - Bulk reject organizations
-router.post('/bulk/reject', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+// POST /api/organizations/bulk/reject - Bulk reject organizations (Moderator and higher)
+router.post('/bulk/reject', authenticateToken, isModeratorOrHigher, async (req, res) => {
   try {
     const { ids } = req.body;
     

@@ -14,9 +14,8 @@ import {
   Typography
 } from '@mui/material';
 import axiosInstance from '@/utils/axiosConfig';
-import { jwtDecode } from 'jwt-decode';
 
-const UserForm = ({ open, onClose, onSuccess, user }) => {
+const UserForm = ({ open, onClose, onSuccess, user, currentUser }) => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -25,7 +24,6 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
     firstName: '',
     phone: ''
   });
-  const [currentUser, setCurrentUser] = useState(null);
 
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -54,27 +52,9 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
     }
   }, [user, open]);
 
-  // Get current user to check permissions
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedToken = localStorage.getItem('token');
-      if (storedToken) {
-        try {
-          const decodedUser = jwtDecode(storedToken);
-          console.log('Decoded user in UserForm:', decodedUser);
-          console.log('User role:', decodedUser?.role);
-          setCurrentUser(decodedUser);
-        } catch (error) {
-          console.error('Error decoding token:', error);
-          setCurrentUser(null);
-        }
-      }
-    }
-  }, []);
-
   const isSuperAdmin = currentUser?.role === 'super_admin';
-  console.log('Is Super Admin:', isSuperAdmin, 'Current user:', currentUser);
-  console.log('Open state:', open, 'User to edit:', user);
+  const isAdmin = currentUser?.role === 'admin';
+  const canAssignRoles = isSuperAdmin || isAdmin;
 
   const handleClose = () => {
     // Resetuj formu i greške kad se zatvara dialog
@@ -124,16 +104,16 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
         // Update existing user
         const updateData = { ...sanitizedData };
         // Password is already removed in sanitization if empty
-        // Ukloni role ako korisnik nije super_admin
-        if (!isSuperAdmin) {
+        // Ukloni role ako korisnik nije admin ili super_admin
+        if (!canAssignRoles) {
           delete updateData.role;
         }
         response = await axiosInstance.put(`/users/${user._id}`, updateData);
       } else {
         // Create new user
         const createData = { ...sanitizedData };
-        // Ukloni role ako korisnik nije super_admin
-        if (!isSuperAdmin) {
+        // Ukloni role ako korisnik nije admin ili super_admin
+        if (!canAssignRoles) {
           delete createData.role;
         }
         response = await axiosInstance.post('/users', createData);
@@ -141,7 +121,14 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
       
       if (response) {
         // Resetuj formu
-        setFormData(getInitialUserForm());
+        setFormData({
+          username: '',
+          email: '',
+          password: '',
+          role: 'user',
+          firstName: '',
+          phone: ''
+        });
         setError(null);
         
         // Pozovi callback funkciju s novim/osvježenim korisnikom
@@ -226,7 +213,7 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
               margin="normal"
             />
 
-            {isSuperAdmin && (
+            {canAssignRoles && (
               <TextField
                 fullWidth
                 select
@@ -238,8 +225,9 @@ const UserForm = ({ open, onClose, onSuccess, user }) => {
                 required
               >
                 <MenuItem value="user">Korisnik</MenuItem>
-                <MenuItem value="admin">Admin</MenuItem>
-                <MenuItem value="super_admin">Super Admin</MenuItem>
+                <MenuItem value="moderator">Moderator</MenuItem>
+                {isSuperAdmin && <MenuItem value="admin">Admin</MenuItem>}
+                {isSuperAdmin && <MenuItem value="super_admin">Super Admin</MenuItem>}
               </TextField>
             )}
           </Box>

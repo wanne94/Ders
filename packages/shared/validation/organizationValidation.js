@@ -18,11 +18,10 @@ export const ORGANIZATION_VALIDATION_RULES = {
     }
   },
   description: {
-    required: true,
+    required: false,
     minLength: 10,
     maxLength: 2000,
     messages: {
-      required: 'Opis udruženja je obavezan',
       minLength: 'Opis mora imati najmanje 10 karaktera',
       maxLength: 'Opis ne može imati više od 2000 karaktera'
     }

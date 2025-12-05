@@ -255,6 +255,34 @@ const isAdminOrSuperAdmin = (req, res, next) => {
   }
 };
 
+// Middleware za provjeru je li korisnik moderator ili viši (moderator, admin, super_admin)
+const isModeratorOrHigher = (req, res, next) => {
+  try {
+    logger.info('Checking moderator+ access:', {
+      user: req.user,
+      role: req.user?.role,
+      allowedRoles: ['moderator', 'admin', 'super_admin']
+    });
+
+    if (!req.user || !req.user.role) {
+      return res.status(403).json({ message: 'Korisničke dozvole nisu pronađene. Molimo prijavite se ponovo.' });
+    }
+
+    const allowedRoles = ['moderator', 'admin', 'super_admin'];
+
+    if (allowedRoles.includes(req.user.role)) {
+      logger.info('Access granted for role:', req.user.role);
+      next();
+    } else {
+      logger.warn('Access denied for role:', req.user.role);
+      res.status(403).json({ message: 'Potrebne su moderatorske dozvole za pristup ovoj funkciji.' });
+    }
+  } catch (error) {
+    logger.error('Error in isModeratorOrHigher middleware:', error);
+    res.status(500).json({ message: 'Greška pri provjeri dozvola. Molimo pokušajte ponovo.' });
+  }
+};
+
 // Middleware za provjeru da li korisnik može ažurirati profil (svoj ili ako je admin)
 const canUpdateProfile = (req, res, next) => {
   try {
@@ -916,7 +944,7 @@ app.post('/api/users', authenticateToken, isAdminOrSuperAdmin, async (req, res) 
       errors.push('Lozinka mora imati najmanje 6 karaktera');
     }
 
-    const validRoles = ['user', 'admin', 'super_admin'];
+    const validRoles = ['user', 'moderator', 'admin', 'super_admin'];
     if (role && !validRoles.includes(role)) {
       errors.push('Nevaljan tip korisnika');
     }
@@ -3326,7 +3354,7 @@ app.put('/api/users/:id', authenticateToken, isAdminOrSuperAdmin, async (req, re
       errors.push('Lozinka mora imati najmanje 6 karaktera');
     }
 
-    const validRoles = ['user', 'admin', 'super_admin'];
+    const validRoles = ['user', 'moderator', 'admin', 'super_admin'];
     if (role && !validRoles.includes(role)) {
       errors.push('Nevaljan tip korisnika');
     }

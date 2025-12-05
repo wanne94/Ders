@@ -47,7 +47,11 @@
       "Bash(git add:*)",
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(systemctl status:*)",
+      "Bash(service mongod status:*)",
+      "Bash(pgrep:*)",
+      "Bash(git -C \"/home/wanne/React projekti/Ders\" remote -v)"
     ],
     "deny": [],
     "ask": []

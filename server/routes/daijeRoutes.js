@@ -26,7 +26,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Middleware
 const { authMiddleware: authenticateToken } = require('../utils/jwt');
-const { isAdminOrSuperAdmin } = require('../middleware/auth');
+const { isAdminOrSuperAdmin, isModeratorOrHigher } = require('../middleware/auth');
 
 // GET /api/daije/public - Get public daije with lecture count
 router.get('/public', async (req, res) => {
@@ -90,8 +90,8 @@ router.get('/with-active-lectures', async (req, res) => {
   }
 });
 
-// POST /api/daije/bulk/approve - Bulk approve daije
-router.post('/bulk/approve', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+// POST /api/daije/bulk/approve - Bulk approve daije (Moderator and higher)
+router.post('/bulk/approve', authenticateToken, isModeratorOrHigher, async (req, res) => {
   try {
     const { ids } = req.body;
     
@@ -114,8 +114,8 @@ router.post('/bulk/approve', authenticateToken, isAdminOrSuperAdmin, async (req,
   }
 });
 
-// POST /api/daije/bulk/reject - Bulk reject daije
-router.post('/bulk/reject', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+// POST /api/daije/bulk/reject - Bulk reject daije (Moderator and higher)
+router.post('/bulk/reject', authenticateToken, isModeratorOrHigher, async (req, res) => {
   try {
     const { ids } = req.body;
     

@@ -7,15 +7,15 @@ const Organization = require('../models/Organization'); // Add Organization mode
 const Daija = require('../models/Daija'); // Add Daija model
 const Settings = require('../models/Settings');
 const { authMiddleware: authenticateToken } = require('../utils/jwt');
-const { isAdminOrSuperAdmin, optionalAuth } = require('../middleware/auth');
+const { isAdminOrSuperAdmin, isModeratorOrHigher, optionalAuth } = require('../middleware/auth');
 const { calculateLecturesStatus } = require('../utils/lectureStatus');
 const { parseLocalDate, addDays } = require('../utils/dateHelpers');
 const { formatDaijaTitle } = require('../utils/formatHelpers');
 
 // 🔧 Debug: Test if both functions are loaded correctly
 
-// Bulk operations endpoints (Admin only)
-router.post('/bulk/approve', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+// Bulk operations endpoints (Moderator and higher)
+router.post('/bulk/approve', authenticateToken, isModeratorOrHigher, async (req, res) => {
   try {
     const { ids } = req.body;
     
@@ -38,7 +38,7 @@ router.post('/bulk/approve', authenticateToken, isAdminOrSuperAdmin, async (req,
   }
 });
 
-router.post('/bulk/reject', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+router.post('/bulk/reject', authenticateToken, isModeratorOrHigher, async (req, res) => {
   try {
     const { ids } = req.body;
     

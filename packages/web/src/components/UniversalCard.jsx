@@ -259,9 +259,13 @@ const UniversalCard = React.memo(({ data }) => {
   const daijaName = data?.name || displayData.title;
   const daijaTitle = data?.title;
 
+  const isLectureCard = displayData.type === 'lecture';
+
   return (
     <Card
-      className={`flex flex-col relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer w-full ${
+      className={`flex flex-col relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer ${
+        isLectureCard ? 'w-[350px] min-w-[350px] max-w-[350px]' : 'w-full'
+      } ${
         isOrganizationCard ? 'min-h-[260px]' : 'h-[240px]'
       }`}
       onClick={displayData.onClick}

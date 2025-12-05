@@ -12,9 +12,10 @@ import Navigation from '@/components/Navigation';
 import { usersService } from '@/services';
 import DataTable from '@/components/DataTable';
 import UserForm from '@/components/UserForm';
-// import { UserForm } from '@shared/dashboard';
+import { useAuthCheck } from '@/utils/useAuthCheck';
 
 const Users = () => {
+  const { user: currentUser } = useAuthCheck();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -122,7 +123,7 @@ const Users = () => {
         onClose={handleCloseModal}
         onSuccess={handleFormSuccess}
         user={selectedUser}
-        showPassword={!selectedUser} // Show password field only for new users
+        currentUser={currentUser}
       />
     </Box>
   );

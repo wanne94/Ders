@@ -76,6 +76,7 @@ const Dashboard = () => {
 
   const [token, setToken] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     const loadApprovalSettings = async () => {
@@ -124,13 +125,13 @@ const Dashboard = () => {
       const { getToken, getUserData } = require('@/utils/authHelpers');
       const storedToken = getToken();
       const userData = getUserData();
-      
+
       console.log('📊 Dashboard useEffect: Setting token and user');
       console.log('📊 Stored token:', !!storedToken);
       console.log('📊 User data:', userData);
-      
+
       setToken(storedToken);
-      
+
       if (storedToken) {
         try {
           const decodedUser = jwtDecode(storedToken);
@@ -141,14 +142,17 @@ const Dashboard = () => {
           setCurrentUser(null);
         }
       }
+      setAuthChecked(true);
     }
   }, []);
   
   const canDelete = currentUser?.role === 'super_admin';
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
+  const isModerator = currentUser?.role === 'moderator';
+  const canAccessDashboard = ['moderator', 'admin', 'super_admin'].includes(currentUser?.role);
 
   // Use custom hook for data fetching and state management
-  const { data, counts, ui, fetchData, setData, setCounts, setUi } = useDashboardData(isAdmin, currentUser, token);
+  const { data, counts, ui, fetchData, setData, setCounts, setUi } = useDashboardData(canAccessDashboard, currentUser, token, authChecked);
   const [dialogs, setDialogs] = useState({
     deleteDialog: false,
     statusDialog: false,
@@ -1328,7 +1332,7 @@ const Dashboard = () => {
           onSuccess={(updatedUser) => {
             setData(prev => ({
               ...prev,
-              users: prev.users.map(user => 
+              users: prev.users.map(user =>
                 user._id === updatedUser._id ? updatedUser : user
               )
             }));
@@ -1336,6 +1340,7 @@ const Dashboard = () => {
             showSnackbar('Korisnik uspješno ažuriran');
           }}
           user={userToEdit}
+          currentUser={currentUser}
         />
         
         {/* Advanced Filters Dialog */}
