@@ -39,13 +39,25 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
+    // Only clear auth on 401 with specific token error messages
+    const tokenErrorMessages = [
+      'Token expired',
+      'Invalid token',
+      'Token je istekao',
+      'Token nije validan',
+      'jwt expired',
+      'jwt malformed'
+    ];
+
+    const isTokenError = error.response?.data?.message &&
+      tokenErrorMessages.some(msg => error.response.data.message.includes(msg));
+
+    if (error.response?.status === 401 && isTokenError) {
+      // Handle unauthorized access - only for token-specific errors
       if (typeof window !== 'undefined') {
         secureClearToken();
         sessionStorage.removeItem('user');
-        // Don't redirect automatically - let users continue as guests
-        console.log('🔓 Unauthorized access - user can continue as guest');
+        console.log('🔓 Token expired or invalid - user can continue as guest');
       }
     }
     return Promise.reject(error);

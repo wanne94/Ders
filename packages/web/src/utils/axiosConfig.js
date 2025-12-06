@@ -49,17 +49,28 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response) {
       // Handle token expiration or invalid token
-      if (
-        error.response.status === 401 || 
-        error.response.status === 403 || 
-        error.response.data?.message === 'Token expired' ||
-        error.response.data?.message === 'Invalid token' ||
-        error.response.data?.message === 'Token je istekao' ||
-        error.response.data?.message === 'Token nije validan'
-      ) {
+      // Only clear auth on 401 with specific token-related messages
+      // 403 means "forbidden" not "token expired" - don't clear auth for permission issues
+      const tokenErrorMessages = [
+        'Token expired',
+        'Invalid token',
+        'Token je istekao',
+        'Token nije validan',
+        'jwt expired',
+        'jwt malformed',
+        'No token provided',
+        'Unauthorized'
+      ];
+
+      const isTokenError = tokenErrorMessages.some(
+        msg => error.response.data?.message?.includes(msg)
+      );
+
+      // Only clear auth if it's a 401 with a specific token error message
+      if (error.response.status === 401 && isTokenError) {
         // Clear all data including remembered credentials
         clearAllData();
-        
+
         // Notify components about token expiration
         if (tokenExpirationCallback) {
           tokenExpirationCallback({
@@ -67,7 +78,7 @@ api.interceptors.response.use(
             message: error.response.data?.message || 'Token je istekao'
           });
         }
-        
+
         console.log('🔓 Token expired or invalid - user can continue as guest');
       }
     }
