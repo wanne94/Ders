@@ -40,13 +40,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Only clear auth on 401 with specific token error messages
+    // IMPORTANT: Do NOT add generic messages like 'Unauthorized' here
+    // as they can trigger on legitimate authorization failures
     const tokenErrorMessages = [
       'Token expired',
       'Invalid token',
       'Token je istekao',
       'Token nije validan',
       'jwt expired',
-      'jwt malformed'
+      'jwt malformed',
+      'Nema tokena ili pogrešan format',
+      'Nema tokena'
     ];
 
     const isTokenError = error.response?.data?.message &&

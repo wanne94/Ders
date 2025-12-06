@@ -59,7 +59,8 @@ api.interceptors.response.use(
         'jwt expired',
         'jwt malformed',
         'No token provided',
-        'Unauthorized'
+        'Nema tokena ili pogrešan format',
+        'Nema tokena'
       ];
 
       const isTokenError = tokenErrorMessages.some(
