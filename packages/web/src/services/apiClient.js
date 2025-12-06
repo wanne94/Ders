@@ -39,9 +39,8 @@ class ApiClient {
 
     // Add auth token if available
     if (typeof window !== 'undefined') {
-      const tokenKey = process.env.NEXT_PUBLIC_JWT_STORAGE_KEY || 'token';
-      const token = localStorage.getItem(tokenKey);
-      
+      const token = tokenManager.secureGetToken();
+
       // Provjeri validnost tokena prije slanja (performanse optimizacija)
       if (token && tokenManager.isTokenValid(token)) {
         config.headers.Authorization = `Bearer ${token}`;

@@ -16,6 +16,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
 import axiosInstance from '../../utils/axiosConfig';
 import { jwtDecode } from 'jwt-decode';
+import { secureGetToken } from '../../utils/tokenManager';
 
 const Settings = ({ approvalSettings, setApprovalSettings }) => {
   const [localSettings, setLocalSettings] = useState(approvalSettings);
@@ -28,7 +29,7 @@ const Settings = ({ approvalSettings, setApprovalSettings }) => {
   // Check if user is super admin
   const isSuperAdmin = () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = secureGetToken();
       if (!token) return false;
       const decoded = jwtDecode(token);
       return decoded.role === 'super_admin';

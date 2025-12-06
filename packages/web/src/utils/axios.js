@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { secureGetToken, secureClearToken } from './tokenManager';
 
 console.log('🔧 API Configuration:', {
   NODE_ENV: process.env.NODE_ENV,
@@ -16,7 +17,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
+      const token = secureGetToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -41,8 +42,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Handle unauthorized access
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        secureClearToken();
+        sessionStorage.removeItem('user');
         // Don't redirect automatically - let users continue as guests
         console.log('🔓 Unauthorized access - user can continue as guest');
       }

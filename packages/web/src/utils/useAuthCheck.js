@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
+import { secureGetToken, secureClearToken } from './tokenManager';
+import { getUserData, clearAuthData as clearAuth } from './authHelpers';
 
 /**
  * Custom hook za proveru autentifikacije korisnika
@@ -23,7 +25,7 @@ export const useAuthCheck = () => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       return response.ok;
     } catch (error) {
       console.log('🔍 Token validation failed:', error);
@@ -33,8 +35,7 @@ export const useAuthCheck = () => {
 
   // Funkcija za čišćenje podataka o autentifikaciji
   const clearAuthData = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearAuth();
     setIsLoggedIn(false);
     setUser(null);
   }, []);
@@ -42,9 +43,9 @@ export const useAuthCheck = () => {
   // Funkcija za provjeru i ažuriranje auth stanja
   const refreshAuthState = useCallback(async () => {
     setIsValidatingToken(true);
-    
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
+
+    const token = secureGetToken();
+    const userData = getUserData();
     
     if (token && userData) {
       // Proveri da li je token još uvek valjan na serveru
@@ -52,7 +53,7 @@ export const useAuthCheck = () => {
       
       if (isTokenValid) {
         setIsLoggedIn(true);
-        setUser(JSON.parse(userData));
+        setUser(userData);
         console.log('✅ Token je valjan - korisnik je prijavljen');
       } else {
         // Token je istekao ili nije valjan - obriši podatke

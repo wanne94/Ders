@@ -1,9 +1,11 @@
 /**
  * Upload Service - uvek koristi produkcijski server za upload slika
- * 
+ *
  * Ovo osigurava da se slike upload-uju direktno na https://ders.ba server
  * čak i kada je web aplikacija u development modu
  */
+
+import { secureGetToken } from './tokenManager';
 
 // Uvek koristi produkcijski server za upload
 const UPLOAD_SERVER_URL = 'https://ders.ba';
@@ -52,7 +54,7 @@ export const uploadImage = async (file, token = null) => {
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     } else if (typeof window !== 'undefined') {
-      const storedToken = localStorage.getItem('token');
+      const storedToken = secureGetToken();
       if (storedToken) {
         headers.Authorization = `Bearer ${storedToken}`;
       }
@@ -118,7 +120,7 @@ export const uploadImageWithAxios = async (file, token = null) => {
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     } else if (typeof window !== 'undefined') {
-      const storedToken = localStorage.getItem('token');
+      const storedToken = secureGetToken();
       if (storedToken) {
         headers.Authorization = `Bearer ${storedToken}`;
       }

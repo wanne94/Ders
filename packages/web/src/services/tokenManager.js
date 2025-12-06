@@ -4,6 +4,7 @@
  */
 
 import { getToken, clearAuthData, setToken, getUserData } from '@/utils/authHelpers';
+import { secureGetToken } from '@/utils/tokenManager';
 const debugEnabled = process.env.NEXT_PUBLIC_DEBUG === 'true';
 
 class TokenManager {
@@ -266,5 +267,8 @@ class TokenManager {
 
 // Singleton instanca
 const tokenManager = new TokenManager();
+
+// Dodaj secureGetToken kao metodu klase za kompatibilnost
+tokenManager.secureGetToken = secureGetToken;
 
 export default tokenManager;
