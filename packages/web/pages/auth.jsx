@@ -169,8 +169,8 @@ const Authentication = () => {
       logAuth('email', false);
 
       // Redirect based on user role
-      if (user.role === 'admin' || user.role === 'super_admin') {
-        console.log('🔑 AUTH: Admin user, redirecting to dashboard');
+      if (['moderator', 'admin', 'super_admin'].includes(user.role)) {
+        console.log('🔑 AUTH: Admin/Moderator user, redirecting to dashboard');
         router.push('/dashboard');
       } else {
         console.log('🔑 AUTH: Regular user, redirecting to home');

@@ -51,7 +51,7 @@ const AdminPanel = () => {
 
       try {
         const decodedUser = jwtDecode(token);
-        if (decodedUser.role === 'admin' || decodedUser.role === 'super_admin') {
+        if (['moderator', 'admin', 'super_admin'].includes(decodedUser.role)) {
           setIsAuthorized(true);
         } else {
           router.push('/');

@@ -60,3 +60,11 @@ export const isAdmin = (userRole) => {
 export const isSuperAdmin = (userRole) => {
   return userRole === USER_ROLES.SUPER_ADMIN;
 };
+
+export const canEditContent = (userRole) => {
+  return [USER_ROLES.MODERATOR, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN].includes(userRole);
+};
+
+export const canDeleteContent = (userRole) => {
+  return [USER_ROLES.MODERATOR, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN].includes(userRole);
+};

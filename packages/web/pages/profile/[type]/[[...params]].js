@@ -154,7 +154,7 @@ const ProfilePage = () => {
     console.log('ProfilePage - User data:', userData);
     if (userData) {
       setUser(userData);
-      const adminStatus = userData.role === 'admin' || userData.role === 'super_admin' || userData.role === 'superadmin';
+      const adminStatus = ['moderator', 'admin', 'super_admin'].includes(userData.role);
       setIsAdmin(adminStatus);
       console.log('ProfilePage - Is admin:', adminStatus, 'Role:', userData.role);
     }

@@ -107,13 +107,13 @@ const ElementPage = ({ type }) => {
         case 'lectures':
           // Use the same endpoint as dashboard - get ALL lectures
           console.log('🔍 [ElementPage] Fetching ALL lectures (same as dashboard)');
-          // Check if user is admin
+          // Check if user is admin or moderator
           const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
           let isAdminUser = false;
           if (token) {
             try {
               const decodedUser = jwtDecode(token);
-              isAdminUser = decodedUser.role === 'admin' || decodedUser.role === 'super_admin';
+              isAdminUser = ['moderator', 'admin', 'super_admin'].includes(decodedUser.role);
               setState(prev => ({ ...prev, isAdmin: isAdminUser }));
             } catch (e) {
               console.error('Error decoding token:', e);

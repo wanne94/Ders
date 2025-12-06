@@ -146,8 +146,8 @@ const Dashboard = () => {
     }
   }, []);
   
-  const canDelete = currentUser?.role === 'super_admin';
-  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
+  const canDelete = ['moderator', 'admin', 'super_admin'].includes(currentUser?.role);
+  const isAdmin = ['moderator', 'admin', 'super_admin'].includes(currentUser?.role);
   const isModerator = currentUser?.role === 'moderator';
   const canAccessDashboard = ['moderator', 'admin', 'super_admin'].includes(currentUser?.role);
 
