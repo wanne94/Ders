@@ -83,12 +83,32 @@ const Navigation = () => {
   }, [lastScrollY]);
 
   useEffect(() => {
-    const token = getToken();
-    const userData = getUserData();
-    if (token && userData) {
-      setIsLoggedIn(true);
-      setUser(userData);
-    }
+    // Check auth state on mount
+    const checkAuth = () => {
+      const token = getToken();
+      const userData = getUserData();
+      if (token && userData) {
+        setIsLoggedIn(true);
+        setUser(userData);
+      } else {
+        setIsLoggedIn(false);
+        setUser(null);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes (login/logout from other components)
+    const handleAuthChange = (event) => {
+      console.log('🔄 Navigation: Auth changed event received', event?.detail?.type);
+      checkAuth();
+    };
+
+    window.addEventListener('authChanged', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('authChanged', handleAuthChange);
+    };
   }, []);
 
   const handleLogout = () => {

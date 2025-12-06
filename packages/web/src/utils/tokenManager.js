@@ -30,10 +30,10 @@ export const secureSetToken = (token) => {
     if (axiosInstance && axiosInstance.defaults) {
       axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
-    
-    // Emit auth change event
-    window.dispatchEvent(new CustomEvent('authChanged', { detail: { type: 'login' } }));
-    
+
+    // Note: authChanged event is emitted from setUserData in authHelpers.js
+    // to ensure both token AND user data are set before the event fires
+
     return true;
   }
   return false;
@@ -79,9 +79,8 @@ export const secureClearToken = () => {
     if (axiosInstance && axiosInstance.defaults) {
       delete axiosInstance.defaults.headers.common['Authorization'];
     }
-    
-    // Emit auth change event
-    window.dispatchEvent(new CustomEvent('authChanged', { detail: { type: 'logout' } }));
+
+    // Note: authChanged event is emitted from clearAuthData in authHelpers.js
   }
 };
 
