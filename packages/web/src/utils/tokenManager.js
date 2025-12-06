@@ -4,8 +4,13 @@ import axiosInstance from './axiosConfig';
 // Token storage using a combination of memory and sessionStorage
 let memoryToken = null;
 
-// Session storage key (obfuscated)
-const SESSION_KEY = btoa('auth_session_' + (process.env.NEXT_PUBLIC_APP_NAME || 'app'));
+// Session storage key (obfuscated) - only compute on client side
+const getSessionKey = () => {
+  if (typeof window !== 'undefined') {
+    return btoa('auth_session_' + (process.env.NEXT_PUBLIC_APP_NAME || 'app'));
+  }
+  return 'auth_session_fallback';
+};
 
 // Store token securely
 export const secureSetToken = (token) => {
@@ -16,7 +21,7 @@ export const secureSetToken = (token) => {
     // Store in sessionStorage (not localStorage) for tab persistence
     // This is cleared when browser is closed
     try {
-      sessionStorage.setItem(SESSION_KEY, btoa(token));
+      sessionStorage.setItem(getSessionKey(), btoa(token));
     } catch (e) {
       console.error('Failed to store token in session storage:', e);
     }
@@ -44,7 +49,7 @@ export const secureGetToken = () => {
     
     // Then try sessionStorage
     try {
-      const encoded = sessionStorage.getItem(SESSION_KEY);
+      const encoded = sessionStorage.getItem(getSessionKey());
       if (encoded) {
         const token = atob(encoded);
         memoryToken = token; // Cache in memory
@@ -65,7 +70,7 @@ export const secureClearToken = () => {
     
     // Clear sessionStorage
     try {
-      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(getSessionKey());
     } catch (e) {
       console.error('Failed to clear token from session storage:', e);
     }
