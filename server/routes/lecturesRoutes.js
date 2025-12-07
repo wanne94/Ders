@@ -1084,7 +1084,7 @@ router.get('/organization/:organizationId', optionalAuth, async (req, res) => {
   }
 });
 // Admin endpoint - Get all lectures with cancellation reports for dashboard
-router.get('/admin/cancellation-reports', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+router.get('/admin/cancellation-reports', authenticateToken, isModeratorOrHigher, async (req, res) => {
   try {
     // Find all lectures that have at least one cancellation report
     const lectures = await Lecture.find({

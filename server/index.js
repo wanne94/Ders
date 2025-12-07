@@ -3239,7 +3239,7 @@ app.get('/api/debug/on-je-allah', async (req, res) => {
 });
 
 // Admin endpoint - Get all daije (including pending/rejected)
-app.get('/api/admin/daije', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+app.get('/api/admin/daije', authenticateToken, isModeratorOrHigher, async (req, res) => {
   try {
     logger.info('Admin fetching all daije (including pending/rejected)');
     const daije = await Daija.find().sort({ name: 1 });
@@ -3254,7 +3254,7 @@ app.get('/api/admin/daije', authenticateToken, isAdminOrSuperAdmin, async (req, 
 });
 
 // Admin endpoint - Get all organizations (including pending/rejected)
-app.get('/api/admin/organizations', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+app.get('/api/admin/organizations', authenticateToken, isModeratorOrHigher, async (req, res) => {
   try {
     logger.info('Admin fetching all organizations (including pending/rejected)');
     const organizations = await Organization.find().sort({ name: 1 });
@@ -3269,7 +3269,7 @@ app.get('/api/admin/organizations', authenticateToken, isAdminOrSuperAdmin, asyn
 });
 
 // Admin endpoint - Get all lectures by daija ID (including pending/rejected)
-app.get('/api/admin/lectures/daija/:daijaId', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+app.get('/api/admin/lectures/daija/:daijaId', authenticateToken, isModeratorOrHigher, async (req, res) => {
   try {
     logger.info('Admin fetching all lectures by daija ID:', req.params.daijaId);
     const lectures = await Lecture.find({ daija: req.params.daijaId })
@@ -3290,7 +3290,7 @@ app.get('/api/admin/lectures/daija/:daijaId', authenticateToken, isAdminOrSuperA
 });
 
 // Admin endpoint - Get all lectures by organization ID (including pending/rejected)
-app.get('/api/admin/lectures/organization/:organizationId', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
+app.get('/api/admin/lectures/organization/:organizationId', authenticateToken, isModeratorOrHigher, async (req, res) => {
   try {
     logger.info('Admin fetching all lectures by organization ID:', req.params.organizationId);
     const lectures = await Lecture.find({ organizationId: req.params.organizationId })
