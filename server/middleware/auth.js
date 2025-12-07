@@ -1,23 +1,26 @@
-const { authMiddleware } = require('../utils/jwt');
+const { authMiddleware, verifyToken } = require('../utils/jwt');
 
 // Optional authentication - allows both authenticated and guest users
+// Fixed: Now properly continues as guest when token is invalid/expired
 const optionalAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  
+
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    // User has provided token - try to authenticate
-    authMiddleware(req, res, (err) => {
-      if (err) {
-        // Token invalid but continue as guest
-        req.user = null;
-      }
-      next();
-    });
+    const token = authHeader.split(' ')[1];
+    try {
+      // Directly verify token instead of using authMiddleware
+      // This prevents authMiddleware from returning 401 response
+      const decoded = verifyToken(token);
+      req.user = decoded;
+    } catch (err) {
+      // Token invalid/expired - continue as guest
+      req.user = null;
+    }
   } else {
     // No token provided - continue as guest
     req.user = null;
-    next();
   }
+  next();
 };
 
 const isAdminOrSuperAdmin = (req, res, next) => {
