@@ -27,8 +27,8 @@ module.exports = {
     },
     {
       name: 'ders-web',
-      script: 'npm',
-      args: 'start',
+      script: './node_modules/.bin/next',
+      args: 'start -p 3002',
       cwd: '/var/www/ders.ba/web',
       instances: 1,
       exec_mode: 'fork',
