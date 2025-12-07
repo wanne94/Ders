@@ -53,9 +53,15 @@ const nextConfig = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname, 'src'),
       '@/pages': path.resolve(__dirname, 'pages'),
+      // Ensure single React instance across all packages
+      'react': path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     };
     return config;
-  }
+  },
+
+  // Transpile shared package
+  transpilePackages: ['@ders-ba/shared']
 };
 
 module.exports = nextConfig;
