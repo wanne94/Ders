@@ -15,18 +15,29 @@ export const useAuthCheck = () => {
   const [isValidatingToken, setIsValidatingToken] = useState(true);
   const router = useRouter();
 
-  // Funkcija za validaciju tokena na serveru
-  const validateTokenOnServer = async (token) => {
+  // Funkcija za validaciju tokena lokalno (bez API poziva)
+  // Provjerava da li je token validan JWT i da li nije istekao
+  const validateTokenLocally = (token) => {
     try {
-      const response = await fetch('/api/test-token', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      if (!token || typeof token !== 'string') return false;
 
-      return response.ok;
+      // JWT format: header.payload.signature
+      const parts = token.split('.');
+      if (parts.length !== 3) return false;
+
+      // Decode payload
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+
+      // Check expiration
+      if (payload.exp) {
+        const now = Date.now() / 1000;
+        if (payload.exp < now) {
+          console.log('⚠️ Token je istekao');
+          return false;
+        }
+      }
+
+      return true;
     } catch (error) {
       console.log('🔍 Token validation failed:', error);
       return false;
@@ -41,16 +52,16 @@ export const useAuthCheck = () => {
   }, []);
 
   // Funkcija za provjeru i ažuriranje auth stanja
-  const refreshAuthState = useCallback(async () => {
+  const refreshAuthState = useCallback(() => {
     setIsValidatingToken(true);
 
     const token = secureGetToken();
     const userData = getUserData();
-    
+
     if (token && userData) {
-      // Proveri da li je token još uvek valjan na serveru
-      const isTokenValid = await validateTokenOnServer(token);
-      
+      // Proveri da li je token još uvek valjan lokalno
+      const isTokenValid = validateTokenLocally(token);
+
       if (isTokenValid) {
         setIsLoggedIn(true);
         setUser(userData);
@@ -65,7 +76,7 @@ export const useAuthCheck = () => {
       setIsLoggedIn(false);
       setUser(null);
     }
-    
+
     setIsValidatingToken(false);
   }, [clearAuthData]);
 
@@ -133,4 +144,4 @@ export const useAuthCheck = () => {
     clearAuthData,
     refreshAuthState
   };
-};;; 
+}; 

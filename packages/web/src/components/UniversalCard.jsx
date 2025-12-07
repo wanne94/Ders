@@ -263,10 +263,8 @@ const UniversalCard = React.memo(({ data }) => {
 
   return (
     <Card
-      className={`flex flex-col relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer ${
-        isLectureCard ? 'w-[350px] min-w-[350px] max-w-[350px]' : 'w-full'
-      } ${
-        isOrganizationCard ? 'min-h-[260px]' : 'h-[240px]'
+      className={`flex flex-col relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer w-full ${
+        isOrganizationCard ? 'min-h-[260px]' : isLectureCard ? 'h-[200px] sm:h-[240px]' : 'h-[240px]'
       }`}
       onClick={displayData.onClick}
     >
@@ -302,10 +300,10 @@ const UniversalCard = React.memo(({ data }) => {
       <CardContent
         className={
           isDaijaCard
-            ? 'h-full p-6 flex flex-col items-center justify-center text-center gap-4'
+            ? 'h-full p-4 sm:p-6 flex flex-col items-center justify-center text-center gap-2 sm:gap-4'
             : isOrganizationCard
               ? 'p-0 h-full flex flex-col'
-              : 'h-full p-4 flex flex-col overflow-hidden'
+              : 'h-full p-2 sm:p-4 flex flex-col overflow-hidden'
         }
       >
         {isOrganizationCard ? (
@@ -390,15 +388,15 @@ const UniversalCard = React.memo(({ data }) => {
             {/* Title section for lectures - full width */}
             {displayData.type === 'lecture' && (
               <>
-                <h2 className="text-base font-bold mb-2 mt-6 text-left w-full text-gray-900 truncate">
+                <h2 className="text-xs sm:text-base font-bold mb-1 sm:mb-2 mt-4 sm:mt-6 text-left w-full text-gray-900 truncate">
                   {displayData.title}
                   {data.lecturePart && ` (dio ${data.lecturePart}.)`}
                 </h2>
-                <div className="border-b border-gray-200 mb-2" />
+                <div className="border-b border-gray-200 mb-1 sm:mb-2" />
               </>
             )}
 
-            <div className="flex h-full flex-1 gap-3">
+            <div className="flex h-full flex-1 gap-2 sm:gap-3">
               {/* Left side - Information */}
               <div className="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
                 {/* Title prefix (for daija titles) */}
@@ -410,20 +408,20 @@ const UniversalCard = React.memo(({ data }) => {
 
                 {/* Main title for non-lecture types */}
                 {displayData.type !== 'lecture' && (
-                  <h2 className="text-base font-semibold mb-1.5 text-left text-gray-900 truncate">
+                  <h2 className="text-xs sm:text-base font-semibold mb-1 sm:mb-1.5 text-left text-gray-900 truncate">
                     {displayData.title}
                     {data.lecturePart && ` (dio ${data.lecturePart}.)`}
                   </h2>
                 )}
 
                 {/* Info items */}
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-0 sm:gap-0.5">
                   {displayData.infoItems.slice(0, 6).map((item, index) => {
                     const Icon = item.icon;
                     return (
-                      <div key={index} className="flex items-center gap-2">
-                        <Icon className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                        <span className="text-[15px] text-gray-600 line-clamp-1 text-left leading-tight">
+                      <div key={index} className="flex items-center gap-1 sm:gap-2">
+                        <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-gray-400 flex-shrink-0" />
+                        <span className="text-[11px] sm:text-[15px] text-gray-600 line-clamp-1 text-left leading-tight">
                           {item.text}
                         </span>
                       </div>
@@ -433,13 +431,13 @@ const UniversalCard = React.memo(({ data }) => {
               </div>
 
               {/* Right side - Image */}
-              <div className="w-28 h-36 flex-shrink-0 relative self-center">
+              <div className="w-16 h-24 sm:w-28 sm:h-36 flex-shrink-0 relative self-center">
                 <div className={`w-full h-full relative overflow-hidden shadow-sm ${displayData.imageStyle}`}>
                   <Image
                     src={imageUrl}
                     alt={displayData.title}
                     fill
-                    sizes="112px"
+                    sizes="(max-width: 640px) 64px, 112px"
                     className="object-cover object-top"
                     onError={handleImageError}
                   />
@@ -447,7 +445,7 @@ const UniversalCard = React.memo(({ data }) => {
                   {displayData.type === 'lecture' && (data.cancelled || data.isCancelled || displayData.statusInfo?.status === 'cancelled') && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-red-500 text-white font-extrabold text-xs tracking-wider uppercase py-1.5 px-10 rotate-[-30deg] shadow-lg transform-gpu">
+                        <div className="bg-red-500 text-white font-extrabold text-[8px] sm:text-xs tracking-wider uppercase py-1 sm:py-1.5 px-4 sm:px-10 rotate-[-30deg] shadow-lg transform-gpu">
                           OTKAZANO
                         </div>
                       </div>

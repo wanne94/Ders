@@ -148,6 +148,150 @@ npm run monitor       # PM2 monit
 
 ---
 
+## Sistem Slika i Upload
+
+### ⚠️ KRITIČNO UPOZORENJE
+
+```
+SLIKE NA PRODUKCIJI SU JEDINA KOPIJA!
+Ako se obrišu — NEMA RECOVERY osim iz backupa!
+```
+
+**Folder `uploads/` NIJE u git repozitoriju** — slike postoje SAMO na produkcijskom serveru i NIGDJE drugdje.
+
+### Lokacije slika
+
+**Production server:**
+```
+/var/www/ders.ba/server/uploads/images/   ← Sve uploadovane slike (JEDINA KOPIJA!)
+```
+
+**Lokalni development:**
+```
+server/uploads/images/   ← Lokalne test slike (ignorisane u .gitignore)
+```
+
+### Kako funkcioniše upload
+
+1. Korisnik uploada sliku kroz API (`POST /api/upload`)
+2. Server prima sliku i optimizira je u `.webp` format (sharp library)
+3. Slika se čuva u `uploads/images/` sa imenom `optimized-{timestamp}.webp`
+4. URL slike se sprema u MongoDB dokument (npr. `lectures.image`, `organizations.logo`)
+5. Vraća se relativni path: `/uploads/images/optimized-xxx.webp`
+
+### Nginx servira slike
+
+Slike se serviraju direktno kroz Nginx (ne kroz Node.js):
+```
+https://ders.ba/uploads/images/optimized-xxx.webp
+```
+
+Nginx konfiguracija (location block):
+```nginx
+location /uploads/ {
+    alias /var/www/ders.ba/server/uploads/;
+    expires 30d;
+    add_header Cache-Control "public, immutable";
+}
+```
+
+### 🚫 ZABRANJENE OPERACIJE NA SLIKAMA
+
+**NIKAD ne radi ovo na produkciji:**
+- `rm -rf uploads/` ili bilo kakvo brisanje uploads foldera
+- `git clean` koji može obrisati untracked fajlove
+- Premještanje uploads foldera bez backupa
+- Deploy skripte koje brišu i ponovo kreiraju foldere
+
+**Ako moraš raditi nešto sa slikama:**
+1. PRVO napravi backup: `ssh root@... "bash /root/backup-ders.sh"`
+2. Provjeri backup: `ssh root@... "ls -la /root/backups/ders/"`
+3. TEK ONDA radi promjene
+
+### Kako slike izgledaju u bazi
+
+MongoDB dokumenti čuvaju relativne URL-ove:
+```json
+{
+  "title": "Neko predavanje",
+  "image": "/uploads/images/optimized-1699123456789.webp"
+}
+```
+
+Frontend prikazuje kombinacijom sa `IMAGE_BASE_URL`:
+- Production: `https://ders.ba` + `/uploads/images/...`
+- Development: `http://localhost:5003` + `/uploads/images/...`
+
+### Troubleshooting slike se ne prikazuju
+
+1. **Provjeri postoji li fajl:**
+   ```bash
+   ssh root@... "ls -la /var/www/ders.ba/server/uploads/images/ | head -20"
+   ```
+
+2. **Provjeri Nginx servira slike:**
+   ```bash
+   curl -I https://ders.ba/uploads/images/optimized-xxx.webp
+   ```
+
+3. **Provjeri permisije:**
+   ```bash
+   ssh root@... "ls -la /var/www/ders.ba/server/uploads/"
+   # Treba biti: drwxr-xr-x (755)
+   ```
+
+4. **Provjeri MongoDB URL:**
+   ```bash
+   # Koristi MCP postgres-borg ili mongo shell da vidiš šta je spremljeno
+   ```
+
+---
+
+## Backup Sistem
+
+### Automatski backup (cron)
+
+Backup se izvršava **svake nedjelje u 3:00** automatski.
+
+**Skripta:** `/root/backup-ders.sh`
+
+**Šta backup uključuje:**
+- MongoDB baza (`Predavanja`) - svih 9 kolekcija
+- Sve slike iz `uploads/images/`
+
+**Gdje se čuva:**
+```
+/root/backups/ders/ders-backup-YYYYMMDD-HHMMSS.tar.gz
+```
+
+### Ručni backup
+
+```bash
+ssh root@194.163.176.171 "bash /root/backup-ders.sh"
+```
+
+### Restore iz backupa
+
+```bash
+# 1. Raspakovati backup
+tar -xzf ders-backup-xxx.tar.gz -C /tmp/restore
+
+# 2. Restore MongoDB
+mongorestore --uri="mongodb://..." /tmp/restore/db/
+
+# 3. Restore slike
+cp -r /tmp/restore/uploads/* /var/www/ders.ba/server/uploads/
+```
+
+### Pravila za backup
+
+- Čuvaju se **zadnja 3 backupa** (rolling)
+- **NIKAD ne briši** `uploads/` folder na serveru bez backupa
+- Prije bilo kakve migracije/promjene — napravi ručni backup
+- Backup uključuje i slike i bazu — ne zaboravi nijedan dio pri restore-u
+
+---
+
 ## Sigurnosna Pravila
 
 - Ne generiši nove production lozinke
