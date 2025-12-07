@@ -1,39 +1,55 @@
 module.exports = {
   apps: [
     {
-      name: 'ders-web',
-      script: 'npm',
-      args: 'start',
-      cwd: '/root/ders.ba/web',
-      env: {
-        NODE_ENV: 'production',
-        PORT: 3000
-      },
+      name: 'ders-server',
+      script: './index.js',
+      cwd: '/var/www/ders.ba/server',
       instances: 1,
+      exec_mode: 'fork',
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      error_file: '/root/logs/ders-web-error.log',
-      out_file: '/root/logs/ders-web-out.log',
-      log_file: '/root/logs/ders-web-combined.log',
+      kill_timeout: 5000,
+      wait_ready: false,
+      env: {
+        NODE_ENV: 'production',
+        PORT: 5003
+      },
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: 5003
+      },
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      error_file: '/var/www/ders.ba/logs/server-error.log',
+      out_file: '/var/www/ders.ba/logs/server-out.log',
+      log_file: '/var/www/ders.ba/logs/server-combined.log',
       time: true
     },
     {
-      name: 'ders-api',
-      script: 'index.js',
-      cwd: '/root/ders.ba/server',
-      env: {
-        NODE_ENV: 'production',
-        PORT: 5003,
-        MONGODB_URI: 'mongodb://avdoAdmin:WanNeAvdo1994@127.0.0.1:27017/Predavanja?authSource=admin'
-      },
+      name: 'ders-web',
+      script: 'npm',
+      args: 'start',
+      cwd: '/var/www/ders.ba/web',
       instances: 1,
+      exec_mode: 'fork',
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      error_file: '/root/logs/ders-api-error.log',
-      out_file: '/root/logs/ders-api-out.log',
-      log_file: '/root/logs/ders-api-combined.log',
+      kill_timeout: 10000,
+      listen_timeout: 15000,
+      restart_delay: 5000,
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3002
+      },
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: 3002
+      },
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      error_file: '/var/www/ders.ba/logs/web-error.log',
+      out_file: '/var/www/ders.ba/logs/web-out.log',
+      log_file: '/var/www/ders.ba/logs/web-combined.log',
       time: true
     }
   ]
