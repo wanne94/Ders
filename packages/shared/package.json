@@ -9,5 +9,8 @@
     "axios": "^1.11.0",
     "date-fns": "^2.30.0",
     "jwt-decode": "^4.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0"
   }
 }
