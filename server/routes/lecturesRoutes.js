@@ -82,7 +82,7 @@ router.post('/bulk/delete', authenticateToken, isAdminOrSuperAdmin, async (req, 
 });
 
 // Make lectures endpoint public (remove authentication requirement)
-router.get('/public', async (req, res) => {
+router.get('/public', optionalAuth, async (req, res) => {
   
   const startTime = Date.now();
   
@@ -496,7 +496,7 @@ router.get('/public', async (req, res) => {
 });
 
 // Get public lectures with calculated status information
-router.get('/public/with-status', async (req, res) => {
+router.get('/public/with-status', optionalAuth, async (req, res) => {
   const startTime = Date.now();
   
   try {
@@ -912,7 +912,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // Get lecture statistics by month and year
-router.get('/statistics', async (req, res) => {
+router.get('/statistics', optionalAuth, async (req, res) => {
   console.log('Statistics endpoint hit!');
   try {
     const { year, startYear, endYear } = req.query;
@@ -1037,7 +1037,7 @@ router.get('/statistics', async (req, res) => {
 });
 
 // Get lectures by daija ID
-router.get('/daija/:daijaId', async (req, res) => {
+router.get('/daija/:daijaId', optionalAuth, async (req, res) => {
   try {
     
     const lectures = await Lecture.find({ 
@@ -1064,7 +1064,7 @@ router.get('/daija/:daijaId', async (req, res) => {
   }
 });
 // Get lectures by organization ID
-router.get('/organization/:organizationId', async (req, res) => {
+router.get('/organization/:organizationId', optionalAuth, async (req, res) => {
   try {
     const lectures = await Lecture.find({ 
       organizationId: req.params.organizationId,
@@ -1219,7 +1219,7 @@ router.get('/pending', authenticateToken, isAdminOrSuperAdmin, async (req, res) 
   }
 });
 // Get approved lectures
-router.get('/approved', async (req, res) => {
+router.get('/approved', optionalAuth, async (req, res) => {
   try {
     const lectures = await Lecture.find({ status: 'approved' })
       .populate('createdBy', 'firstName lastName email')
@@ -1244,7 +1244,7 @@ router.get('/approved', async (req, res) => {
   }
 });
 // Get latest lectures
-router.get('/latest', async (req, res) => {
+router.get('/latest', optionalAuth, async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     const lectures = await Lecture.find({ status: 'approved' })
@@ -1295,7 +1295,7 @@ router.get('/public-test', async (req, res) => {
   }
 });
 // Get weekly lecture series
-router.get('/weekly-series/:seriesId', async (req, res) => {
+router.get('/weekly-series/:seriesId', optionalAuth, async (req, res) => {
   try {
     const { seriesId } = req.params;
     
@@ -1421,7 +1421,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 });
 
 // Get single lecture by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     // Skip if this is the statistics route (fallback for deployment issues)
     if (req.params.id === 'statistics') {
@@ -1651,7 +1651,7 @@ router.post('/:id/report-cancellation', optionalAuth, async (req, res) => {
 });
 
 // Get cancellation statistics for a lecture
-router.get('/:id/cancellation-stats', async (req, res) => {
+router.get('/:id/cancellation-stats', optionalAuth, async (req, res) => {
   try {
     const lectureId = req.params.id;
 

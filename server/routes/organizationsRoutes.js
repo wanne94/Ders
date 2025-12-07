@@ -26,10 +26,10 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Middleware
 const { authMiddleware: authenticateToken } = require('../utils/jwt');
-const { isAdminOrSuperAdmin, isModeratorOrHigher } = require('../middleware/auth');
+const { isAdminOrSuperAdmin, isModeratorOrHigher, optionalAuth } = require('../middleware/auth');
 
 // GET /api/organizations/public - Get public organizations with lecture count
-router.get('/public', async (req, res) => {
+router.get('/public', optionalAuth, async (req, res) => {
   try {
     logger.info('Fetching public organizations for dashboard');
     
@@ -58,7 +58,7 @@ router.get('/public', async (req, res) => {
 });
 
 // GET /api/organizations/with-active-lectures - Get organizations with their active lectures
-router.get('/with-active-lectures', async (req, res) => {
+router.get('/with-active-lectures', optionalAuth, async (req, res) => {
   try {
     logger.info('Fetching organizations with active lectures');
     
@@ -160,7 +160,7 @@ router.post('/bulk/delete', authenticateToken, isAdminOrSuperAdmin, async (req, 
 });
 
 // GET /api/organizations - Get all approved organizations with lecture count
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     logger.info('Fetching all organizations');
     const organizations = await Organization.find({ status: 'approved' }).sort({ name: 1 });
@@ -189,7 +189,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/organizations/search - Search organizations
-router.get('/search', async (req, res) => {
+router.get('/search', optionalAuth, async (req, res) => {
   try {
     const query = req.query.q;
     if (!query || query.trim().length === 0) {
@@ -218,7 +218,7 @@ router.get('/search', async (req, res) => {
 });
 
 // GET /api/organizations/:id - Get single organization by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({ message: 'Invalid organization ID format' });
