@@ -4,6 +4,53 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
+const crypto = require('crypto');
+const { authMiddleware } = require('../utils/jwt');
+const { isModeratorOrHigher } = require('../middleware/auth');
+
+// Magic bytes signatures for common image formats
+const IMAGE_SIGNATURES = {
+  jpeg: [
+    [0xFF, 0xD8, 0xFF, 0xE0],
+    [0xFF, 0xD8, 0xFF, 0xE1],
+    [0xFF, 0xD8, 0xFF, 0xE2],
+    [0xFF, 0xD8, 0xFF, 0xE8],
+    [0xFF, 0xD8, 0xFF, 0xDB]
+  ],
+  png: [[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]],
+  gif: [[0x47, 0x49, 0x46, 0x38, 0x37, 0x61], [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]],
+  webp: [[0x52, 0x49, 0x46, 0x46]], // RIFF header (WebP starts with RIFF)
+  bmp: [[0x42, 0x4D]]
+};
+
+// Validate file magic bytes
+const validateImageMagicBytes = (buffer) => {
+  if (!buffer || buffer.length < 8) {
+    return { valid: false, format: null };
+  }
+
+  for (const [format, signatures] of Object.entries(IMAGE_SIGNATURES)) {
+    for (const signature of signatures) {
+      let match = true;
+      for (let i = 0; i < signature.length; i++) {
+        if (buffer[i] !== signature[i]) {
+          match = false;
+          break;
+        }
+      }
+      if (match) {
+        return { valid: true, format };
+      }
+    }
+  }
+
+  return { valid: false, format: null };
+};
+
+// Generate secure random filename
+const generateSecureFilename = () => {
+  return `img-${crypto.randomUUID()}.webp`;
+};
 
 // Helper function for cleaning up temp files with retry logic (Windows fix)
 const cleanupTempFile = async (filePath, maxRetries = 5, delay = 100) => {
@@ -80,8 +127,10 @@ router.get('/test', (req, res) => {
 });
 
 // Upload endpoint with Sharp optimization
-router.post('/', upload.single('image'), async (req, res) => {
+// Protected: requires authentication + moderator/admin role
+router.post('/', authMiddleware, isModeratorOrHigher, upload.single('image'), async (req, res) => {
   console.log('🔄 Upload endpoint hit');
+  console.log('👤 User:', req.user ? { id: req.user.id, role: req.user.role } : 'No user');
   console.log('📁 Request details:', {
     method: req.method,
     url: req.url,
@@ -104,11 +153,23 @@ router.post('/', upload.single('image'), async (req, res) => {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
 
+  // Validate magic bytes - ensure file content matches an image format
+  const magicValidation = validateImageMagicBytes(req.file.buffer);
+  if (!magicValidation.valid) {
+    console.log('❌ Invalid file magic bytes - not a valid image');
+    return res.status(400).json({
+      success: false,
+      message: 'Fajl nije validna slika. Molimo uploadajte JPG, PNG, GIF ili WebP.',
+      error: 'INVALID_FILE_TYPE'
+    });
+  }
+  console.log('✅ Magic bytes validation passed:', magicValidation.format);
+
   // In development mode, reject local uploads and inform to use production server
   if (isDevelopment) {
     console.log('⚠️ Development mode: Local uploads disabled. Use production server.');
-    return res.status(400).json({ 
-      success: false, 
+    return res.status(400).json({
+      success: false,
       message: 'Development mode: Please upload images directly to production server (https://ders.ba)',
       suggestion: 'Use the uploadService.js utility which automatically uploads to production'
     });
@@ -116,10 +177,9 @@ router.post('/', upload.single('image'), async (req, res) => {
 
   try {
     const originalSize = req.file.size;
-    
-    // Generate final filename (WebP format)
-    const timestamp = Date.now();
-    const finalFileName = `optimized-${timestamp}.webp`;
+
+    // Generate secure random filename (WebP format)
+    const finalFileName = generateSecureFilename();
     const finalFilePath = path.join(uploadsDir, finalFileName);
 
     console.log('🔄 Starting Sharp optimization...');

@@ -85,8 +85,10 @@ app.use(cors(getCorsOptions()));
 const generalLimiter = rateLimit(rateLimitConfig.general);
 const authLimiter = rateLimit(rateLimitConfig.auth);
 const apiLimiter = rateLimit(rateLimitConfig.api);
+const uploadLimiter = rateLimit(rateLimitConfig.upload);
 
 app.use('/api/', apiLimiter);
+app.use('/api/upload-image', uploadLimiter); // Stricter limit for uploads (10/hour)
 app.use('/users/auth', authLimiter);
 app.use('/users/register', authLimiter);
 

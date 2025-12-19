@@ -88,6 +88,14 @@ const rateLimitConfig = {
     max: process.env.NODE_ENV === 'development' ? 200 : 60, // Higher limit for development
     message: 'API rate limit exceeded, please slow down.',
     trustProxy: process.env.NODE_ENV === 'production'
+  },
+  upload: {
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: process.env.NODE_ENV === 'development' ? 50 : 10, // 10 uploads per hour in production
+    message: 'Previše uploada. Molimo pokušajte ponovo za sat vremena.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    trustProxy: process.env.NODE_ENV === 'production'
   }
 };
 
