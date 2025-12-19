@@ -305,36 +305,35 @@ router.delete('/profile/delete', authMiddleware, async (req, res) => {
 });
 
 // GET /api/users/:id/public - Get public user profile by ID
+// 🔒 SECURITY: Protected - only return non-sensitive data
+// Email is NOT included to prevent email harvesting attacks
 router.get('/:id/public', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const user = await User.findById(id).select('-password -securityAnswer -securityQuestionIndex');
+
+    const user = await User.findById(id).select('-password -securityAnswer -securityQuestionIndex -email');
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Korisnik nije pronađen.' 
+      return res.status(404).json({
+        success: false,
+        message: 'Korisnik nije pronađen.'
       });
     }
 
-    // Return public user data - matching web app profile
+    // 🔒 SECURITY: Return ONLY truly public data - NO email, NO sensitive info
     const publicUserData = {
       _id: user._id,
       id: user._id,
-      rid: user.rid,
       username: user.username,
-      email: user.email, // Include email like web app
       role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      createdAt: user.createdAt
     };
 
     res.json(publicUserData);
   } catch (error) {
     console.error('❌ Greška pri dohvatanju javnog profila:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Greška na serveru.' 
+    res.status(500).json({
+      success: false,
+      message: 'Greška na serveru.'
     });
   }
 });

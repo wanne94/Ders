@@ -1017,17 +1017,18 @@ app.post('/api/users', authenticateToken, isAdminOrSuperAdmin, async (req, res) 
 });
 
 // Public users endpoint for dashboard
-app.get('/api/users/public', async (req, res) => {
+// 🔒 SECURITY: Protected - admin only (was public, leaked all user emails!)
+app.get('/api/users/public', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
   try {
-    logger.info('Fetching public users for dashboard');
-    
-    const users = await User.find({}, '-password -securityAnswer')
+    logger.info('Fetching users for dashboard (admin access)');
+
+    const users = await User.find({}, '-password -securityAnswer -securityQuestionIndex')
       .sort({ createdAt: -1 });
 
     logger.info(`Found ${users.length} users for dashboard`);
     res.json(users);
   } catch (error) {
-    logger.error('Error fetching public users:', error);
+    logger.error('Error fetching users:', error);
     res.status(500).json({ message: 'Greška pri dohvaćanju korisnika' });
   }
 });
