@@ -361,16 +361,15 @@ const connectDB = async () => {
     const connectionOptions = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      dbName: 'Predavanja',
       maxPoolSize: 10, // Connection pool size
       minPoolSize: 2,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     };
-    
+
     await mongoose.connect(MONGODB_URI, connectionOptions);
     console.log("✅ Connected to MongoDB");
-    logger.info('Connected to MongoDB Database: Predavanja');
+    logger.info('Connected to MongoDB Database: ders_production');
     logger.info('MongoDB connection state:', mongoose.connection.readyState);
     
     await createDatabaseIndexes();
