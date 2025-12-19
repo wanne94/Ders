@@ -65,9 +65,11 @@ Ako nisi siguran — postavi pitanje prije nego daš rješenje.
 - **Zabranjeno** predlaganje promjena koje utiču na produkciju
 
 ### Production
-- Server: definisan u `.env` (DEPLOY_HOST)
-- Projekat root: `/root/ders.ba/`
-- PM2 procesi: `ders-web`, `ders-api`
+- Server: `194.163.176.171`
+- **SSH port: 2306** (ne defaultni 22!)
+- SSH ključ: `~/.ssh/ders_deploy`
+- Projekat root: `/var/www/ders.ba/`
+- PM2 procesi: `ders-web`, `ders-server`
 - MongoDB: konfigurisano u `.env.production`
 
 ---
