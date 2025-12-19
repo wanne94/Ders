@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'ders-server',
       script: './index.js',
-      cwd: '/var/www/ders.ba/server',
+      cwd: '/var/www/ders/server',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
@@ -20,16 +20,16 @@ module.exports = {
         PORT: 5003
       },
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      error_file: '/var/www/ders.ba/logs/server-error.log',
-      out_file: '/var/www/ders.ba/logs/server-out.log',
-      log_file: '/var/www/ders.ba/logs/server-combined.log',
+      error_file: '/var/www/ders/logs/server-error.log',
+      out_file: '/var/www/ders/logs/server-out.log',
+      log_file: '/var/www/ders/logs/server-combined.log',
       time: true
     },
     {
       name: 'ders-web',
       script: './node_modules/.bin/next',
-      args: 'start -p 3002',
-      cwd: '/var/www/ders.ba/web',
+      args: 'start -p 3005',
+      cwd: '/var/www/ders/packages/web',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
@@ -40,16 +40,16 @@ module.exports = {
       restart_delay: 5000,
       env: {
         NODE_ENV: 'production',
-        PORT: 3002
+        PORT: 3005
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3002
+        PORT: 3005
       },
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      error_file: '/var/www/ders.ba/logs/web-error.log',
-      out_file: '/var/www/ders.ba/logs/web-out.log',
-      log_file: '/var/www/ders.ba/logs/web-combined.log',
+      error_file: '/var/www/ders/logs/web-error.log',
+      out_file: '/var/www/ders/logs/web-out.log',
+      log_file: '/var/www/ders/logs/web-combined.log',
       time: true
     }
   ]

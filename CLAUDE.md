@@ -27,7 +27,7 @@ Ako nisi siguran — postavi pitanje prije nego daš rješenje.
 ```
 /
 ├── packages/
-│   ├── web/          ← Next.js frontend (port 3000)
+│   ├── web/          ← Next.js frontend (port 3005 production, 3001 dev)
 │   ├── mobile/       ← React Native/Expo mobile app
 │   └── shared/       ← Shared utilities
 ├── server/           ← Express API (port 5003)
@@ -61,16 +61,16 @@ Ako nisi siguran — postavi pitanje prije nego daš rješenje.
 ### Development (lokalno)
 - MongoDB: `mongodb://127.0.0.1:27017/Predavanja`
 - API port: 5003
-- Web port: 3000
+- Web port: 3001
 - **Zabranjeno** predlaganje promjena koje utiču na produkciju
 
 ### Production
 - Server: `194.163.176.171`
-- **SSH port: 2306** (ne defaultni 22!)
-- SSH ključ: `~/.ssh/ders_deploy`
-- Projekat root: `/var/www/ders.ba/`
-- PM2 procesi: `ders-web`, `ders-server`
-- MongoDB: konfigurisano u `.env.production`
+- **SSH port: 22** (standardni port)
+- SSH korisnik: `root`
+- Projekat root: `/var/www/ders/`
+- PM2 procesi: `ders-web` (port 3005), `ders-server` (port 5003)
+- MongoDB: `ders_production` (konfigurisano u `.env.production`)
 
 ---
 
@@ -92,7 +92,7 @@ Sav kod MORA ići kroz Git:
 - `git pull origin main`
 - `npm install`
 - `npm run build`
-- `pm2 restart ders-web` / `pm2 restart ders-api`
+- `pm2 restart ders-web` / `pm2 restart ders-server`
 - Editovanje SAMO `.env` fajlova
 
 ---
@@ -101,7 +101,7 @@ Sav kod MORA ići kroz Git:
 
 Claude smije upravljati samo:
 - `ders-web`
-- `ders-api`
+- `ders-server`
 
 **Zabranjeno:**
 - `pm2 delete all`
@@ -165,7 +165,7 @@ Ako se obrišu — NEMA RECOVERY osim iz backupa!
 
 **Production server:**
 ```
-/var/www/ders.ba/server/uploads/images/   ← Sve uploadovane slike (JEDINA KOPIJA!)
+/var/www/ders/server/uploads/images/   ← Sve uploadovane slike (JEDINA KOPIJA!)
 ```
 
 **Lokalni development:**
@@ -191,7 +191,7 @@ https://ders.ba/uploads/images/optimized-xxx.webp
 Nginx konfiguracija (location block):
 ```nginx
 location /uploads/ {
-    alias /var/www/ders.ba/server/uploads/;
+    alias /var/www/ders/server/uploads/;
     expires 30d;
     add_header Cache-Control "public, immutable";
 }
@@ -228,7 +228,7 @@ Frontend prikazuje kombinacijom sa `IMAGE_BASE_URL`:
 
 1. **Provjeri postoji li fajl:**
    ```bash
-   ssh root@... "ls -la /var/www/ders.ba/server/uploads/images/ | head -20"
+   ssh root@... "ls -la /var/www/ders/server/uploads/images/ | head -20"
    ```
 
 2. **Provjeri Nginx servira slike:**
@@ -238,7 +238,7 @@ Frontend prikazuje kombinacijom sa `IMAGE_BASE_URL`:
 
 3. **Provjeri permisije:**
    ```bash
-   ssh root@... "ls -la /var/www/ders.ba/server/uploads/"
+   ssh root@... "ls -la /var/www/ders/server/uploads/"
    # Treba biti: drwxr-xr-x (755)
    ```
 
@@ -282,7 +282,7 @@ tar -xzf ders-backup-xxx.tar.gz -C /tmp/restore
 mongorestore --uri="mongodb://..." /tmp/restore/db/
 
 # 3. Restore slike
-cp -r /tmp/restore/uploads/* /var/www/ders.ba/server/uploads/
+cp -r /tmp/restore/uploads/* /var/www/ders/server/uploads/
 ```
 
 ### Pravila za backup
