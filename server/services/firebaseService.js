@@ -1,4 +1,9 @@
-const admin = require('firebase-admin');
+let admin;
+try {
+  admin = require('firebase-admin');
+} catch (error) {
+  console.error('⚠️  firebase-admin module not installed - push notifications disabled:', error.message);
+}
 const path = require('path');
 const fs = require('fs');
 
@@ -6,6 +11,7 @@ let firebaseApp = null;
 
 const initializeFirebase = () => {
   if (firebaseApp) return firebaseApp;
+  if (!admin) throw new Error('firebase-admin module not installed');
 
   try {
     // Try to find service account file

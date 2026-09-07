@@ -20,13 +20,8 @@ const LecturesSection = ({
 }) => {
   const router = useRouter();
 
-  // Filtriramo approved i cancelled predavanja
-  const filteredLectures = lectures.filter(lecture =>
-    lecture.status === 'approved' || lecture.status === 'cancelled'
-  );
-
-  // Sortiramo predavanja
-  const sortedLectures = sortLecturesByStatus(filteredLectures);
+  // Sortiramo predavanja (backend model više nema status polje - sva predavanja su javna)
+  const sortedLectures = sortLecturesByStatus(lectures);
 
   // Primenjujemo limit ako je potrebno
   const displayLectures = limit ? sortedLectures.slice(0, limit) : sortedLectures;

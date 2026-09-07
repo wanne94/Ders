@@ -53,6 +53,18 @@ Thumbs.db
 temp/
 
 # Security & Credentials
+.env
+.env.local
+.env.development
+.env.production
+packages/*/.env
+packages/*/.env.local
+packages/*/.env.development
+packages/*/.env.production
+server/.env
+server/.env.local
+server/.env.development
+server/.env.production
 *.pem
 *.key
 *.crt

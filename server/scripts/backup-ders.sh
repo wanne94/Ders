@@ -12,11 +12,11 @@ DATE=$(date +%Y%m%d-%H%M%S)
 BACKUP_NAME="ders-backup-${DATE}"
 
 # MongoDB connection (reads from environment or uses default)
-MONGO_URI="${MONGODB_URI:-mongodb://avdoAdmin:WanNeAvdo1994@localhost:27017/Predavanja?authSource=admin}"
-DB_NAME="Predavanja"
+MONGO_URI="${MONGODB_URI:-mongodb://127.0.0.1:27017/ders_production}"
+DB_NAME="ders_production"
 
 # Paths
-UPLOADS_DIR="/var/www/ders.ba/server/uploads"
+UPLOADS_DIR="/var/www/ders/server/uploads"
 LOG_FILE="/var/log/ders-backup.log"
 
 # Logging function

@@ -59,18 +59,21 @@ Ako nisi siguran — postavi pitanje prije nego daš rješenje.
 ## Dev vs Production
 
 ### Development (lokalno)
-- MongoDB: `mongodb://127.0.0.1:27017/Predavanja`
-- API port: 5003
+- MongoDB: `mongodb://127.0.0.1:27017/ders_dev`
+- API port: 5004
 - Web port: 3001
 - **Zabranjeno** predlaganje promjena koje utiču na produkciju
 
 ### Production
-- Server: `194.163.176.171`
+- Server: `76.13.133.55` (hostname `srv1311057`)
 - **SSH port: 22** (standardni port)
 - SSH korisnik: `root`
 - Projekat root: `/var/www/ders/`
 - PM2 procesi: `ders-web` (port 3005), `ders-server` (port 5003)
-- MongoDB: `ders_production` (konfigurisano u `.env.production`)
+- MongoDB: `ders_production` (konfigurisano u `.env.production`, bez auth, `mongodb://127.0.0.1:27017/ders_production`)
+- Slike: `/var/www/ders/server/uploads/images/`
+- Nginx vhost: `/etc/nginx/sites-available/ders.ba` (kopija u repou: `deploy/nginx/ders.ba.conf`), SSL preko Let's Encrypt/certbot
+- **⚠️ Server je dijeljen sa 12+ tuđih projekata (borg, bhmarket, nun, cs2, kako-se-pise, trenerka, discord-bot, chatbot, netwatch…).** Svaka `pm2`/`nginx`/`fs` operacija mora biti usko ciljana samo na `ders-*` resurse. Nikad `pm2 restart/delete all`, nikad brisanje/gašenje tuđih procesa ili vhostova.
 
 ---
 
@@ -82,6 +85,18 @@ Sav kod MORA ići kroz Git:
 1. Izmjene se rade LOKALNO
 2. Commit i push na GitHub
 3. Na serveru: `git pull` + `npm run build` + `pm2 restart`
+
+### Kanonski deploy postupak
+
+```bash
+ssh root@76.13.133.55
+cd /var/www/ders && git pull origin main
+npm install --legacy-peer-deps
+cd packages/web && npm run build
+pm2 restart ders-web ders-server && pm2 save
+```
+
+Ovo je jedini deploy put. `deploy-complete.js`, `deploy.sh`, `deploy.bat` i GitHub Actions auto-deploy su uklonjeni jer su ciljali putanju `/var/www/ders.ba/` koja ne postoji.
 
 ### Zabranjeno na produkciji
 - Editovanje source fajlova (.ts, .tsx, .js, .json, .css)
@@ -140,7 +155,7 @@ npm run monitor       # PM2 monit
 ## Baza Podataka
 
 - **Tip:** MongoDB
-- **Dev:** `mongodb://127.0.0.1:27017/Predavanja`
+- **Dev:** `mongodb://127.0.0.1:27017/ders_dev`
 - **Production:** Definisano u server `.env.production`
 
 **Pravila:**
@@ -258,7 +273,7 @@ Backup se izvršava **svake nedjelje u 3:00** automatski.
 **Skripta:** `/root/backup-ders.sh`
 
 **Šta backup uključuje:**
-- MongoDB baza (`Predavanja`) - svih 9 kolekcija
+- MongoDB baza (`ders_production`) - svih 9 kolekcija
 - Sve slike iz `uploads/images/`
 
 **Gdje se čuva:**
@@ -269,7 +284,7 @@ Backup se izvršava **svake nedjelje u 3:00** automatski.
 ### Ručni backup
 
 ```bash
-ssh root@194.163.176.171 "bash /root/backup-ders.sh"
+ssh root@76.13.133.55 "bash /root/backup-ders.sh"
 ```
 
 ### Restore iz backupa

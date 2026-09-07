@@ -16,11 +16,7 @@ const corsConfig = {
   production: {
     origin: [
       'https://ders.ba',
-      'https://www.ders.ba',
-      'http://ders.ba', // Remove in production when HTTPS is enforced
-      'http://www.ders.ba', // Remove in production when HTTPS is enforced
-      'http://localhost:3001', // Development access to production uploads
-      'http://127.0.0.1:3001' // Development access to production uploads
+      'https://www.ders.ba'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
