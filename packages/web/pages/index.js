@@ -24,7 +24,6 @@ import { OrganizationsGrid, DaijeGrid, LecturesGrid } from '@/components/GridLay
 import UniversalCard from '@/components/UniversalCard';
 import SkeletonGrid from '@/components/SkeletonGrid';
 import LecturesSection from '@/components/LecturesSection';
-import SimplifiedStatistics from '@/components/SimplifiedStatistics';
 import { logNavigation, logSocialShare } from '@/services/analytics';
 import { usePerformanceTracking } from '@/hooks/usePerformanceTracking';
 
@@ -554,11 +553,6 @@ export default function Home({
       {/* Active Organizations */}
       <div className="w-full mb-8">
         <ActiveOrganizations organizations={organizations} lectures={lectures} isLoading={isLoading} />
-      </div>
-
-      {/* Lecture Statistics */}
-      <div className="w-full mb-8">
-        <SimplifiedStatistics />
       </div>
     </PageLayout>
   );
