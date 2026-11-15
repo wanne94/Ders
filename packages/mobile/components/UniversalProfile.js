@@ -427,13 +427,14 @@ const UniversalProfile = ({ data, type, onBack, onProfileOpen, onAdd, user, isAu
               styles.profileImage,
               type === 'daija' && styles.circularImage,
               type === 'lecture' && styles.fullWidthImage,
+              type === 'organization' && { backgroundColor: '#fff' },
               imageLoading && type === 'lecture' && { opacity: 0 }
             ]}
             onLoad={type === 'lecture' ? handleImageLoad : undefined}
             onError={type === 'lecture' ? handleImageError : undefined}
             onLoadStart={() => type === 'lecture' && setImageLoading(true)}
             cache="force-cache"
-            resizeMode={type === 'lecture' ? 'contain' : 'cover'}
+            resizeMode={type === 'lecture' || type === 'organization' ? 'contain' : 'cover'}
           />
           {/* Diagonal "OTKAZANO" label for cancelled lectures */}
           {type === 'lecture' && (profile.isCancelled || profile.status === 'cancelled') && (

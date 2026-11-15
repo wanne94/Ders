@@ -730,6 +730,7 @@ const ProfilePage = () => {
                         className={`
                           relative w-full ${type === 'lecture' ? 'h-full min-h-[400px]' : 'aspect-square'} max-w-sm mx-auto lg:max-w-none
                           ${type === 'daija' ? 'rounded-full' : 'rounded-2xl'}
+                          ${type === 'organization' ? 'bg-white' : ''}
                           overflow-hidden border-4 border-white/20 shadow-2xl
                           transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:shadow-3xl
                           group
@@ -739,7 +740,7 @@ const ProfilePage = () => {
                           src={getImageUrl(profile.image) || getDefaultImage()}
                           alt={profile.title || profile.name}
                           fill
-                          className={`${type === 'lecture' ? 'object-contain bg-black/5' : 'object-cover'}`}
+                          className={`${type === 'lecture' ? 'object-contain bg-black/5' : type === 'organization' ? 'object-contain p-6' : 'object-cover'}`}
                           onError={(e) => {
                             e.target.onerror = null;
                             e.target.src = getDefaultImage();

@@ -396,7 +396,15 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
           <View style={[
             styles.imageContainer,
             displayData.type === 'daija' && { width: 100, height: 100 },
-            displayData.type === 'organization' && { width: 100, height: 100 },
+            displayData.type === 'organization' && {
+              width: 100,
+              height: 100,
+              backgroundColor: '#fff',
+              borderRadius: 8,
+              padding: 6,
+              borderWidth: 1,
+              borderColor: '#f0f0f0',
+            },
           ]}>
             <Image
               source={{ uri: 
@@ -409,7 +417,7 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
                   : getImageUrl(data.image)
               }}
               style={displayData.type === 'daija' ? styles.imageDaija : displayData.type === 'organization' ? styles.imageOrganization : styles.image}
-              resizeMode="cover"
+              resizeMode={displayData.type === 'organization' ? 'contain' : 'cover'}
               onError={(e) => {
                 console.log('🚫 Image load error:', data.image, e.nativeEvent);
                 setImageError(true);
@@ -533,8 +541,8 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   imageOrganization: {
-    width: 100,
-    height: 100,
+    width: '100%',
+    height: '100%',
     borderRadius: 8,
   },
   imagePlaceholder: {

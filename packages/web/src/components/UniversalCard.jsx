@@ -311,13 +311,13 @@ const UniversalCard = React.memo(({ data }) => {
       >
         {isOrganizationCard ? (
           <div className="flex flex-col h-full">
-            <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-gray-100">
+            <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-white border-b border-gray-100">
               <Image
                 src={imageUrl}
                 alt={displayData.title}
                 fill
                 sizes="(min-width: 640px) 180px, 100vw"
-                className="object-cover"
+                className="object-contain p-3"
                 onError={handleImageError}
               />
             </div>
