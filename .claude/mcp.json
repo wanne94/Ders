@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "serena": {
-      "command": "uvx",
-      "args": ["--from", "git+https://github.com/oraios/serena", "serena-mcp-server", "--context", "ide-assistant", "--project", "/home/avdo/Majstori"]
-    },
     "shadcn-ui": {
       "command": "npx",
       "args": ["-y", "@heilgar/shadcn-ui-mcp-server"]
