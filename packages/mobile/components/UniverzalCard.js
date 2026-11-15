@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { bs } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
 import { getImageUrl, getDefaultDaijaImage, getDefaultLectureImage, getDefaultOrganizationImage } from '../utils/imageUtils';
-import { formatDaijaTitle } from '../utils';
+import { formatDaijaTitle, getDaijaTitleLabel } from '../utils';
 import { calculateLectureStatus, getStatusBadgeColors } from '../utils/lectureStatusHelpers';
 // import { COLORS, TYPOGRAPHY, SPACING } from '../theme';
 
@@ -220,9 +220,9 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
           return {
             type: 'daija',
             title: data.name || data.title,
-            titlePrefix: data.title?.toUpperCase(),
+            titlePrefix: getDaijaTitleLabel(data.title).toUpperCase(),
             items: [
-              data.title && { icon: 'School', text: data.title.toUpperCase() },
+              data.title && { icon: 'School', text: getDaijaTitleLabel(data.title).toUpperCase() },
               data.shortDescription && { icon: 'Description', text: data.shortDescription }
             ].filter(Boolean)
           };

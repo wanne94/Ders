@@ -4,8 +4,8 @@
 // Image server configuration
 export const IMAGE_CONFIG = {
   // Production server URL for all images
-  IMAGE_SERVER_URL: 'https://ders.ba',
-  UPLOAD_SERVER_URL: 'https://ders.ba',
+  IMAGE_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL || 'https://ders.ba',
+  UPLOAD_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL || 'https://ders.ba',
   
   // Image paths
   IMAGE_BASE_PATH: '/uploads/images/',

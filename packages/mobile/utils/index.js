@@ -7,6 +7,12 @@ export const toTitleCase = (str) => {
 };
 
 // Daija title formatting utility
+export const DAIJA_TITLE_LABELS = { prof: 'Profesor', mr: 'Magistar', dr: 'Doktor' };
+export const getDaijaTitleLabel = (title) => {
+  const key = (title || '').toLowerCase().trim().replace(/\.$/, '');
+  return DAIJA_TITLE_LABELS[key] || title || '';
+};
+
 export const formatDaijaTitle = (name, title) => {
   // If no name, return empty string
   if (!name) return '';

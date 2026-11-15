@@ -701,15 +701,15 @@ const UnifiedFormNew = ({
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="prof" id="prof" />
-                    <Label htmlFor="prof">prof.</Label>
+                    <Label htmlFor="prof">Profesor</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="mr" id="mr" />
-                    <Label htmlFor="mr">mr.</Label>
+                    <Label htmlFor="mr">Magistar</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="dr" id="dr" />
-                    <Label htmlFor="dr">dr.</Label>
+                    <Label htmlFor="dr">Doktor</Label>
                   </div>
                  
                   

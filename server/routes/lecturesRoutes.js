@@ -55,7 +55,7 @@ router.get('/:id', async (req, res) => {
 // POST / - Kreiranje novog predavanja
 router.post('/', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
   try {
-    const { image, date } = req.body;
+    const { title, image, date } = req.body;
 
     if (!date) {
       return res.status(400).json({ success: false, message: 'Datum je obavezan.' });
@@ -71,6 +71,7 @@ router.post('/', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
     }
 
     const newLecture = new Lecture({
+      title: title || '',
       image: image || '',
       date: lectureDate
     });
@@ -94,9 +95,10 @@ router.put('/:id', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Neispravan ID format' });
     }
 
-    const { image, date } = req.body;
+    const { title, image, date } = req.body;
     const updateData = {};
 
+    if (title !== undefined) updateData.title = title;
     if (image !== undefined) updateData.image = image;
     if (date !== undefined) updateData.date = new Date(date);
 

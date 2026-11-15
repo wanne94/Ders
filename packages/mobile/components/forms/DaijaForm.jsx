@@ -57,9 +57,9 @@ const DaijaForm = ({ onBack, onSuccess, editMode = false, editData = null }) => 
   const [imageUri, setImageUri] = useState(null);
 
   const titles = [
-    { value: 'prof', label: 'Prof.' },
-    { value: 'mr', label: 'Mr.' },
-    { value: 'dr', label: 'Dr.' }
+    { value: 'prof', label: 'Profesor' },
+    { value: 'mr', label: 'Magistar' },
+    { value: 'dr', label: 'Doktor' }
   ];
 
   const populateFormWithEditData = useCallback(() => {

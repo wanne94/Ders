@@ -7,7 +7,7 @@ import { MapPin, Building2, Clock, Calendar, User, Briefcase, GraduationCap, Cal
 import { formatDateWithDay, generateLectureSlug, generateDaijaSlug, generateOrganizationSlug, calculateLectureStatus } from '../utils/dataHelpers';
 import CancelledOverlay from './CancelledOverlay';
 import { getImageUrl, getImageFallbackUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
-import { formatDaijaTitle, generateSlug } from '../utils';
+import { formatDaijaTitle, generateSlug, getDaijaTitleLabel } from '../utils';
 import { logLectureView, logDaijaProfileView, logOrganizationView } from '@/services/analytics';
 
 const UniversalCard = React.memo(({ data }) => {
@@ -354,7 +354,7 @@ const UniversalCard = React.memo(({ data }) => {
               </h2>
               {daijaTitle && (
                 <span className="text-xs text-gray-500 mb-2">
-                  {daijaTitle.toUpperCase()}
+                  {getDaijaTitleLabel(daijaTitle).toUpperCase()}
                 </span>
               )}
 
