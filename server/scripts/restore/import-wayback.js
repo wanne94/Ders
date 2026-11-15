@@ -9,7 +9,11 @@
 const fs = require('fs');
 const path = require('path');
 
+const { titleTspans } = require('../lib/poster-title');
+
 const CONFIRM = process.argv.includes('--confirm');
+const REGEN = process.argv.includes('--regen-posters');
+const GENERIC = '/uploads/images/predavanjeslika.jpg'; // default slika aplikacije, nikad se ne prepisuje
 const data = require('./wayback-data.json');
 const IMG_DIR = path.join(__dirname, '..', '..', 'uploads', 'images');
 
@@ -28,8 +32,8 @@ const poster = (i, title, sub, city) => `<svg xmlns="http://www.w3.org/2000/svg"
   <rect width="800" height="1131" fill="url(#g)"/>
   <rect x="60" y="60" width="680" height="1011" fill="none" stroke="#fff" stroke-opacity="0.35" stroke-width="3"/>
   <text x="400" y="200" font-family="sans-serif" font-size="36" fill="#fff" opacity="0.8" text-anchor="middle" letter-spacing="8">PREDAVANJE</text>
-  <text x="400" y="520" font-family="sans-serif" font-weight="700" font-size="48" fill="#fff" text-anchor="middle">${esc(String(title).slice(0, 36))}</text>
-  <text x="400" y="680" font-family="sans-serif" font-size="40" fill="#fff" text-anchor="middle">${esc(sub)}</text>
+  ${titleTspans(title)}
+  ${titleTspans(sub, { cy: 720, maxLines: 1, fontSize: 40, minFont: 28, weight: 400 })}
   <text x="400" y="960" font-family="sans-serif" font-size="40" fill="#fff" opacity="0.9" text-anchor="middle">${esc(city)}</text></svg>`;
 const avatar = (i, name, round) => `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600">${grad(i + 3)}
   <rect width="600" height="600" rx="${round ? 300 : 60}" fill="url(#g)"/>
@@ -60,7 +64,7 @@ const lectures = data.lectures.map((l) => {
     organization: (nameOf(l.organization) || nameOf(l.organizationId)).trim() || undefined,
     address: l.address, city: l.city, time: l.time,
     date: new Date(l.date),
-    image: l.image || `/uploads/images/restored-lecture-${l._id}.webp`,
+    image: (!l.image || l.image === GENERIC) ? `/uploads/images/restored-lecture-${l._id}.webp` : l.image,
     _sub: dj ? `${dj.title}. ${dj.name}` : (l.speaker || '')
   };
 });
@@ -75,6 +79,26 @@ orgs.forEach((o, i) => o.image && imgs.set(o.image, () => avatar(i + 2, o.name, 
 const missing = [...imgs.keys()].filter((p) => !fs.existsSync(path.join(IMG_DIR, path.basename(p))));
 console.log(`🖼️  Slika: ${imgs.size} jedinstvenih putanja, ${missing.length} nedostaje (dobiće placeholder)`);
 if (bad.length) console.log('⚠️  Problemi:', bad);
+
+// --regen-posters: bez baze; prepisuje samo placeholdere dersova (tačno 800×1131), prave slike ostaju.
+if (REGEN) {
+  const sharp = require('sharp');
+  (async () => {
+    let regen = 0, skipped = 0;
+    for (const l of lectures) {
+      const file = path.join(IMG_DIR, path.basename(l.image));
+      if (!fs.existsSync(file)) { skipped++; continue; }
+      const m = await sharp(file).metadata();
+      if (m.width !== 800 || m.height !== 1131) { skipped++; continue; }
+      const img = sharp(Buffer.from(imgs.get(l.image)()));
+      const buf = await (/\.jpe?g$/i.test(file) ? img.jpeg({ quality: 85 }) : /\.png$/i.test(file) ? img.png() : img.webp({ quality: 85 })).toBuffer();
+      fs.writeFileSync(file, buf);
+      regen++;
+    }
+    console.log(`✅ Regenerisano postera: ${regen}, preskočeno (nije placeholder/ne postoji): ${skipped}`);
+  })().catch((e) => { console.error('❌', e.message); process.exit(1); });
+  return;
+}
 
 if (!CONFIRM) {
   console.log('ℹ️  Dry-run. Dodaj --confirm za stvarni import.');

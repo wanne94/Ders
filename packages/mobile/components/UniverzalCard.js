@@ -323,7 +323,7 @@ const UniverzalCard = ({ data, onPress, style, isFollowing = false }) => {
 
 
       {/* Status Badge for all lectures */}
-      {displayData.type === 'lecture' && displayData.statusInfo && (
+      {displayData.type === 'lecture' && displayData.statusInfo && displayData.statusInfo.status !== 'past' && (
         <View style={[
           styles.statusBadge,
           { 

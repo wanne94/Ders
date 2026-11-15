@@ -6,6 +6,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const sharp = require('sharp');
 
+const { titleTspans } = require('./lib/poster-title');
 const Lecture = require('../models/Lecture');
 const Daija = require('../models/Daija');
 const Organization = require('../models/Organization');
@@ -40,8 +41,8 @@ const posterSvg = (i, title, daija, city, dateStr) => {
   <circle cx="120" cy="980" r="260" fill="#fff" opacity="0.06"/>
   <rect x="60" y="60" width="680" height="1011" fill="none" stroke="#fff" stroke-opacity="0.35" stroke-width="3"/>
   <text x="400" y="200" font-family="sans-serif" font-size="36" fill="#fff" opacity="0.8" text-anchor="middle" letter-spacing="8">PREDAVANJE</text>
-  <text x="400" y="520" font-family="sans-serif" font-weight="700" font-size="72" fill="#fff" text-anchor="middle">${esc(title)}</text>
-  <text x="400" y="680" font-family="sans-serif" font-size="44" fill="#fff" text-anchor="middle">${esc(daija)}</text>
+  ${titleTspans(title)}
+  ${titleTspans(daija, { cy: 720, maxLines: 1, fontSize: 44, minFont: 28, weight: 400 })}
   <text x="400" y="900" font-family="sans-serif" font-size="40" fill="#fff" opacity="0.9" text-anchor="middle">${esc(dateStr)}</text>
   <text x="400" y="960" font-family="sans-serif" font-size="40" fill="#fff" opacity="0.9" text-anchor="middle">${esc(city)}</text>
 </svg>`;

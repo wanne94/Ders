@@ -290,7 +290,7 @@ const UniversalCard = React.memo(({ data }) => {
       )}
 
       {/* Status badge for lectures - identično mobilnoj */}
-      {displayData.type === 'lecture' && displayData.statusInfo && (
+      {displayData.type === 'lecture' && displayData.statusInfo && displayData.statusInfo.status !== 'past' && (
         <div className="absolute top-3 right-3 z-10">
           <Badge
             className={`${getBadgeColor(displayData.statusInfo.badgeColor)} font-medium text-xs px-2 py-0.5 max-w-[160px] whitespace-normal text-center border pointer-events-none`}
