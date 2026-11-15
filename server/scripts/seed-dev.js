@@ -120,7 +120,17 @@ const lecturesData = [
       posterSvg(i, l.title, `${d.title}. ${d.name}`, l.city, fmt.format(date)),
       `seed-lecture-${i + 1}.webp`
     );
-    await Lecture.create({ title: l.title, image, date });
+    const org = orgsData.find((o) => o.city === l.city) || orgsData[0];
+    await Lecture.create({
+      title: l.title,
+      daija: daije[l.daija]._id,
+      organization: org.name,
+      address: org.address,
+      city: l.city,
+      time: i % 2 === 0 ? '19:30' : '20:00',
+      image,
+      date
+    });
   }
 
   console.log(`✅ Seed gotov: ${lecturesData.length} predavanja, ${daijeData.length} daija, ${orgsData.length} udruženja`);

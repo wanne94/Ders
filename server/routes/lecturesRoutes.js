@@ -10,6 +10,7 @@ router.get('/public', async (req, res) => {
   try {
     const lectures = await Lecture.find({})
       .sort({ date: -1 })
+      .populate('daija', 'name title')
       .lean();
 
     res.json(lectures);
@@ -25,6 +26,7 @@ router.get('/latest', async (req, res) => {
     const lectures = await Lecture.find({})
       .sort({ date: -1 })
       .limit(limit)
+      .populate('daija', 'name title')
       .lean();
 
     res.json(lectures);
@@ -40,7 +42,7 @@ router.get('/:id', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Neispravan ID format' });
     }
 
-    const lecture = await Lecture.findById(req.params.id).lean();
+    const lecture = await Lecture.findById(req.params.id).populate('daija', 'name title').lean();
 
     if (!lecture) {
       return res.status(404).json({ success: false, message: 'Predavanje nije pronadjeno' });
@@ -55,7 +57,7 @@ router.get('/:id', async (req, res) => {
 // POST / - Kreiranje novog predavanja
 router.post('/', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
   try {
-    const { title, image, date } = req.body;
+    const { title, image, date, daija, organization, address, city, time } = req.body;
 
     if (!date) {
       return res.status(400).json({ success: false, message: 'Datum je obavezan.' });
@@ -72,6 +74,11 @@ router.post('/', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
 
     const newLecture = new Lecture({
       title: title || '',
+      daija: mongoose.Types.ObjectId.isValid(daija) ? daija : undefined,
+      organization: organization || '',
+      address: address || '',
+      city: city || '',
+      time: time || '',
       image: image || '',
       date: lectureDate
     });
@@ -95,10 +102,15 @@ router.put('/:id', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Neispravan ID format' });
     }
 
-    const { title, image, date } = req.body;
+    const { title, image, date, daija, organization, address, city, time } = req.body;
     const updateData = {};
 
     if (title !== undefined) updateData.title = title;
+    if (daija !== undefined) updateData.daija = mongoose.Types.ObjectId.isValid(daija) ? daija : null;
+    if (organization !== undefined) updateData.organization = organization;
+    if (address !== undefined) updateData.address = address;
+    if (city !== undefined) updateData.city = city;
+    if (time !== undefined) updateData.time = time;
     if (image !== undefined) updateData.image = image;
     if (date !== undefined) updateData.date = new Date(date);
 

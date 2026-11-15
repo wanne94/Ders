@@ -267,14 +267,14 @@ const UniversalCard = React.memo(({ data }) => {
   return (
     <Card
       className={`flex flex-col relative overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer w-full ${
-        isOrganizationCard ? 'min-h-[260px]' : isLectureCard ? 'h-auto' : 'h-[240px]'
+        isOrganizationCard ? 'min-h-[260px]' : 'h-[240px]'
       } ${isLectureCard && isCancelled ? 'opacity-85' : ''}`}
       onClick={displayData.onClick}
     >
       {/* Seminar badge - left side - identično mobilnoj */}
       {displayData.type === 'lecture' && data.isSeminar && (
-        <div className="absolute top-2 left-2 z-10">
-          <Badge className="bg-[#fff7ed] text-[#d97706] font-bold text-xs px-1.5 py-1 border border-[#fed7aa] pointer-events-none rounded">
+        <div className="absolute top-3 left-3 z-10">
+          <Badge className="bg-amber-50 text-amber-600 font-medium text-xs px-2 py-0.5 border border-amber-200 pointer-events-none">
             Seminar
           </Badge>
         </div>
@@ -282,8 +282,8 @@ const UniversalCard = React.memo(({ data }) => {
 
       {/* Weekly lecture badge - left side - identično mobilnoj */}
       {displayData.type === 'lecture' && data.isWeeklyLecture && !data.isSeminar && (
-        <div className="absolute top-2 left-2 z-10">
-          <Badge className="bg-[#e3f2fd] text-[#1565c0] font-bold text-xs px-1.5 py-1 pointer-events-none rounded">
+        <div className="absolute top-3 left-3 z-10">
+          <Badge className="bg-blue-50 text-blue-600 font-medium text-xs px-2 py-0.5 border border-blue-200 pointer-events-none">
             Sedmično
           </Badge>
         </div>
@@ -291,9 +291,9 @@ const UniversalCard = React.memo(({ data }) => {
 
       {/* Status badge for lectures - identično mobilnoj */}
       {displayData.type === 'lecture' && displayData.statusInfo && (
-        <div className="absolute top-2 right-2 z-10">
+        <div className="absolute top-3 right-3 z-10">
           <Badge
-            className={`${getBadgeColor(displayData.statusInfo.badgeColor)} font-bold text-xs px-1.5 py-1 max-w-[180px] whitespace-normal text-center border pointer-events-none rounded`}
+            className={`${getBadgeColor(displayData.statusInfo.badgeColor)} font-medium text-xs px-2 py-0.5 max-w-[160px] whitespace-normal text-center border pointer-events-none`}
           >
             {displayData.statusInfo.badgeText || 'N/A'}
           </Badge>
@@ -306,7 +306,7 @@ const UniversalCard = React.memo(({ data }) => {
             ? 'h-full p-4 flex flex-col items-center justify-center text-center gap-2'
             : isOrganizationCard
               ? 'p-0 h-full flex flex-col'
-              : 'p-4 flex flex-col overflow-hidden'
+              : 'h-full p-4 flex flex-col overflow-hidden'
         }
       >
         {isOrganizationCard ? (
@@ -392,43 +392,43 @@ const UniversalCard = React.memo(({ data }) => {
         ) : (
           /* Lecture kartica - identično mobilnoj */
           <>
-            {/* Title section for lectures - sa border bottom, padding za badges */}
+            {/* Title section for lectures - full width */}
             {displayData.type === 'lecture' && (
-              <div className="pt-9 pb-1 border-b border-[#e0e0e0] mb-1">
-                <h2 className="text-lg font-bold text-[#022C43] leading-[23px] text-left uppercase line-clamp-2">
+              <>
+                <h2 className="text-base font-bold mb-2 mt-6 text-left w-full text-gray-900 truncate">
                   {displayData.title}
                   {data.lecturePart && ` (dio ${data.lecturePart}.)`}
                 </h2>
-              </div>
+                <div className="border-b border-gray-200 mb-2" />
+              </>
             )}
 
-            {/* Content row - identično mobilnoj */}
-            <div className="flex flex-row flex-1 mt-1 gap-6">
+            <div className="flex h-full flex-1 gap-3">
               {/* Left side - Information */}
               <div className="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
                 {/* Title prefix (for daija titles) */}
                 {displayData.titlePrefix && (
-                  <p className="text-xs text-gray-500 mb-0.5 leading-[14px]">
+                  <p className="text-xs text-gray-600 mb-1">
                     {displayData.titlePrefix}
                   </p>
                 )}
 
                 {/* Main title for non-lecture types */}
                 {displayData.type !== 'lecture' && (
-                  <h2 className="text-lg font-semibold text-[#022C43] leading-[22px] mb-1 text-left line-clamp-2">
+                  <h2 className="text-base font-semibold mb-1.5 text-left text-gray-900 truncate">
                     {displayData.title}
                     {data.lecturePart && ` (dio ${data.lecturePart}.)`}
                   </h2>
                 )}
 
-                {/* Info items - gap identičan mobilnoj (4px) */}
-                <div className="flex flex-col gap-1">
+                {/* Info items */}
+                <div className="flex flex-col gap-0.5">
                   {displayData.infoItems.slice(0, 6).map((item, index) => {
                     const Icon = item.icon;
                     return (
-                      <div key={index} className="flex items-center gap-2 mb-0.5">
-                        <Icon className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <span className="text-[13px] text-gray-600 line-clamp-1 text-left leading-[18px] pr-2">
+                      <div key={index} className="flex items-center gap-2">
+                        <Icon className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                        <span className="text-[15px] text-gray-600 line-clamp-1 text-left leading-tight">
                           {item.text}
                         </span>
                       </div>
@@ -437,33 +437,24 @@ const UniversalCard = React.memo(({ data }) => {
                 </div>
               </div>
 
-              {/* Right side - Image 100x130px za lecture - identično mobilnoj */}
-              <div className="w-[100px] flex-shrink-0 flex justify-center items-center">
-                <div className="w-[100px] h-[130px] relative overflow-hidden shadow-sm rounded-lg">
+              {/* Right side - Image */}
+              <div className="w-28 h-36 flex-shrink-0 relative self-center">
+                <div className={`w-full h-full relative overflow-hidden shadow-sm ${displayData.imageStyle}`}>
                   <Image
                     src={imageUrl}
                     alt={displayData.title}
                     fill
-                    sizes="100px"
+                    sizes="112px"
                     className="object-cover object-top"
                     onError={handleImageError}
                   />
-                  {/* Cancelled overlay - dijagonalna sa -45deg rotacijom - identično mobilnoj */}
-                  {isCancelled && (
-                    <div className="absolute inset-0 pointer-events-none overflow-hidden z-10 rounded-lg">
-                      <div
-                        className="absolute bg-[#f44336] flex items-center justify-center shadow-md"
-                        style={{
-                          top: '50%',
-                          left: '50%',
-                          width: '200px',
-                          height: '30px',
-                          transform: 'translate(-50%, -50%) rotate(-45deg)',
-                        }}
-                      >
-                        <span className="text-white text-xs font-bold tracking-wider text-center drop-shadow-sm">
+                  {/* Cancelled overlay on image only for lectures */}
+                  {displayData.type === 'lecture' && (data.cancelled || data.isCancelled || displayData.statusInfo?.status === 'cancelled') && (
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-red-500 text-white font-extrabold text-xs tracking-wider uppercase py-1.5 px-10 rotate-[-30deg] shadow-lg transform-gpu">
                           OTKAZANO
-                        </span>
+                        </div>
                       </div>
                     </div>
                   )}
