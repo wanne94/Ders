@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const Lecture = require('../models/Lecture');
+const Organization = require('../models/Organization');
 const { authMiddleware: authenticateToken } = require('../utils/jwt');
 const { isAdminOrSuperAdmin } = require('../middleware/auth');
 
@@ -35,6 +36,40 @@ router.get('/latest', async (req, res) => {
   }
 });
 
+// GET /daija/:id - Predavanja jednog daije
+router.get('/daija/:id', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Neispravan ID format' });
+    }
+    const lectures = await Lecture.find({ daija: req.params.id })
+      .sort({ date: -1 })
+      .populate('daija', 'name title')
+      .lean();
+    res.json(lectures);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Greska pri dohvacanju predavanja' });
+  }
+});
+
+// GET /organization/:id - Predavanja jednog udruzenja (Lecture.organization cuva naziv)
+router.get('/organization/:id', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Neispravan ID format' });
+    }
+    const org = await Organization.findById(req.params.id).select('name').lean();
+    if (!org) return res.json([]);
+    const lectures = await Lecture.find({ $or: [{ organizationId: org._id }, { organization: (org.name || '').trim() }] })
+      .sort({ date: -1 })
+      .populate('daija', 'name title')
+      .lean();
+    res.json(lectures);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Greska pri dohvacanju predavanja' });
+  }
+});
+
 // GET /:id - Jedno predavanje po ID
 router.get('/:id', async (req, res) => {
   try {
@@ -57,7 +92,7 @@ router.get('/:id', async (req, res) => {
 // POST / - Kreiranje novog predavanja
 router.post('/', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
   try {
-    const { title, image, date, daija, organization, address, city, time } = req.body;
+    const { title, image, date, daija, organization, organizationId, address, city, time } = req.body;
 
     if (!date) {
       return res.status(400).json({ success: false, message: 'Datum je obavezan.' });
@@ -76,6 +111,7 @@ router.post('/', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
       title: title || '',
       daija: mongoose.Types.ObjectId.isValid(daija) ? daija : undefined,
       organization: organization || '',
+      organizationId: mongoose.Types.ObjectId.isValid(organizationId) ? organizationId : undefined,
       address: address || '',
       city: city || '',
       time: time || '',
@@ -102,12 +138,13 @@ router.put('/:id', authenticateToken, isAdminOrSuperAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Neispravan ID format' });
     }
 
-    const { title, image, date, daija, organization, address, city, time } = req.body;
+    const { title, image, date, daija, organization, organizationId, address, city, time } = req.body;
     const updateData = {};
 
     if (title !== undefined) updateData.title = title;
     if (daija !== undefined) updateData.daija = mongoose.Types.ObjectId.isValid(daija) ? daija : null;
     if (organization !== undefined) updateData.organization = organization;
+    if (organizationId !== undefined) updateData.organizationId = mongoose.Types.ObjectId.isValid(organizationId) ? organizationId : null;
     if (address !== undefined) updateData.address = address;
     if (city !== undefined) updateData.city = city;
     if (time !== undefined) updateData.time = time;

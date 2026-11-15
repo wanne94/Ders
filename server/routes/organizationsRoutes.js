@@ -39,8 +39,7 @@ router.get('/public', optionalAuth, async (req, res) => {
     const organizationsWithLectureCount = await Promise.all(
       organizations.map(async (organization) => {
         const lectureCount = await Lecture.countDocuments({
-          organizationId: organization._id,
-          status: 'approved'
+          organizationId: organization._id
         });
         
         return {
@@ -169,8 +168,7 @@ router.get('/', optionalAuth, async (req, res) => {
     const organizationsWithLectureCount = await Promise.all(
       organizations.map(async (organization) => {
         const lectureCount = await Lecture.countDocuments({
-          organizationId: organization._id,
-          status: 'approved'
+          organizationId: organization._id
         });
         
         return {

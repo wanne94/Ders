@@ -4,6 +4,7 @@ const lectureSchema = new mongoose.Schema({
   title: { type: String, trim: true, maxlength: 120 },
   daija: { type: mongoose.Schema.Types.ObjectId, ref: 'Daija' },
   organization: { type: String, trim: true },
+  organizationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization' },
   address: { type: String, trim: true },
   city: { type: String, trim: true },
   time: { type: String, trim: true },
@@ -13,5 +14,6 @@ const lectureSchema = new mongoose.Schema({
 
 // Index za sortiranje po datumu
 lectureSchema.index({ date: 1 });
+lectureSchema.index({ organizationId: 1 });
 
 module.exports = mongoose.model('Lecture', lectureSchema);
