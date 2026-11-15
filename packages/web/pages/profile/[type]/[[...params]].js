@@ -65,7 +65,7 @@ import SkeletonGrid from '@/components/SkeletonGrid';
 import { predavanjaService, daijeService, udruzenjaService } from '@/services';
 import { formatDateWithDay } from '@/utils/dataHelpers';
 import { getImageUrl, getDefaultLectureImage, getDefaultDaijaImage, getDefaultOrganizationImage } from '@/utils/imageUtils';
-import { formatDaijaTitle, generateSlug } from '@/utils';
+import { formatDaijaTitle, generateSlug, getDaijaTitleLabel } from '@/utils';
 import { safeApiCall, normalizeToArray } from '@/utils/dataHelpers';
 import { downloadICS, addToGoogleCalendar } from '@/utils/calendarUtils';
 import { sortLecturesByStatus } from '@/helpers/sortingHelpers';
@@ -242,7 +242,7 @@ const ProfilePage = () => {
         // Filter only approved lectures (not cancelled)
         const approvedLectures = lectures.filter(lecture => {
           // Check if lecture is approved
-          if (lecture.status !== 'approved') return false;
+          if (lecture.status && lecture.status !== 'approved') return false;
           
           // Check if lecture is not cancelled
           if (lecture.isCancelled || lecture.status === 'cancelled') return false;
@@ -291,8 +291,8 @@ const ProfilePage = () => {
         
         // Filter only approved lectures and exclude based on profile type
         const approvedLectures = normalized.filter(lecture => {
-          // Must be approved
-          if (lecture.status !== 'approved') return false;
+          // Must be approved (dersovi bez statusa se računaju kao odobreni)
+          if (lecture.status && lecture.status !== 'approved') return false;
           
           // If we're viewing a lecture profile, exclude the current lecture
           if (type === 'lecture' && profile && lecture._id === profile._id) {
@@ -726,30 +726,31 @@ const ProfilePage = () => {
                     <div className="lg:col-span-4">
                       {/* Profile Image */}
                       <div
-                        onClick={() => setImageModalOpen(true)}
+                        onClick={type === 'daija' ? undefined : () => setImageModalOpen(true)}
                         className={`
-                          relative w-full ${type === 'lecture' ? 'h-full min-h-[400px]' : 'aspect-square'} max-w-sm mx-auto lg:max-w-none
+                          relative w-full ${type === 'lecture' ? 'h-full min-h-[400px]' : 'aspect-square'} ${type === 'daija' ? 'max-w-[220px]' : 'max-w-sm lg:max-w-none'} mx-auto
                           ${type === 'daija' ? 'rounded-full' : 'rounded-2xl'}
                           ${type === 'organization' ? 'bg-white' : ''}
                           overflow-hidden border-4 border-white/20 shadow-2xl
-                          transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:shadow-3xl
-                          group
+                          transition-all duration-300 ${type === 'daija' ? '' : 'cursor-pointer hover:scale-[1.02] hover:shadow-3xl group'}
                         `}
                       >
                         <Image
                           src={getImageUrl(profile.image) || getDefaultImage()}
                           alt={profile.title || profile.name}
                           fill
-                          className={`${type === 'lecture' ? 'object-contain bg-black/5' : type === 'organization' ? 'object-contain p-6' : 'object-cover'}`}
+                          className={`${type === 'lecture' ? 'object-contain bg-black/5' : type === 'organization' ? 'object-contain p-6' : type === 'daija' ? 'object-cover object-[38%_25%]' : 'object-cover'}`}
                           onError={(e) => {
                             e.target.onerror = null;
                             e.target.src = getDefaultImage();
                           }}
                         />
                         {/* Overlay on hover */}
+                        {type !== 'daija' && (
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                           <Eye className="h-12 w-12 text-white" />
                         </div>
+                        )}
                         {/* Cancellation Overlay for lectures */}
                         {type === 'lecture' && (
                           <CancelledOverlay 
@@ -794,7 +795,7 @@ const ProfilePage = () => {
                           {type === 'daija' && profile.title && (
                             <Badge className="bg-purple-500/20 text-purple-100 border-purple-400/30 px-3 py-1">
                               <Award className="h-3 w-3 mr-1" />
-                              {profile.title}
+                              {getDaijaTitleLabel(profile.title)}
                             </Badge>
                           )}
                           {type === 'organization' && (
@@ -1268,7 +1269,7 @@ const ProfilePage = () => {
             {/* Daija's Upcoming Lectures Section */}
             {type === 'daija' && (
               <div id="daija-lectures" className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Najavljeni dersovi ovog daije</h2>
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Dersovi daije</h2>
                 
                 {relatedLoading ? (
                   <SkeletonGrid />
@@ -1306,7 +1307,7 @@ const ProfilePage = () => {
                   <Card className="p-8 text-center border-dashed">
                     <CardContent>
                       <CalendarDays className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-gray-500">Trenutno nema najavljenih dersova ovog daije</p>
+                      <p className="text-gray-500">Trenutno nema dersova ovog daije</p>
                     </CardContent>
                   </Card>
                 )}
@@ -1361,7 +1362,8 @@ const ProfilePage = () => {
               </div>
             )}
 
-            {/* Other Upcoming Lectures Section - Always show */}
+            {/* Other Upcoming Lectures Section - not for daija (they have one merged section) */}
+            {type !== 'daija' && (
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Ostali najavljeni dersovi</h2>
               
@@ -1416,6 +1418,7 @@ const ProfilePage = () => {
                 </Card>
               )}
             </div>
+            )}
 
             {/* Additional Information Section */}
             {type === 'lecture' && (profile.topics || profile.requirements || profile.targetAudience) && (

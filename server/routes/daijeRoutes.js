@@ -39,8 +39,8 @@ router.get('/public', optionalAuth, async (req, res) => {
     const daijeWithLectureCount = await Promise.all(
       daije.map(async (daija) => {
         const lectureCount = await Lecture.countDocuments({ 
-          daija: daija._id, 
-          status: 'approved' 
+          daija: daija._id,
+          $or: [{ status: 'approved' }, { status: { $exists: false } }], isCancelled: { $ne: true }
         });
         
         return {
@@ -67,9 +67,9 @@ router.get('/with-active-lectures', optionalAuth, async (req, res) => {
     const daijeWithLectures = await Promise.all(
       daije.map(async (daija) => {
         const lectures = await Lecture.find({ 
-          daija: daija._id, 
-          status: 'approved',
-          date: { $gte: new Date() }
+          daija: daija._id,
+          date: { $gte: new Date() },
+          $or: [{ status: 'approved' }, { status: { $exists: false } }], isCancelled: { $ne: true }
         }).sort({ date: 1 });
         
         return {
@@ -169,8 +169,8 @@ router.get('/', optionalAuth, async (req, res) => {
     const daijeWithLectureCount = await Promise.all(
       daije.map(async (daija) => {
         const lectureCount = await Lecture.countDocuments({ 
-          daija: daija._id, 
-          status: 'approved' 
+          daija: daija._id,
+          $or: [{ status: 'approved' }, { status: { $exists: false } }], isCancelled: { $ne: true }
         });
         
         return {
