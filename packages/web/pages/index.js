@@ -525,7 +525,7 @@ export default function Home({
       )}
 
       {/* 10 Lectures */}
-      <div className="w-full mb-8">
+      <div className="w-full mb-8 pt-8">
         <ContentContainer>
           <LecturesSection
             lectures={lectures}
